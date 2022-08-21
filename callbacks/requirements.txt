@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+psycopg2-binary
+aiohttp
+asyncpg
+python-multipart
+motor
+orjson
+pydantic
+aioredis
