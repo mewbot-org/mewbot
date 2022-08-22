@@ -698,7 +698,7 @@ class Extras(commands.Cog):
         embed.add_field(name="Upvote Points", value=f"{uppoints}", inline=True)
         embed.add_field(
             name="Credits",
-            value=f"{mewcoins:,}<:mewcoin:536965485829423107>",
+            value=f"{mewcoins:,}<:mewcoin:1010959258638094386>",
             inline=True,
         )
         embed.add_field(name="Pokemon Count", value=f"{count:,}", inline=True)
@@ -869,7 +869,7 @@ class Extras(commands.Cog):
             staffrank = await tconn.fetchval("SELECT staff FROM users WHERE u_id = $1", user.id)
             hitem = details["held_item"]
             desc = f"{tnick if tnick is not None else user.name}'s\n__**Balances**__"
-            desc += f"\n<:mewcoin:536965485829423107>**Credits**: `{mewcoins:,}`"
+            desc += f"\n<:mewcoin:1010959258638094386>**Credits**: `{mewcoins:,}`"
             desc += f"\n<:rtedee2m:817647281364271144>**Redeems**: `{redeems:,}`"
             desc += f"\n<:evs:818149979428093983>**EV Points**: `{evpoints:,}`"
             desc += f"\n<:upvote:817898847320801300>**Upvote Points**: `{uppoints}`"

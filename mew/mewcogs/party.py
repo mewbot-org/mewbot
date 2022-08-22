@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from typing import Literal
 
 from mewutils.misc import pagify, MenuView, ConfirmView
 
@@ -27,14 +28,18 @@ class Party(commands.Cog):
             for idx, _id in enumerate(party_nums):
                 t_name = await pconn.fetchval(f"SELECT pokname FROM pokes WHERE id = $1", _id)
                 if t_name is None:
-                    t_name = "None"
+                    t_name, counter = "None", ""
                 else:
                     num = await pconn.fetchval(
                         "SELECT array_position(pokes, $1) FROM users WHERE u_id = $2",
                         _id,
                         ctx.author.id,
                     )
-                    t_name = f"{t_name} [{num}]"
+                    if t_name == 'Egg':
+                        counter = await pconn.fetchval(f"SELECT counter FROM pokes WHERE id = $1", _id)
+                        t_name = f"{t_name} `{counter} steps` [{num}]"
+                    else:
+                        t_name = f"{t_name} [{num}]"
                 embed.add_field(name=(f"Slot {idx+1} Pokemon"), value=(f"{t_name}"))
         embed.set_footer(
             text=(
@@ -44,7 +49,7 @@ class Party(commands.Cog):
         await ctx.send(embed=embed)
 
     @party_base.command(name="add")
-    async def party_add(self, ctx, slot: int, poke: int=None) -> None:
+    async def party_add(self, ctx, slot: Literal[1, 2, 3, 4, 5, 6], poke: int=None) -> None:
         """Add a pokemon to a slot in your party"""
         if 1 > slot or slot > 6:
             await ctx.send("You only add a Pokemon to a slot between 1 and 6!")

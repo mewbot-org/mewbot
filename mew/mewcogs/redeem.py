@@ -187,7 +187,7 @@ class Redeem(commands.Cog):
             perk = "worth too much"
         pack = get_perks(perk)
         price = pack["price"]
-        async with ctx.bot.db[0].acquire as pconn:
+        async with ctx.bot.db[0].acquire() as pconn:
             redeems = await pconn.fetchval(
                 "SELECT redeems FROM users WHERE u_id = $1",
                 ctx.author.id,

@@ -1082,7 +1082,7 @@ class Events(commands.Cog):
         if amount > curcreds:
             await ctx.send("You don't have that many credits!")
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to donate {amount}<:mewcoin:536965485829423107> to the christmas raffle prize pool?").wait():
+        if not await ConfirmView(ctx, f"Are you sure you want to donate {amount}<:mewcoin:1010959258638094386> to the christmas raffle prize pool?").wait():
             await ctx.send("Canceled")
             return
         async with ctx.bot.db[0].acquire() as pconn:
@@ -1100,7 +1100,7 @@ class Events(commands.Cog):
                 amount,
             )
             await ctx.send(
-                f"{ctx.author.name} has donated {amount}<:mewcoin:536965485829423107> to the christmas raffle prize pool"
+                f"{ctx.author.name} has donated {amount}<:mewcoin:1010959258638094386> to the christmas raffle prize pool"
             )
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",

@@ -85,10 +85,10 @@ class Boost(commands.Cog):
     @nitro.command()
     async def claim(self, ctx):
         """Claim rewards for Boosting our Official Server!"""
-        if ctx.guild.id != ctx.bot.official_server:
+        if ctx.guild != ctx.bot.official_server:
             await ctx.send("You can only use this command in the Mewbot Official Server.")
             return
-        if ctx.bot.BOOSTER_ROLE not in [x.id for x in ctx.author.roles]:
+        if ctx.bot.booster_role not in ctx.author.roles:
             await ctx.send("You can only use this command if you have nitro boosted this server.")
             return
 

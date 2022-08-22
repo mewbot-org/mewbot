@@ -193,6 +193,18 @@ class KittyCat(commands.Cog):
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
+    async def addupdate(self, ctx, *, update):
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "INSERT INTO updates (update, dev) VALUES ($1, $2)",
+                update,
+                ctx.author.mention,
+            )
+        await ctx.send("Update Successfully Added")
+
+    @check_owner()
+    @owner.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def traceback(self, ctx, public: bool = False):
         if not ctx.bot.traceback:
             await ctx.send("No exception has occurred yet.")

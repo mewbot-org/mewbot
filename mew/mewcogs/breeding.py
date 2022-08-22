@@ -706,7 +706,7 @@ class Breeding(commands.Cog):
         e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
         e.add_field(name="You can breed again", value=f"<t:{int(time.time()) + 36}:R>", inline=False)
         e.set_image(
-            url="https://mewbot.xyz/img/breed_success.png"
+            url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
         )
         e.set_footer(text=chance_message)
         if auto:
@@ -722,7 +722,7 @@ class Breeding(commands.Cog):
         e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
         e.add_field(name="You can breed again", value="Now!", inline=False)
         e.set_image(
-            url="https://mewbot.xyz/img/breed_success.png"
+            url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
         )
         e.set_footer(text=chance_message)
         try:

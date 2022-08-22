@@ -481,7 +481,7 @@ class Admin(commands.Cog):
         embed.add_field(name="Upvote Points", value=f"{uppoints}", inline=True)
         embed.add_field(
             name="Credits",
-            value=f"{mewcoins}<:mewcoin:536965485829423107>",
+            value=f"{mewcoins}<:mewcoin:1010959258638094386>",
             inline=True,
         )
         embed.add_field(name="Pokemon Count", value=f"{count}", inline=True)

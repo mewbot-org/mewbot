@@ -6,6 +6,7 @@ from contextlib import suppress
 import asyncio
 import os
 
+from typing import Literal
 from discord.ext.commands.view import StringView
 from discord.ext.commands.converter import MemberConverter, TextChannelConverter, _convert_to_bool
 from mewcogs.json_files import *
@@ -299,6 +300,7 @@ class MewBotAdmin(commands.Cog):
             await pconn.execute("UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id)
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
     
+    @check_admin()
     @admin.command()
     async def createpoke(self, ctx, *, pokemon: str, shiny: bool, radiant: bool, boosted: bool):
       """Creates a new poke and gives it to the author."""
@@ -312,6 +314,44 @@ class MewBotAdmin(commands.Cog):
       pokemon = pokemon.replace(" ", "-").capitalize()
       await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, radiant=radiant, boosted=boosted)
       await ctx.send(f"Gave you a {extras}{pokemon}!")
+    
+    @check_admin()
+    @admin.command()
+    async def set_skin(self, ctx, globalid: int, skin):
+        """ADMIN: Add a skin to pokemon via its globalid"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "UPDATE pokes SET skin = $1 WHERE id = $2",
+                globalid,
+                skin,
+            )
+        await ctx.send("Successfully added skin to pokemon")
+    
+    @check_admin()
+    @admin.command()
+    async def add_skin(self, ctx, user: discord.Member, pokname: str, skinname: str):
+        """ADMIN: Add a skin to a users' skin inventory"""
+        pokname = pokname.lower()
+        skinname = skinname.lower()
+        async with ctx.bot.db[0].acquire() as pconn:
+            skins = await pconn.fetchval("SELECT skins::json FROM users WHERE u_id = $1", user.id)
+            if pokname not in skins:
+                skins[pokname] = {}
+            if skinname not in skins[pokname]:
+                skins[pokname][skinname] = 1
+            else:
+                skins[pokname][skinname] += 1
+            await pconn.execute("UPDATE users SET skins = $1::json WHERE u_id = $2", skins, user.id)
+        await ctx.send(f"Gave `{user}` a `{skinname}` skin for `{pokname}`.")
+    
+    @check_admin()
+    @admin.command()
+    async def editiv(self, ctx, iv: Literal["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"], amount: int, globalid: int):
+        if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
+            return
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid)
+            await ctx.send(":white_check_mark:")
 
     # @check_helper()
     # @commands.hybrid_command(enabled=False)
