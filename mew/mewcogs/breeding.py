@@ -791,7 +791,7 @@ class Breeding(commands.Cog):
         c = ctx.bot.get_cog("Filter")
         if c is None:
             return
-        await c.filter_pokemon.callback(c, ctx, args="name egg")
+        await c.f.get_command("p").callback(c, ctx, args="name egg")
         return
 
 async def setup(bot):

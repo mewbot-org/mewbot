@@ -720,7 +720,7 @@ class Filter(commands.Cog):
             level = str(record['pokelevel']).rjust(max_lvl, ' ')
             level = f"<:lvl2:971522301583581225>`{level}`"
             emoji = get_emoji(
-                blank="<:blank:942623726715936808>",
+                blank="<:blank:1012504803496177685>",
                 shiny=shiny,
                 radiant=radiant,
                 skin=record["skin"],

@@ -346,6 +346,14 @@ class MewBotAdmin(commands.Cog):
     
     @check_admin()
     @admin.command()
+    async def set_ot(self, ctx, pokeid: int, user: discord.Member):
+        """ADMIN: Set pokes OT"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute("UPDATE pokes SET caught_by = $1 where id = $2", user.id, pokeid)
+            await ctx.send(f"```Elm\n- Successflly set OT of `{pokeid}` to {user}```")
+
+    @check_admin()
+    @admin.command()
     async def editiv(self, ctx, iv: Literal["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"], amount: int, globalid: int):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
             return
@@ -434,16 +442,91 @@ class MewBotAdmin(commands.Cog):
 
     @check_mod()
     @admin.command()
+    async def getuser(self, ctx, user):
+        """MOD: Get user info by ID"""
+        user = int(user)
+        async with ctx.bot.db[0].acquire() as pconn:
+            info = await pconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user
+            )
+        if info is None:
+            await ctx.send("User has not started.")
+            return
+        pokes = info["pokes"]
+        count = len(pokes)
+        uid = info["id"]
+        redeems = info["redeems"]
+        evpoints = info["evpoints"]
+        tnick = info["tnick"]
+        upvote = info["upvotepoints"]
+        mewcoins = info["mewcoins"]
+        inv = info["inventory"]
+        daycare = info["daycare"]
+        dlimit = info["daycarelimit"]
+        energy = info["energy"]
+        fishing_exp = info["fishing_exp"]
+        fishing_level = info["fishing_level"]
+        party = info["party"]
+        luck = info["luck"]
+        selected = info["selected"]
+        visible = info["visible"]
+        voted = info["voted"]
+        tradelock = info["tradelock"]
+        botbanned = ctx.bot.botbanned(user)
+        mlimit = info["marketlimit"]
+        staff = info["staff"]
+        gym_leader = info["gym_leader"]
+        patreon_tier = await ctx.bot.patreon_tier(user)
+        intrade = user in [
+            int(id_)
+            for id_ in await ctx.bot.redis_manager.redis.execute(
+                "LRANGE", "tradelock", "0", "-1"
+            )
+            if id_.decode("utf-8").isdigit()
+        ]
+        desc =  f"**__Information on {user}__**"
+        desc += f"\n**Trainer Nickname**: `{tnick}`"
+        desc += f"\n**MewbotID**: `{uid}`"
+        desc += f"\n**Patreon Tier**: `{patreon_tier}`"
+        desc += f"\n**Staff Rank**: `{staff}`"
+        desc += f"\n**Gym Leader?**: `{gym_leader}`"
+        desc += f"\n**Selected Party**: `{party}`"
+        desc += f"\n**Selected Pokemon**: `{selected}`"
+        desc += f"\n**Pokemon Owned**: `{count}`"
+        desc += f"\n**Mewcoins**: `{mewcoins}`"
+        desc += f"\n**Redeems**: `{redeems}`"
+        desc += f"\n**EvPoints**: `{evpoints}`"
+        desc += f"\n**UpVOTE Points**: `{upvote}`"
+        desc += f"\n\n**Daycare Slots**: `{daycare}`"
+        desc += f"\n**Daycare Limit**: `{dlimit}`"
+        desc += f"\n**Market Limit**: `{mlimit}`"
+        desc += f"\n\n**Energy**: `{energy}`"
+        desc += f"\n**Fishing Exp**: `{fishing_exp}`"
+        desc += f"\n**Fishing Level**: `{fishing_level}`"
+        desc += f"\n**Luck**: `{luck}`"
+        desc += f"\n\n**Visible Balance?**: `{visible}`"
+        desc += f"\n**Voted?**: `{voted}`"
+        desc += f"\n**Tradebanned?**: `{tradelock}`"
+        desc += f"\n**In a trade?**: `{intrade}`"
+        desc += f"\n**Botbanned?**: `{botbanned}`"
+        embed = discord.Embed(color=0xFFB6C1, description=desc)
+        embed.add_field(name=f"Inventory", value=f"{inv}", inline=False)
+        embed.set_footer(text="Information live from Database")
+        await ctx.send(embed=embed)
+
+    @check_mod()
+    @admin.command()
     @discord.app_commands.describe(command="The command to mock, prefix must not be entered.")
-    async def mock(self, ctx, user_id: discord.Member, *, command):
+    async def mock(self, ctx, user_id, *, command):
         """MOD: 
         Mock another user invoking a command.
         """
+        user_id = int(user_id)
         raw = command
-        user = ctx.bot.get_user(user_id.id)
+        user = ctx.bot.get_user(user_id)
         if not user:
             try:
-                user = await ctx.bot.fetch_user(user_id.id)
+                user = await ctx.bot.fetch_user(user_id)
             except discord.HTTPException:
                 await ctx.send("User not found.")
                 return

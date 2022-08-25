@@ -247,7 +247,7 @@ class Pokemon(commands.Cog):
             radiant = record["radiant"]
             level = record["pokelevel"]
             emoji = get_emoji(
-                blank="<:blank:942623726715936808>",
+                blank="<:blank:1012504803496177685>",
                 shiny=shiny,
                 radiant=radiant,
                 skin=record["skin"],
