@@ -12,7 +12,7 @@ from discord.ext.commands.converter import MemberConverter, TextChannelConverter
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
 from mewcogs.pokemon_list import _
-from mewutils.checks import check_admin, check_investigator, check_mod, check_helper
+from mewutils.checks import check_admin, check_investigator, check_mod, check_helper, check_gymauth
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER
 from datetime import datetime, timedelta
 
@@ -40,7 +40,6 @@ class MewBotAdmin(commands.Cog):
     @commands.hybrid_group()
     async def admin(self, ctx):
         ...
-    
 
     @admin.command(name="help")
     async def _help_message(self, ctx):
@@ -103,7 +102,7 @@ class MewBotAdmin(commands.Cog):
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
             e.description = builder
-            
+
         class FSnow():
             def __init__(self, id):
                 self.id = id
@@ -162,7 +161,7 @@ class MewBotAdmin(commands.Cog):
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
             e.description = builder
-        
+
         class FSnow():
             def __init__(self, id):
                 self.id = id
@@ -245,7 +244,8 @@ class MewBotAdmin(commands.Cog):
     @admin.command()
     async def cogs(self, ctx):
         """View the currently loaded cogs."""
-        cogs = sorted([x.replace("mewcogs.", "") for x in ctx.bot.extensions.keys()])
+        cogs = sorted([x.replace("mewcogs.", "")
+                      for x in ctx.bot.extensions.keys()])
         embed = discord.Embed(
             title=f"{len(cogs)} loaded:", description=", ".join(cogs), color=0xFF69B4
         )
@@ -265,7 +265,7 @@ class MewBotAdmin(commands.Cog):
     @check_investigator()
     @discord.app_commands.describe(id="The user ID to trade ban.")
     @admin.command()
-    async def tradeban(self, ctx, id): # Looks like tradelock is temporary?
+    async def tradeban(self, ctx, id):  # Looks like tradelock is temporary?
         """Permanently trade-ban a user"""
         id = int(id)
         async with ctx.bot.db[0].acquire() as pconn:
@@ -299,34 +299,37 @@ class MewBotAdmin(commands.Cog):
                 return
             await pconn.execute("UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id)
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
-    
+
     @check_admin()
     @admin.command()
     async def createpoke(self, ctx, *, pokemon: str, shiny: bool, radiant: bool, boosted: bool):
-      """Creates a new poke and gives it to the author."""
-      extras = ""
-      if shiny:
-          extras += "shiny "
-      if radiant:
-          extras += "radiant "
-      if boosted:
-          extras += "boosted "
-      pokemon = pokemon.replace(" ", "-").capitalize()
-      await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, radiant=radiant, boosted=boosted)
-      await ctx.send(f"Gave you a {extras}{pokemon}!")
-    
+        """Creates a new poke and gives it to the author."""
+        extras = ""
+        if shiny:
+            extras += "shiny "
+        if radiant:
+            extras += "radiant "
+        if boosted:
+            extras += "boosted "
+        pokemon = pokemon.replace(" ", "-").capitalize()
+        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, radiant=radiant, boosted=boosted)
+        await ctx.send(f"Gave you a {extras}{pokemon}!")
+
     @check_admin()
     @admin.command()
-    async def set_skin(self, ctx, globalid: int, skin):
+    @discord.app_commands.describe(skin="Leave Blank for no skin")
+    async def set_skin(self, ctx, globalid: int, skin: str = None):
         """ADMIN: Add a skin to pokemon via its globalid"""
+        if not skin:
+            await ctx.send("Will remove the Skin of the Pokemon...")
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE pokes SET skin = $1 WHERE id = $2",
-                globalid,
                 skin,
+                globalid,
             )
-        await ctx.send("Successfully added skin to pokemon")
-    
+        await ctx.send("Successfully added skin to pokemon" if skin else "Removed Skin from Pokemon")
+
     @check_admin()
     @admin.command()
     async def add_skin(self, ctx, user: discord.Member, pokname: str, skinname: str):
@@ -343,7 +346,7 @@ class MewBotAdmin(commands.Cog):
                 skins[pokname][skinname] += 1
             await pconn.execute("UPDATE users SET skins = $1::json WHERE u_id = $2", skins, user.id)
         await ctx.send(f"Gave `{user}` a `{skinname}` skin for `{pokname}`.")
-    
+
     @check_admin()
     @admin.command()
     async def set_ot(self, ctx, pokeid: int, user: discord.Member):
@@ -360,6 +363,224 @@ class MewBotAdmin(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid)
             await ctx.send(":white_check_mark:")
+
+    @check_gymauth()
+    @commands.hybrid_command()
+    async def tradable(self, ctx, pokeid: int, answer: bool):
+        """MOD: Set pokemon trade-able or not"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "UPDATE pokes SET tradable = $1 WHERE id = $2",
+                answer,
+                pokeid,
+            )
+        await ctx.send(f"Successfully set trade-able to {answer}")
+
+    @check_investigator()
+    @commands.hybrid_group(aliases=["tradelogs", "tl"])
+    async def tradelog(self, ctx):
+        """INVESTIGATOR: Tradelog command"""
+        pass
+
+    @tradelog.command(name="user")
+    async def tradelog_user(self, ctx, u_id: str):
+        u_id = int(u_id)
+        async with ctx.bot.db[0].acquire() as pconn:
+            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = sender ORDER BY t_id ASC", u_id)
+            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = receiver ORDER BY t_id ASC", u_id)
+        # List[Tuple] -> (T_ID, Optional[DateTime], Traded With, Sent Creds, Sent Redeems, # Sent Pokes, Rec Creds, Rec Redeems, # Rec Pokes)
+        trade = []
+        t_s = trade_sender.pop(0) if trade_sender else None
+        t_r = trade_receiver.pop(0) if trade_receiver else None
+        while t_s or t_r:
+            if t_s is None:
+                trade.append((
+                    t_r["t_id"], t_r["time"], t_r["sender"],
+                    t_r["receiver_credits"], t_r["receiver_redeems"], len(
+                        t_r["receiver_pokes"]),
+                    t_r["sender_credits"], t_r["sender_redeems"], len(
+                        t_r["sender_pokes"])
+                ))
+                t_r = trade_receiver.pop(0) if trade_receiver else None
+            elif t_r is None:
+                trade.append((
+                    t_s["t_id"], t_s["time"], t_s["receiver"],
+                    t_s["sender_credits"], t_s["sender_redeems"], len(
+                        t_s["sender_pokes"]),
+                    t_s["receiver_credits"], t_s["receiver_redeems"], len(
+                        t_s["receiver_pokes"])
+                ))
+                t_s = trade_sender.pop(0) if trade_sender else None
+            elif t_s["t_id"] > t_r["t_id"]:
+                trade.append((
+                    t_r["t_id"], t_r["time"], t_r["sender"],
+                    t_r["receiver_credits"], t_r["receiver_redeems"], len(
+                        t_r["receiver_pokes"]),
+                    t_r["sender_credits"], t_r["sender_redeems"], len(
+                        t_r["sender_pokes"])
+                ))
+                t_r = trade_receiver.pop(0) if trade_receiver else None
+            else:
+                trade.append((
+                    t_s["t_id"], t_s["time"], t_s["receiver"],
+                    t_s["sender_credits"], t_s["sender_redeems"], len(
+                        t_s["sender_pokes"]),
+                    t_s["receiver_credits"], t_s["receiver_redeems"], len(
+                        t_s["receiver_pokes"])
+                ))
+                t_s = trade_sender.pop(0) if trade_sender else None
+
+        if not trade:
+            await ctx.send("That user has not traded!")
+            return
+
+        raw = ""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        name_map = {}
+        for t in trade:
+            if t[1] is None:
+                time = '?'
+            else:
+                d = t[1]
+                d = now - d
+                if d.days:
+                    time = str(d.days) + 'd'
+                elif d.seconds // 3600:
+                    time = str(d.seconds // 3600) + 'h'
+                elif d.seconds // 60:
+                    time = str(d.seconds // 60) + 'm'
+                elif d.seconds:
+                    time = str(d.seconds) + 's'
+                else:
+                    time = '?'
+            if t[2] in name_map:
+                un = name_map[t[2]]
+            else:
+                try:
+                    un = f"{await ctx.bot.fetch_user(int(t[2]))} ({t[2]})"
+                except discord.HTTPException:
+                    un = t[2]
+                name_map[t[2]] = un
+            raw += f"__**{t[0]}** - {un}__ ({time} ago)\n"
+            raw += f"Gave: {t[3]} creds + {t[4]} redeems + {t[5]} pokes\n"
+            raw += f"Got: {t[6]} creds + {t[7]} redeems + {t[8]} pokes\n\n"
+
+        PER_PAGE = 15
+        page = ""
+        pages = []
+        raw = raw.strip().split("\n\n")
+        total_pages = ((len(raw) - 1) // PER_PAGE) + 1
+        for idx, part in enumerate(raw):
+            page += part + "\n\n"
+            if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
+                embed = discord.Embed(
+                    title=f"Trade history of user {u_id}", description=page, color=0xDD00DD)
+                embed.set_footer(
+                    text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
+                pages.append(embed)
+                page = ""
+
+        await MenuView(ctx, pages).start()
+
+    @tradelog.command(name="poke")
+    async def tradelog_poke(self, ctx, p_id: int):
+        async with ctx.bot.db[0].acquire() as pconn:
+            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) ORDER BY t_id ASC", p_id)
+            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(receiver_pokes) ORDER BY t_id ASC", p_id)
+        # List[Tuple] -> (T_ID, Optional[DateTime], Sender, Receiver)
+        trade = []
+        t_s = trade_sender.pop(0) if trade_sender else None
+        t_r = trade_receiver.pop(0) if trade_receiver else None
+        while t_s or t_r:
+            if t_s is None:
+                trade.append((t_r["t_id"], t_r["time"],
+                             t_r["receiver"], t_r["sender"]))
+                t_r = trade_receiver.pop(0) if trade_receiver else None
+            elif t_r is None:
+                trade.append((t_s["t_id"], t_s["time"],
+                             t_s["sender"], t_s["receiver"]))
+                t_s = trade_sender.pop(0) if trade_sender else None
+            elif t_s["t_id"] > t_r["t_id"]:
+                trade.append((t_r["t_id"], t_r["time"],
+                             t_r["receiver"], t_r["sender"]))
+                t_r = trade_receiver.pop(0) if trade_receiver else None
+            else:
+                trade.append((t_s["t_id"], t_s["time"],
+                             t_s["sender"], t_s["receiver"]))
+                t_s = trade_sender.pop(0) if trade_sender else None
+
+        if not trade:
+            await ctx.send("That pokemon has not been traded!")
+            return
+
+        raw = ""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for t in trade:
+            if t[1] is None:
+                time = '?'
+            else:
+                d = t[1]
+                d = now - d
+                if d.days:
+                    time = str(d.days) + 'd'
+                elif d.seconds // 3600:
+                    time = str(d.seconds // 3600) + 'h'
+                elif d.seconds // 60:
+                    time = str(d.seconds // 60) + 'm'
+                elif d.seconds:
+                    time = str(d.seconds) + 's'
+                else:
+                    time = '?'
+            raw += f"**{t[0]}**: {t[2]} -> {t[3]} ({time} ago)\n"
+
+        PER_PAGE = 15
+        page = ""
+        pages = []
+        raw = raw.strip().split("\n")
+        total_pages = ((len(raw) - 1) // PER_PAGE) + 1
+        for idx, part in enumerate(raw):
+            page += part + "\n"
+            if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
+                embed = discord.Embed(
+                    title=f"Trade history of poke {p_id}", description=page, color=0xDD00DD)
+                embed.set_footer(
+                    text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
+                pages.append(embed)
+                page = ""
+
+        await MenuView(ctx, pages).start()
+
+    @tradelog.command(name="info")
+    async def tradelog_info(self, ctx, t_id: int):
+        """Get information on a specific trade by transaction id."""
+        async with ctx.bot.db[0].acquire() as pconn:
+            trade = await pconn.fetchrow("SELECT * FROM trade_logs WHERE t_id = $1", t_id)
+        if trade is None:
+            await ctx.send("That transaction id does not exist!")
+            return
+        desc = ""
+        if trade["sender_credits"] or trade["sender_pokes"] or trade["sender_redeems"]:
+            desc += f"**{trade['receiver']} received:**\n"
+            if trade["sender_credits"]:
+                desc += f"__Credits:__ {trade['sender_credits']}\n"
+            if trade["sender_redeems"]:
+                desc += f"__Redeems:__ {trade['sender_redeems']}\n"
+            if trade["sender_pokes"]:
+                desc += f"__Pokes:__ {trade['sender_pokes']}\n"
+            desc += "\n"
+        if trade["receiver_credits"] or trade["receiver_pokes"] or trade["receiver_redeems"]:
+            desc += f"**{trade['sender']} received:**\n"
+            if trade["receiver_credits"]:
+                desc += f"__Credits:__ {trade['receiver_credits']}\n"
+            if trade["receiver_redeems"]:
+                desc += f"__Redeems:__ {trade['receiver_redeems']}\n"
+            if trade["receiver_pokes"]:
+                desc += f"__Pokes:__ {trade['receiver_pokes']}\n"
+        embed = discord.Embed(
+            title=f"Trade ID {t_id}", description=desc, color=0xDD00DD)
+        if trade["time"] is not None:
+            embed.set_footer(text=trade["time"].isoformat(" "))
+        await ctx.send(embed=embed)
 
     # @check_helper()
     # @commands.hybrid_command(enabled=False)
@@ -438,7 +659,46 @@ class MewBotAdmin(commands.Cog):
     #         embed.description = desc
     #         await ctx.send(embed=embed)
     #     else:
-    #         await ctx.send("Choose Redeems, and thats it! Just redeems!")    
+    #         await ctx.send("Choose Redeems, and thats it! Just redeems!")
+
+    @check_admin()
+    @admin.command()
+    async def combine(self, ctx, user1: str, user2: str):
+        u_id1, u_id2 = int(user1), int(user2)
+        """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
+        await ctx.send(f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?")
+
+        def check(m):
+            return m.author.id == ctx.author.id and m.content.lower() in (
+                "yes",
+                "no",
+                "y",
+                "n",
+            )
+        try:
+            m = await ctx.bot.wait_for("message", check=check, timeout=30)
+        except asyncio.TimeoutError:
+            await ctx.send("Request timed out.")
+            return
+        if m.content.lower().startswith("n"):
+            await ctx.send("Cancelled.")
+            return
+        async with ctx.bot.db[0].acquire() as pconn:
+            user1 = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", u_id1
+            )
+            user2 = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", u_id2
+            )
+            user1.extend(user2)
+            user2 = []
+            await pconn.execute(
+                "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id1, user1
+            )
+            await pconn.execute(
+                "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id2, user2
+            )
+        await ctx.send(f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```")
 
     @check_mod()
     @admin.command()
@@ -484,7 +744,7 @@ class MewBotAdmin(commands.Cog):
             )
             if id_.decode("utf-8").isdigit()
         ]
-        desc =  f"**__Information on {user}__**"
+        desc = f"**__Information on {user}__**"
         desc += f"\n**Trainer Nickname**: `{tnick}`"
         desc += f"\n**MewbotID**: `{uid}`"
         desc += f"\n**Patreon Tier**: `{patreon_tier}`"
@@ -531,6 +791,7 @@ class MewBotAdmin(commands.Cog):
                 await ctx.send("User not found.")
                 return
         ctx.author = user
+
         class FakeInteraction():
             pass
         ctx._interaction = FakeInteraction()
@@ -553,7 +814,8 @@ class MewBotAdmin(commands.Cog):
             await ctx.send("I can't find a command that matches that input.")
             return
         # Just... trust me, this gets a list of type objects for the command's args
-        signature = [x.annotation for x in inspect.signature(command.callback).parameters.values()][2:]
+        signature = [x.annotation for x in inspect.signature(
+            command.callback).parameters.values()][2:]
         view = StringView(args.strip())
         args = []
         for arg_type in signature:
@@ -616,7 +878,8 @@ class MewBotAdmin(commands.Cog):
             title=f"Cluster #{cluster_id} ({cluster_name})",
             color=0xFFB6C1,
         )
-        current.set_footer(text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]")
+        current.set_footer(
+            text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]")
         for s in shard_groups.values():
             msg = (
                 "```prolog\n"
@@ -626,7 +889,8 @@ class MewBotAdmin(commands.Cog):
                 f"Users:     {s['users']}\n"
                 "```"
             )
-            current.add_field(name=f"Shard `{s['id']}/{ctx.bot.shard_count}`", value=msg)
+            current.add_field(
+                name=f"Shard `{s['id']}/{ctx.bot.shard_count}`", value=msg)
 
         pages.append(current)
 

@@ -1,7 +1,7 @@
 import discord
 import asyncpg
 from discord.ext import commands
-
+from typing import Literal
 
 
 class Evs(commands.Cog):
@@ -16,7 +16,7 @@ class Evs(commands.Cog):
         pass
 
     @evs.command(name="add")
-    async def add_evs(self, ctx, amount: int, stat: str):
+    async def add_evs(self, ctx, amount: int, stat: Literal["attack", "hp", "defense", "special attack", "special defense", "speed"]):
         """Add a stat to a specific pokemon"""
         stat = stat.lower()
         if not stat in (

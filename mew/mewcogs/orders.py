@@ -14,33 +14,41 @@ from mewutils.misc import *
 class Orders(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    
+    @commands.hybrid_group()
+    async def order(self, ctx):
+        ...
 
-    @commands.hybrid_command()
-    async def order_ivs(self, ctx):
+    @order.command()
+    async def ivs(self, ctx):
+        """Order your Pokemon according to their IVs"""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET user_order = $1 WHERE u_id = $2", "iv", ctx.author.id
             )
         await ctx.send("Your Pokemon will now be ordered by their IVs!")
 
-    @commands.hybrid_command()
-    async def order_default(self, ctx):
+    @order.command()
+    async def default(self, ctx):
+        """Remove ordering"""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET user_order = $1 WHERE u_id = $2", "kek", ctx.author.id
             )
         await ctx.send("Your Pokemon orders have been reset!")
 
-    @commands.hybrid_command()
-    async def order_evs(self, ctx):
+    @order.command()
+    async def evs(self, ctx):
+        """Order your Pokemon according to their EVs"""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET user_order = $1 WHERE u_id = $2", "ev", ctx.author.id
             )
         await ctx.send("Your Pokemon will now be ordered by their EVs!")
 
-    @commands.hybrid_command()
-    async def order_name(self, ctx):
+    @order.command()
+    async def name(self, ctx):
+        """Order your Pokemon according to their names alphabetically."""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET user_order = $1 WHERE u_id = $2",
@@ -49,8 +57,9 @@ class Orders(commands.Cog):
             )
         await ctx.send("Your Pokemon will now be ordered by their Names!")
 
-    @commands.hybrid_command()
-    async def order_level(self, ctx):
+    @order.command()
+    async def level(self, ctx):
+        """Order your Pokemon according to their levels"""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET user_order = $1 WHERE u_id = $2",

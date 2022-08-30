@@ -150,6 +150,7 @@ class Tutorial(commands.Cog):
             [
                 "Filtering your Pokemon",
                 """
+                `/order <default | ivs | evs | name | level>` - Order your Pokemon according to a set order.
                 `/f p <filter args>` - Filter your owned Pokemon.
                 `/f m <filter args>` - Filter the market listings.
 

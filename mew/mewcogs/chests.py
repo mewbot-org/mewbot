@@ -3,7 +3,7 @@ import random
 import asyncio
 
 from discord.ext import commands
-
+from typing import Literal
 from mewcogs.pokemon_list import pList, LegendList, natlist, pseudoList, ubList, starterList
 from mewutils.misc import ConfirmView, ListSelectView
 
@@ -401,21 +401,29 @@ class Chests(commands.Cog):
         msg += await self._maybe_spawn_event(ctx, .33)
         await ctx.send(msg)
 
-    @commands.hybrid_command()
-    async def gleam(self, ctx, packnum: int=None):
-        """Spend your radiant gems."""
-        if packnum is None:
-            desc = ""
-            for idx, pack in enumerate(self.PACKS, start=1):
-                desc += f"**{idx}.** __{pack[0]}__ - <a:radiantgem:774866137472827432>x{pack[1]}\n"
-            desc += f"\nUse `/gleam` with the number you want to buy."
-            e = discord.Embed(
-                title="Radiant Gem Shop",
-                description=desc,
-                color=ctx.bot.get_random_color(),
-            )
-            await ctx.send(embed=e)
-            return
+
+    @commands.hybrid_group()
+    async def gleam(self, ctx):
+        ...
+    
+    @gleam.command()
+    async def packs(self, ctx):
+        """Get Information of Gleam Packs"""
+        desc = ""
+        for idx, pack in enumerate(self.PACKS, start=1):
+            desc += f"**{idx}.** __{pack[0]}__ - <a:radiantgem:774866137472827432>x{pack[1]}\n"
+        desc += f"\nUse `/gleam` with the number you want to buy."
+        e = discord.Embed(
+            title="Radiant Gem Shop",
+            description=desc,
+            color=ctx.bot.get_random_color(),
+        )
+        await ctx.send(embed=e)
+        
+    @gleam.command()
+    async def pack(self, ctx, pack: Literal["1. Shiny Multiplier x1", "2. Battle Multiplier x1", "3. IV Multiplier x1", "4. Breeding Multiplier x1", "5. Legend Chest", "6. Radiant Pokemon (common & starter)", "7. Radiant Pokemon (legend & pseudo)"]):
+        """Spend your radiant gems to obtain gleam Pokemon."""
+        packnum = int(pack[0])
         if packnum < 1 or packnum > len(self.PACKS):
             await ctx.send("That is not a valid pack number.")
             return
