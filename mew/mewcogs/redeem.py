@@ -458,8 +458,10 @@ class Redeem(commands.Cog):
         await ctx.bot.mongo_update("users", {"user": ctx.author.id}, {"progress": progress})
 
     @redeem.command(with_app_command=True) # This has to be registered
+    @discord.app_commands.describe(option="Either Credits or a Pokemon")
     @tradelock
     async def multiple(self, ctx, amount: int, option: str):
+        """Redeem multiple Pokemon or Credits"""
         if option == "credits":
             async with ctx.bot.db[0].acquire() as pconn:
                 redeems = await pconn.fetchval(

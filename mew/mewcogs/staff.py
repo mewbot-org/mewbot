@@ -363,6 +363,25 @@ class MewBotAdmin(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid)
             await ctx.send(":white_check_mark:")
+    
+
+    @commands.hybrid_group()
+    async def gym(self, ctx):
+        ...
+
+    @check_gymauth()
+    @gym.command()
+    async def reward(self, ctx, mewcoins: int, user: str):
+        """GYM-AUTH: Gym mewcoins Reward"""
+        user = int(user)
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                mewcoins,
+                user,
+            )
+        await ctx.bot.get_partial_messageable(998316464719278280).send(f"{ctx.author}: <@{user}> has been awarded {mewcoins} for a gym challenge.")
+        await ctx.send(f"<@{user}> has been awarded {mewcoins} for a gym challenge.\n")
 
     @check_gymauth()
     @commands.hybrid_command()
