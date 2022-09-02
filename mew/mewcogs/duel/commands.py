@@ -529,7 +529,7 @@ class Duel(commands.Cog):
                     exp,
                     poke.id,
                 )
-        desc += f"\nConsider joining the [Official Mewbot Gyms Server]({os.environ.get('GYM_SERVER') or 'https://discord.gg/XAwZzzsCFf'}) if you are a fan of pokemon duels!\n"
+        desc += f"\nConsider joining the [Official Mewbot Server]({'https://discord.gg/mewbot'}) if you are a fan of pokemon duels!\n"
         await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
         
     async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member):
