@@ -191,6 +191,65 @@ class KittyCat(commands.Cog):
         pass
 
     @check_owner()
+    @discord.app_commands.describe(extension_name="The name of the extension to reload.")
+    @owner.command(name="reload")
+    async def _owner_reload(self, ctx, extension_name: str):
+        """Reloads an extension."""
+        if "mew.cogs" in extension_name:
+            extension_name = extension_name.replace("mew.cogs", "mewcogs")
+        if not extension_name.startswith("mewcogs."):
+            extension_name = f"mewcogs.{extension_name}"
+
+        launcher_res = await ctx.bot.handler("statuses", 1, scope="launcher")
+        if not launcher_res:
+            return await ctx.send(
+                f"Launcher did not respond.  Please start with the launcher to use this command across all clusters.  If attempting to reload on this cluster alone, please use `{ctx.prefix}reloadsingle {extension_name}`"
+            )
+
+        messages = {}
+
+        processes = len(launcher_res[0])
+        # We don't really care whether or not it fails to unload... the main thing is just to get it loaded with a refresh
+        await ctx.bot.handler("unload", processes, args={"cogs": [extension_name]}, scope="bot")
+        load_res = await ctx.bot.handler(
+            "load", processes, args={"cogs": [extension_name]}, scope="bot"
+        )
+        load_res.sort(key=lambda x: x["cluster_id"])
+
+        e = discord.Embed(color=0xFFB6C1)
+        builder = ""
+        message_same = (
+            all(
+                [
+                    load_res[0]["cogs"][extension_name]["message"]
+                    == nc["cogs"][extension_name]["message"]
+                    for nc in load_res
+                ]
+            )
+            and load_res[0]["cogs"][extension_name]["message"]
+        )
+        if message_same:
+            e.description = f"Failed to reload package on all clusters:\n`{load_res[0]['cogs'][extension_name]['message']}`"
+        else:
+            for cluster in load_res:
+                if cluster["cogs"][extension_name]["success"]:
+                    builder += f"`Cluster #{cluster['cluster_id']}`: Successfully reloaded\n"
+                else:
+                    msg = cluster["cogs"][extension_name]["message"]
+                    builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
+            e.description = builder
+
+        class FSnow():
+            def __init__(self, id):
+                self.id = id
+
+        await ctx.send("Syncing Commands...")
+        await ctx.bot.tree.sync()
+        await ctx.bot.tree.sync(guild=FSnow(STAFFSERVER))
+        await ctx.send("Successfully Synced.")
+        await ctx.send(embed=e)
+
+    @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def addupdate(self, ctx, *, update):
@@ -1226,18 +1285,17 @@ class KittyCat(commands.Cog):
             await pconn.execute("UPDATE users SET staff = 'User' WHERE u_id = $1", member.id)
         
         msg = f"{GREEN} Removed bot permissions.\n"
-        if ctx.guild.id != ctx.bot.official_server:
+        if ctx.guild != ctx.bot.official_server:
             msg += f"{RED} Could not remove OS roles, as this command was not run in OS.\n"
             await ctx.send(msg)
             return
-        
         ranks = {
             "Support": ctx.guild.get_role(544630193449598986),
-            "Helper": ctx.guild.get_role(728937101285916772),
-            "Mod": ctx.guild.get_role(519468261780357141),
-            "Investigator": ctx.guild.get_role(781716697500614686),
-            "Gymauth": ctx.guild.get_role(758853378515140679),
-            "Admin": ctx.guild.get_role(519470089318301696),
+            "Trial": ctx.guild.get_role(809624282967310347),
+            "Mod": ctx.guild.get_role(998224325159178301),
+            "Investigator": ctx.guild.get_role(1009276177418043424),
+            "Gymauth": ctx.guild.get_role(998398578420629515),
+            "Admin": ctx.guild.get_role(998147456959270943),
         }
         removeset = set(ranks.values())
         currentset = set(member.roles)
@@ -1250,7 +1308,7 @@ class KittyCat(commands.Cog):
             removelist = [str(x) for x in removelist]
             msg += f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
         
-        staff_role = ctx.guild.get_role(764870105741393942)
+        staff_role = ctx.guild.get_role(1009277747677372458)
         if staff_role not in member.roles:
             msg += f"{YELLOW} User did not have the **{staff_role}** role.\n"
         else:
@@ -1549,9 +1607,21 @@ class KittyCat(commands.Cog):
                 return branch
         
         raise ValueError()
+    
+    @commands.hybrid_command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def chdo(self, ctx, date: str=None):
+        try:
+            date = datetime.strptime(date, '%Y-%m-%d')
+        except:
+            await ctx.send("Incorrect date format passed. Format must be, `;[ chdo ] YYYY-MM-DD`\n`;chdo 2021-04-10`")
+            return
+        async with ctx.bot.db[0].acquire() as pconn:
+            result = await pconn.fetchval("SELECT sum(amount) FROM donations WHERE date_donated >= $1", date)
+            await ctx.send(f"{date} = {result}")
 
-    @check_owner()
-    @owner.command()
+    @check_admin()
+    @commands.hybrid_command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def refresh(self, ctx):
         COMMAND = f"cd {ctx.bot.app_directory} && git pull"

@@ -22,7 +22,8 @@ class Favs(commands.Cog):
         c = ctx.bot.get_cog("Filter")
         if c is None:
             return
-        await c.filter_pokemon.callback(c, ctx, args="fav")
+        await c.f.get_command("p").callback(c, ctx, args="fav")
+        return
         return
 
         async with ctx.bot.db[0].acquire() as pconn:

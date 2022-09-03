@@ -144,7 +144,7 @@ class CommonDB:
             override_with_shadow = await self.shadow_hunt_check(user_id, pokemon)
             if override_with_shadow:
                 skin = "shadow"
-                await bot.get_partial_messageable(959830374781956148).send(f"`{user_id} - {pokemon}`")
+                await bot.get_partial_messageable(998341289164689459).send(f"`{user_id} - {pokemon}`")
         emoji = get_emoji(
             shiny=shiny,
             radiant=radiant,

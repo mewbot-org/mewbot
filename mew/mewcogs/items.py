@@ -311,8 +311,9 @@ class Items(commands.Cog):
         ...
 
     @buy.command(name="item")
-    async def buy_item(self, ctx, arg: str):
-        arg = arg.replace(" ", "-").lower()
+    async def buy_item(self, ctx, item_name: str):
+        """Buy an item from the items shop."""
+        arg = item_name.replace(" ", "-").lower()
         if arg == "evo-stone":
             await ctx.send("Purchasing that item is currently disabled.")
             return
@@ -594,6 +595,17 @@ class Items(commands.Cog):
                 except:
                     await ctx.send("Your Pokemon has maxed all 510 EVs or 252 EVs for that stat.")
 
+    @buy.command(name="energy")
+    async def _energy_refill(self, ctx):
+        """Buy enery refills using this command"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            msg = await ctx.send(embed=make_embed(title="Refilling all your Energy..."))
+            try:
+                await pconn.execute("UPDATE users SET mewcoins = mewcoins - 25000, energy = 10 WHERE u_id = $1", ctx.author.id)
+                await msg.edit(embed=make_embed(title="Your energy has been refilled!"))
+            except:
+                await msg.edit(embed=make_embed(title=f"You don't have 25000{ctx.bot.misc.emotes['CREDITS']}"))
+        
     @buy.command(name="candy")
     async def buy_candy(self, ctx, amount: int=1):
         async with ctx.bot.db[0].acquire() as pconn:
@@ -778,6 +790,7 @@ class Items(commands.Cog):
 
     @buy.command(name="redeems")
     async def buy_redeems(self, ctx, amount: int=None):
+        f"""Buy redeems using Credits"""
         if amount and amount < 1:
             await ctx.send("Nice try...")
             return

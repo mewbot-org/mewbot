@@ -7,7 +7,10 @@ from mewcogs.pokemon_list import natlist
 class MewMisc:
     def __init__(self, bot):
         self.bot = bot
-
+        self.emotes = {
+            "CREDITS" : "<:mewcoin:1010959258638094386>",
+            "REDEEMS": "<:rtedee2m:817647281364271144>"
+        }
     def get_type_emote(self, t):
         t = t.lower()
         types = {

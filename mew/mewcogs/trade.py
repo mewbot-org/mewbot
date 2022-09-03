@@ -737,7 +737,7 @@ class Trade(commands.Cog):
             await ctx.send(
                 f"{ctx.author.name} has given {user.name} {val} redeems."
             )
-            await ctx.bot.get_partial_messageable(1004190550678831214).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n")
+            await ctx.bot.get_partial_messageable(999442907465523220).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n")
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_redeems, command, time) VALUES ($1, $2, $3, $4, $5) ",
                 ctx.author.id, user.id, val, "gift_redeems", datetime.now()
@@ -807,7 +807,7 @@ class Trade(commands.Cog):
             await ctx.send(
                 f"{ctx.author.name} has given {user.name} {val} credits."
             )
-            await ctx.bot.get_partial_messageable(1004190550678831214).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n")
+            await ctx.bot.get_partial_messageable(999442907465523220).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n")
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
                 ctx.author.id, user.id, val, "gift", datetime.now()
@@ -883,7 +883,7 @@ class Trade(commands.Cog):
                 user.id,
             )
             await ctx.send(f"{ctx.author.name} has given {user.name} a {name}")
-            await ctx.bot.get_partial_messageable(1004190550678831214).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n")
+            await ctx.bot.get_partial_messageable(999442907465523220).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n")
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_pokes, command, time) VALUES ($1, $2, $3, $4, $5) ",
                 ctx.author.id, user.id, [poke_id], "give", datetime.now()

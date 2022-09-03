@@ -277,15 +277,16 @@ class GameCorner(commands.Cog):
             ) # Give an error
             raise exc
         await ctx.send(f"DEBUG: Dreamslots called with {slot_results}.\n**WARNING:** This is where your dreams go to die...")
-        return await self._slotsnew(ctx = ctx, bet = bet, dbg_slot_results = slot_results, embed = embed)   
+        return await self._slotsnew(ctx = ctx, bet = bet, dbg_slot_results = slot_results, embed = embed)
 
     @commands.hybrid_command()
     async def slots(
-            self, 
-            ctx: commands.Context, 
+            self,
+            ctx: commands.Context,
             bet: str,
             embed: bool = True
         ):
+        """Try your luck in hitting *jackpot* ;)"""
         bet = self._get_bet(bet)
         if not bet:
             await ctx.send("Bet must be a number.\n**Tip:** You can use k for one thousand and 'ht' or 'l' for hundred thousand (or lakh)")
@@ -429,7 +430,7 @@ class GameCorner(commands.Cog):
                 # 3 coins
                 reward["coin-case"] = ceil(-1*bet*2.5)
             e = discord.Embed(
-                title = "You Lose!", 
+                title = "You Lose!",
                 description = f"Say good bye to {abs(reward['coin-case'])} coins!", 
                 color = discord.Color.red()
             )
@@ -492,7 +493,7 @@ class GameCorner(commands.Cog):
                 luck += 7
 
         elif result == RewardsEnum.JACKPOT and total_good == 2:
-             # Always make sure they gain (with balancing)
+            # Always make sure they gain (with balancing)
             luck = ceil(min(luck, 100) * 0.5)
             coins = ceil(bet + (bet * (random.uniform(1, 1.5)) * 100) * (luck/101))
             reward["coin-case"] += coins # Anyways will be floored
@@ -552,7 +553,7 @@ class GameCorner(commands.Cog):
                     "You have used up all of your energy!\nYou will get an energy bar every 20 Minutes or you can also upvote MewBot if you haven't done it yet to get an energy bar"
                 )
                 upvote = ctx.bot.get_command("upvote")
-                if command is not None:
+                if upvote is not None:
                     return await ctx.invoke(upvote)
             return 
 

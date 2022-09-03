@@ -6,6 +6,7 @@ from contextlib import suppress
 import asyncio
 import os
 
+from discord.ui import Button, View
 from typing import Literal
 from discord.ext.commands.view import StringView
 from discord.ext.commands.converter import MemberConverter, TextChannelConverter, _convert_to_bool
@@ -14,7 +15,7 @@ from mewcogs.pokemon_list import *
 from mewcogs.pokemon_list import _
 from mewutils.checks import check_admin, check_investigator, check_mod, check_helper, check_gymauth
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER
-from datetime import datetime, timedelta
+import datetime
 
 
 def round_speed(speed):
@@ -680,44 +681,55 @@ class MewBotAdmin(commands.Cog):
     #     else:
     #         await ctx.send("Choose Redeems, and thats it! Just redeems!")
 
-    @check_admin()
+    @check_mod()
     @admin.command()
     async def combine(self, ctx, user1: str, user2: str):
-        u_id1, u_id2 = int(user1), int(user2)
         """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
-        await ctx.send(f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?")
+        u_id1, u_id2 = int(user1), int(user2)
+        # def check(m):
+        #     return m.author.id == ctx.author.id and m.content.lower() in (
+        #         "yes",
+        #         "no",
+        #         "y",
+        #         "n",
+        #     )
+        # try:
+        #     m = await ctx.bot.wait_for("message", check=check, timeout=30)
+        # except asyncio.TimeoutError:
+        #     await ctx.send("Request timed out.")
+        #     return
+        yes = Button(style=discord.ButtonStyle.green, label="Yes")
+        no = Button(style=discord.ButtonStyle.red, label="No")
 
-        def check(m):
-            return m.author.id == ctx.author.id and m.content.lower() in (
-                "yes",
-                "no",
-                "y",
-                "n",
-            )
-        try:
-            m = await ctx.bot.wait_for("message", check=check, timeout=30)
-        except asyncio.TimeoutError:
-            await ctx.send("Request timed out.")
+        async def no_click(interaction: discord.Interaction):
+            await interaction.response.edit_message(content=f"Canceled", embed=None, view=None)
             return
-        if m.content.lower().startswith("n"):
-            await ctx.send("Cancelled.")
-            return
-        async with ctx.bot.db[0].acquire() as pconn:
-            user1 = await pconn.fetchval(
-                "SELECT pokes FROM users WHERE u_id = $1", u_id1
-            )
-            user2 = await pconn.fetchval(
-                "SELECT pokes FROM users WHERE u_id = $1", u_id2
-            )
-            user1.extend(user2)
-            user2 = []
-            await pconn.execute(
-                "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id1, user1
-            )
-            await pconn.execute(
-                "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id2, user2
-            )
-        await ctx.send(f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```")
+        
+        async def yes_click(interaction: discord.Interaction):
+            await interaction.response.edit_message(content=f"Combining Pokemon...", embed=None, view=None)
+            async with ctx.bot.db[0].acquire() as pconn:
+                user1 = await pconn.fetchval(
+                    "SELECT pokes FROM users WHERE u_id = $1", u_id1
+                )
+                user2 = await pconn.fetchval(
+                    "SELECT pokes FROM users WHERE u_id = $1", u_id2
+                )
+                user1.extend(user2)
+                user2 = []
+                await pconn.execute(
+                    "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id1, user1
+                )
+                await pconn.execute(
+                    "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id2, user2
+                )
+            await ctx.send(f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```")
+
+        yes.callback = yes_click
+        no.callback = no_click
+        view = View()
+        view.add_item(item=yes)
+        view.add_item(item=no)
+        await ctx.send(f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?", view=view)
 
     @check_mod()
     @admin.command()
