@@ -219,7 +219,7 @@ class Misc(commands.Cog):
         "Support MewBot & get Credit and Redeem Rewards! (Also comes with perks in our Official Server)."
         # User "is unable to control himself", so is blocked from using the command
         if ctx.author.id == 499740738138013696:
-            await ctx.send("Sorry, you are not currently able to use this command. Contact Sky if you think this block should be removed.")
+            await ctx.send("Sorry, you are not currently able to use this command. Contact Dylee if you think this block should be removed.")
             return
         name = ctx.author.name
         if " " in name:
@@ -232,10 +232,10 @@ class Misc(commands.Cog):
         
         # e.add_field(name="READ THIS", value="We are currently experiencing problems with the automatic rewards from donations. Heres our temporary work-around.\n 1.Please use this [link](https://mewbot.wiki/en/Donations) to donate via paypal.\n2.Then DM Sky or join the [official server](https://discord.gg/mewbot) and ask in questions.\n3. Have a SS of donation ready.")
         e.add_field(name="Donation Link", value=f"[Donate Here!]({donation_url})\n")
-        # e.add_field(
-        #     name="Patreon",
-        #     value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotofficial?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.", inline=False
-        # )
+        e.add_field(
+         name="Patreon",
+         value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotos?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.", inline=False
+        )
         e.set_footer(text="You will receive 3 Redeems + 2,000 credits for every USD donated.")
         await ctx.send(embed=e)
 
