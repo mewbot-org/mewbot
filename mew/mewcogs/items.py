@@ -17,6 +17,13 @@ from mewutils.misc import ConfirmView
 class Items(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.bot.loop.create_task(self.initialize())
+    
+    async def initialize(self):
+        # This is to make sure the dict exists before we access in the cog check
+        await self.bot.redis_manager.redis.execute(
+            "HMSET", "energycooldown", "examplekey", "examplevalue"
+        )
 
     @staticmethod
     async def prep_item_remove(ctx):
@@ -598,6 +605,27 @@ class Items(commands.Cog):
     @buy.command(name="energy")
     async def _energy_refill(self, ctx):
         """Buy enery refills using this command"""
+
+        cooldown = (
+            await ctx.bot.redis_manager.redis.execute(
+                "HMGET", "energycooldown", str(ctx.author.id)
+            )
+        )[0]
+
+        if cooldown is None:
+            cooldown = 0
+        else:
+            cooldown = float(cooldown.decode("utf-8"))
+
+        if cooldown > time.time():
+            reset_in = round(cooldown - time.time())
+            cooldown = str(timedelta(seconds=reset_in))
+            await ctx.send(f"Command on cooldown for {cooldown}")
+            return
+        await ctx.bot.redis_manager.redis.execute(
+            "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 12)
+        )
+
         async with ctx.bot.db[0].acquire() as pconn:
             msg = await ctx.send(embed=make_embed(title="Refilling all your Energy..."))
             try:

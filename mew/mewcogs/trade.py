@@ -157,7 +157,7 @@ class TradeMainView(discord.ui.View):
             name = poke.cached_info
         else:
             name = await pconn.fetchrow(
-                "SELECT pokname, tradable, shiny, radiant FROM pokes WHERE id = $1",
+                "SELECT pokname, tradable, shiny, radiant, skin FROM pokes WHERE id = $1",
                 poke.poke_id
             )
             poke.cached_info = name
@@ -165,9 +165,17 @@ class TradeMainView(discord.ui.View):
         attrs = []
 
         if name["shiny"]:
-            attrs.append("Shiny")
-        if name["radiant"]:
-            attrs.append("Radiant")
+            attrs.append(
+                self.ctx.bot.misc.get_skin_emote(shiny=True)
+            )
+        elif name["radiant"]:
+            attrs.append(
+                self.ctx.bot.misc.get_skin_emote(radiant=True)
+            )
+        elif name["skin"]:
+            attrs.append(
+                self.ctx.bot.misc.get_skin_emote(skin=name["skin"])
+            )
 
         return name, attrs
     
@@ -265,7 +273,7 @@ class TradeMainView(discord.ui.View):
 
                 name, attrs = await self._attrs(pconn, poke)
 
-                msg.append(f"{name['pokname']} ({poke.poke_id}) {attrs}")
+                msg.append(f"{name['pokname']} ({poke.poke_id}) {attrs[0]}")
 
             if not p1_has:
                 msg.append("No pokemon added to trade")
@@ -283,7 +291,7 @@ class TradeMainView(discord.ui.View):
 
                 name, attrs = await self._attrs(pconn, poke)
 
-                msg.append(f"{name['pokname']} ({poke.poke_id}) {attrs}")
+                msg.append(f"{name['pokname']} ({poke.poke_id}) {attrs[0]}")
             
             if not p2_has:
                 msg.append("No pokemon added to trade")
@@ -304,7 +312,7 @@ class TradeMainView(discord.ui.View):
                 child.disabled = not self.can_trade
                 
         if self.msg:
-            await self.msg.edit(content=f"**Trade Summary**\n{trade_msg}", view=self)
+            await self.msg.edit(content=f"**__Trade Summary__**\n{trade_msg}", view=self)
     
     @discord.ui.button(label='Add Pokemon', style=discord.ButtonStyle.success, row=1)
     async def add_poke(self, interaction, button):

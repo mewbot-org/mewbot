@@ -11,6 +11,45 @@ class MewMisc:
             "CREDITS" : "<:mewcoin:1010959258638094386>",
             "REDEEMS": "<:rtedee2m:817647281364271144>"
         }
+    
+    def get_skin_emote(self, *, blank="", shiny=False, radiant=False, gleam=False, skin=None):
+        """Gets the prefix emoji for a particular pokemon."""
+        emoji = blank
+        if skin:
+            skin = skin.lower()
+            emoji = ":question:"
+            if skin == "staff":
+                emoji = "<:staff:867903114841423902>"
+            elif skin == "custom":
+                emoji = "<:custom:867904645447548929>"
+            elif skin == "patreon":
+                emoji = "<a:patreon:906307892565672036>"
+            elif skin in ("vote", "vote2", "vote3"):
+                emoji = "<a:votestreak:998338987070603354>" # Can Use
+            elif skin in ("rad", "rad2", "rad3"):
+                emoji = "<a:radiant2:909627287094317097>"
+            elif skin == "xmas":
+                emoji = "<:xmas:927667765135945798>"
+            elif skin == "xmas_special":
+                emoji = "<:xmas_special:927668471943282698>"
+            elif skin == "tourney":
+                emoji = "<:tourney:927669898715471893>"
+            elif skin == "shadow":
+                emoji = "<:shadow:1010559067590246410>"
+            elif skin == "oldrad":
+                emoji = "<:radiant:1010558960027308052>"
+            elif skin == "radiant":
+                emoji = "<:radiant:1010558960027308052>"
+            elif skin == "gleam":
+                emoji = "<:gleam:1010559151472115772>"
+            else:
+                emoji = "<:skin:1010890087074123777>"
+        elif radiant:
+            emoji = "<:gleam:1010559151472115772>"
+        elif shiny:
+            emoji = ':star2:'
+        return emoji
+
     def get_type_emote(self, t):
         t = t.lower()
         types = {

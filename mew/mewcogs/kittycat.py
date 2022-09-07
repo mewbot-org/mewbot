@@ -1612,13 +1612,13 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def chdo(self, ctx, date: str=None):
         try:
-            date = datetime.strptime(date, '%Y-%m-%d')
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
         except:
             await ctx.send("Incorrect date format passed. Format must be, `;[ chdo ] YYYY-MM-DD`\n`;chdo 2021-04-10`")
             return
         async with ctx.bot.db[0].acquire() as pconn:
             result = await pconn.fetchval("SELECT sum(amount) FROM donations WHERE date_donated >= $1", date)
-            await ctx.send(f"{date} = {result}")
+            await ctx.author.send(f"{date} - {datetime.datetime.now()} = ${result}")
 
     @check_admin()
     @commands.hybrid_command()
