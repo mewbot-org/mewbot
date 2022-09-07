@@ -34,8 +34,8 @@ class Chests(commands.Cog):
             ("IV Multiplier x1", 5),
             ("Breeding Multiplier x1", 5),
             ("Legend Chest", 75),
-            ("Radiant Pokemon (common & starter)", 150),
-            ("Radiant Pokemon (legend & pseudo)", 300),
+            ("Gleam Pokemon (common & starter)", 150),
+            ("Gleam Pokemon (legend & pseudo)", 300),
         )
         self.CREDITS_PER_MULTI = 100000
         legend = set(LegendList + ubList + pseudoList)
@@ -108,11 +108,11 @@ class Chests(commands.Cog):
             )
 
         reward = random.choices(
-            ("radiant", "chest", "ev", "poke", "redeem", "cred"),
+            ("gleam", "chest", "ev", "poke", "redeem", "cred"),
             weights=(0.005, 0.015, 0.1, 0.2, 0.25, 0.43),
         )[0]
 
-        if reward == "radiant":
+        if reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a gleam {pokemon}!**\n"
@@ -171,7 +171,7 @@ class Chests(commands.Cog):
                     inventory,
                     ctx.author.id,
                 )
-            msg += f"You also received {gems} Radiant Gems <a:radiantgem:774866137472827432>!\n"
+            msg += f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         msg += await self._maybe_spawn_event(ctx, .15)
         await ctx.send(msg)
 
@@ -243,7 +243,7 @@ class Chests(commands.Cog):
                 inventory,
                 ctx.author.id,
             )
-        msg += f"You also received {gems} Radiant Gems <a:radiantgem:774866137472827432>!\n"
+        msg += f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         msg += await self._maybe_spawn_event(ctx, .20)
         await ctx.send(msg)
     
@@ -325,7 +325,7 @@ class Chests(commands.Cog):
                 inventory,
                 ctx.author.id,
             )
-        msg += f"You also received {gems} Radiant Gems <a:radiantgem:774866137472827432>!\n"
+        msg += f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         msg += await self._maybe_spawn_event(ctx, .25)
         await ctx.send(msg)
 
@@ -397,7 +397,7 @@ class Chests(commands.Cog):
                 inv,
                 ctx.author.id,
             )
-        msg += f"You also received {gems} Radiant Gems <a:radiantgem:774866137472827432>!\n"
+        msg += f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         msg += await self._maybe_spawn_event(ctx, .33)
         await ctx.send(msg)
 
@@ -414,15 +414,15 @@ class Chests(commands.Cog):
             desc += f"**{idx}.** __{pack[0]}__ - <a:radiantgem:774866137472827432>x{pack[1]}\n"
         desc += f"\nUse `/gleam` with the number you want to buy."
         e = discord.Embed(
-            title="Radiant Gem Shop",
+            title="Gleam Gem Shop",
             description=desc,
             color=ctx.bot.get_random_color(),
         )
         await ctx.send(embed=e)
         
     @gleam.command()
-    async def pack(self, ctx, pack: Literal["1. Shiny Multiplier x1", "2. Battle Multiplier x1", "3. IV Multiplier x1", "4. Breeding Multiplier x1", "5. Legend Chest", "6. Radiant Pokemon (common & starter)", "7. Radiant Pokemon (legend & pseudo)"]):
-        """Spend your radiant gems to obtain gleam Pokemon."""
+    async def pack(self, ctx, pack: Literal["1. Shiny Multiplier x1", "2. Battle Multiplier x1", "3. IV Multiplier x1", "4. Breeding Multiplier x1", "5. Legend Chest", "6. Gleam Pokemon (common & starter)", "7. Gleam Pokemon (legend & pseudo)"]):
+        """Spend your gleam gems to obtain gleam Pokemon."""
         packnum = int(pack[0])
         if packnum < 1 or packnum > len(self.PACKS):
             await ctx.send("That is not a valid pack number.")
