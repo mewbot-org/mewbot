@@ -134,7 +134,7 @@ class Market(commands.Cog):
         await ctx.bot.commondb.remove_poke(ctx.author.id, poke_id)
         await ctx.send(f"You have added your {pokename} to the market! It is market listing #{listing_id}.")
         await ctx.bot.log(
-            998559833873711204,
+            1017198932704637008,
             f"<:market1:820145226495950898><:market2:820145226357932042>\n{ctx.author.name}(`{ctx.author.id}`) has added a **{pokename}** to market in listing id #{listing_id}\n-----------",
         )
 
@@ -250,7 +250,7 @@ class Market(commands.Cog):
             except discord.HTTPException:
                 pass
             await ctx.bot.log(
-                998559833873711204,
+                1004190550678831214,
                 f"<:market1:820145226495950898><:market2:820145226357932042>\n{ctx.author.name}(`{ctx.author.id}`) has bought a {pokename} on the market. Seller - {owner}. Listing id - {listing_id}\n-----------",
             )
         except Exception:
