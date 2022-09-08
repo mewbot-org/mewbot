@@ -15,15 +15,7 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available radiant pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = (
-            "Tauros", 
-            "Venonat", 
-            "Eevee", 
-            "Ponyta-galar", 
-            "Spiritomb", 
-            "Riolu", 
-            "Gible", 
-            "Necrozma", 
-            "Rayquaza",
+            "Mimikyu", "Klefki", "Fennekin", "Elgyem", "Luvdisc", "Bagon", "Dedenne", "Virizion", "Dialga"
         )
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
