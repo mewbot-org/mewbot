@@ -622,8 +622,15 @@ class Items(commands.Cog):
             cooldown = str(timedelta(seconds=reset_in))
             await ctx.send(f"Command on cooldown for {cooldown}")
             return
-        await ctx.bot.redis_manager.redis.execute(
+
+        patreon = await ctx.bot.patreon_tier(ctx.author.id)
+        if patreon not in ("Crystal Tier", "Silver Tier"):
+            await ctx.bot.redis_manager.redis.execute(
             "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 12)
+        )
+        else:
+            await ctx.bot.redis_manager.redis.execute(
+            "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 4)
         )
 
         async with ctx.bot.db[0].acquire() as pconn:
