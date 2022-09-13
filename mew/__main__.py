@@ -53,7 +53,7 @@ class SIGINTController(object):
 def parse_cluster_info():
     # Temporary statement until the next bot restart
     if len(sys.argv) == 6:
-        sys.argv.append("/home/dylee/clustered/")
+        sys.argv.append("/home/dyroot/mewbot/")
 
     if not len(sys.argv) == 7:
         raise RuntimeError("Invalid arguments passed.\nUsage: [shard_list...] shard_count cluster_id cluster_name logging_code app_dir")

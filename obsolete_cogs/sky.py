@@ -39,8 +39,8 @@ from email.message import EmailMessage
 
 IMG_SERVER_BASE_SKIN = "https://dyleee.github.io/mewbot-images/sprites/skins/"
 IMG_SERVER_BASE_RAD = "https://dyleee.github.io/mewbot-images/sprites/radiant/"
-SKIN_BASE = "/home/dylee/clustered/shared/duel/sprites/skins/"
-RAD_BASE = "/home/dylee/clustered/shared/duel/sprites/radiant/"
+SKIN_BASE = "/home/dyroot/mewbot/shared/duel/sprites/skins/"
+RAD_BASE = "/home/dyroot/mewbot/shared/duel/sprites/radiant/"
 
 GREEN = "\N{LARGE GREEN CIRCLE}"
 YELLOW = "\N{LARGE YELLOW CIRCLE}"
