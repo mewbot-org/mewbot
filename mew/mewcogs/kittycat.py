@@ -1631,13 +1631,13 @@ class KittyCat(commands.Cog):
 
         stdout, stderr = await proc.communicate()
         stdout = stdout.decode()
-
+        print(stdout)
         if "no tracking information" in stderr.decode():
             COMMAND = f"cd {ctx.bot.app_directory} && git pull origin main"
             proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await proc.communicate()
             stdout = stdout.decode()
-            addendum = "\n\n**Warning: no upstream branch is set.  I automatically pulled from origin/clustered but this may be wrong.  To remove this message and make it dynamic, please run `git branch --set-upstream-to=origin/<branch> <branch>`**"
+            addendum = "\n\n**Warning: no upstream branch is set.  I automatically pulled from origin/main but this may be wrong.  To remove this message and make it dynamic, please run `git branch --set-upstream-to=origin/<branch> <branch>`**"
 
         embed = discord.Embed(title="Git pull", description="", color=0xFFB6C1)
 
