@@ -62,7 +62,7 @@ class Shop(commands.Cog):
             await ctx.send(embed=e)
         elif section == "items":
             e = discord.Embed(
-                title="Items to Evolve or Boost stats, e.t.c", color=3553600)
+                title="Items to evolve or Boost stats, e.t.c", color=3553600)
 
             e.add_field(
                 name="Rare Candies",
