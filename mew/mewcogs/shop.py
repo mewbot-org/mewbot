@@ -66,7 +66,7 @@ class Shop(commands.Cog):
 
             e.add_field(
                 name="Rare Candies",
-                value=f"Buy rare candies with `/buy candy <amount>`. Costs 100{ctx.bot.misc.emotes['CREDITS']} Each!",
+                value=f"Buy rare candies with `/buy candy <amount>`. Costs 100{ctx.bot.misc.emotes['CREDITS']} each!",
             )
             e.add_field(
                 name="Energy Refill",

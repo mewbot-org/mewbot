@@ -604,7 +604,7 @@ class Items(commands.Cog):
 
     @buy.command(name="energy")
     async def _energy_refill(self, ctx):
-        """Buy enery refills using this command"""
+        """Buy energy refills using this command"""
 
         cooldown = (
             await ctx.bot.redis_manager.redis.execute(
