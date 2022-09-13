@@ -74,7 +74,7 @@ class Shop(commands.Cog):
             )
             e.add_field(
                 name="Everstone",
-                value=f"Buy the Everstone to Automatically stop evolution! Costs 3,000{ctx.bot.misc.emotes['CREDITS']}",
+                value=f"Buy the Everstone to automatically stop evolution! Costs 3,000{ctx.bot.misc.emotes['CREDITS']}",
             )
             e.add_field(
                 name="XP-Block",
