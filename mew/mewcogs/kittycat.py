@@ -1631,7 +1631,7 @@ class KittyCat(commands.Cog):
 
         stdout, stderr = await proc.communicate()
         stdout = stdout.decode()
-        print(stdout)
+        await ctx.send(stdout)
         if "no tracking information" in stderr.decode():
             COMMAND = f"cd {ctx.bot.app_directory} && git pull origin main"
             proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)

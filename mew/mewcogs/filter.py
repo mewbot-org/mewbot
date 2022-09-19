@@ -717,13 +717,13 @@ class Filter(commands.Cog):
             nick = record["poknick"]
             iv = record["ivs"]
             shiny = record["shiny"]
-            radiant = record["radiant"]
+            gleam = record["radiant"]
             level = str(record['pokelevel']).rjust(max_lvl, ' ')
             level = f"<:lvl2:971522301583581225>`{level}`"
             emoji = get_emoji(
                 blank="<:blank:1012504803496177685>",
                 shiny=shiny,
-                radiant=radiant,
+                radiant=gleam, # Will change later
                 skin=record["skin"],
             )
             price_text = f" | **Price** {price:,.0f}" if filter_type == "m" else ""

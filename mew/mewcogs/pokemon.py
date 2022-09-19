@@ -525,9 +525,9 @@ class Pokemon(commands.Cog):
         if "shiny" in pokemon:
             shiny = True
             pokemon.remove("shiny")
-        elif "radiant" in pokemon:
+        elif "gleam" in pokemon:
             radiant = True
-            pokemon.remove("radiant")
+            pokemon.remove("gleam")
         elif "shadow" in pokemon and pokemon.index("shadow") == 0:
             skin = "shadow"
             pokemon.remove("shadow")
@@ -730,11 +730,11 @@ class Pokemon(commands.Cog):
         # "pokemon" is *probably* a pokemon name
         pokemon = pokemon.lower().replace("alolan", "alola").split()
         shiny = "shiny" in pokemon
-        radiant = "radiant" in pokemon
+        radiant = "gleam" in pokemon
         if shiny:
             pokemon.remove("shiny")
         if radiant:
-            pokemon.remove("radiant")
+            pokemon.remove("gleam")
         pokemon = "-".join(pokemon)
         val = pokemon.capitalize()
         try:

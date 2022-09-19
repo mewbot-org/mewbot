@@ -4,6 +4,7 @@ import random
 import time
 
 from discord.ext import commands
+from typing import List, Union
 from datetime import datetime, timedelta
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
@@ -466,269 +467,277 @@ class Breeding(commands.Cog):
         self.auto_redo[id_] = None
 
     @commands.hybrid_command()
-    @discord.app_commands.describe(male="The Male Pokémon to be bred.", female="The Female Pokémon to be bred.")
-    async def breed(self, ctx, male: int, female: int, auto: bool =False):
+    @discord.app_commands.describe(male="The Male Pokémon to be bred.", females="The list of Female Pokémon to be bred.")
+    async def breed(self, ctx, male: int, females: str, auto: bool =False):
         """Breeds two Pokémon - Male & Female"""
-        try:
-            male = int(male)
-            female = int(female)
-        except ValueError:
-            await ctx.send("You need to provide two pokemon id numbers.")
-            return
-        if male > 2147483647 or female > 2147483647:
-            await ctx.send("You do not have that many pokemon!")
-            return        
-        breed_reset = (
-            await ctx.bot.redis_manager.redis.execute(
-                "HMGET", "breedcooldowns", str(ctx.author.id)
-            )
-        )[0]
-
-        if breed_reset is None:
-            breed_reset = 0
+        if not type(females) == int:
+            females = [int(x) for x in females.split(" ") if x.isdigit()]
         else:
-            breed_reset = float(breed_reset.decode("utf-8"))
+            females = [females]
 
-        if breed_reset > time.time():
-            reset_in = breed_reset - time.time()
-            cooldown = f"{round(reset_in)}s"
-            await ctx.send(f"Command on cooldown for {cooldown}")
-            return
-        await ctx.bot.redis_manager.redis.execute(
-            "HMSET", "breedcooldowns", str(ctx.author.id), str(time.time() + 35)
-        )
-        if male == female:
-            await ctx.send("You can not breed the same Pokemon!")
-            await self.reset_cooldown(ctx.author.id)
-            return
-        father, mother = male, female
-        async with ctx.bot.db[0].acquire() as pconn:
-            pokes = await pconn.fetchrow(
-                "SELECT pokes, daycarelimit, inventory::json FROM users WHERE u_id = $1",
-                ctx.author.id,
-            )
+        while females:
+            for female in females:
+                # await ctx.send(f"Breeding {female}")
+                try:
+                    male = int(male)
+                    female = int(female)
+                except ValueError:
+                    await ctx.send("You need to provide two pokemon id numbers.")
+                    return
+                if male > 2147483647 or female > 2147483647:
+                    await ctx.send("You do not have that many pokemon!")
+                    return        
+                breed_reset = (
+                    await ctx.bot.redis_manager.redis.execute(
+                        "HMGET", "breedcooldowns", str(ctx.author.id)
+                    )
+                )[0]
 
-            if pokes is None:
-                await ctx.send("You have not started!\nStart with `/start` first.")
-                return
-            dets = pokes["inventory"]
-            s_threshold = round(8000 - 8000 * (dets["shiny-multiplier"] / 100))
-            is_shiny = random.choice([False for i in range(s_threshold)] + [True])
+                if breed_reset is None:
+                    breed_reset = 0
+                else:
+                    breed_reset = float(breed_reset.decode("utf-8"))
 
-            dlimit = pokes["daycarelimit"]
-            pokes = pokes["pokes"]
-            daycared = await pconn.fetchval(
-                "SELECT count(*) FROM pokes WHERE id = ANY ($1) AND pokname = 'Egg'",
-                pokes,
-            )
-            if daycared > dlimit:
-                await ctx.send("You already have enough Pokemon in the Daycare!")
-                await self.reset_cooldown(ctx.author.id)
-                return
-            father_details = await pconn.fetchrow(
-                "SELECT * FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
-                father,
-                ctx.author.id,
-            )
-            mother_details = await pconn.fetchrow(
-                "SELECT * FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
-                mother,
-                ctx.author.id,
-            )
-            if father_details is None or mother_details is None:
-                await ctx.send("You do not have that many pokemon!")
-                await self.reset_cooldown(ctx.author.id)
-                return
-            if "Egg" in (father_details["pokname"], mother_details["pokname"]):
-                await ctx.send("You cannot breed an egg!")
-                await self.reset_cooldown(ctx.author.id)
-                return
-            
-            # Dittos cannot breed
-            if mother_details["pokname"] == "Ditto" and father_details["pokname"] == "Ditto":
-                await ctx.send("You cannot breed two dittos!")
-                await self.reset_cooldown(ctx.author.id)
-                return
-            
-            # Ditto is always the father, since the mother passes the pokname, and ditto cannot pass the pokname
-            if mother_details["pokname"] == "Ditto":
-                mother_details, father_details = father_details, mother_details
-            
-            # Properly order non-dittoed pokemon
-            if father_details["pokname"] != "Ditto":
-                if mother_details["gender"] == "-m":
-                    mother_details, father_details = father_details, mother_details
-                if mother_details["gender"] != "-f" or father_details["gender"] != "-m":
-                    await ctx.send("You must breed one male and one female pokemon, or breed with a ditto.")
+                if breed_reset > time.time():
+                    reset_in = breed_reset - time.time()
+                    cooldown = f"{round(reset_in)}s"
+                    await ctx.send(f"Command on cooldown for {cooldown}")
+                    return
+                await ctx.bot.redis_manager.redis.execute(
+                    "HMSET", "breedcooldowns", str(ctx.author.id), str(time.time() + 35)
+                )
+                if male == female:
+                    await ctx.send("You can not breed the same Pokemon!")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
+                father, mother = male, female
+                async with ctx.bot.db[0].acquire() as pconn:
+                    pokes = await pconn.fetchrow(
+                        "SELECT pokes, daycarelimit, inventory::json FROM users WHERE u_id = $1",
+                        ctx.author.id,
+                    )
+
+                    if pokes is None:
+                        await ctx.send("You have not started!\nStart with `/start` first.")
+                        return
+                    dets = pokes["inventory"]
+                    s_threshold = round(8000 - 8000 * (dets["shiny-multiplier"] / 100))
+                    is_shiny = random.choice([False for i in range(s_threshold)] + [True])
+
+                    dlimit = pokes["daycarelimit"]
+                    pokes = pokes["pokes"]
+                    daycared = await pconn.fetchval(
+                        "SELECT count(*) FROM pokes WHERE id = ANY ($1) AND pokname = 'Egg'",
+                        pokes,
+                    )
+                    if daycared > dlimit:
+                        await ctx.send("You already have enough Pokemon in the Daycare!")
+                        await self.reset_cooldown(ctx.author.id)
+                        return
+                    father_details = await pconn.fetchrow(
+                        "SELECT * FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
+                        father,
+                        ctx.author.id,
+                    )
+                    mother_details = await pconn.fetchrow(
+                        "SELECT * FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
+                        mother,
+                        ctx.author.id,
+                    )
+                    if father_details is None or mother_details is None:
+                        await ctx.send("You do not have that many pokemon!")
+                        await self.reset_cooldown(ctx.author.id)
+                        return
+                    if "Egg" in (father_details["pokname"], mother_details["pokname"]):
+                        await ctx.send("You cannot breed an egg!")
+                        await self.reset_cooldown(ctx.author.id)
+                        return
+                    
+                    # Dittos cannot breed
+                    if mother_details["pokname"] == "Ditto" and father_details["pokname"] == "Ditto":
+                        await ctx.send("You cannot breed two dittos!")
+                        await self.reset_cooldown(ctx.author.id)
+                        return
+                    
+                    # Ditto is always the father, since the mother passes the pokname, and ditto cannot pass the pokname
+                    if mother_details["pokname"] == "Ditto":
+                        mother_details, father_details = father_details, mother_details
+                    
+                    # Properly order non-dittoed pokemon
+                    if father_details["pokname"] != "Ditto":
+                        if mother_details["gender"] == "-m":
+                            mother_details, father_details = father_details, mother_details
+                        if mother_details["gender"] != "-f" or father_details["gender"] != "-m":
+                            await ctx.send("You must breed one male and one female pokemon, or breed with a ditto.")
+                            await self.reset_cooldown(ctx.author.id)
+                            return
+
+                    cooldowned = await pconn.fetchval(
+                        "SELECT pokemon_id FROM mothers WHERE pokemon_id = $1",
+                        mother_details["id"],
+                    )
+                    if cooldowned:
+                        await ctx.send(f"Your {mother_details['pokname']} is currently on cooldown... See `/f p args:cooldown`.")
+                        await self.reset_cooldown(ctx.author.id)
+                        return
+                father = await get_parent(ctx, father_details)
+                if father is None:
+                    await ctx.send(f"You can not breed a {father_details['pokname']}! You might need to `/deform` it first.")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
+                mother = await get_parent(ctx, mother_details)
+                if mother is None:
+                    await ctx.send(f"You can not breed a {mother_details['pokname']}! You might need to `/deform` it first.")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
+                if 15 in father.egg_groups:
+                    await ctx.send("You can not breed undiscovered egg groups!")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
+                if 15 in mother.egg_groups:
+                    await ctx.send("You can not breed undiscovered egg groups!")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
+                father_total_iv = (
+                    father.hp + father.attack + father.defense + father.spatk + father.spdef + father.speed
+                )
+                mother_total_iv = (
+                    mother.hp + mother.attack + mother.defense + mother.spatk + mother.spdef + mother.speed
+                )
+
+                # The code below prevents hexas from being bred. It is here *for now* due to the snowballing effect of breeding hexas.
+                if 186 in (father_total_iv, mother_total_iv):
+                    await ctx.send("You cannot breed 100% iv pokemon!")
                     await self.reset_cooldown(ctx.author.id)
                     return
 
-            cooldowned = await pconn.fetchval(
-                "SELECT pokemon_id FROM mothers WHERE pokemon_id = $1",
-                mother_details["id"],
-            )
-            if cooldowned:
-                await ctx.send(f"Your {mother_details['pokname']} is currently on cooldown... See `/f p args:cooldown`.")
-                await self.reset_cooldown(ctx.author.id)
-                return
-        father = await get_parent(ctx, father_details)
-        if father is None:
-            await ctx.send(f"You can not breed a {father_details['pokname']}! You might need to `/deform` it first.")
-            await self.reset_cooldown(ctx.author.id)
-            return
-        mother = await get_parent(ctx, mother_details)
-        if mother is None:
-            await ctx.send(f"You can not breed a {mother_details['pokname']}! You might need to `/deform` it first.")
-            await self.reset_cooldown(ctx.author.id)
-            return
-        if 15 in father.egg_groups:
-            await ctx.send("You can not breed undiscovered egg groups!")
-            await self.reset_cooldown(ctx.author.id)
-            return
-        if 15 in mother.egg_groups:
-            await ctx.send("You can not breed undiscovered egg groups!")
-            await self.reset_cooldown(ctx.author.id)
-            return
-        father_total_iv = (
-            father.hp + father.attack + father.defense + father.spatk + father.spdef + father.speed
-        )
-        mother_total_iv = (
-            mother.hp + mother.attack + mother.defense + mother.spatk + mother.spdef + mother.speed
-        )
+                breedable = any((id in father.egg_groups for id in mother.egg_groups))
+                dittoed = "Ditto" in (father.name.capitalize(), mother.name.capitalize())
+                manaphied = any(
+                    (
+                        "Manaphy" in (father.name, mother.name),
+                        "Phione" in (father.name, mother.name),
+                    )
+                )
+                manaphied = manaphied and dittoed
+                conditions = (manaphied, breedable, dittoed)
 
-        # The code below prevents hexas from being bred. It is here *for now* due to the snowballing effect of breeding hexas.
-        if 186 in (father_total_iv, mother_total_iv):
-            await ctx.send("You cannot breed 100% iv pokemon!")
-            await self.reset_cooldown(ctx.author.id)
-            return
+                if not any(conditions):
+                    await ctx.send("These Two Pokemon are not breedable!")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
 
-        breedable = any((id in father.egg_groups for id in mother.egg_groups))
-        dittoed = "Ditto" in (father.name.capitalize(), mother.name.capitalize())
-        manaphied = any(
-            (
-                "Manaphy" in (father.name, mother.name),
-                "Phione" in (father.name, mother.name),
-            )
-        )
-        manaphied = manaphied and dittoed
-        conditions = (manaphied, breedable, dittoed)
+                child, counter = await get_child(ctx, father, mother, is_shiny)
+                if child is None:
+                    await ctx.send(f"You can not breed a {mother_details['pokname']}! You might need to `/deform` it first.")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
 
-        if not any(conditions):
-            await ctx.send("These Two Pokemon are not breedable!")
-            await self.reset_cooldown(ctx.author.id)
-            return
+                if father_total_iv < 40:
+                    father_total_iv = 120
+                if mother_total_iv < 40:
+                    mother_total_iv = 120
+                chance = (min(100, father.capture_rate) + min(100, mother.capture_rate)) / (
+                    (father_total_iv + mother_total_iv) * 3
+                )
+                breedmulti = dets.get("breeding-multiplier", 0)
+                inc = (breedmulti / 50.0) + 1.0 # * 1.0 - 2.0
+                chance *= inc
+                if ctx.bot.premium_server(ctx.guild.id):
+                    chance *= 1.05
+                success = random.choices([True, False], weights=(chance, 1 - chance))[
+                    0
+                ]
+                chance_message = f"Chance of success: {chance * 100:.2f}%"
+                if not success:
+                    embed = discord.Embed(
+                        title="Breeding Attempt Failed!",
+                        description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: <t:{int(time.time()) + 36}:R>",
+                    ).set_footer(text=chance_message)
+                    if auto:
+                        view = CancelRedoView(ctx, self)
+                    else:
+                        view = RedoBreedView(ctx, self, male, female)
+                    message = await ctx.send(embed=embed, view=view)
+                    view.message = message
+                    await asyncio.sleep(37)
+                    embed = discord.Embed(
+                        title="Breeding Attempt Failed!",
+                        description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: Now!",
+                    ).set_footer(text=chance_message)
+                    try:
+                        await message.edit(embed=embed)
+                    except discord.NotFound:
+                        pass
+                    if auto and self.auto_redo[ctx.author.id] == [male, female]:
+                        return await self.breed.callback(self, ctx, male, female, auto=True)
+                    return
 
-        child, counter = await get_child(ctx, father, mother, is_shiny)
-        if child is None:
-            await ctx.send(f"You can not breed a {mother_details['pokname']}! You might need to `/deform` it first.")
-            await self.reset_cooldown(ctx.author.id)
-            return
+                self.auto_redo[ctx.author.id] = None
 
-        if father_total_iv < 40:
-            father_total_iv = 120
-        if mother_total_iv < 40:
-            mother_total_iv = 120
-        chance = (min(100, father.capture_rate) + min(100, mother.capture_rate)) / (
-            (father_total_iv + mother_total_iv) * 3
-        )
-        breedmulti = dets.get("breeding-multiplier", 0)
-        inc = (breedmulti / 50.0) + 1.0 # * 1.0 - 2.0
-        chance *= inc
-        if ctx.bot.premium_server(ctx.guild.id):
-            chance *= 1.05
-        success = random.choices([True, False], weights=(chance, 1 - chance))[
-            0
-        ]
-        chance_message = f"Chance of success: {chance * 100:.2f}%"
-        if not success:
-            embed = discord.Embed(
-                title="Breeding Attempt Failed!",
-                description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: <t:{int(time.time()) + 36}:R>",
-            ).set_footer(text=chance_message)
-            if auto:
-                view = CancelRedoView(ctx, self)
-            else:
-                view = RedoBreedView(ctx, self, male, female)
-            message = await ctx.send(embed=embed, view=view)
-            view.message = message
-            await asyncio.sleep(37)
-            embed = discord.Embed(
-                title="Breeding Attempt Failed!",
-                description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: Now!",
-            ).set_footer(text=chance_message)
-            try:
-                await message.edit(embed=embed)
-            except discord.NotFound:
-                pass
-            if auto and self.auto_redo[ctx.author.id] == [male, female]:
-                return await self.breed.callback(self, ctx, male, female, auto=True)
-            return
+                patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
 
-        self.auto_redo[ctx.author.id] = None
+                if patreon_status in ("Crystal Tier", "Sapphire Tier"):
+                    counter = counter - round(counter * (50 / 100))
+                elif patreon_status == "Silver Tier":
+                    counter = counter - round(counter * (30 / 100))
+                elif patreon_status == "Yellow Tier":
+                    counter = counter - round(counter * (20 / 100))
+                elif patreon_status == "Red Tier" and random.randint(0, 1):
+                    counter = counter - round(counter * (20 / 100))
 
-        patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
+                is_shadow = False
+                if not child.shiny:
+                    is_shadow = await ctx.bot.commondb.shadow_hunt_check(ctx.author.id, child.name)
+                if is_shadow:
+                    await ctx.bot.get_partial_messageable(959830374781956148).send(f"`{ctx.author.id} - {child.name}`")
+                emoji = get_emoji(
+                    shiny=child.shiny,
+                    skin="shadow" if is_shadow else None,
+                )
 
-        if patreon_status in ("Crystal Tier", "Sapphire Tier"):
-            counter = counter - round(counter * (50 / 100))
-        elif patreon_status == "Silver Tier":
-            counter = counter - round(counter * (30 / 100))
-        elif patreon_status == "Yellow Tier":
-            counter = counter - round(counter * (20 / 100))
-        elif patreon_status == "Red Tier" and random.randint(0, 1):
-            counter = counter - round(counter * (20 / 100))
-
-        is_shadow = False
-        if not child.shiny:
-            is_shadow = await ctx.bot.commondb.shadow_hunt_check(ctx.author.id, child.name)
-        if is_shadow:
-            await ctx.bot.get_partial_messageable(959830374781956148).send(f"`{ctx.author.id} - {child.name}`")
-        emoji = get_emoji(
-            shiny=child.shiny,
-            skin="shadow" if is_shadow else None,
-        )
-
-        query, args = get_insert_query(ctx, child, counter, mother, is_shadow)
-        mother_query, mother_args = get_mother_query(mother_details["id"], ctx.author.id)
-        async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(mother_query, *mother_args)
-            pokeid = await pconn.fetchval(query, *args)
-            # a = await pconn.fetchval("SELECT currval('pokes_id_seq');")
-            await pconn.execute(
-                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = $2",
-                pokeid,
-                ctx.author.id,
-            )
-        name = mother.name
-        ivsum = child.attack + child.defense + child.spatk + child.spdef + child.speed + child.hp
-        ivpercent = round((ivsum / 186) * 100, 2)
-        e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
-        e.description = f"It will hatch after {counter} messages!"
-        e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
-        e.add_field(name="You can breed again", value=f"<t:{int(time.time()) + 36}:R>", inline=False)
-        e.set_image(
-            url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
-        )
-        e.set_footer(text=chance_message)
-        if auto:
-            message = await ctx.send(ctx.author.mention, embed=e)
-        else:
-            message = await ctx.send(embed=e)
-        #Dispatches an event that a poke was bred.
-        #on_poke_breed(self, channel, user)
-        self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
-        await asyncio.sleep(36)
-        e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
-        e.description = f"It will hatch after {counter} messages!"
-        e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
-        e.add_field(name="You can breed again", value="Now!", inline=False)
-        e.set_image(
-            url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
-        )
-        e.set_footer(text=chance_message)
-        try:
-            await message.edit(embed=e)
-        except discord.NotFound:
-            pass
+                query, args = get_insert_query(ctx, child, counter, mother, is_shadow)
+                mother_query, mother_args = get_mother_query(mother_details["id"], ctx.author.id)
+                async with ctx.bot.db[0].acquire() as pconn:
+                    await pconn.execute(mother_query, *mother_args)
+                    pokeid = await pconn.fetchval(query, *args)
+                    # a = await pconn.fetchval("SELECT currval('pokes_id_seq');")
+                    await pconn.execute(
+                        "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = $2",
+                        pokeid,
+                        ctx.author.id,
+                    )
+                name = mother.name
+                ivsum = child.attack + child.defense + child.spatk + child.spdef + child.speed + child.hp
+                ivpercent = round((ivsum / 186) * 100, 2)
+                e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
+                e.description = f"It will hatch after {counter} messages!"
+                e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
+                e.add_field(name="You can breed again", value=f"<t:{int(time.time()) + 36}:R>", inline=False)
+                e.set_image(
+                    url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
+                )
+                e.set_footer(text=chance_message)
+                if auto:
+                    message = await ctx.send(ctx.author.mention, embed=e)
+                else:
+                    message = await ctx.send(embed=e)
+                #Dispatches an event that a poke was bred.
+                #on_poke_breed(self, channel, user)
+                self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
+                await asyncio.sleep(36)
+                e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
+                e.description = f"It will hatch after {counter} messages!"
+                e.add_field(name=f"Your {mother_details['pokname']} will be on breeding cooldown for", value="6 Hours!", inline=False)
+                e.add_field(name="You can breed again", value="Now!", inline=False)
+                e.set_image(
+                    url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
+                )
+                e.set_footer(text=chance_message)
+                try:
+                    await message.edit(embed=e)
+                except discord.NotFound:
+                    pass
 
     @commands.hybrid_command()
     @discord.app_commands.describe(pokemon="The Pokémon to check compatibility.", filter_args="Extra arguments to filter - see /filter for more.")
