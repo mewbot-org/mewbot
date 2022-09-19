@@ -690,7 +690,7 @@ class Breeding(commands.Cog):
                 if not child.shiny:
                     is_shadow = await ctx.bot.commondb.shadow_hunt_check(ctx.author.id, child.name)
                 if is_shadow:
-                    await ctx.bot.get_partial_messageable(959830374781956148).send(f"`{ctx.author.id} - {child.name}`")
+                    await ctx.bot.get_partial_messageable(998341289164689459).send(f"`{ctx.author.id} - {child.name}`")
                 emoji = get_emoji(
                     shiny=child.shiny,
                     skin="shadow" if is_shadow else None,
