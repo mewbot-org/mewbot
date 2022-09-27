@@ -285,6 +285,7 @@ class Skins(commands.Cog):
     async def on_poke_spawn(self, channel, user):
         if self.bot.botbanned(user.id):
             return
+        return
         if random.randrange(15):
             return
         async with self.bot.db[0].acquire() as pconn:
@@ -296,7 +297,7 @@ class Skins(commands.Cog):
             return
         await asyncio.sleep(random.randint(30, 90))
         skin = random.choice(list(BUYABLE_SKINS.keys()))
-        poke = random.choice(BUYABLE_SKINS[skin])
+        poke = random.choice(BUYABLE_SKINS[skin])GruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQ
         await RaidSpawn(self.bot, channel, poke, skin).start()
     
 
