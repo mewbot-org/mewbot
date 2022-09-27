@@ -297,7 +297,7 @@ class Skins(commands.Cog):
             return
         await asyncio.sleep(random.randint(30, 90))
         skin = random.choice(list(BUYABLE_SKINS.keys()))
-        poke = random.choice(BUYABLE_SKINS[skin])GruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQGruMBiGULKITYPtIoNvERdwIdestiOnQ
+        poke = random.choice(BUYABLE_SKINS[skin])
         await RaidSpawn(self.bot, channel, poke, skin).start()
     
 
