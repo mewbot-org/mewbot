@@ -1,3 +1,4 @@
+from typing import Literal
 import discord
 import asyncpg
 from discord.ext import commands
@@ -701,8 +702,9 @@ class Items(commands.Cog):
         )
 
     @buy.command(name="chest")
-    async def buy_chest(self, ctx, chest_type: str, credits_or_redeems: str):
-        """Buy a radiant chest."""
+    @discord.app_commands.describe(chest_type="The type of chest you want to buy.", credits_or_redeems="Use credits or redeems to buy chest.")
+    async def buy_chest(self, ctx, chest_type: Literal["Rare", "Mythic", "Legend"], credits_or_redeems: Literal["Credits", "Redeems"]):
+        """Buy a gleam chest."""
         ct = chest_type.lower().strip()
         cor = credits_or_redeems.lower()
         if ct not in ("rare", "mythic", "legend"):
