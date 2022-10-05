@@ -1025,7 +1025,8 @@ class KittyCat(commands.Cog):
     @check_gymauth()
     @commands.hybrid_command() 
     @discord.app_commands.guilds(STAFFSERVER)
-    async def gymcalc(self, ctx, chan: int, messageid: int):
+    async def gymcalc(self, ctx, chan: str, messageid: str):
+        chan, messageid = int(chan), int(messageid)
         winrate = defaultdict(int)
         lossrate = defaultdict(int)
         leaders = set()
