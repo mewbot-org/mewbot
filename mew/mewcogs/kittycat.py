@@ -129,11 +129,14 @@ class KittyCat(commands.Cog):
             self.task = None
 
     async def cog_before_invoke(self, ctx):
-        await ctx.bot.get_partial_messageable(999442907465523220).send(
-            f"CMD - {ctx.command}\n\n"
-            f"ARGS - `{ctx.kwargs}`\n\n"
-            f"Author - {ctx.author}"
-        )
+        try:
+            await ctx.bot.get_partial_messageable(999442907465523220).send(
+                f"CMD - {ctx.command}\n\n"
+                f"ARGS - `{ctx.kwargs}`\n\n"
+                f"Author - {ctx.author}"
+            )
+        except:
+            raise ValueError("Might be on Debug Mode")
         ...
         # async with ctx.bot.db[0].acquire() as pconn:
         #     await pconn.execute(
