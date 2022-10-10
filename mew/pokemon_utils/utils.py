@@ -432,17 +432,38 @@ async def get_pokemon_info(ctx, records, info_type=None):
         else f"{emoji}{gender} {pn} {pnick}",
         color=random.choice(ctx.bot.colors),
     )
-    embed.description = f"""**Level {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}, -{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n
-**HP**: `{hp}` | `{hpiv}` **IVs** | `{hpev}` **EVs**
-**Attack**: `{attack}` | `{atkiv}` **IVs** | `{atkev}` **EVs**
-**Defense**: `{defense}` | `{defiv}` **IVs** | `{defev}` **EVs**
-**Sp. Atk**: `{specialattack}` | `{spatkiv}` **IVs** |  `{spaev}` **EVs**
-**Sp. Def**: `{specialdefense}` | `{spdefiv}` **IVs** | `{spdev}` **EVs**
-**Speed**: `{speed}` | `{speediv}` **IVs** | `{speedev}` **EVs**
-**IV %**: `{ivs}`
-**Hidden Power**: `{hidden_power}`
-**Happiness**: `{happiness}`
-{skindisp}"""
+    hpev_display = f"┃<:evs:1028966396178210899>`{hpev}`"
+    atkev_display = f"┃<:evs:1028966396178210899>`{atkev}`"
+    defev_display = f"┃<:evs:1028966396178210899>`{defev}`"
+    spaev_display = f"┃<:evs:1028966396178210899>`{spaev}`"
+    spdev_display = f"┃<:evs:1028966396178210899>`{spdev}`"
+    speedev_display = f"┃<:evs:1028966396178210899>`{speedev}`"
+    desc = ""
+
+    desc += f"**<:lvl:1028966430441488384> {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n\n"
+    desc += "__**Stats** `(total (iv/evs))`__\n"
+    desc += f"**HP:**  `{hp}` (<:ivs:1028966344508592139>`{hpiv}`{hpev_display if hpev != 0 else ''})\n"
+    desc += f"**Attack:** `{attack}` (<:ivs:1028966344508592139>`{atkiv}`{atkev_display if atkev != 0 else ''})\n"
+    desc += f"**Defense:** `{defense}` (<:ivs:1028966344508592139>`{defiv}`{defev_display if defev != 0 else ''})\n"
+    desc += f"**Sp. Atk:** `{specialattack}` (<:ivs:1028966344508592139>`{spatkiv}`{spaev_display if spaev != 0 else ''})\n"
+    desc += f"**Sp. Def:** `{specialdefense}` (<:ivs:1028966344508592139>`{spdefiv}`{spdev_display if spdev != 0 else ''})\n"
+    desc += f"**Speed:** `{speed}` (<:ivs:1028966344508592139>`{speediv}`{speedev_display if speedev != 0 else ''})\n"
+    desc += f"**IV %**: `{ivs}`\n"
+    desc += f"**Hidden Power**: `{hidden_power}`\n"
+    desc += f"**Happiness**: `{happiness}`\n"
+    desc += f"{skindisp}"
+    embed.description = desc
+#     embed.description = f"""**Level {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}, -{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n
+# **HP**: `{hp}` | `{hpiv}` **IVs** | `{hpev}` **EVs**
+# **Attack**: `{attack}` | `{atkiv}` **IVs** | `{atkev}` **EVs**
+# **Defense**: `{defense}` | `{defiv}` **IVs** | `{defev}` **EVs**
+# **Sp. Atk**: `{specialattack}` | `{spatkiv}` **IVs** |  `{spaev}` **EVs**
+# **Sp. Def**: `{specialdefense}` | `{spdefiv}` **IVs** | `{spdev}` **EVs**
+# **Speed**: `{speed}` | `{speediv}` **IVs** | `{speedev}` **EVs**
+# **IV %**: `{ivs}`
+# **Hidden Power**: `{hidden_power}`
+# **Happiness**: `{happiness}`
+# {skindisp}"""
     move1, move2, move3, move4 = (move.capitalize().replace("-", " ") for move in records["moves"])
     embed.add_field(
         name="**__Learned Moves__**:", value=f"**{move1}**\n**{move2}**\n**{move3}**\n**{move4}**"

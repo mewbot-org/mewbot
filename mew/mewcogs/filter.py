@@ -728,7 +728,18 @@ class Filter(commands.Cog):
             )
             price_text = f" | **Price** {price:,.0f}" if filter_type == "m" else ""
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
-            desc += f'{emoji}{"" if not is_egg else ":egg:`" + str(counter) + "`"}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}{price_text}\n'
+            iv = f"{iv/186:02.0%}".rjust(4, " ")
+            
+            desc += (
+                f"{emoji}{'' if not is_egg else ':egg:`' + str(counter) + '`'}{gender}"
+                f"<:num:1028966160047288380>**`{pn}`** "
+                f"__`{formatted_name}`__"
+                f"{level}"
+                f"<:ivs:1028966344508592139>`{iv}`"
+                f"{price_text}\n"
+            )
+
+            # desc += f'{emoji}{"" if not is_egg else ":egg:`" + str(counter) + "`"}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}{price_text}\n'
 
         # Send the result
         embed = discord.Embed(title="Filtered Pokemon", color=0xFFB6C1)
