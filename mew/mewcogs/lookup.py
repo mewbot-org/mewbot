@@ -54,7 +54,7 @@ class AbilityView(discord.ui.View):
         return self.message
     
     @discord.ui.button(label="View Pokemon")
-    async def view_pokes(self, button, interaction):
+    async def view_pokes(self, interaction, button):
         await interaction.response.edit_message(embed=self.poke_embed, view=None)
 
 

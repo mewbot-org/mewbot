@@ -122,7 +122,7 @@ class MewMisc:
         return (
             "<:male:998336034519654534>"
             if gender == "-m"
-            else ("<:female:998336077943279747>" if gender == "-f" else "")
+            else ("<:female:998336077943279747>" if gender == "-f" else "<:genderless:1029425375589187634>")
         )
     
     async def log_error(self, ctx, error):

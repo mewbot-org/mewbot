@@ -719,7 +719,7 @@ class Filter(commands.Cog):
             shiny = record["shiny"]
             gleam = record["radiant"]
             level = str(record['pokelevel']).rjust(max_lvl, ' ')
-            level = f"<:lvl2:971522301583581225>`{level}`"
+            level = f"<:lvl:1029030189981765673>`{level}`"
             emoji = get_emoji(
                 blank="<:blank:1012504803496177685>",
                 shiny=shiny,
@@ -732,10 +732,10 @@ class Filter(commands.Cog):
             
             desc += (
                 f"{emoji}{'' if not is_egg else ':egg:`' + str(counter) + '`'}{gender}"
-                f"<:num:1028966160047288380>**`{pn}`** "
+                f"<:num:1029030329350111232>**`{pn}`** "
                 f"__`{formatted_name}`__"
                 f"{level}"
-                f"<:ivs:1028966344508592139>`{iv}`"
+                f"<:ivs:1029331472789819442>`{iv}`"
                 f"{price_text}\n"
             )
 

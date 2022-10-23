@@ -143,11 +143,11 @@ class Moves(commands.Cog):
             type_id = move_info["type_id"]
             damage_class = move_info["damage_class_id"]
             if damage_class == 1:
-                damage_class = "<:status:898649534547230730>"
+                damage_class = "<:status:1030141986906316842>"
             elif damage_class == 2:
-                damage_class = "<:phys:898649534492717086>"
+                damage_class = "<:phy:1030141843855396914>"
             elif damage_class == 3:
-                damage_class = "<:sp:898649534652108800>"
+                damage_class = "<:sp:1030141934313947166>"
             type = [t["identifier"] for t in TYPES if t["id"] == type_id][0].capitalize()
             desc += f"**{damage_class}{move.replace('-', ' ')}** - Power:`{power}` Acc:`{accuracy}` Type:`{type}`\n"
         embed = discord.Embed(title="Learnable Move List", colour=random.choice(ctx.bot.colors))

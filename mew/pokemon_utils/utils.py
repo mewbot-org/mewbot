@@ -9,7 +9,7 @@ from mewcogs.json_files import *
 from enum import IntFlag
 
 
-#TODO: Replace everything that uses this with the new natures handling from here
+# TODO: Replace everything that uses this with the new natures handling from here
 #      https://gitlab.com/Dyleee/mewbot/-/commit/8fa27560b9c885824be9d1da9037511de05d9cce
 def edit_stats(stats, inc_stat, dec_stat):
     stat_names = (
@@ -90,7 +90,8 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
     inc_stat = await ctx.bot.db[1].stat_types.find_one({"id": inc_stat_id})
     dec_stat = dec_stat["identifier"].capitalize().replace("-", " ")
     inc_stat = inc_stat["identifier"].capitalize().replace("-", " ")
-    stat_deltas = {"Attack": 1, "Defense": 1, "Special attack": 1, "Special defense": 1, "Speed": 1}
+    stat_deltas = {"Attack": 1, "Defense": 1,
+                   "Special attack": 1, "Special defense": 1, "Speed": 1}
     if dec_stat != inc_stat:
         stat_deltas[dec_stat] = 0.9
         stat_deltas[inc_stat] = 1.1
@@ -152,12 +153,18 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         tlist = ", ".join(types)
         egg_groups = ", ".join(egg_groups)
 
-        hp = round((((2 * pokemonHp + hpiv + (hpev / 4)) * plevel) / 100) + plevel + 10)
-        attack = round(((((2 * pokemonAtk + atkiv + (atkev / 4)) * plevel) / 100) + 5) * stat_deltas["Attack"])
-        defense = round(((((2 * pokemonDef + defiv + (defev / 4)) * plevel) / 100) + 5) * stat_deltas["Defense"])
-        specialattack = round(((((2 * pokemonSpa + spatkiv + (spaev / 4)) * plevel) / 100) + 5) * stat_deltas["Special attack"])
-        specialdefense = round(((((2 * pokemonSpd + spdefiv + (spdev / 4)) * plevel) / 100) + 5) * stat_deltas["Special defense"])
-        speed = round(((((2 * pokemonSpeed + speediv + (speedev / 4)) * plevel) / 100) + 5) * stat_deltas["Speed"])
+        hp = round(
+            (((2 * pokemonHp + hpiv + (hpev / 4)) * plevel) / 100) + plevel + 10)
+        attack = round(((((2 * pokemonAtk + atkiv + (atkev / 4))
+                       * plevel) / 100) + 5) * stat_deltas["Attack"])
+        defense = round(((((2 * pokemonDef + defiv + (defev / 4))
+                        * plevel) / 100) + 5) * stat_deltas["Defense"])
+        specialattack = round(((((2 * pokemonSpa + spatkiv + (spaev / 4))
+                              * plevel) / 100) + 5) * stat_deltas["Special attack"])
+        specialdefense = round(
+            ((((2 * pokemonSpd + spdefiv + (spdev / 4)) * plevel) / 100) + 5) * stat_deltas["Special defense"])
+        speed = round(((((2 * pokemonSpeed + speediv + (speedev / 4))
+                      * plevel) / 100) + 5) * stat_deltas["Speed"])
         t_ivs = hpiv + atkiv + defiv + spatkiv + spdefiv + speediv
         if "arceus-" in pn.lower():
             tlist = pn.split("-")[1]
@@ -172,13 +179,13 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
         egg_groups = "?"
-    
+
     emoji = get_emoji(
         shiny=shiny,
         radiant=radiant,
         skin=skin,
     )
-    
+
     if pn.lower() == "shedinja":
         hp = 1
 
@@ -194,19 +201,22 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
     gender = (
         "<:male:998336034519654534>"
         if gender == "-m"
-        else ("<:female:998336077943279747>" if gender == "-f" else "Genderless")
+        else ("<:female:998336077943279747>" if gender == "-f" else "<:genderless:1029425375589187634>")
     )
-    gender = "Genderless" if pn.split("-")[0] in LegendList + ubList + ["Ditto"] else gender
+    gender = "Genderless" if pn.split(
+        "-")[0] in LegendList + ubList + ["Ditto"] else gender
     if info_type == "market":
         price = records["pokeprice"]
         mid = records["mid"]
     embed = discord.Embed(
         title=f'Market ID# {mid}{emoji}{pn} "{gender}" - Price {price:,.0f}'
         if info_type and info_type == "market"
-        else f'{emoji}{gender} Level {plevel} {pn} "{pnick}"',
+        else f'<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} "{pnick}"',
         color=random.choice(ctx.bot.colors),
     )
-    embed.description = f"""**Ability**: `{abilities}` | **Nature**: `{nature}` | **Types**: {tlist}\n**Egg Groups**: {egg_groups}\n`HP`: **{hpiv}** | `Attack`: **{atkiv}** | `Defense`: **{defiv}**\n`SP.A`: **{spatkiv}** | `SP.D`: **{spdefiv}** | `Speed`: **{speediv}**\n__**Total IV%:**__ `{ivs}`\nHeld item : `{hi}{txt}`"""
+    move1, move2, move3, move4 = (move.capitalize().replace(
+        "-", " ") for move in records["moves"])
+    embed.description = f"""**Ability**: `{abilities}` | **Nature**: `{nature}` | **Types**: {tlist}\n**Egg Groups**: {egg_groups}\n`HP`: **{hpiv}** | `Attack`: **{atkiv}** | `Defense`: **{defiv}**\n`SP.A`: **{spatkiv}** | `SP.D`: **{spdefiv}** | `Speed`: **{speediv}**\n__**Total IV%:**__ `{ivs}`\n**__Held item__** : `{hi}{txt}`\n**__Moves__** : `{move1}, {move2}, {move3}, {move4}`"""
     # embed.set_thumbnail(url=ctx.author.avatar_url)
     # embed.set_image(url=iurl)
     id_count = len(ids)
@@ -259,6 +269,8 @@ async def get_pokemon_info(ctx, records, info_type=None):
     happiness = records["happiness"]
     ab_index = records["ability_index"]
     skin = records["skin"]
+    move1, move2, move3, move4 = (move.capitalize().replace(
+        "-", " ") for move in records["moves"])
     gender, counter = records["gender"], records["counter"]
     if records["caught_by"]:
         original_trainer = ctx.bot.get_user(records["caught_by"])
@@ -288,7 +300,8 @@ async def get_pokemon_info(ctx, records, info_type=None):
     inc_stat = await ctx.bot.db[1].stat_types.find_one({"id": inc_stat_id})
     dec_stat = dec_stat["identifier"].capitalize().replace("-", " ")
     inc_stat = inc_stat["identifier"].capitalize().replace("-", " ")
-    stat_deltas = {"Attack": 1, "Defense": 1, "Special attack": 1, "Special defense": 1, "Speed": 1}
+    stat_deltas = {"Attack": 1, "Defense": 1,
+                   "Special attack": 1, "Special defense": 1, "Speed": 1}
     if dec_stat != inc_stat:
         stat_deltas[dec_stat] = 0.9
         stat_deltas[inc_stat] = 1.1
@@ -350,12 +363,18 @@ async def get_pokemon_info(ctx, records, info_type=None):
         tlist = ", ".join(types)
         egg_groups = ", ".join(egg_groups)
 
-        hp = round((((2 * pokemonHp + hpiv + (hpev / 4)) * plevel) / 100) + plevel + 10)
-        attack = round(((((2 * pokemonAtk + atkiv + (atkev / 4)) * plevel) / 100) + 5) * stat_deltas["Attack"])
-        defense = round(((((2 * pokemonDef + defiv + (defev / 4)) * plevel) / 100) + 5) * stat_deltas["Defense"])
-        specialattack = round(((((2 * pokemonSpa + spatkiv + (spaev / 4)) * plevel) / 100) + 5) * stat_deltas["Special attack"])
-        specialdefense = round(((((2 * pokemonSpd + spdefiv + (spdev / 4)) * plevel) / 100) + 5) * stat_deltas["Special defense"])
-        speed = round(((((2 * pokemonSpeed + speediv + (speedev / 4)) * plevel) / 100) + 5) * stat_deltas["Speed"])
+        hp = round(
+            (((2 * pokemonHp + hpiv + (hpev / 4)) * plevel) / 100) + plevel + 10)
+        attack = round(((((2 * pokemonAtk + atkiv + (atkev / 4))
+                       * plevel) / 100) + 5) * stat_deltas["Attack"])
+        defense = round(((((2 * pokemonDef + defiv + (defev / 4))
+                        * plevel) / 100) + 5) * stat_deltas["Defense"])
+        specialattack = round(((((2 * pokemonSpa + spatkiv + (spaev / 4))
+                              * plevel) / 100) + 5) * stat_deltas["Special attack"])
+        specialdefense = round(
+            ((((2 * pokemonSpd + spdefiv + (spdev / 4)) * plevel) / 100) + 5) * stat_deltas["Special defense"])
+        speed = round(((((2 * pokemonSpeed + speediv + (speedev / 4))
+                      * plevel) / 100) + 5) * stat_deltas["Speed"])
         t_ivs = hpiv + atkiv + defiv + spatkiv + spdefiv + speediv
         if "arceus-" in pn.lower():
             tlist = pn.split("-")[1]
@@ -369,13 +388,13 @@ async def get_pokemon_info(ctx, records, info_type=None):
         abilities = "?"
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
-    
+
     emoji = get_emoji(
         shiny=shiny,
         radiant=radiant,
         skin=skin,
     )
-    
+
     if pn.lower() == "shedinja":
         hp = 1
 
@@ -416,43 +435,52 @@ async def get_pokemon_info(ctx, records, info_type=None):
         txt = f" | Will hatch in {counter} Messages"
         hidden_power = "?"
 
-    gender = (
-        "<:male:998336034519654534>"
-        if gender == "-m"
-        else ("<:female:998336077943279747>" if gender == "-f" else "Genderless")
-    )
-    pnick = f"'{pnick}'" if pnick or not pnick.lower() == "none" else ""
-
+    gender = ctx.bot.misc.get_gender_emote(gender)
+    pnick = '' if not pnick or pnick.lower() == "none" else f"'{pnick}'"
     if info_type == "market":
         price = records["pokeprice"]
         mid = records["mid"]
     embed = discord.Embed(
         title=f"Market ID# {mid}{emoji}{gender} {pn} - Price {price:,.0f}"
         if info_type and info_type == "market"
-        else f"{emoji}{gender} {pn} {pnick}",
+        else f"<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} {pnick}",
         color=random.choice(ctx.bot.colors),
     )
-    hpev_display = f"┃<:evs:1028966396178210899>`{hpev}`"
-    atkev_display = f"┃<:evs:1028966396178210899>`{atkev}`"
-    defev_display = f"┃<:evs:1028966396178210899>`{defev}`"
-    spaev_display = f"┃<:evs:1028966396178210899>`{spaev}`"
-    spdev_display = f"┃<:evs:1028966396178210899>`{spdev}`"
-    speedev_display = f"┃<:evs:1028966396178210899>`{speedev}`"
+
+    blank = "<:blank:1012504803496177685>"
+    hpev_display = f"{hpev:03d}"
+    atkev_display = f"{atkev:03d}"
+    defev_display = f"{defev:03d}"
+    spaev_display = f"{spaev:03d}"
+    spdev_display = f"{spdev:03d}"
+    speedev_display = f"{speedev:03d}"
     desc = ""
 
-    desc += f"**<:lvl:1028966430441488384> {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n\n"
-    desc += "__**Stats** `(total (iv/evs))`__\n"
-    desc += f"**HP:**  `{hp}` (<:ivs:1028966344508592139>`{hpiv}`{hpev_display if hpev != 0 else ''})\n"
-    desc += f"**Attack:** `{attack}` (<:ivs:1028966344508592139>`{atkiv}`{atkev_display if atkev != 0 else ''})\n"
-    desc += f"**Defense:** `{defense}` (<:ivs:1028966344508592139>`{defiv}`{defev_display if defev != 0 else ''})\n"
-    desc += f"**Sp. Atk:** `{specialattack}` (<:ivs:1028966344508592139>`{spatkiv}`{spaev_display if spaev != 0 else ''})\n"
-    desc += f"**Sp. Def:** `{specialdefense}` (<:ivs:1028966344508592139>`{spdefiv}`{spdev_display if spdev != 0 else ''})\n"
-    desc += f"**Speed:** `{speed}` (<:ivs:1028966344508592139>`{speediv}`{speedev_display if speedev != 0 else ''})\n"
-    desc += f"**IV %**: `{ivs}`\n"
-    desc += f"**Hidden Power**: `{hidden_power}`\n"
-    desc += f"**Happiness**: `{happiness}`\n"
+    desc += f"**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n**Happiness**: `{happiness}`\n\n"
+    desc += f"**__Stats__ {blank*2}__Total__{blank*2}<:ivs:1029331472789819442> __|__ <:evs:1029331432792915988>**\n"
+    desc += f"`HP:       {hp:03d} `{blank}` {hpiv:02d} | {hpev_display}`\n"
+    desc += f"`Attack:   {attack:03d} `{blank}` {atkiv:02d} | {atkev_display}`\n"
+    desc += f"`Defense:  {defense:03d} `{blank}` {defiv:02d} | {defev_display}`\n"
+    desc += f"`Sp. Atk:  {specialattack:03d} `{blank}` {spatkiv:02d} | {spaev_display}`\n"
+    desc += f"`Sp. Def:  {specialdefense:03d} `{blank}` {spdefiv:02d} | {spdev_display}`\n"
+    desc += f"`Speed:    {speed:03d} `{blank}` {speediv:02d} | {speedev_display}`\n"
+    desc += f"`IV %` {blank*5} `{ivs}%`\n"
     desc += f"{skindisp}"
     embed.description = desc
+
+    # desc += f"**<:lvl:1029030189981765673> {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n\n"
+    # desc += "__**Stats** `(total (iv/evs))`__\n"
+    # desc += f"**HP:**  `{hp}` (<:ivs:1029331472789819442>`{hpiv}`{hpev_display if hpev != 0 else ''})\n"
+    # desc += f"**Attack:** `{attack}` (<:ivs:1029331472789819442>`{atkiv}`{atkev_display if atkev != 0 else ''})\n"
+    # desc += f"**Defense:** `{defense}` (<:ivs:1029331472789819442>`{defiv}`{defev_display if defev != 0 else ''})\n"
+    # desc += f"**Sp. Atk:** `{specialattack}` (<:ivs:1029331472789819442>`{spatkiv}`{spaev_display if spaev != 0 else ''})\n"
+    # desc += f"**Sp. Def:** `{specialdefense}` (<:ivs:1029331472789819442>`{spdefiv}`{spdev_display if spdev != 0 else ''})\n"
+    # desc += f"**Speed:** `{speed}` (<:ivs:1029331472789819442>`{speediv}`{speedev_display if speedev != 0 else ''})\n"
+    # desc += f"**IV %**: `{ivs}`\n"
+    # desc += f"**Hidden Power**: `{hidden_power}`\n"
+    # desc += f"**Happiness**: `{happiness}`\n"
+    # desc += f"{skindisp}"
+    # embed.description = desc
 #     embed.description = f"""**Level {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}, -{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n
 # **HP**: `{hp}` | `{hpiv}` **IVs** | `{hpev}` **EVs**
 # **Attack**: `{attack}` | `{atkiv}` **IVs** | `{atkev}` **EVs**
@@ -464,12 +492,10 @@ async def get_pokemon_info(ctx, records, info_type=None):
 # **Hidden Power**: `{hidden_power}`
 # **Happiness**: `{happiness}`
 # {skindisp}"""
-    move1, move2, move3, move4 = (move.capitalize().replace("-", " ") for move in records["moves"])
-    embed.add_field(
-        name="**__Learned Moves__**:", value=f"**{move1}**\n**{move2}**\n**{move3}**\n**{move4}**"
-    )
-    embed.add_field(name="__Held Item:__", value=f"**{hi}**")
-    embed.add_field(name="__OT:__", value=f"**{tnick}**")
+
+    embed.add_field(name="__Moves:__", value=f"`{move1}, {move2}, {move3}, {move4}`", inline=False)
+    embed.add_field(name="__Held Item:__", value=f"`{hi}`")
+    embed.add_field(name="__OT:__", value=f"`{tnick}`")
     if ctx.author.avatar is not None:
         embed.set_thumbnail(url=ctx.author.avatar.url)
     embed.set_image(url=iurl)
@@ -478,6 +504,7 @@ async def get_pokemon_info(ctx, records, info_type=None):
         text=f"Number {pnum}/{id_count} | Global ID#: {_id}{txt}" if not info_type else ""
     )
     return embed
+
 
 class EvoReqs(IntFlag):
     """Stores the requirements for a particular evolution."""
@@ -515,13 +542,14 @@ class EvoReqs(IntFlag):
             score |= EvoReqs.REGION
         return score
 
+
 async def _check_evo_reqs(bot, pokemon, held_item_id, active_item_id, region, evoreq, override_lvl_100):
     """Checks that "poke" meets all of the criteria of "evoreq"."""
     req_flags = EvoReqs.from_raw(evoreq)
-    #They used an active item but this evo doesn't use an active item, don't use it.
+    # They used an active item but this evo doesn't use an active item, don't use it.
     if active_item_id is not None and not req_flags.used_active_item():
         return False
-    #If a pokemon is level 100, ONLY evolve via an override or active item.
+    # If a pokemon is level 100, ONLY evolve via an override or active item.
     if pokemon.pokelevel >= 100 and not (override_lvl_100 or active_item_id is not None):
         return False
     if evoreq['trigger_item_id']:
@@ -561,15 +589,16 @@ async def _check_evo_reqs(bot, pokemon, held_item_id, active_item_id, region, ev
     if evoreq['region']:
         if evoreq['region'] != region:
             return False
-        # Temp blocker since previously radiants could never evolve to regional forms, so they were released separately 
+        # Temp blocker since previously radiants could never evolve to regional forms, so they were released separately
         if pokemon.radiant:
             return False
     return True
 
+
 def _pick_evo(valid_evos):
     """
     Picks one of the valid evos, and returns that evo's id.
-    
+
     Prioritizes evos that are more explicit than implicit ones.
     IE: held item evos > level evos
     """
@@ -582,12 +611,13 @@ def _pick_evo(valid_evos):
             best_id = evo['evolved_species_id']
     return (best_id, best_score)
 
+
 async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=None, override_lvl_100: bool = False):
     """
     Attempts to evolve the poke using its current data and the optional active_item.
-    
+
     Returns False if the poke did not evolve, and an instance of EvoReqs if it did.
-    
+
     Channel must be passed now or a ValueError will be raised
     """
     if not channel:
@@ -612,7 +642,8 @@ async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=Non
     # Get the necessary info of this poke to find evos
     pokemon_info = await bot.mongo_pokemon_db.forms.find_one({"identifier": pokemon.pokname})
     if pokemon_info is None:
-        bot.logger.warning(f"A poke exists that is not in the mongo forms table - {pokemon.pokname}")
+        bot.logger.warning(
+            f"A poke exists that is not in the mongo forms table - {pokemon.pokname}")
         return False
     pokemon_info = dacite.from_dict(
         data_class=FormInfo,
@@ -622,7 +653,8 @@ async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=Non
         {"identifier": pokemon_info.identifier}
     )
     if raw_pfile is None:
-        bot.logger.warning(f"A non-formed poke exists that is not in the mongo pfile table - {pokemon.pokname}")
+        bot.logger.warning(
+            f"A non-formed poke exists that is not in the mongo pfile table - {pokemon.pokname}")
         return False
     pokemon_info.pfile = dacite.from_dict(data_class=PFile, data=raw_pfile)
 
@@ -633,7 +665,7 @@ async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=Non
     async for record in evoline:
         pokemon_info.evoline.append(record)
     pokemon_info.evoline.sort(key=lambda doc: doc["is_baby"], reverse=True)
-    
+
     # Filter the potential evos to only include ones that are evolved from this poke
     potential_evos = []
     for x in pokemon_info.evoline:
@@ -641,40 +673,42 @@ async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=Non
             continue
         val = await bot.db[1].evofile.find_one({'evolved_species_id': x['id']})
         if val is None:
-            bot.logger.warning(f"An evofile does not exist for a poke - {x['identifier']}")
+            bot.logger.warning(
+                f"An evofile does not exist for a poke - {x['identifier']}")
         else:
             potential_evos.append(val)
 
     # This pokemon has no future evos, so it can't evolve into anything
     if not potential_evos:
         return False
-    
+
     # Prep held and active items
     if active_item is None:
         active_item_id = None
     else:
         active_item_id = await bot.mongo_pokemon_db.items.find_one({"identifier": active_item})
         if active_item_id is None:
-            bot.logger.warning(f"A poke is trying to use an active item that is not in the mongo table - {active_item}")
+            bot.logger.warning(
+                f"A poke is trying to use an active item that is not in the mongo table - {active_item}")
         else:
             active_item_id = active_item_id['id']
     held_item_id = await bot.mongo_pokemon_db.items.find_one({"identifier": pokemon.hitem})
     if held_item_id is not None:
         held_item_id = held_item_id['id']
-    
+
     # Get the owner's current region
     async with bot.db[0].acquire() as pconn:
         region = await pconn.fetchval("SELECT region FROM users WHERE u_id = $1", owner.id)
     if region is None:
         return False
 
-    #Filter out evos that this poke does not meet the requirements for
+    # Filter out evos that this poke does not meet the requirements for
     valid_evos = []
     for evoreq in potential_evos:
         if await _check_evo_reqs(bot, pokemon, held_item_id, active_item_id, region, evoreq, override_lvl_100):
             valid_evos.append(evoreq)
-    
-    #This poke does not meet the conditions of any potential evos
+
+    # This poke does not meet the conditions of any potential evos
     if not valid_evos:
         return False
 
@@ -709,10 +743,11 @@ async def evolve(ctx, bot, pokemon_data, owner, *, channel=None, active_item=Non
             pass
     return evo_reqs
 
+
 async def devolve(ctx, pokeid):
     """
     Instantly devolve the given poke id (if applicable).
-    
+
     This DOES NOT check items, but DOES check if the pokemon has a prior evolution.
     Returns a bool, indicating if the poke was successfully devolved.
     """
@@ -720,7 +755,7 @@ async def devolve(ctx, pokeid):
         pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", pokeid)
     pokedata = await ctx.bot.mongo_pokemon_db.pfile.find_one({"identifier": pokename.lower()})
     preid = pokedata["evolves_from_species_id"]
-    #The pokemon is the base evolution, or otherwise does not exist.
+    # The pokemon is the base evolution, or otherwise does not exist.
     if not preid:
         return False
     preevo = await ctx.bot.mongo_pokemon_db.pfile.find_one({"id": preid})

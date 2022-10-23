@@ -23,6 +23,7 @@ GUILD_DEFAULT = {
     "silence_levels": False,
 }
 
+POKEMON_WITH_EGG_ABILITIES = {'Rapidash', 'Talonflame', 'Slugma', 'Carkol', 'Larvesta', 'Coalossal', 'Fletchinder', 'Centiskorch', 'Coalossal-Gmax', 'Magmar', 'Litwick', 'Moltres', 'Centiskorch-Gmax', 'Magmortar', 'Rolycoly', 'Camerupt', 'Ponyta', 'Volcarona', 'Lampent', 'Sizzlipede', 'Magcargo', 'Chandelure', 'Heatran', 'Magby'}
 
 class Misc(commands.Cog):
     def __init__(self, bot):
@@ -78,6 +79,21 @@ class Misc(commands.Cog):
                     "SELECT party_counter($1), selected_counter($1), level_pokemon($1)",
                     message.author.id,
                 )
+
+
+                """ Check For Magma Armor, Flame body bleh"""
+                party_pokemon = await pconn.fetch("SELECT pokname FROM pokes WHERE id IN (SELECT unnest(party) FROM users u WHERE u.u_id = $1)", message.author.id)
+                exists = not POKEMON_WITH_EGG_ABILITIES.isdisjoint(set(
+                    [record['pokname'] for record in party_pokemon]
+                ))
+                if exists and random.random() < 0.25: # 25% Chance.
+                    if message.author.id == 455277032625012737:
+                        await message.channel.send("Hit the spot.")
+                    hatched_party_pokemon, hatched_pokemon, level_pokemon = await pconn.fetchrow(
+                    "SELECT party_counter($1), selected_counter($1), level_pokemon($1)",
+                    message.author.id,
+                )
+                """ TADA """
             except Exception:
                 return
             response = ""

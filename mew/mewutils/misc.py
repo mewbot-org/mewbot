@@ -524,9 +524,8 @@ async def get_file_name(name, bot, shiny=False, *, radiant=False, skin=None):
         if skin.endswith("_gif"):
             filetype = "gif"
         skin = f"skins/{skin}/"
-    is_radiant = "radiant/" if radiant else ""
     is_shiny = "shiny/" if shiny else ""
-    new_name = f"{is_radiant}{is_shiny}{skin}{pokemon_id}-{form_id}-.{filetype}"
+    new_name = f"{is_shiny}{skin}{pokemon_id}-{form_id}-.{filetype}"
     return new_name
 
 
@@ -602,6 +601,10 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
             emoji = "<:shadow:1010559067590246410>"
         elif skin == "oldrad":
             emoji = "<:radiant:1010558960027308052>"
+        elif skin == "radiant":
+            emoji = "<:radiant:1010558960027308052>"
+        elif skin == "gleam":
+            emoji = "<:gleam:1010559151472115772>"
         else:
             emoji = "<:skin:1010890087074123777>"
     elif radiant:
@@ -908,7 +911,7 @@ class EnableCommandsView(discord.ui.View):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     @discord.ui.button(label="Re-enable commands", style=discord.ButtonStyle.secondary)
-    async def reenable(self, button, interaction):
+    async def reenable(self, interaction, button):
         current_setting = await self.ctx.bot.mongo_find("guilds", {"id": self.ctx.guild.id})
         # I'm not checking current_setting, since it shouldn't be possible to *not* have settings and get this view
         disabled = set(current_setting["disabled_channels"])

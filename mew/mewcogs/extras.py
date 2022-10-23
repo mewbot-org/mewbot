@@ -418,7 +418,7 @@ class Extras(commands.Cog):
         """
         Our Contributors
         """
-        desc = f"**Contributor Credit**\n"
+        desc = f"**Soure Repo Credit**: [GitHub](https://github.com/skylarr1227/dittobot-open)\n"
         desc += f"\n**Various Artwork/Skins:**"
         desc += f"\n\n**Gleam Artwork:**"
         desc += f"\n\n**Art Team:**"

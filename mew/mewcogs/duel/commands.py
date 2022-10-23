@@ -220,6 +220,7 @@ class Duel(commands.Cog):
 
     @commands.hybrid_group()
     async def duel(self, ctx):
+        """Initiate a 1v1 duel, 6v6 battle, NPC duel or an Inverse duel."""
         ...
 
     @duel.command()
@@ -506,7 +507,7 @@ class Duel(commands.Cog):
         await ctx.bot.mongo_update("users", {"user": ctx.author.id}, {"progress": progress})
         
         #Grant credits & xp
-        creds = random.randint(100, 600)
+        creds = random.randint(100, 600) / 1.25
         creds *= min(battle_multi, 50)
         desc = f"You received {creds} credits for winning the duel!\n\n"
         async with ctx.bot.db[0].acquire() as pconn:

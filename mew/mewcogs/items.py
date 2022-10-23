@@ -629,6 +629,10 @@ class Items(commands.Cog):
             await ctx.bot.redis_manager.redis.execute(
             "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 12)
         )
+        elif ctx.author.id == 449401742568849409:
+            await ctx.bot.redis_manager.redis.execute(
+            "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 1.25)
+        )
         else:
             await ctx.bot.redis_manager.redis.execute(
             "HMSET", "energycooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 4)
