@@ -207,7 +207,7 @@ class Pokemon(commands.Cog):
         c = ctx.bot.get_cog("Filter")
         if c is None:
             return
-        await c.f.get_command("p").callback(c, ctx, args="cooldown")
+        await c.filter_pokemon.callback(c, ctx, args="cooldown")
         return
 
     @commands.hybrid_command()
@@ -466,7 +466,7 @@ class Pokemon(commands.Cog):
 
     @commands.hybrid_command(name="i")
     @discord.app_commands.describe(pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon.")
-    async def info(self, ctx, pokemon: str = None):
+    async def info(self, ctx, *, pokemon: str = None):
         """Get information about a Pokémon."""
         if pokemon is None:
             async with ctx.bot.db[0].acquire() as pconn:
@@ -520,22 +520,25 @@ class Pokemon(commands.Cog):
         # "pokemon" is *probably* a pokemon name
         pokemon = pokemon.lower().replace("alolan", "alola").split()
         shiny = False
-        radiant = False
         skin = None
         if "shiny" in pokemon:
             shiny = True
             pokemon.remove("shiny")
         elif "gleam" in pokemon:
-            radiant = True
+            skin = 'gleam'
             pokemon.remove("gleam")
+        elif "radiant" in pokemon:
+            skin = 'radiant'
+            pokemon.remove("radiant")
         elif "shadow" in pokemon and pokemon.index("shadow") == 0:
             skin = "shadow"
             pokemon.remove("shadow")
         pokemon = "-".join(pokemon)
         val = pokemon.capitalize()
+
         try:
             val = await self.parse_form(val)
-            iurl = await get_pokemon_image(val, ctx.bot, shiny, radiant=radiant, skin=skin)
+            iurl = await get_pokemon_image(val, ctx.bot, shiny, skin=skin)
         except ValueError:
             await ctx.send("That Pokemon does not exist!")
             return
@@ -652,7 +655,6 @@ class Pokemon(commands.Cog):
             tlist = val.split("-")[1]
         emoji = get_emoji(
             shiny=shiny,
-            radiant=radiant,
             skin=skin,
         )
         val = val.capitalize()
