@@ -303,17 +303,15 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
-    async def createpoke(self, ctx, *, pokemon: str, shiny: bool, radiant: bool, boosted: bool):
+    async def createpoke(self, ctx, *, pokemon: str, shiny: bool, skin: Literal['radiant', 'gleam'], boosted: bool):
         """Creates a new poke and gives it to the author."""
         extras = ""
         if shiny:
             extras += "shiny "
-        if radiant:
-            extras += "radiant "
         if boosted:
             extras += "boosted "
         pokemon = pokemon.replace(" ", "-").capitalize()
-        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, radiant=radiant, boosted=boosted)
+        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, skin=skin, boosted=boosted)
         await ctx.send(f"Gave you a {extras}{pokemon}!")
 
     @check_admin()

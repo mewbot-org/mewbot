@@ -68,7 +68,7 @@ class Chests(commands.Cog):
         if not options:
             return ""
         poke = random.choice(options)
-        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, poke, radiant=True)
+        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, poke, skin='gleam')
         return self.EVENT_ACTIVE[poke]
 
     @commands.hybrid_group()
@@ -106,7 +106,7 @@ class Chests(commands.Cog):
 
         if reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a gleam {pokemon}!**\n"
         elif reward == "chest":
             async with ctx.bot.db[0].acquire() as pconn:
@@ -193,7 +193,7 @@ class Chests(commands.Cog):
         )[0]
         if reward == "radiant":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a gleam {pokemon}!**\n"
         elif reward == "redeem":
             amount = random.randint(4, 6)
@@ -293,7 +293,7 @@ class Chests(commands.Cog):
 
         elif reward == "radiant":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a gleam {pokemon}!**\n"
 
         elif reward == "shiny":
@@ -467,7 +467,7 @@ class Chests(commands.Cog):
             elif packnum == 5:
                 inventory["legend chest"] = inventory.get("legend chest", 0) + 1
             elif packnum in (6, 7):
-                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, choice, radiant=True, boosted=True)
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, choice, skin='gleam', boosted=True)
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json where u_id = $2",
                 inventory,

@@ -170,7 +170,7 @@ class TradeMainView(discord.ui.View):
             )
         elif name["radiant"]:
             attrs.append(
-                self.ctx.bot.misc.get_skin_emote(radiant=True)
+                self.ctx.bot.misc.get_skin_emote(skin='gleam')
             )
         elif name["skin"]:
             attrs.append(

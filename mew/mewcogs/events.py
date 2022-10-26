@@ -427,7 +427,7 @@ class Events(commands.Cog):
                     await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
                     await ctx.send("Successfully bought a Missingno for 1 pumpkin.")
                 elif option == 8:
-                    await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, self.HALLOWEEN_RADIANT, radiant=True)
+                    await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, self.HALLOWEEN_RADIANT, skin='gleam')
                     await ctx.send(f"Successfully bought a {self.HALLOWEEN_RADIANT} for 1 pumpkin!")
                 elif option == 9:
                     await pconn.execute("UPDATE halloween SET raffle = raffle + 1 WHERE u_id = $1", ctx.author.id)
@@ -576,7 +576,7 @@ class Events(commands.Cog):
         )[0]
         if reward == "radiant":
             pokemon = self.HALLOWEEN_RADIANT
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
         elif reward == "redeem":
             amount = 1
@@ -646,7 +646,7 @@ class Events(commands.Cog):
         )[0]
         if reward == "radiant":
             pokemon = self.HALLOWEEN_RADIANT
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
         elif reward == "redeem":
             amount = random.randint(4, 6)
