@@ -497,7 +497,7 @@ class Mew(commands.AutoShardedBot):
         return ctx.author == self.owner
 
     async def load_extensions(self):
-        cogs = ['boost', 'botlist', 'breeding', 'chests', 'cooldown', 'duel', 'dylee', 'events', 'evs', 'extras', 'favs', 'filter', 'fishing', 'forms', 'gamecorner', 'helpcog', 'invitecheck', 'items', 'lookup', 'market', 'misc', 'missions', 'moves', 'orders', 'party', 'pokemon', 'redeem', 'responses', 'sell', 'server', 'shop', 'sky', 'spawn', 'staff', 'start', 'tasks', 'trade', 'tutorial']
+        cogs = ['boost', 'botlist', 'breeding', 'chests', 'cooldown', 'duel', 'dylee', 'events', 'evs', 'extras', 'favs', 'filter', 'fishing', 'forms', 'helpcog', 'invitecheck', 'items', 'lookup', 'market', 'misc', 'missions', 'moves', 'orders', 'party', 'pokemon', 'redeem', 'responses', 'sell', 'server', 'shop', 'sky', 'spawn', 'staff', 'start', 'tasks', 'trade', 'tutorial']
         for cog in cogs:
             if "_" in cog:
                 continue
@@ -573,7 +573,7 @@ class Mew(commands.AutoShardedBot):
                         "party",
                         "favs",
                         "items",
-                        "gamecorner",
+                        # "gamecorner",
                         "lookup",
                         "evs",
                         "responses",

@@ -37,6 +37,7 @@ KEYS = {
     "genderless": "genderless",
     "shiny": "shiny",
     "gleam": "gleam",
+    "radiant": "radiant",
     "regular": "regular",
     "owned": "owned",
     "ot": "ot",
@@ -347,9 +348,11 @@ class Filter(commands.Cog):
                 elif key == "shiny":
                     postfix.append("shiny = true")
                 elif key == "gleam":
-                    postfix.append("radiant = true")
+                    postfix.append("skin = 'gleam'")
+                elif key == 'radiant':
+                    postfix.append("skin = 'radiant'")
                 elif key == "regular":
-                    postfix.append("(NOT shiny AND NOT radiant)")
+                    postfix.append("(NOT shiny)")
                 elif key == "owned":
                     if filter_type != "m":
                         raise ExtractionException("`owned` is only a valid key in market filters.")

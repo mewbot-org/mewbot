@@ -80,7 +80,7 @@ class HelpCog(commands.Cog):
     async def activities(self, ctx):
         e = discord.Embed(title="Activities currently in MewBot", color=3553600)
         e.add_field(name="Fishing Activity", value=f"`{ctx.prefix}help fishing`")
-        e.add_field(name="Game corner", value=f"`{ctx.prefix}help game corner`")
+        e.add_field(name="Game corner (temporarily disabled)", value=f"`{ctx.prefix}help game corner`")
         e.add_field(name="NPC interaction", value=f"`{ctx.prefix}duel npc`")
         await ctx.send(embed=e)
 

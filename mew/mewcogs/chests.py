@@ -13,7 +13,7 @@ class Chests(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        # currently available radiant pokemon, ("Pokemon")
+        # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = (
             "Pichu", "Toxel", "Golett", "Comfey", "Buneary", "Haunter", "Combusken", "Marshadow", "Lugia"
         ) 
@@ -376,7 +376,7 @@ class Chests(commands.Cog):
             msg = f"You received {amount} redeems!\n"
         elif reward == "radiant":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True, boosted=True)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam', boosted=True)
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted gleam {pokemon}!**\n"
         gems = random.randint(10, 15)
         async with ctx.bot.db[0].acquire() as pconn:
