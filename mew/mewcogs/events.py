@@ -1507,7 +1507,7 @@ class ChristmasSpawn(discord.ui.View):
     """A spawn embed for a christmas spawn."""
 
     def __init__(self, cog, channel, poke: str):
-        super().__init__(timeout=120)
+        super().__init__(timeout=140)
         self.cog = cog
         self.channel = channel
         self.poke = poke
