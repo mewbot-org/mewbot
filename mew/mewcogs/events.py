@@ -470,7 +470,7 @@ class Events(commands.Cog):
             # Convert potions for mask
             if option == 2:
                 await pconn.execute("UPDATE halloween SET pumpkin = pumpkin + 1 WHERE u_id = $1", ctx.author.id)
-                await ctx.send(f"Successfully bought 1 pumpkin for {price} <:mewbot_potion:1036332369076043776>.")
+                await ctx.send(f"Successfully bought 1 Scary  for {price} <:mewbot_potion:1036332369076043776>.")
             # Spooky Chest
             if option == 4:
                 inventory = await pconn.fetchval(
@@ -640,38 +640,38 @@ class Events(commands.Cog):
                 inventory,
                 ctx.author.id,
             )
-        reward = random.choices(
-            ("radiant", "missingno", "redeem", "cred", "trick"),
-            weights=(0.01, 0.19, 0.2, 0.3, 0.3),
-        )[0]
-        if reward == "radiant":
-            pokemon = random.randchoice(self.HALLOWEEN_RADIANT)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
-        elif reward == "redeem":
-            amount = random.randint(1, 10)
-            async with ctx.bot.db[0].acquire() as pconn:
-                await pconn.execute(
-                    "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
-                    amount,
-                    ctx.author.id,
-                )
-            msg = "You received 1 redeem!\n"
-        elif reward == "cred":
-            amount = random.randint(25, 50) * 1000
-            async with ctx.bot.db[0].acquire() as pconn:
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                    amount,
-                    ctx.author.id,
-                )
-            msg = f"You received {amount} credits!\n"
-        elif reward == "missingno":
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
-            msg = f"You received a Missingno!\n"
-        elif reward == "trick":
-            await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
-            return
+            reward = random.choices(
+                ("gleam", "missingno", "redeem", "cred", "trick"),
+                weights=(0.01, 0.19, 0.2, 0.3, 0.3),
+            )[0]
+            if reward == "gleam":
+                pokemon = random.choice(self.HALLOWEEN_RADIANT)
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='halloween')
+                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Halloween {pokemon}!**\n"
+            elif reward == "redeem":
+                amount = random.randint(1, 10)
+                async with ctx.bot.db[0].acquire() as pconn:
+                    await pconn.execute(
+                        "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                        amount,
+                        ctx.author.id,
+                    )
+                msg = "You received 1 redeem!\n"
+            elif reward == "cred":
+                amount = random.randint(25, 50) * 1000
+                async with ctx.bot.db[0].acquire() as pconn:
+                    await pconn.execute(
+                        "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                        amount,
+                        ctx.author.id,
+                    )
+                msg = f"You received {amount} credits!\n"
+            elif reward == "missingno":
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
+                msg = f"You received a Missingno!\n"
+            elif reward == "trick":
+                await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
+                return
         bones = random.randint(1, 3)
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute("UPDATE halloween SET bone = bone + $1 WHERE u_id = $2", bones, ctx.author.id)
@@ -700,47 +700,49 @@ class Events(commands.Cog):
                 inventory,
                 ctx.author.id,
             )
-        reward = random.choices(
-            ("radiant", "rarechest", "mythicchest", "missingno", "trick"),
-            weights=(0.15, 0.3, 0.10, 0.15, 0.3),
-        )[0]
+            reward = random.choices(
+                ("gleam", "rarechest", "mythicchest", "missingno", "trick"),
+                weights=(0.15, 0.3, 0.10, 0.15, 0.3),
+            )[0]
 
-        if reward == "radiant":
-            pokemon = random.randchoice(self.HALLOWEEN_RADIANT)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
+            if reward == "gleam":
+                pokemon = random.choice(self.HALLOWEEN_RADIANT)
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='halloween')
+                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Halloween {pokemon}!**\n"
 
-        elif reward == "mythicchest":
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            inventory["mythic chest"] = inventory.get("mythic chest", 0) + 1
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                ctx.author.id,
-            )
-            msg = "You received a Mythic Chest!\n"
+            elif reward == "mythicchest":
 
-        elif reward == "rarechest":
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            inventory["rare chest"] = inventory.get("rare chest", 0) + 1
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                ctx.author.id,
-            )
-            msg = "You received a Rare Chest!\n"
+                inventory = await pconn.fetchval(
+                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+                )
+                inventory["mythic chest"] = inventory.get(
+                    "mythic chest", 0) + 1
+                await pconn.execute(
+                    "UPDATE users SET inventory = $1::json where u_id = $2",
+                    inventory,
+                    ctx.author.id,
+                )
+                msg = "You received a Mythic Chest!\n"
 
-        elif reward == "missingno":
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
-            msg = f"You received a Missingno!\n"
+            elif reward == "rarechest":
+                inventory = await pconn.fetchval(
+                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+                )
+                inventory["rare chest"] = inventory.get("rare chest", 0) + 1
+                await pconn.execute(
+                    "UPDATE users SET inventory = $1::json where u_id = $2",
+                    inventory,
+                    ctx.author.id,
+                )
+                msg = "You received a Rare Chest!\n"
 
-        elif reward == "trick":
-            await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
-            return
+            elif reward == "missingno":
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
+                msg = f"You received a Missingno!\n"
+
+            elif reward == "trick":
+                await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
+                return
 
         bones = random.randint(3, 5)
         async with ctx.bot.db[0].acquire() as pconn:
@@ -771,32 +773,34 @@ class Events(commands.Cog):
                 inventory,
                 ctx.author.id
             )
-        reward = random.choices(
-            ("legendchest", "boostedshiny", "radiant", "trick"),
-            weights=(0.155, 0.3, 0.235, .31),
-        )[0]
-        if reward == "boostedshiny":
-            pokemon = random.choice(await self.get_ghosts())
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True)
-            msg = f"You received a shiny boosted IV {pokemon}!\n"
-        elif reward == "radiant":
-            pokemon = random.randchoice(self.HALLOWEEN_RADIANT)
-            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, radiant=True, boosted=True)
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted radiant {pokemon}!**\n"
-        elif reward == "missingno":
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            inventory["legend chest"] = inventory.get("legend chest", 0) + 1
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                ctx.author.id,
-            )
-            msg = "You received a Legend Chest!\n"
-        elif reward == "trick":
-            await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
-            return
+            reward = random.choices(
+                ("legendchest", "boostedshiny", "gleam", "trick"),
+                weights=(0.155, 0.3, 0.235, .31),
+            )[0]
+            if reward == "boostedshiny":
+                pokemon = random.choice(await self.get_ghosts())
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True)
+                msg = f"You received a shiny boosted IV {pokemon}!\n"
+            elif reward == "gleam":
+                pokemon = random.choice(self.HALLOWEEN_RADIANT)
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='halloween', boosted=True)
+                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted Halloween {pokemon}!**\n"
+            elif reward == "missingno":
+                inventory = await pconn.fetchval(
+                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+                )
+                inventory["legend chest"] = inventory.get(
+                    "legend chest", 0) + 1
+                await pconn.execute(
+                    "UPDATE users SET inventory = $1::json where u_id = $2",
+                    inventory,
+                    ctx.author.id,
+                )
+                msg = "You received a Legend Chest!\n"
+            elif reward == "trick":
+                await ctx.send("*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*")
+                return
+
         bones = random.randint(10, 15)
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute("UPDATE halloween SET bone = bone + $1 WHERE u_id = $2", bones, ctx.author.id)
@@ -1302,19 +1306,19 @@ class Events(commands.Cog):
             await pconn.execute("UPDATE halloween SET candy = candy + $1 WHERE u_id = $2", random.randint(2, 5), user.id)
         await channel.send(f"The pokemon dropped some candy!\nUse command `/halloween inventory` to view what you have collected.")
 
-    async def give_potion(self, channel, user):
+    async def give_bone(self, channel, user):
         """Gives potions to the provided user."""
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute("INSERT INTO halloween (u_id) VALUES ($1) ON CONFLICT DO NOTHING", user.id)
             await pconn.execute("UPDATE halloween SET bone = bone + $1 WHERE u_id = $2", random.randint(1, 3), user.id)
-        await channel.send(f"The pokemon dropped some bones!\nUse command `/halloween inventory` to view what you have collected.")
+        await channel.send(f"The pokemon dropped some potions!\nUse command `/halloween inventory` to view what you have collected.")
 
-    async def give_pumpkin(self, channel, user):
+    async def give_scary_mask(self, channel, user):
         """Gives jack-o-laterns to the provided user."""
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute("INSERT INTO halloween (u_id) VALUES ($1) ON CONFLICT DO NOTHING", user.id)
             await pconn.execute("UPDATE halloween SET pumpkin = pumpkin + $1 WHERE u_id = $2", random.randint(1, 2), user.id)
-        await channel.send(f"The pokemon dropped a pumpkin!\nUse command `/halloween inventory` to view what you have collected.")
+        await channel.send(f"The pokemon dropped a scary mask!\nUse command `/halloween inventory` to view what you have collected.")
 
     async def get_ghosts(self):
         data = await self.bot.db[1].ptypes.find({"types": 8}).to_list(None)
@@ -1456,6 +1460,8 @@ class Events(commands.Cog):
         if self.HALLOWEEN_DROPS:
             if not random.randrange(30):
                 await self.give_candy(channel, user)
+            if not random.randrange(10):
+                await self.maybe_spawn_christmas(channel)
         if self.CHRISTMAS_DROPS:
             if not random.randrange(30):
                 await self.give_cheer(channel, user)
@@ -1472,7 +1478,7 @@ class Events(commands.Cog):
             await self.give_egg(channel, user)
         if self.HALLOWEEN_DROPS:
             if not random.randrange(100):
-                await self.give_pumpkin(channel, user)
+                await self.give_scary_mask(channel, user)
             elif not random.randrange(15):
                 await self.give_bone(channel, user)
             elif not random.randrange(4):
@@ -1488,7 +1494,7 @@ class Events(commands.Cog):
             await self.give_egg(channel, user)
         if self.HALLOWEEN_DROPS:
             if not random.randrange(200):
-                await self.give_pumpkin(channel, user)
+                await self.give_scary_mask(channel, user)
             elif not random.randrange(25):
                 await self.give_bone(channel, user)
             elif not random.randrange(4):
@@ -1540,7 +1546,7 @@ class ChristmasSpawn(discord.ui.View):
             small_images = guild["small_images"]
         color = random.choice(RED_GREEN)
         self.embed = discord.Embed(
-            title="A Christmas Pokémon has spawned, join the fight to take it down!",
+            title="A Halloween Pokémon has spawned, join the fight to take it down!",
             color=color,
         )
         self.embed.add_field(name="-", value="Click the button to join!")

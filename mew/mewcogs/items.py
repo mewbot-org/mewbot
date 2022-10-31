@@ -485,7 +485,7 @@ class Items(commands.Cog):
             await ctx.send("That Item is not in the market")
             return
         price = item["price"]
-        price *= amount
+        price *= abs(amount)
         async with ctx.bot.db[0].acquire() as pconn:
             bal = await pconn.fetchval("SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id)
             if bal is None:
