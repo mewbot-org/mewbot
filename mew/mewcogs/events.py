@@ -71,17 +71,19 @@ class Events(commands.Cog):
         ]
         # "Poke name": ["Super effective (2)", "Not very (1)", "No effect (0)", "No effect (0)"]
         self.CHRISTMAS_MOVES = {
-            'Surskit': ['Thunderbolt', 'Razor Leaf', 'Tail Whip', 'Rain Dance'],
-            'Absol': ['Bite', 'Scratch', 'Swords Dance', 'Sucker Punch'],
-            'Litwick': ['Will-o-wips', 'Memento', 'Imprison', 'Ember'],
-            'Gligar': ['Screech', 'Slash', 'Sky Uppercut', 'Guillotine'],
-            'Misdreavus': ['Payback', 'Psywave', 'Spite', 'Confuse Ray'],
-            'Yamper': ['Play Rough', 'Bite', 'Tackle', 'Nuzzle'],
-            'Togepi': ['Ancient Power', 'Double-edge', 'Charm', 'Sweet Kiss'],
-            'Marshadow': ['Assurance', 'Psych Up', 'Sucker Punch', 'Spectral Thief'],
-            'Shroomish': ['Poison Powder', 'Seed Bomb', 'Spore', 'Growth'],
-            'Hatenna': ['Aromatherapy', 'Psychic', 'Play Nice', 'Life Dew'],
+            'Surskit': ['Thunderbolt', 'Razor Leaf', 'Bubble', 'Aqua Ring'],
+            'Absol': ['Draining Kiss', 'Aqua Tail', 'Shadow Sneak', 'Telekinesis'],
+            'Litwick': ['Scald Super', 'Dragon Claw', 'Fairy Wind', 'Will-o-wisp'],
+            'Gligar': ['Hydro Pump', 'Earthquake ', 'Razor Leaf', ' Bug Buzz'],
+            'Misdreavus': ['Payback', 'Psywave', 'Silver Wind', 'Vacuum Wave'],
+            'Yamper': ['Mud Slap', 'Power Whip', 'Thunder Shock', 'Thunder Wave'],
+            'Togepi': ['Acid Super', 'Water Shuriken', 'Bug Buzz', 'Dragon Rage'],
+            'Marshadow': ['Bitter Malice', 'Fire Spin', 'Bug Bite', 'Low Kick'],
+            'Shroomish': ['Dual Wingbeat', 'Grassy Glide', 'Hyper Voice', 'Leech Seed'],
+            'Hatenna': ['Bite', 'Psyshock', 'Moonblast', 'Leer'],
+
         }
+
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
         self.UNOWN_MESSAGE = None
