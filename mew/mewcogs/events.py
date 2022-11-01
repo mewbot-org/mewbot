@@ -704,7 +704,7 @@ class Events(commands.Cog):
             )
             reward = random.choices(
                 ("gleam", "rarechest", "mythicchest", "missingno", "trick"),
-                weights=(0.15, 0.3, 0.10, 0.15, 0.3),
+                weights=(0.35, 0.10, 0.05, 0.15, 0.35),
             )[0]
 
             if reward == "gleam":
