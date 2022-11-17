@@ -475,7 +475,7 @@ class Breeding(commands.Cog):
             auto = females.endswith("auto")
             if auto:
                 females = females[:-4]
-            females_list = [int(x) for x in females.split(" ") if x.isdigit()]
+            females_list = list(set([int(x) for x in females.split(" ") if x.isdigit()]))
         
         elif type(females) == list:
             auto = females[-1] == "auto"

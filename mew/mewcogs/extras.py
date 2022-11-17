@@ -870,10 +870,10 @@ class Extras(commands.Cog):
             hitem = details["held_item"]
             desc = f"{tnick if tnick is not None else user.name}'s\n__**Balances**__"
             desc += f"\n<:mewcoin:1010959258638094386>**Credits**: `{mewcoins:,}`"
-            desc += f"\n<:rtedee2m:817647281364271144>**Redeems**: `{redeems:,}`"
-            desc += f"\n<:evs:818149979428093983>**EV Points**: `{evpoints:,}`"
-            desc += f"\n<:upvote:817898847320801300>**Upvote Points**: `{uppoints}`"
-            desc += f"\n<:upvote:817898847320801300>**Vote Streak**: `{vote_streak}`"
+            desc += f"\n<:redeem:1037942226132668417>**Redeems**: `{redeems:,}`"
+            desc += f"\n<:evs:1029331432792915988>**EV Points**: `{evpoints:,}`"
+            desc += f"\n<:upvote:1037942314691199089>**Upvote Points**: `{uppoints}`"
+            desc += f"\n<:upvotestreak:1037942367929503766>**Vote Streak**: `{vote_streak}`"
             desc += f"\n**Holding**: `{hitem.capitalize().replace('-',' ')}`"
             desc += f"\n**Region**: `{region.capitalize()}`"
             embed = Embed(color=0xFFB6C1, description=desc)

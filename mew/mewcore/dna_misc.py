@@ -9,7 +9,7 @@ class MewMisc:
         self.bot = bot
         self.emotes = {
             "CREDITS" : "<:mewcoin:1010959258638094386>",
-            "REDEEMS": "<:rtedee2m:817647281364271144>"
+            "REDEEMS": "<:redeem:1037942226132668417>"
         }
     
     def get_skin_emote(self, *, blank="", shiny=False, radiant=False, gleam=False, skin=None):
@@ -48,6 +48,8 @@ class MewMisc:
             emoji = "<:gleam:1010559151472115772>"
         elif shiny:
             emoji = ':star2:'
+        elif blank != "":
+            emoji = "<:blank:1012504803496177685>"
         return emoji
 
     def get_type_emote(self, t):

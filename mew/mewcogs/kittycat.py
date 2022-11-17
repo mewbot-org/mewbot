@@ -879,10 +879,38 @@ class KittyCat(commands.Cog):
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
+    @check_investigator()
+    @commands.hybrid_command(aliases=["serverban"])
+    async def banserver(self, ctx, id):
+        id = int(id)
+        """INVESTIGATOR: Ban a server"""
+        sbans = set(ctx.bot.banned_guilds)
+        if id in sbans:
+            await ctx.send("That server is already banned.")
+            return
+        sbans.add(id)
+        await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
+        await ctx.send(f"```Elm\n-Successfully Banned {await ctx.bot.fetch_guild(id)}```")
+        await self.load_bans_cross_cluster()
+
+    @check_investigator()
+    @commands.hybrid_command(aliases=["serverunban", "unserverban"])
+    async def unbanserver(self, ctx, id):
+        """INVESTIGATOR: UNBan a server"""
+        id = int(id)
+        sbans = set(ctx.bot.banned_guilds)
+        if id not in sbans:
+            await ctx.send("That server is not banned.")
+            return
+        sbans.remove(id)
+        await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
+        await ctx.send(f"```Elm\n- Successfully Unbanned {await ctx.bot.fetch_guild(id)}```")
+        await self.load_bans_cross_cluster()
+
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def chest(self, ctx, user_id, chest: Literal["legend chest", "mythic chest", "rare chest", "common chest"], amount: int):
+    async def chest(self, ctx, user_id, chest: Literal["legend chest", "mythic chest", "rare chest", "common chest", "horrific chest"], amount: int):
         """Add a chest"""
         user_id = int(user_id)
         async with ctx.bot.db[0].acquire() as pconn:

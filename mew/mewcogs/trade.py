@@ -176,6 +176,10 @@ class TradeMainView(discord.ui.View):
             attrs.append(
                 self.ctx.bot.misc.get_skin_emote(skin=name["skin"])
             )
+        else:
+            attrs.append(
+                self.ctx.bot.misc.get_skin_emote(blank="blank")
+            )
 
         return name, attrs
     

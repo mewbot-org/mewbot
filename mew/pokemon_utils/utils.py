@@ -285,14 +285,6 @@ async def get_pokemon_info(ctx, records, info_type=None):
 
     iurl = await get_pokemon_image(pn, ctx.bot, shiny, radiant=radiant, skin=skin)
 
-    skindisp = ""
-    if skin == "shadow":
-        skindisp = "<:emoji_55:947332001122385940><:emoji_56:947332044273360987><:emoji_57:947332082047266856>"
-    elif skin == "glitch":
-        skindisp = "<a:glitch1:988175512109211728><a:glitch2:988175552009629696><a:glitch3:988175669584355390><a:glitch4:988175155954061394>"
-    elif skin:
-        skindisp = "<:sp6:875570797673086986><:sp5:875570797668876298><:sp4:875570797589172274><:sp3:875570797148770375><:sp2:875570797199118388><:sp1:875570797173948458>"
-
     nature = await ctx.bot.db[1].natures.find_one({"identifier": nature.lower()})
     dec_stat_id = nature["decreased_stat_id"]
     inc_stat_id = nature["increased_stat_id"]
@@ -379,12 +371,12 @@ async def get_pokemon_info(ctx, records, info_type=None):
         if "arceus-" in pn.lower():
             tlist = pn.split("-")[1]
     else:
-        hp = "?"
-        attack = "?"
-        defense = "?"
-        specialattack = "?"
-        specialdefense = "?"
-        speed = "?"
+        hp = attack = defense = specialattack = specialdefense = speed = 000
+        # attack = "000"
+        # defense = "000"
+        # specialattack = "000"
+        # specialdefense = "000"
+        # speed = "?"
         abilities = "?"
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
@@ -465,7 +457,6 @@ async def get_pokemon_info(ctx, records, info_type=None):
     desc += f"`Sp. Def:  {specialdefense:03d} `{blank}` {spdefiv:02d} | {spdev_display}`\n"
     desc += f"`Speed:    {speed:03d} `{blank}` {speediv:02d} | {speedev_display}`\n"
     desc += f"`IV %` {blank*5} `{ivs}%`\n"
-    desc += f"{skindisp}"
     embed.description = desc
 
     # desc += f"**<:lvl:1029030189981765673> {plevel}**\n**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n\n"

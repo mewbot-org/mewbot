@@ -25,8 +25,8 @@ class Events(commands.Cog):
         # Seasonal toggles
         self.EASTER_DROPS = False
         self.EASTER_COMMANDS = False
-        self.HALLOWEEN_DROPS = True
-        self.HALLOWEEN_COMMANDS = True
+        self.HALLOWEEN_DROPS = False
+        self.HALLOWEEN_COMMANDS = False
         self.CHRISTMAS_DROPS = False
         self.CHRISTMAS_COMMANDS = False
         self.EGGS = (
@@ -787,7 +787,7 @@ class Events(commands.Cog):
                 pokemon = random.choice(self.HALLOWEEN_RADIANT)
                 await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='halloween', boosted=True)
                 msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted Halloween {pokemon}!**\n"
-            elif reward == "missingno":
+            elif reward == "legendchest":
                 inventory = await pconn.fetchval(
                     "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
                 )
@@ -1490,6 +1490,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_poke_breed(self, channel, user):
+        return
         if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS and not random.randrange(18):

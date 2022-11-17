@@ -15,7 +15,7 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = (
-            "Pichu", "Toxel", "Golett", "Comfey", "Buneary", "Haunter", "Combusken", "Marshadow", "Lugia"
+            "Absol", "Palkia", "Hoppip", "Rockruff", "Kartana", "Zorua-hisui", "Growlithe", "Smeargle"
         ) 
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
@@ -378,6 +378,85 @@ class Chests(commands.Cog):
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam', boosted=True)
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted gleam {pokemon}!**\n"
+        gems = random.randint(10, 15)
+        async with ctx.bot.db[0].acquire() as pconn:
+            inv = await pconn.fetchval(
+                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            )
+            inv["radiant gem"] = inv.get("radiant gem", 0) + gems
+            await pconn.execute(
+                "UPDATE users SET inventory = $1::json where u_id = $2",
+                inv,
+                ctx.author.id,
+            )
+        msg += f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
+        msg += await self._maybe_spawn_event(ctx, .33)
+        await ctx.send(msg)
+
+
+    @chest.command(name="art")
+    async def art_team(self, ctx):
+        """Open an art chest."""
+        async with ctx.bot.db[0].acquire() as pconn:
+            inventory = await pconn.fetchval(
+                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            )
+            if inventory is None:
+                await ctx.send(f"You have not Started!\nStart with `/start` first!")
+                return
+            if "art chest" not in inventory or inventory["art chest"] <= 0:
+                await ctx.send("You do not have any Art Chests!")
+                return
+            inventory["art chest"] = inventory.get("art chest", 0) - 1
+            await pconn.execute(
+                "UPDATE users SET inventory = $1::json where u_id = $2",
+                inventory,
+                ctx.author.id
+            )
+
+        reward = random.choices(
+            ("boostedshinylegendary", "redeem", "radiant", "gleam", "boostedgleam", "boostedshiny"),
+            weights=(0.015, 0.05, 0.15, 0.315, 0.235, 0.235),
+        )[0]
+
+        if reward == "custom":
+            msg = "You have received a public voucher that allows you to submit your own recolor with background for any unreleased gleam pokemon, and it will be added to the following months lineup for everyone to obtain! Message Sky in the official server for more information!\nAlso, you of course get the one you design guaranteed. "
+            await ctx.bot.get_partial_messageable(998291646443704320).send(f"<@631840748924436490> USER ID `{ctx.author.id}` HAS WON A 'Totally Custom Pokemon skin PUBLIC voucher'!")
+        elif reward == "boostedshinylegendary":
+            pokemon = random.choice(LegendList)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True)
+            msg = f"You received a shiny boosted IV {pokemon}!\n"
+        elif reward == "boostedshiny":
+            pokemon = random.choice(pList)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True)
+            msg = f"You received a shiny boosted IV {pokemon}!\n"
+        elif reward == "redeem":
+            amount = random.randint(30, 50)
+            async with ctx.bot.db[0].acquire() as pconn:
+                await pconn.execute(
+                    "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                    amount,
+                    ctx.author.id,
+                )
+            msg = f"You received {amount} redeems!\n"
+
+        elif reward == "radiant":
+            pokemon = random.choice(self.CURRENTLY_ACTIVE)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='radiant')
+            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted radiant {pokemon}!**\n"
+
+        elif reward == "gleam":
+            pokemon = random.choice(self.CURRENTLY_ACTIVE)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam')
+            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted gleam {pokemon}!**\n"
+
+
+        elif reward == "boostedgleam":
+            pokemon = random.choice(self.CURRENTLY_ACTIVE)
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, skin='gleam', boosted=True)
+            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted gleam {pokemon}!**\n"
+
+
         gems = random.randint(10, 15)
         async with ctx.bot.db[0].acquire() as pconn:
             inv = await pconn.fetchval(
