@@ -18,7 +18,7 @@ UNSELLABLE = [
     "coin-case",
     "daycare-space",
     "market-space",
-    "radiant gem",
+    "gleam gem",
     "legend",
     "mythic",
     "rare",

@@ -946,7 +946,7 @@ class Events(commands.Cog):
                 inventory = await pconn.fetchval("SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id)
                 inventory["radiant gem"] = inventory.get("radiant gem", 0) + 1
                 await pconn.execute("UPDATE users SET inventory = $1::json, holidayinv = $2::json WHERE u_id = $3", inventory, holidayinv, ctx.author.id)
-                await ctx.send(f"You bought 1x radiant gem.")
+                await ctx.send(f"You bought 1x gleam gem.")
             if option == 5:
                 if holidayinv["coal"] < 200:
                     await ctx.send("You don't have enough coal for that!")

@@ -106,7 +106,7 @@ class FishingSpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             embed = self.embedmsg.embeds[0]
             embed.title = f"The {pokemon} escaped."
             embed.description = ""
-            embed.set_footer(text=f"You have lost an Energy Point - You have {energy} remaining!")
+            embed.set_footer(text=f"You have lost an Energy Point - You have {energy-1} remaining!")
             return await self.embedmsg.edit(embed=embed, view=self.view)
 
         # Someone caught the poke, create it
@@ -167,7 +167,7 @@ class FishingSpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                 value=f"Your Fishing Level is now Level {level}",
             )
         
-        e.set_footer(text=f"You have lost an Energy Point - You have {energy} remaining!")
+        e.set_footer(text=f"You have lost an Energy Point - You have {energy-1} remaining!")
         #
         user = await interaction.client.mongo_find(
             "users",

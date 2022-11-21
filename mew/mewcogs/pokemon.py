@@ -93,9 +93,9 @@ class Pokemon(commands.Cog):
             if poke not in total:
                 continue
             if poke not in owned:
-                desc += f"**{poke}** - <a:cuscross:529192535642603530>\n"
+                desc += f"**{poke}** - <a:abrillianceCROSSX:1044340450938589204>\n"
             elif include_owned:
-                desc += f"**{poke}** - <a:cuscheck:534740177147396097>\n"
+                desc += f"**{poke}** - <a:check_arn:1044340391748571136>\n"
         embed = discord.Embed(
             title=f"You have {len(owned)} out of {len(total)} available Pokemon!",
             colour=random.choice(self.bot.colors),
@@ -664,7 +664,7 @@ class Pokemon(commands.Cog):
         abilities = ", ".join(abilities).capitalize()
         forms = forms.capitalize()
         embed.add_field(
-            name="Pokemon information",
+            name="<:blank:1012504803496177685>",
             value=(
                 f"**Abilities**: {abilities}\n"
                 f"**Types**: {tlist}\n"
