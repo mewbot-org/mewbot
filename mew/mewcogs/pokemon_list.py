@@ -465,7 +465,6 @@ pList = [
     "Fearow",
     "Ekans",
     "Arbok",
-    "Pikachu",
     "Raichu",
     "Raichu-alola",
     "Sandshrew",
@@ -1245,6 +1244,7 @@ starterList = [
     "Marshtomp",
     "Swampert",
     "Eevee",
+    "Pikachu"
     "Chespin",
     "Quilladin",
     "Chesnaught",

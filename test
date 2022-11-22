@@ -1,5 +1,0 @@
-OUTPUT=$(echo "`date +"%Y-%m-%d-%H-%M"`")
-echo ["`date +"%b %d %H:%M"`"] Beginning backup
-pg_dump -h localhost -p 5432 -U postgres -d mewbot -Fc > "$HOME/backups/postgres-backups/${OUTPUT}.dump"
-# mongodump --uri mongodb://localhost:27017 -o "/home/ubuntu/backups/mongo-backups/${OUTPUT}"
-echo ["`date +"%b %d %H:%M"`"] Finished backup
