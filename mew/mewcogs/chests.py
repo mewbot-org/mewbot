@@ -15,7 +15,7 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = (
-            "Absol", "Palkia", "Hoppip", "Rockruff", "Kartana", "Zorua-hisui", "Growlithe", "Smeargle"
+            "Poipole, Jirachi, Gligar, Cubone, Wooloo, Spinda, Rowlet",
         ) 
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
