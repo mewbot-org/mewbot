@@ -286,7 +286,12 @@ galarians = [
     "Slowking-galar",
     "Slowbro-galar",
 ]
-
+paldeans = [
+    "Wooper-paldea",
+    "Tauros-paldea",
+    "Tauros-water-paldea",
+    "Tauros-fire-paldea",
+]
 hisuians = [
     "Arcanine-hisui",
     "Avalugg-hisui",
@@ -310,6 +315,79 @@ hisuians = [
 # ALL POKEMON SHOULD BE IN EXACTLY ONE OF THE FOLLOWING LISTS ------------------------
 # basic pokemon that are not one of the other categories
 pList = [
+    "Lechonk",
+    "Oinkologne",
+    "Tarountula",
+    "Spidops",
+    "Nymble",
+    "Lokix",
+    "Pawmi",
+    "Pawmo",
+    "Pawmot",
+    "Wooper-paldea",
+    "Tauros-paldea",
+    "Clodsire",
+    "Tandemaus",
+    "Maushold",
+    "Fidough",
+    "Dachsbun",
+    "Smoliv",
+    "Dolliv",
+    "Arboliva",
+    "Squawkabilly",
+    "Nacli",
+    "Naclstack",
+    "Garganacl",
+    "Annihilape",
+    "Charcadet",
+    "Armarouge",
+    "Ceruledge",
+    "Tadbulb",
+    "Bellibolt",
+    "Wattrel",
+    "Kilowattrel",
+    "Dudunsparce",
+    "Farigiraf",
+    "Maschiff",
+    "Mabosstiff",
+    "Shroodle",
+    "Grafaiai",
+    "Bramblin",
+    "Brambleghast",
+    "Toedscool",
+    "Toedscruel",
+    "Klawf",
+    "Capsakid",
+    "Scovillain",
+    "Rellor",
+    "Rabsca",
+    "Flittle",
+    "Espathra",
+    "Tinkatink",
+    "Tinkatuff",
+    "Tinkaton",
+    "Wiglett",
+    "Wugtrio",
+    "Bombirdier",
+    "Finizen",
+    "Palafin",
+    "Varoom",
+    "Revavroom",
+    "Cyclizar",
+    "Orthworm",
+    "Glimmet",
+    "Glimmora",
+    "Greavard",
+    "Houndstone",
+    "Flamigo",
+    "Cetoddle",
+    "Cetitan",
+    "Kingambit",
+    "Veluza",
+    "Dondozo",
+    "Tatsugiri",
+    "Gimmighoul",
+    "Gholdengo",
     "Skwovet",
     "Greedent",
     "Rookidee",
@@ -1173,10 +1251,22 @@ pseudoList = [
     "Dratini",
     "Dragonair",
     "Dragonite",
+    "Frigibax",
+    "Arctibax",
+    "Baxcalibur",
 ]
 
 # starter pokemon
 starterList = [
+    "Sprigatito",
+    "Floragato",
+    "Meowscarada",
+    "Fuecoco",
+    "Crocalor",
+    "Skeledirge",
+    "Quaxly",
+    "Quaxwell",
+    "Quaquaval",
     "Grookey",
     "Decidueye-hisui",
     "Typhlosion-hisui",
@@ -1244,7 +1334,7 @@ starterList = [
     "Marshtomp",
     "Swampert",
     "Eevee",
-    "Pikachu"
+    "Pikachu",
     "Chespin",
     "Quilladin",
     "Chesnaught",
@@ -1258,6 +1348,12 @@ starterList = [
 
 # legendary pokemon
 LegendList = [
+    "Chien-pao",
+    "Chi-yu",
+    "Ting-lu",
+    "Wo-chien",
+    "Koraidon",
+    "Miraidon",
     "Enamorus",
     "Tapu-koko",
     "Tapu-lele",
@@ -1365,6 +1461,20 @@ ubList = [
     "Naganadel",
     "Stakataka",
     "Blacephalon",
+    "Iron-treads",
+    "Iron-jugulis",
+    "Iron-bundle",
+    "Iron-valiant",
+    "Iron-hands",
+    "Iron-moth",
+    "Iron-thorns",
+    "Great-tusk",
+    "Brute-bonnet",
+    "Scream-tail",
+    "Sandy-shocks",
+    "Slither-wing",
+    "Flutter-mane",
+    "Roaring-moon",
 ]
 
 # TOTAL LIST SHOULD CONTAIN EACH POKEMON ONCE
@@ -1390,6 +1500,7 @@ emotes = [
     "<a:bulbaload:773315942628982794>",
     "<a:chanduload:773314380720766986>",
 ]
+
 
 def is_formed(name):
     if any(
@@ -1607,9 +1718,13 @@ def is_formed(name):
         return True
     return False
 
+
 # OLD TRANSLATION CODE - NOT FUNCTIONING BUT INTEGRATED IN THE BOT SOMEWHAT STILL TO THE POINT THAT REMOVING IT BREAKS TOO MUCH SHIT
+
+
 def parse(string):
     return f"`{string}`"
+
 
 async def tr(text: str, variables):
     first_text = text
@@ -1649,12 +1764,16 @@ async def tr(text: str, variables):
                 ctx.bot.language_strings,
             )
             if not entry:
-                await ctx.bot.owner.send(f"Appending {first_text} For language - {language}")
+                await ctx.bot.owner.send(
+                    f"Appending {first_text} For language - {language}"
+                )
                 ctx.bot.language_strings.append({"en": first_text, language: "None"})
             elif entry and not language in entry:
                 new_entry = entry
                 new_entry[language] = "None"
-                ctx.bot.language_strings[ctx.bot.language_strings.index(entry)] = new_entry
+                ctx.bot.language_strings[
+                    ctx.bot.language_strings.index(entry)
+                ] = new_entry
             elif entry and language in entry:
                 text = entry.get(language)
             try:
@@ -1665,9 +1784,9 @@ async def tr(text: str, variables):
             except:
                 await ctx.bot.owner.send(parse(language))
                 await ctx.bot.owner.send(parse(first_text))
-            ctx.bot.language_strings = (await ctx.bot.translations_collection.find_one())[
-                "translations"
-            ]
+            ctx.bot.language_strings = (
+                await ctx.bot.translations_collection.find_one()
+            )["translations"]
             text = first_text
             await ctx.bot.owner.send(f"{first_text}\nNeeds to be translated")
         else:
@@ -1694,8 +1813,14 @@ async def tr(text: str, variables):
                         + word.split("-")[1:]
                     )
                 else:
-                    id = [i["pokemon_id"] for i in FORMS if i["identifier"] == word.lower()][0]
-                    text = text.replace(word, ctx.bot.pokemon_names.get(language)[id - 1])
+                    id = [
+                        i["pokemon_id"]
+                        for i in FORMS
+                        if i["identifier"] == word.lower()
+                    ][0]
+                    text = text.replace(
+                        word, ctx.bot.pokemon_names.get(language)[id - 1]
+                    )
     return text
 
 

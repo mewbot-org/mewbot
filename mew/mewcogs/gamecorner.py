@@ -15,9 +15,11 @@ def generate(luck):
     luck = 10 if luck > 10 else luck
     return max(1, int(random.random() * int(35 - (luck - 1) * 0.75)))
 
+
 # old
 def all_equal(iterator):
     return len(set(iterator)) <= 1
+
 
 # old
 def two_equal(iterator):
@@ -27,10 +29,13 @@ def two_equal(iterator):
     return any([all_equal(first), all_equal(second), all_equal(last)])
 
 
-slot_gif = "http://images.mewbot.me/Lychee/uploads/big/7634c78a96f38b892db08cf68c25d0b8.gif"
+slot_gif = (
+    "http://images.mewbot.me/Lychee/uploads/big/7634c78a96f38b892db08cf68c25d0b8.gif"
+)
 
 # New
 spin_emoji = "<:Poke:844434416935108630>"
+
 
 class RewardsEnum(IntEnum):
     FILLER1 = 0
@@ -47,10 +52,12 @@ class RewardsEnum(IntEnum):
     FIRST_TIER = 11
     JACKPOT = 12
 
+
 class Reroll(IntEnum):
     OFF = 0
     ON = 1
     ON_JACKPOT = 2
+
 
 # I initially had no idea what to internally call the bet tiers.
 # So I named them after warrior cats because I like them.
@@ -58,30 +65,34 @@ class Reroll(IntEnum):
 # like this since I want something warrior cats related in
 # the source code.
 
-class BetTiers():
+
+class BetTiers:
     """Stores all tier metadata types (maybe could be a debug command or smth), but def useful for development
     Types:
-     
+
     range - anything with begin and end ONLY as keys
-     
+
     Devs should add other tier metadata types as they add stuff
     """
+
     _metadata_types = {
         "breed": "range",
     }
     _tiers = [
         {
-            "min": 100, # Minimum coins needed
-            "max": 1000, # Maximum coins for tier, set last tier to None to mean no maximum
+            "min": 100,  # Minimum coins needed
+            "max": 1000,  # Maximum coins for tier, set last tier to None to mean no maximum
             "tierName": "Bronze",
-            "internalName": "Shadowsight", # Just to make it easier to debug/Give unique names that aren't used everywhere and can never change unlike tier names which may change
-            "metadata": { # Metadata for a tier, if the reward of the particular metadata does not exist, omit its group entirely.
-                "_groups": ("breed",), # All groups, this key is very important and can be relied upon existing. WARNING: DO NOT CHANGE GROUP NAMES EVER
+            "internalName": "Shadowsight",  # Just to make it easier to debug/Give unique names that aren't used everywhere and can never change unlike tier names which may change
+            "metadata": {  # Metadata for a tier, if the reward of the particular metadata does not exist, omit its group entirely.
+                "_groups": (
+                    "breed",
+                ),  # All groups, this key is very important and can be relied upon existing. WARNING: DO NOT CHANGE GROUP NAMES EVER
                 "breed": {
-                    "start": 1, # Breed multiplier starts
-                    "end": 5 # Breed multiplier ends
+                    "start": 1,  # Breed multiplier starts
+                    "end": 5,  # Breed multiplier ends
                 },
-            }, 
+            },
         },
         {
             "min": 1000,
@@ -90,10 +101,7 @@ class BetTiers():
             "internalName": "Bristlefrost",
             "metadata": {
                 "_groups": ("breed",),
-                "breed": {
-                    "start": 10,
-                    "end": 20
-                },
+                "breed": {"start": 10, "end": 20},
             },
         },
         {
@@ -103,10 +111,7 @@ class BetTiers():
             "internalName": "Ashfur",
             "metadata": {
                 "_groups": ("breed",),
-                "breed": {
-                    "start": 30,
-                    "end": 50
-                },
+                "breed": {"start": 30, "end": 50},
             },
         },
         {
@@ -116,10 +121,7 @@ class BetTiers():
             "internalName": "Squirrelflight",
             "metadata": {
                 "_groups": ("breed",),
-                "breed": {
-                    "start": 70,
-                    "end": 90
-                },
+                "breed": {"start": 70, "end": 90},
             },
         },
         {
@@ -129,17 +131,14 @@ class BetTiers():
             "internalName": "Snowtuft",
             "metadata": {
                 "_groups": ("breed",),
-                "breed": {
-                    "start": 110,
-                    "end": 150
-                },     
+                "breed": {"start": 110, "end": 150},
             },
         },
     ]
 
-    def  __init__(self, tier):
+    def __init__(self, tier):
         self.tier = tier
-    
+
     @staticmethod
     def get_tier(coins):
         # Gets the tier given a number of coins
@@ -153,19 +152,25 @@ class BetTiers():
 
     def next_tier(self):
         return BetTiers(self._tiers[self._tiers.index(self.tier) + 1])
-    
+
     def __eq__(self, other):
         if isinstance(other, BetTiers):
-            return self.tier["internalName"].upper() == other.tier["internalName"].upper()
+            return (
+                self.tier["internalName"].upper() == other.tier["internalName"].upper()
+            )
         elif isinstance(other, dict):
             return self.tier["internalName"].upper() == other["internalName"].upper()
         elif isinstance(other, str):
-            return self.tier["internalName"].upper() == other.upper() # Handle string compare as well to make comparing easier
+            return (
+                self.tier["internalName"].upper() == other.upper()
+            )  # Handle string compare as well to make comparing easier
         elif isinstance(other, Enum):
-            return self.tier["internalName"].upper() == other.name.upper() # Also handle our old enum code as well
+            return (
+                self.tier["internalName"].upper() == other.name.upper()
+            )  # Also handle our old enum code as well
         return False
-    
-    def coins(self, tier = None): 
+
+    def coins(self, tier=None):
         """Given tier is the tier class itself"""
         if not tier:
             tier = self.tier
@@ -177,7 +182,9 @@ class BetTiers():
         """Returns the friendly string for the tier modifier"""
         try:
             next_tier = self.next_tier()
-            modifier = f"The next tier is {next_tier.tier['tierName']} at {next_tier.coins()}"
+            modifier = (
+                f"The next tier is {next_tier.tier['tierName']} at {next_tier.coins()}"
+            )
             try:
                 next_next_tier = next_tier.next_tier()
                 modifier += f" to {next_next_tier.coins()}"
@@ -190,34 +197,41 @@ class BetTiers():
     # Base Getters
     def _base_range_getter(self, group):
         """
-Metadata Checking Methods
+        Metadata Checking Methods
 
-NOTE: All methods here must check _groups if the thing they are looking for is supported. raise NotImplementedError if so. Callers should handle the error correctly (mostly just pass and/or sending the str of the exception as these rewards are tier specific). If in doubt, use the base getter for your metadata type (see _metadata_types dictionary)
+        NOTE: All methods here must check _groups if the thing they are looking for is supported. raise NotImplementedError if so. Callers should handle the error correctly (mostly just pass and/or sending the str of the exception as these rewards are tier specific). If in doubt, use the base getter for your metadata type (see _metadata_types dictionary)
         """
         if group not in self.tier["metadata"]["_groups"]:
-            raise NotImplementedError(f"This tier does not support the reward '{group}'!")
-        return self.tier["metadata"][group]["start"], self.tier["metadata"][group]["end"]
+            raise NotImplementedError(
+                f"This tier does not support the reward '{group}'!"
+            )
+        return (
+            self.tier["metadata"][group]["start"],
+            self.tier["metadata"][group]["end"],
+        )
 
     # Range Getters
     def get_breed_multi(self):
         return self._base_range_getter("breed")
 
+
 # New
 slot_dict = {
-    RewardsEnum.FILLER1: "<:wailmer:844434417246142514>", # Filler (IMPLEMENTED)
-    RewardsEnum.FILLER2: "<:urs:844434418398527508>", # Filler (IMPLEMENTED)
-    RewardsEnum.FILLER3: "<:star:844434418172559370>", # Filler (IMPLEMENTED)
-    RewardsEnum.FILLER4: "<:poli:844434417933221909>", # Filler (IMPLEMENTED)
-    RewardsEnum.FILLER5: "<:sudo:844434417660329984>", # Filler (IMPLEMENTED)
-    RewardsEnum.FILLER6: "<:star_wars_copy_2_cartoon_charact:844434418281218058>", # Filler (IMPLEMENTED)
-    RewardsEnum.BREED: "<:egg:844434416200712193>", # Breeding (IMPLEMENTED)
-    RewardsEnum.LOSE: "<:gas:844434417816829972>", # Lose Coins (IMPLEMENTED)
-    RewardsEnum.FREE_SPIN: "<:ball5:844434418135203870>", # Free spin (IMPLEMENTED)
-    RewardsEnum.BET_50: "<:Poke:844434416935108630>", # Get 50% Bet (IMPLEMENTED)
-    RewardsEnum.SECOND_TIER: "<:bal3:844434417958256671>", # Second Tier (IMPLEMENTED)
-    RewardsEnum.FIRST_TIER: "<:ball6:844434418197594122>", # First tier (IMPLEMENTED)
-    RewardsEnum.JACKPOT: "<:Crown:844434416856203294>", # Jackpot (IMPLEMENTED)
+    RewardsEnum.FILLER1: "<:wailmer:844434417246142514>",  # Filler (IMPLEMENTED)
+    RewardsEnum.FILLER2: "<:urs:844434418398527508>",  # Filler (IMPLEMENTED)
+    RewardsEnum.FILLER3: "<:star:844434418172559370>",  # Filler (IMPLEMENTED)
+    RewardsEnum.FILLER4: "<:poli:844434417933221909>",  # Filler (IMPLEMENTED)
+    RewardsEnum.FILLER5: "<:sudo:844434417660329984>",  # Filler (IMPLEMENTED)
+    RewardsEnum.FILLER6: "<:star_wars_copy_2_cartoon_charact:844434418281218058>",  # Filler (IMPLEMENTED)
+    RewardsEnum.BREED: "<:egg:844434416200712193>",  # Breeding (IMPLEMENTED)
+    RewardsEnum.LOSE: "<:gas:844434417816829972>",  # Lose Coins (IMPLEMENTED)
+    RewardsEnum.FREE_SPIN: "<:ball5:844434418135203870>",  # Free spin (IMPLEMENTED)
+    RewardsEnum.BET_50: "<:Poke:844434416935108630>",  # Get 50% Bet (IMPLEMENTED)
+    RewardsEnum.SECOND_TIER: "<:bal3:844434417958256671>",  # Second Tier (IMPLEMENTED)
+    RewardsEnum.FIRST_TIER: "<:ball6:844434418197594122>",  # First tier (IMPLEMENTED)
+    RewardsEnum.JACKPOT: "<:Crown:844434416856203294>",  # Jackpot (IMPLEMENTED)
 }
+
 
 class RerollView(discord.ui.View):
     def __init__(self, callback, timeout, uid):
@@ -226,15 +240,16 @@ class RerollView(discord.ui.View):
         self.timeout_fn = timeout
         self.uid = uid
         super().__init__(timeout=180)
-    
+
     @discord.ui.button(label="Reroll", style=discord.ButtonStyle.green)
     async def reroll(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.uid:
             return
         await self.callback
-    
+
     async def on_timeout(self):
         await self.timeout_fn
+
 
 # Begin actual cog code (finally)
 class GameCorner(commands.Cog):
@@ -256,61 +271,64 @@ class GameCorner(commands.Cog):
     @commands.hybrid_command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def dreamslots(
-            self, 
-            ctx: commands.Context, 
-            bet: str, 
-            s1: int, 
-            s2: int, 
-            s3: int,
-            embed: bool = True
-        ):
+        self,
+        ctx: commands.Context,
+        bet: str,
+        s1: int,
+        s2: int,
+        s3: int,
+        embed: bool = True,
+    ):
         """Owner command to manually spin the slots"""
         bet = self._get_bet(bet)
         if not bet:
-            await ctx.send("Bet must be a number. Youcan use k for 1,000 and ht/l for 100,000 (2k etc.)")
+            await ctx.send(
+                "Bet must be a number. Youcan use k for 1,000 and ht/l for 100,000 (2k etc.)"
+            )
             return
         try:
             slot_results = [RewardsEnum(s1), RewardsEnum(s2), RewardsEnum(s3)]
         except Exception as exc:
             await ctx.send(
                 f"DEBUG: Internal Error Occurred **WARNING:** We couldn't kill your dreams because of the following error:\n\n{type(exc).__name__}: {exc}"
-            ) # Give an error
+            )  # Give an error
             raise exc
-        await ctx.send(f"DEBUG: Dreamslots called with {slot_results}.\n**WARNING:** This is where your dreams go to die...")
-        return await self._slotsnew(ctx = ctx, bet = bet, dbg_slot_results = slot_results, embed = embed)
+        await ctx.send(
+            f"DEBUG: Dreamslots called with {slot_results}.\n**WARNING:** This is where your dreams go to die..."
+        )
+        return await self._slotsnew(
+            ctx=ctx, bet=bet, dbg_slot_results=slot_results, embed=embed
+        )
 
     @commands.hybrid_command()
-    async def slots(
-            self,
-            ctx: commands.Context,
-            bet: str,
-            embed: bool = True
-        ):
+    async def slots(self, ctx: commands.Context, bet: str, embed: bool = True):
         """Try your luck in hitting *jackpot* ;)"""
         bet = self._get_bet(bet)
         if not bet:
-            await ctx.send("Bet must be a number.\n**Tip:** You can use k for one thousand and 'ht' or 'l' for hundred thousand (or lakh)")
+            await ctx.send(
+                "Bet must be a number.\n**Tip:** You can use k for one thousand and 'ht' or 'l' for hundred thousand (or lakh)"
+            )
             return
         if embed not in (0, 1):
             return await ctx.send("You can only give 0 or 1 for embed/no embed")
-        return await self._slotsnew(ctx = ctx, bet = bet, embed = embed)
+        return await self._slotsnew(ctx=ctx, bet=bet, embed=embed)
 
     async def _slotsnew(
-            self, 
-            ctx: commands.Context, 
-            bet: int, # How much to bet?
-            embed: bool,
-            dbg_slot_results: Optional[list] = None, # Should be None unless in dreamslots
-            reroll: Optional[Reroll] = None, # Reroll state for previous reroll
-            reroll_reward: Optional[dict] = None, # Reward for reroll currently
-            prev_slot_results: Optional[list] = None, # Previous reroll results
-            in_reroll: Optional[bool] = False, # Whether we are currently in a reroll
-            reroll_luck: Optional[int] = None # Our reroll luck for previous round
-        ):
+        self,
+        ctx: commands.Context,
+        bet: int,  # How much to bet?
+        embed: bool,
+        dbg_slot_results: Optional[list] = None,  # Should be None unless in dreamslots
+        reroll: Optional[Reroll] = None,  # Reroll state for previous reroll
+        reroll_reward: Optional[dict] = None,  # Reward for reroll currently
+        prev_slot_results: Optional[list] = None,  # Previous reroll results
+        in_reroll: Optional[bool] = False,  # Whether we are currently in a reroll
+        reroll_luck: Optional[int] = None,  # Our reroll luck for previous round
+    ):
 
         if in_reroll and reroll.OFF:
             return
-        
+
         MIN_COINS = 100
         MAX_COINS = 250000
         if bet < MIN_COINS or bet > MAX_COINS:
@@ -322,14 +340,19 @@ class GameCorner(commands.Cog):
         tier = BetTiers.get_tier(bet)
         async with ctx.bot.db[0].acquire() as pconn:
             data = await pconn.fetchrow(
-                "SELECT energy, luck, inventory::json FROM users WHERE u_id = $1", ctx.author.id
+                "SELECT energy, luck, inventory::json FROM users WHERE u_id = $1",
+                ctx.author.id,
             )
 
         if not data:
-            await ctx.send(f"You have not started yet!\nStart with `{ctx.prefix}start` first!")
+            await ctx.send(
+                f"You have not started yet!\nStart with `{ctx.prefix}start` first!"
+            )
             return
 
-        luck = data["luck"] if not in_reroll else reroll_luck # Use reroll luck if in a reroll
+        luck = (
+            data["luck"] if not in_reroll else reroll_luck
+        )  # Use reroll luck if in a reroll
         energy = data["energy"]
         items = data["inventory"]
         if not in_reroll:
@@ -339,7 +362,9 @@ class GameCorner(commands.Cog):
 
         # User does not have a coin case
         if not "coin-case" in items:
-            await ctx.send(f"You do not have a coin case yet!\nBuy one with `{ctx.prefix}buy coin case`.")
+            await ctx.send(
+                f"You do not have a coin case yet!\nBuy one with `{ctx.prefix}buy coin case`."
+            )
             return
         coins = items["coin-case"]
 
@@ -354,10 +379,7 @@ class GameCorner(commands.Cog):
 
         if not in_reroll:
             friendly_tier = tier.friendly()
-            e = discord.Embed(
-                title="Slots",
-                color=0xFFB6C1
-            )
+            e = discord.Embed(title="Slots", color=0xFFB6C1)
         else:
             e = discord.Embed(title="Slots Reroll", color=0xFFBC61)
 
@@ -367,20 +389,20 @@ class GameCorner(commands.Cog):
             dmsg = await ctx.send(embed=e)
         else:
             dmsg = await ctx.send(e.description)
-        
+
         # We use predetermined weights here to make things slightly easier for users
-        slot_results = (random.choices(
+        slot_results = random.choices(
             list(RewardsEnum),
             #        F1   F2   F3   F4   F5   F6   BR LO FS  B5  ST  FT  JP
             weights=(1.2, 1.2, 1.3, 1.2, 1.1, 1.0, 5, 9, 10, 12, 11, 9, 7),
-            k = 3
-        ))
+            k=3,
+        )
 
         try:
             for i in range(3):
                 if dbg_slot_results:
                     slot_results[i] = dbg_slot_results[i]
-                
+
                 await asyncio.sleep(0.6)
 
                 # Note to self: Slot dict is a dict defined above that defines all the emojis
@@ -396,7 +418,7 @@ class GameCorner(commands.Cog):
 
         def most_frequent(List):
             """From programiz"""
-            return max(set(List), key = List.count)
+            return max(set(List), key=List.count)
 
         result = RewardsEnum(most_frequent(slot_results))
 
@@ -410,7 +432,7 @@ class GameCorner(commands.Cog):
         # The amount of good/matching slots
         total_good = slot_results.count(result)
         reward = reroll_reward if reroll_curr == Reroll.ON_JACKPOT else {"coin-case": 0}
-        
+
         async def _error(ctx, bet, luck):
             coin_case = -bet * 0.974
             luck -= 2
@@ -418,23 +440,24 @@ class GameCorner(commands.Cog):
                 luck = 0
             return coin_case, luck
 
-
-        if result.name.startswith("FILLER") or (result == RewardsEnum.JACKPOT and total_good < 2):
+        if result.name.startswith("FILLER") or (
+            result == RewardsEnum.JACKPOT and total_good < 2
+        ):
             reward["coin-case"], luck = await _error(ctx, bet, luck)
 
         elif result == RewardsEnum.LOSE:
             if total_good == 2:
                 # 2 coins
-                reward["coin-case"] = ceil(-1*bet*1.5)
+                reward["coin-case"] = ceil(-1 * bet * 1.5)
             else:
                 # 3 coins
-                reward["coin-case"] = ceil(-1*bet*2.5)
+                reward["coin-case"] = ceil(-1 * bet * 2.5)
             e = discord.Embed(
-                title = "You Lose!",
-                description = f"Say good bye to {abs(reward['coin-case'])} coins!", 
-                color = discord.Color.red()
+                title="You Lose!",
+                description=f"Say good bye to {abs(reward['coin-case'])} coins!",
+                color=discord.Color.red(),
             )
-            await ctx.send(embed = e)
+            await ctx.send(embed=e)
 
         elif result == RewardsEnum.FREE_SPIN and total_good == 3:
             await ctx.send("**Free Spin!**")
@@ -445,70 +468,72 @@ class GameCorner(commands.Cog):
             reward["coin-case"] += 2 * bet
             luck += 2
             e = discord.Embed(
-                title = "Second Tier Spin!", 
-                description = "Way to go! You got x2 of your bet and your luck increased by 2!", 
-                color = discord.Color.light_grey()
+                title="Second Tier Spin!",
+                description="Way to go! You got x2 of your bet and your luck increased by 2!",
+                color=discord.Color.light_grey(),
             )
-            await ctx.send(embed = e)
+            await ctx.send(embed=e)
 
         elif result == RewardsEnum.FIRST_TIER and total_good == 3:
             reward["coin-case"] += 3 * bet
             luck += 4
             e = discord.Embed(
-                title = "First Tier Spin!", 
-                description = "Congratulations! You got x3 of your bet and your luck increased by 4!", 
-                color = discord.Color.blue()
+                title="First Tier Spin!",
+                description="Congratulations! You got x3 of your bet and your luck increased by 4!",
+                color=discord.Color.blue(),
             )
-            await ctx.send(embed = e)
+            await ctx.send(embed=e)
 
         elif result == RewardsEnum.BET_50 and total_good == 3:
             reward["coin-case"] += 0.5 * bet
             luck += 1
             e = discord.Embed(
-                title = "50% Bet", 
-                description = "You got 50% of your bet back!",
-                color = discord.Color.magenta()
+                title="50% Bet",
+                description="You got 50% of your bet back!",
+                color=discord.Color.magenta(),
             )
-            await ctx.send(embed = e)
+            await ctx.send(embed=e)
 
         elif result == RewardsEnum.JACKPOT and total_good == 3:
             if reroll_curr == Reroll.ON_JACKPOT:
-                reward["coin-case"] *= 3 # Triple payout
+                reward["coin-case"] *= 3  # Triple payout
                 luck += 4
                 e = discord.Embed(
-                    title = "Reroll Paid Off!", 
-                    description = "That reroll paid off. You win x3 of your bet and your luck has increased by 4", 
-                    color = discord.Color.green()
+                    title="Reroll Paid Off!",
+                    description="That reroll paid off. You win x3 of your bet and your luck has increased by 4",
+                    color=discord.Color.green(),
                 )
-                await ctx.send(embed = e)
+                await ctx.send(embed=e)
             else:
-                reward["coin-case"] = ceil((bet + (bet * (random.uniform(1, 1.5)) + 100)) * 1.15)
-                e = discord.Embed(
-                    title = "Jackpot!", 
-                    description = f"**Congratulations!**\nYou hit the jackpot! You have won {reward['coin-case']} and your luck increased by 7. You can reroll to get triple the money and some luck.",
-                    color = discord.Color.gold()
+                reward["coin-case"] = ceil(
+                    (bet + (bet * (random.uniform(1, 1.5)) + 100)) * 1.15
                 )
-                await ctx.send(embed = e)
+                e = discord.Embed(
+                    title="Jackpot!",
+                    description=f"**Congratulations!**\nYou hit the jackpot! You have won {reward['coin-case']} and your luck increased by 7. You can reroll to get triple the money and some luck.",
+                    color=discord.Color.gold(),
+                )
+                await ctx.send(embed=e)
                 reroll_new = Reroll.ON_JACKPOT
                 luck += 7
 
         elif result == RewardsEnum.JACKPOT and total_good == 2:
             # Always make sure they gain (with balancing)
             luck = ceil(min(luck, 100) * 0.5)
-            coins = ceil(bet + (bet * (random.uniform(1, 1.5)) * 100) * (luck/101))
-            reward["coin-case"] += coins # Anyways will be floored
+            coins = ceil(bet + (bet * (random.uniform(1, 1.5)) * 100) * (luck / 101))
+            reward["coin-case"] += coins  # Anyways will be floored
 
             # Drop luck by 6 for only getting 2 crowns
             luck -= 6
-            if luck < 0: 
+            if luck < 0:
                 luck = 0
             color = discord.Color.blurple()
             e = discord.Embed(
-                title = "2 Crowns",
-                description = f"You got {abs(coins)} coins since you got 2 crowns.",
-                color = color
+                title="2 Crowns",
+                description=f"You got {abs(coins)} coins since you got 2 crowns.",
+                color=color,
             )
-            await ctx.send(embed = e)
+            await ctx.send(embed=e)
 
         elif result == RewardsEnum.BREED and total_good == 3:
             start, end = tier.get_breed_multi()
@@ -517,14 +542,14 @@ class GameCorner(commands.Cog):
                 await pconn.execute(
                     "UPDATE pokes SET counter = (SELECT MAX(steps) FROM (VALUES (pokes.counter - $2), (1)) AS stepoptions(steps)) WHERE id = ANY(SELECT unnest(party) FROM users WHERE u_id = $1) AND counter > 0",
                     ctx.author.id,
-                    steps_lost
+                    steps_lost,
                 )
             if dbg_slot_results:
                 await ctx.send(f"DEBUG: Breeding steps lost = {steps_lost}")
             luck += 1
         else:
             reward["coin-case"], luck = await _error(ctx, bet, luck)
-        
+
         # Helper function to give rewards
         async def give_reward(ctx, items, reward, luck):
             async with ctx.bot.db[0].acquire() as pconn:
@@ -546,6 +571,7 @@ class GameCorner(commands.Cog):
                     floor(luck),
                     ctx.author.id,
                 )
+
         if reroll_new == Reroll.OFF:
             await give_reward(ctx, items, reward, luck)
             if energy - 1 <= 0:
@@ -555,50 +581,55 @@ class GameCorner(commands.Cog):
                 upvote = ctx.bot.get_command("upvote")
                 if upvote is not None:
                     return await ctx.invoke(upvote)
-            return 
+            return
 
         try:
             if reroll_new == Reroll.ON:
                 await ctx.send(
-                    "You can reroll again :)", 
+                    "You can reroll again :)",
                     view=RerollView(
                         self._slotsnew(
-                            ctx = ctx, 
-                            bet = bet, 
-                            embed = embed,
-                            dbg_slot_results = dbg_slot_results, 
-                            reroll = reroll_new, 
-                            reroll_reward = reward, 
-                            prev_slot_results = slot_results, 
-                            in_reroll = True,
-                            reroll_luck = luck
+                            ctx=ctx,
+                            bet=bet,
+                            embed=embed,
+                            dbg_slot_results=dbg_slot_results,
+                            reroll=reroll_new,
+                            reroll_reward=reward,
+                            prev_slot_results=slot_results,
+                            in_reroll=True,
+                            reroll_luck=luck,
                         ),
-                        give_reward(ctx, items, reward, luck), # Give them the reward on timeout
-                        ctx.author.id
-                    )
+                        give_reward(
+                            ctx, items, reward, luck
+                        ),  # Give them the reward on timeout
+                        ctx.author.id,
+                    ),
                 )
             elif reroll_new == Reroll.ON_JACKPOT:
                 await ctx.send(
-                    "Do you want to try rerolling for a chance to triple the money you got?", 
+                    "Do you want to try rerolling for a chance to triple the money you got?",
                     view=RerollView(
                         self._slotsnew(
-                            ctx = ctx, 
-                            bet = bet, 
-                            embed = embed,
-                            dbg_slot_results = dbg_slot_results, 
-                            reroll = reroll_new, 
-                            reroll_reward = reward, 
-                            prev_slot_results = slot_results, 
-                            in_reroll = True,
-                            reroll_luck = luck
+                            ctx=ctx,
+                            bet=bet,
+                            embed=embed,
+                            dbg_slot_results=dbg_slot_results,
+                            reroll=reroll_new,
+                            reroll_reward=reward,
+                            prev_slot_results=slot_results,
+                            in_reroll=True,
+                            reroll_luck=luck,
                         ),
-                        give_reward(ctx, items, reward, luck), # Give them the reward on timeout
-                        ctx.author.id
-                    )
+                        give_reward(
+                            ctx, items, reward, luck
+                        ),  # Give them the reward on timeout
+                        ctx.author.id,
+                    ),
                 )
         except Exception as exc:
             await ctx.send(str(exc))
             return
+
 
 async def setup(bot):
     await bot.add_cog(GameCorner())

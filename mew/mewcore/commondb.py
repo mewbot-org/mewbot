@@ -9,20 +9,24 @@ class UserNotStartedError(Exception):
     Generic exception that is raised when a DB
     util is used on a user who has not started.
     """
+
     pass
 
-class Pokemon():
+
+class Pokemon:
     """Dataclass to hold information about a created pokemon."""
+
     def __init__(self, id, gender, iv_sum, emoji):
         self.id = id
         self.gender = gender
         self.iv_sum = iv_sum
         self.emoji = emoji
 
+
 class CommonDB:
     def __init__(self, bot):
         self.bot = bot
-    
+
     async def remove_poke(self, user_id: int, poke_id: int, delete: bool = False):
         """
         Helper func to remove a pokemon from a user's array.
@@ -50,17 +54,21 @@ class CommonDB:
             if delete:
                 await pconn.execute("DELETE FROM pokes WHERE id = $1", poke_id)
             else:
-                await pconn.execute("UPDATE pokes SET fav = false WHERE id = $1", poke_id)
+                await pconn.execute(
+                    "UPDATE pokes SET fav = false WHERE id = $1", poke_id
+                )
 
     async def shadow_hunt_check(self, user_id: int, pokemon: str):
         """
         Rolls for a shadow pokemon.
-        
+
         Returns True if the given user should get a shadow skin for the given pokemon, False otherwise.
         """
         make_shadow = False
         async with self.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchrow("SELECT hunt, chain FROM users WHERE u_id = $1", user_id)
+            data = await pconn.fetchrow(
+                "SELECT hunt, chain FROM users WHERE u_id = $1", user_id
+            )
             if data is None:
                 return False
             hunt, chain = data
@@ -68,9 +76,13 @@ class CommonDB:
                 return False
             make_shadow = random.random() < ((1 / 12000) * (4 ** (chain / 1000)))
             if make_shadow:
-                await pconn.execute("UPDATE users SET chain = 0 WHERE u_id = $1", user_id)
+                await pconn.execute(
+                    "UPDATE users SET chain = 0 WHERE u_id = $1", user_id
+                )
             else:
-                await pconn.execute("UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id)
+                await pconn.execute(
+                    "UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id
+                )
         return make_shadow
 
     async def create_poke(
@@ -84,19 +96,21 @@ class CommonDB:
         shiny: bool = False,
         skin: str = None,
         gender: str = None,
-        level: int = 1
+        level: int = 1,
     ):
         """
         Creates a poke and gives it to user.
-        
+
         Returns a Pokemon object if the poke was created, and None otherwise.
         """
         form_info = await bot.db[1].forms.find_one({"identifier": pokemon.lower()})
-        pokemon_info = await bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
         try:
+            pokemon_info = await bot.db[1].pfile.find_one(
+                {"id": form_info["pokemon_id"]}
+            )
             gender_rate = pokemon_info["gender_rate"]
         except Exception:
-            bot.logger.warn("No Gender Rate for %s" % pokemon_info["identifier"])
+            bot.logger.warn("No Gender Rate for %s" % pokemon.lower())
             return None
 
         ab_ids = (
@@ -133,7 +147,7 @@ class CommonDB:
                 gender = "-f"
             else:
                 gender = "-m"
-        
+
         if skin:
             shiny = False
             radiant = False
@@ -144,7 +158,9 @@ class CommonDB:
             override_with_shadow = await self.shadow_hunt_check(user_id, pokemon)
             if override_with_shadow:
                 skin = "shadow"
-                await bot.get_partial_messageable(998341289164689459).send(f"`{user_id} - {pokemon}`")
+                await bot.get_partial_messageable(998341289164689459).send(
+                    f"`{user_id} - {pokemon}`"
+                )
         emoji = get_emoji(
             shiny=shiny,
             radiant=radiant,
@@ -174,7 +190,7 @@ class CommonDB:
             "None",
             1,
             nature,
-            level ** 2,
+            level**2,
             "None",
             shiny,
             0,
@@ -193,9 +209,11 @@ class CommonDB:
                 user_id,
                 pokeid,
             )
-        return Pokemon(pokeid, gender, sum((hpiv, atkiv, defiv, spaiv, spdiv, speiv)), emoji)
+        return Pokemon(
+            pokeid, gender, sum((hpiv, atkiv, defiv, spaiv, spdiv, speiv)), emoji
+        )
 
-    class TradeLock():
+    class TradeLock:
         """
         A context manager for tradelocking users.
 
@@ -206,14 +224,19 @@ class CommonDB:
         Any number of users can be passed after the bot param,
         and they will all be tradelocked for the entire duration of the context manager.
         """
+
         def __init__(self, bot, *users: discord.User):
             self.bot = bot
             self.users = users
 
         async def __aenter__(self):
             for user in self.users:
-                await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", str(user.id))
+                await self.bot.redis_manager.redis.execute(
+                    "LPUSH", "tradelock", str(user.id)
+                )
 
         async def __aexit__(self, exc_type, exc_value, traceback):
             for user in self.users:
-                await self.bot.redis_manager.redis.execute("LREM", "tradelock", "1", str(user.id))
+                await self.bot.redis_manager.redis.execute(
+                    "LREM", "tradelock", "1", str(user.id)
+                )

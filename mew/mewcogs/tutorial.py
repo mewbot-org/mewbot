@@ -59,7 +59,7 @@ class Tutorial(commands.Cog):
                 `/buy candy <#>` - Purchase rare candies. Each rare candy increases your Pokemon's level by 1.
                 `/change nature <nature>` - Use a nature capsule to change your Pokemon's nature.
                 `/add evs <amount> <stat>` - Add EVs to your selected pokemon.
-                """
+                """,
             ],
             [
                 "Dueling with your Pokemon",
@@ -324,6 +324,7 @@ class Tutorial(commands.Cog):
     async def help(self, ctx):
         """Opens a brief tutorial providing basic information."""
         await MenuView(ctx, self.pages).start()
+
 
 async def setup(bot):
     await bot.add_cog(Tutorial(bot))

@@ -26,13 +26,14 @@ PREGAME_GIFS = [
 
 class Duel(commands.Cog):
     """Fight pokemon in a duel."""
+
     def __init__(self, bot):
         self.bot = bot
         self.duel_reset_time = None
         self.init_task = asyncio.create_task(self.initialize())
-        
+
         self.games = {}
-        #TODO: swap this to db
+        # TODO: swap this to db
         self.ranks = {}
 
     async def initialize(self):
@@ -65,16 +66,18 @@ class Duel(commands.Cog):
             await ctx.send("You cannot duel yourself!")
             return False
         return await DuelAcceptView(ctx, opponent, battle_type).wait()
-    
+
     async def _check_cooldowns(self, ctx, opponent: discord.Member):
         """Checks daily cooldowns to see if the author can duel."""
-        #Funky neuro code I am going to assume works flawlessly
-        #TODO: This seems to only check that ctx.author hasn't dueled 50 times,
+        # Funky neuro code I am going to assume works flawlessly
+        # TODO: This seems to only check that ctx.author hasn't dueled 50 times,
         #      should it also check opponent?
         perms = ctx.channel.permissions_for(ctx.guild.me)
         if not all((perms.send_messages, perms.embed_links, perms.attach_files)):
             try:
-                await ctx.send("I need `send_messages`, `embed_links`, and `attach_files` perms in order to let you duel!")
+                await ctx.send(
+                    "I need `send_messages`, `embed_links`, and `attach_files` perms in order to let you duel!"
+                )
             except discord.HTTPException:
                 pass
             return False
@@ -108,7 +111,9 @@ class Duel(commands.Cog):
             if self.duel_reset_time.strftime(DATE_FORMAT) == temp_time:
                 self.duel_reset_time = datetime.now()
                 await self.bot.redis_manager.redis.execute(
-                    "SET", "duelcooldownreset", self.duel_reset_time.strftime(DATE_FORMAT)
+                    "SET",
+                    "duelcooldownreset",
+                    self.duel_reset_time.strftime(DATE_FORMAT),
                 )
                 await self.bot.redis_manager.redis.execute("DEL", "dailyduelcooldowns")
                 await self.bot.redis_manager.redis.execute(
@@ -149,12 +154,12 @@ class Duel(commands.Cog):
     async def wrapped_run(self, battle):
         """
         Runs the provided battle, handling any errors that are raised.
-        
+
         Returns the output of the battle, or None if the battle errored.
         """
         winner = None
         duel_start = datetime.now()
-        
+
         try:
             winner = await battle.run()
         except (aiohttp.client_exceptions.ClientOSError, asyncio.TimeoutError) as e:
@@ -171,6 +176,7 @@ class Duel(commands.Cog):
                 "Please post this code in <#888861248907780136> with "
                 "details about what was happening when this error occurred."
             )
+
             def paginate(text: str):
                 """Paginates arbatrary length text."""
                 last = 0
@@ -182,15 +188,17 @@ class Duel(commands.Cog):
                 pages = list(filter(lambda a: a != "", pages))
                 return pages
 
-            stack = ''.join(traceback.TracebackException.from_exception(e).format())
+            stack = "".join(traceback.TracebackException.from_exception(e).format())
             pages = paginate(stack)
             for idx, page in enumerate(pages):
                 if idx == 0:
                     page = f"Exception ID {battle.ctx._interaction.id}\n\n" + page
-                await self.bot.get_partial_messageable(998290393709944842).send(f"```py\n{page}\n```")
+                await self.bot.get_partial_messageable(998290393709944842).send(
+                    f"```py\n{page}\n```"
+                )
             self.games[int(battle.ctx._interaction.id)] = battle
-        
-        if (battle.trainer1.is_human() and battle.trainer2.is_human()):
+
+        if battle.trainer1.is_human() and battle.trainer2.is_human():
             t1 = battle.trainer1
             t2 = battle.trainer2
             # async with self.bot.db[0].acquire() as pconn:
@@ -215,7 +223,7 @@ class Duel(commands.Cog):
             #             await self.bot.get_partial_messageable(550751484694888469).send(embed=embed)
             #         # Swap who to check in an easy way
             #         t1, t2 = t2, t1
-        
+
         return winner
 
     @commands.hybrid_group()
@@ -250,19 +258,27 @@ class Duel(commands.Cog):
                 opponent.id,
             )
         if challenger1 is None:
-            await ctx.send(f"{ctx.author.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!")
+            await ctx.send(
+                f"{ctx.author.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!"
+            )
             return
         if challenger2 is None:
-            await ctx.send(f"{opponent.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!")
+            await ctx.send(
+                f"{opponent.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!"
+            )
             return
         if challenger1["pokname"].lower() == "egg":
-            await ctx.send(f"{ctx.author.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!")
+            await ctx.send(
+                f"{ctx.author.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!"
+            )
             return
         if challenger2["pokname"].lower() == "egg":
-            await ctx.send(f"{opponent.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!")
+            await ctx.send(
+                f"{opponent.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!"
+            )
             return
-        
-        #Gets a Pokemon object based on the specifics of each poke
+
+        # Gets a Pokemon object based on the specifics of each poke
         p1_current = await DuelPokemon.create(ctx, challenger1)
         p2_current = await DuelPokemon.create(ctx, challenger2)
         owner1 = MemberTrainer(ctx.author, [p1_current])
@@ -270,11 +286,11 @@ class Duel(commands.Cog):
 
         battle = Battle(ctx, owner1, owner2)
         winner = await self.wrapped_run(battle)
-        
+
         if winner is None:
             return
-        
-        #Update missions progress
+
+        # Update missions progress
         user = await ctx.bot.mongo_find(
             "users",
             {"user": winner.id},
@@ -283,13 +299,15 @@ class Duel(commands.Cog):
         progress = user["progress"]
         progress["duel-win"] = progress.get("duel-win", 0) + 1
         await ctx.bot.mongo_update("users", {"user": winner.id}, {"progress": progress})
-        
-        #Grant xp
+
+        # Grant xp
         desc = ""
         async with ctx.bot.db[0].acquire() as pconn:
-            for poke in winner.party:       
-                #We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
-                data = await pconn.fetchrow("SELECT hitem, exp FROM pokes WHERE id = $1", poke.id)
+            for poke in winner.party:
+                # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
+                data = await pconn.fetchrow(
+                    "SELECT hitem, exp FROM pokes WHERE id = $1", poke.id
+                )
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
@@ -297,7 +315,7 @@ class Duel(commands.Cog):
                     exp = (150 * poke.level) / 7
                     if held_item == "lucky-egg":
                         exp *= 2.5
-                    #Max int for the exp col
+                    # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
                     desc += f"{poke._starting_name} got {exp} exp from winning.\n"
                 await pconn.execute(
@@ -312,12 +330,12 @@ class Duel(commands.Cog):
     async def party(self, ctx, opponent: discord.Member):
         """A 6v6 duel with another user's selected party."""
         await self.run_party_duel(ctx, opponent)
-    
+
     @duel.command()
     async def inverse(self, ctx, opponent: discord.Member):
         """A 6v6 inverse battle with another user's selected party."""
         await self.run_party_duel(ctx, opponent, inverse_battle=True)
-    
+
     async def run_party_duel(self, ctx, opponent, *, inverse_battle=False):
         """Creates and runs a party duel."""
         battle_type = "party duel"
@@ -341,9 +359,11 @@ class Duel(commands.Cog):
             party1 = await pconn.fetchval(
                 "SELECT party FROM users WHERE u_id = $1",
                 ctx.author.id,
-            ) 
+            )
             if party1 is None:
-                await ctx.send(f"{ctx.author.name} has not Started!\nStart with `/start` first!")
+                await ctx.send(
+                    f"{ctx.author.name} has not Started!\nStart with `/start` first!"
+                )
                 return
             party1 = [x for x in party1 if x != 0]
             raw1 = await pconn.fetch("SELECT * FROM pokes WHERE id = any($1)", party1)
@@ -354,7 +374,9 @@ class Duel(commands.Cog):
                 opponent.id,
             )
             if party2 is None:
-                await ctx.send(f"{opponent.name} has not Started!\nStart with `/start` first!")
+                await ctx.send(
+                    f"{opponent.name} has not Started!\nStart with `/start` first!"
+                )
                 return
             party2 = [x for x in party2 if x != 0]
             raw2 = await pconn.fetch("SELECT * FROM pokes WHERE id = any($1)", party2)
@@ -362,13 +384,17 @@ class Duel(commands.Cog):
             raw2.sort(key=lambda e: party2.index(e["id"]))
 
         if not raw1:
-            await ctx.send(f"{ctx.author.name} has no pokemon in their party!\nAdd some with `/party` first!")
+            await ctx.send(
+                f"{ctx.author.name} has no pokemon in their party!\nAdd some with `/party` first!"
+            )
             return
         if not raw2:
-            await ctx.send(f"{opponent.name} has no pokemon in their party!\nAdd some with `/party` first!")
+            await ctx.send(
+                f"{opponent.name} has no pokemon in their party!\nAdd some with `/party` first!"
+            )
             return
-        
-        #Gets a Pokemon object based on the specifics of each poke
+
+        # Gets a Pokemon object based on the specifics of each poke
         pokes1 = []
         for pdata in raw1:
             poke = await DuelPokemon.create(ctx, pdata)
@@ -388,13 +414,13 @@ class Duel(commands.Cog):
         await battle.trainer1.event.wait()
         await battle.trainer2.event.wait()
         preview_view.stop()
-        
+
         winner = await self.wrapped_run(battle)
-        
+
         if winner is None:
             return
-        
-        #Update mission progress
+
+        # Update mission progress
         user = await ctx.bot.mongo_find(
             "users",
             {"user": winner.id},
@@ -403,15 +429,17 @@ class Duel(commands.Cog):
         progress = user["progress"]
         progress["duel-win"] = progress.get("duel-win", 0) + 1
         await ctx.bot.mongo_update("users", {"user": winner.id}, {"progress": progress})
-        
-        #Grant xp
+
+        # Grant xp
         desc = ""
         async with ctx.bot.db[0].acquire() as pconn:
             for poke in winner.party:
                 if poke.hp == 0 or not poke.ever_sent_out:
                     continue
-                #We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
-                data = await pconn.fetchrow("SELECT hitem, exp FROM pokes WHERE id = $1", poke.id)
+                # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
+                data = await pconn.fetchrow(
+                    "SELECT hitem, exp FROM pokes WHERE id = $1", poke.id
+                )
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
@@ -419,7 +447,7 @@ class Duel(commands.Cog):
                     exp = (150 * poke.level) / 7
                     if held_item == "lucky-egg":
                         exp *= 2.5
-                    #Max int for the exp col
+                    # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
                     desc += f"{poke._starting_name} got {exp} exp from winning.\n"
                 await pconn.execute(
@@ -429,33 +457,38 @@ class Duel(commands.Cog):
                 )
         if desc:
             await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
-    
+
     @duel.command()
     async def npc(self, ctx):
         """A 1v1 duel with an npc AI."""
-        #TODO: remove this
+        # TODO: remove this
         ENERGY_IMMUNE = False
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
             # Reduce energy
             data = await pconn.fetchrow(
-                "SELECT energy, inventory::json FROM users WHERE u_id = $1", ctx.author.id
+                "SELECT energy, inventory::json FROM users WHERE u_id = $1",
+                ctx.author.id,
             )
             if data is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
-        
+
             challenger1 = await pconn.fetchrow(
                 "SELECT * FROM pokes WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
                 ctx.author.id,
             )
             if challenger1 is None:
-                await ctx.send(f"{ctx.author.mention} has not selected a Pokemon!\nSelect one with `/select <id>` first!")
+                await ctx.send(
+                    f"{ctx.author.mention} has not selected a Pokemon!\nSelect one with `/select <id>` first!"
+                )
                 return
             if challenger1["pokname"].lower() == "egg":
-                await ctx.send(f"{ctx.author.mention} has an egg selected!\nSelect a different pokemon with `/select <id>` first!")
+                await ctx.send(
+                    f"{ctx.author.mention} has an egg selected!\nSelect a different pokemon with `/select <id>` first!"
+                )
                 return
-            
+
             if data["energy"] <= 0:
                 await ctx.send("You don't have energy left!")
                 cog = ctx.bot.get_cog("Extras")
@@ -468,7 +501,7 @@ class Duel(commands.Cog):
                     "UPDATE users SET energy = energy - 1 WHERE u_id = $1",
                     ctx.author.id,
                 )
-            
+
             npc_pokemon = await pconn.fetch(
                 (
                     "SELECT * FROM pokes WHERE pokelevel BETWEEN $1 - 10 AND $1 + 10 and not 'tackle' = ANY(moves) "
@@ -479,8 +512,8 @@ class Duel(commands.Cog):
             )
             challenger2 = dict(random.choice(npc_pokemon))
             challenger2["poknick"] = "None"
-        
-        #Gets a Pokemon object based on the specifics of each poke
+
+        # Gets a Pokemon object based on the specifics of each poke
         p1_current = await DuelPokemon.create(ctx, challenger1)
         p2_current = await DuelPokemon.create(ctx, challenger2)
         owner1 = MemberTrainer(ctx.author, [p1_current])
@@ -488,15 +521,15 @@ class Duel(commands.Cog):
 
         battle = Battle(ctx, owner1, owner2)
         winner = await self.wrapped_run(battle)
-        
+
         if winner is not owner1:
             return
         if ENERGY_IMMUNE:
             return
-        
+
         battle_multi = data["inventory"].get("battle-multiplier", 1)
-        
-        #Update mission progress
+
+        # Update mission progress
         user = await ctx.bot.mongo_find(
             "users",
             {"user": ctx.author.id},
@@ -504,17 +537,25 @@ class Duel(commands.Cog):
         )
         progress = user["progress"]
         progress["npc-win"] = progress.get("npc-win", 0) + 1
-        await ctx.bot.mongo_update("users", {"user": ctx.author.id}, {"progress": progress})
-        
-        #Grant credits & xp
+        await ctx.bot.mongo_update(
+            "users", {"user": ctx.author.id}, {"progress": progress}
+        )
+
+        # Grant credits & xp
         creds = random.randint(100, 600)
         creds *= min(battle_multi, 50)
         desc = f"You received {creds} credits for winning the duel!\n\n"
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2", creds, ctx.author.id)
-            for poke in winner.party:       
-                #We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
-                data = await pconn.fetchrow("SELECT hitem, exp FROM pokes WHERE id = $1", poke.id)
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                creds,
+                ctx.author.id,
+            )
+            for poke in winner.party:
+                # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
+                data = await pconn.fetchrow(
+                    "SELECT hitem, exp FROM pokes WHERE id = $1", poke.id
+                )
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
@@ -522,7 +563,7 @@ class Duel(commands.Cog):
                     exp = (150 * poke.level) / 7
                     if held_item == "lucky-egg":
                         exp *= 2.5
-                    #Max int for the exp col
+                    # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
                     desc += f"{poke._starting_name} got {exp} exp from winning.\n"
                 await pconn.execute(
@@ -532,31 +573,31 @@ class Duel(commands.Cog):
                 )
         desc += f"\nConsider joining the [Official Mewbot Server]({'https://discord.gg/mewbot'}) if you are a fan of pokemon duels!\n"
         await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
-        
+
     async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member):
         """
         Updates the ranks between two members, based on the result of the match.
-        
+
         https://en.wikipedia.org/wiki/Elo_rating_system#Theory
         """
-        #This is the MAX amount of ELO that can be swapped in any particular match.
-        #Matches between players of the same rank will transfer half this amount.
-        #TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
+        # This is the MAX amount of ELO that can be swapped in any particular match.
+        # Matches between players of the same rank will transfer half this amount.
+        # TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
         K = 50
-        
+
         R1 = self.ranks.get(winner.id, 1000)
         R2 = self.ranks.get(loser.id, 1000)
-        
-        E1 = 1 / (1 + (10 ** ((R2 - R1)/ 400)))
-        E2 = 1 / (1 + (10 ** ((R1 - R2)/ 400)))
-        
-        #If tieing is added, this needs to be the score of each player
+
+        E1 = 1 / (1 + (10 ** ((R2 - R1) / 400)))
+        E2 = 1 / (1 + (10 ** ((R1 - R2) / 400)))
+
+        # If tieing is added, this needs to be the score of each player
         S1 = 1
         S2 = 0
-        
+
         newR1 = round(R1 + K * (S1 - E1))
         newR2 = round(R2 + K * (S2 - E2))
-        
+
         self.ranks[winner.id] = newR1
         self.ranks[loser.id] = newR2
         msg = "**__Rank Adjustments__**\n"

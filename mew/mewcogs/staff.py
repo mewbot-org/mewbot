@@ -9,11 +9,21 @@ import os
 from discord.ui import Button, View
 from typing import Literal
 from discord.ext.commands.view import StringView
-from discord.ext.commands.converter import MemberConverter, TextChannelConverter, _convert_to_bool
+from discord.ext.commands.converter import (
+    MemberConverter,
+    TextChannelConverter,
+    _convert_to_bool,
+)
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
 from mewcogs.pokemon_list import _
-from mewutils.checks import check_admin, check_investigator, check_mod, check_helper, check_gymauth
+from mewutils.checks import (
+    check_admin,
+    check_investigator,
+    check_mod,
+    check_helper,
+    check_gymauth,
+)
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER
 import datetime
 
@@ -31,7 +41,6 @@ def round_stat(stat):
 
 
 class MewBotAdmin(commands.Cog):
-
     def parse_params(self, params: dict):
         msg = ""
         for parameter in params.keys():
@@ -53,7 +62,9 @@ class MewBotAdmin(commands.Cog):
             desc += f"`/{command.qualified_name} {self.parse_params(command.clean_params)}` - {command.short_doc}\n"
         kitty_cat_cog = ctx.bot.get_cog("KittyCat")
         for command in kitty_cat_cog.walk_commands():
-            if (isinstance(command, commands.HybridGroup)) or (str(command.root_parent) == "owner"):
+            if (isinstance(command, commands.HybridGroup)) or (
+                str(command.root_parent) == "owner"
+            ):
                 continue
             desc += f"`/{command.qualified_name} {self.parse_params(command.clean_params)}` - {command.short_doc}\n"
         pages = pagify(desc, per_page=20, base_embed=embed)
@@ -98,13 +109,15 @@ class MewBotAdmin(commands.Cog):
         else:
             for cluster in load_res:
                 if cluster["cogs"][extension_name]["success"]:
-                    builder += f"`Cluster #{cluster['cluster_id']}`: Successfully loaded\n"
+                    builder += (
+                        f"`Cluster #{cluster['cluster_id']}`: Successfully loaded\n"
+                    )
                 else:
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
             e.description = builder
 
-        class FSnow():
+        class FSnow:
             def __init__(self, id):
                 self.id = id
 
@@ -115,7 +128,9 @@ class MewBotAdmin(commands.Cog):
         await ctx.send(embed=e)
 
     @check_mod()
-    @discord.app_commands.describe(extension_name="The name of the extension to reload.")
+    @discord.app_commands.describe(
+        extension_name="The name of the extension to reload."
+    )
     @admin.command()
     async def reload(self, ctx, extension_name: str):
         """Reloads an extension."""
@@ -134,7 +149,9 @@ class MewBotAdmin(commands.Cog):
 
         processes = len(launcher_res[0])
         # We don't really care whether or not it fails to unload... the main thing is just to get it loaded with a refresh
-        await ctx.bot.handler("unload", processes, args={"cogs": [extension_name]}, scope="bot")
+        await ctx.bot.handler(
+            "unload", processes, args={"cogs": [extension_name]}, scope="bot"
+        )
         load_res = await ctx.bot.handler(
             "load", processes, args={"cogs": [extension_name]}, scope="bot"
         )
@@ -157,13 +174,15 @@ class MewBotAdmin(commands.Cog):
         else:
             for cluster in load_res:
                 if cluster["cogs"][extension_name]["success"]:
-                    builder += f"`Cluster #{cluster['cluster_id']}`: Successfully reloaded\n"
+                    builder += (
+                        f"`Cluster #{cluster['cluster_id']}`: Successfully reloaded\n"
+                    )
                 else:
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
             e.description = builder
 
-        class FSnow():
+        class FSnow:
             def __init__(self, id):
                 self.id = id
 
@@ -212,7 +231,9 @@ class MewBotAdmin(commands.Cog):
         else:
             for cluster in unload_res:
                 if cluster["cogs"][extension_name]["success"]:
-                    builder += f"`Cluster #{cluster['cluster_id']}`: Successfully unloaded\n"
+                    builder += (
+                        f"`Cluster #{cluster['cluster_id']}`: Successfully unloaded\n"
+                    )
                 else:
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
@@ -245,8 +266,7 @@ class MewBotAdmin(commands.Cog):
     @admin.command()
     async def cogs(self, ctx):
         """View the currently loaded cogs."""
-        cogs = sorted([x.replace("mewcogs.", "")
-                      for x in ctx.bot.extensions.keys()])
+        cogs = sorted([x.replace("mewcogs.", "") for x in ctx.bot.extensions.keys()])
         embed = discord.Embed(
             title=f"{len(cogs)} loaded:", description=", ".join(cogs), color=0xFF69B4
         )
@@ -257,9 +277,13 @@ class MewBotAdmin(commands.Cog):
     @admin.command(aliases=["resettradelock", "deltradelock"])
     async def detradelock(self, ctx, user_id):
         """Reset the redis market tradelock for a user"""
-        result = await ctx.bot.redis_manager.redis.execute("LREM", "tradelock", "1", user_id)
+        result = await ctx.bot.redis_manager.redis.execute(
+            "LREM", "tradelock", "1", user_id
+        )
         if result == 0:
-            await ctx.send("That user was not in the Redis tradelock.  Are you sure you have the right user?")
+            await ctx.send(
+                "That user was not in the Redis tradelock.  Are you sure you have the right user?"
+            )
         else:
             await ctx.send("Successfully removed the user from the Redis tradelock.")
 
@@ -279,7 +303,9 @@ class MewBotAdmin(commands.Cog):
             if is_tradebanned:
                 await ctx.send("User already trade banned.")
                 return
-            await pconn.execute("UPDATE users SET tradelock = $1 WHERE u_id = $2", True, id)
+            await pconn.execute(
+                "UPDATE users SET tradelock = $1 WHERE u_id = $2", True, id
+            )
         await ctx.send(f"Successfully trade banned USER ID - {id}")
 
     @check_mod()
@@ -298,22 +324,34 @@ class MewBotAdmin(commands.Cog):
             if not is_tradebanned:
                 await ctx.send("User is not trade banned.")
                 return
-            await pconn.execute("UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id)
+            await pconn.execute(
+                "UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id
+            )
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
 
     @check_admin()
     @admin.command()
-    async def createpoke(self, ctx, *, pokemon: str, shiny: bool, skin: Literal['radiant', 'gleam', 'false'], boosted: bool):
+    async def createpoke(
+        self,
+        ctx,
+        *,
+        pokemon: str,
+        shiny: bool,
+        skin: Literal["radiant", "gleam", "false"],
+        boosted: bool,
+    ):
         """Creates a new poke and gives it to the author."""
         extras = ""
         if shiny:
             extras += "shiny "
         if boosted:
             extras += "boosted "
-        if skin == 'false':
+        if skin == "false":
             skin = None
         pokemon = pokemon.replace(" ", "-").capitalize()
-        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny, skin=skin, boosted=boosted)
+        await ctx.bot.commondb.create_poke(
+            ctx.bot, ctx.author.id, pokemon, shiny=shiny, skin=skin, boosted=boosted
+        )
         await ctx.send(f"Gave you a {extras}{pokemon}!")
 
     @check_admin()
@@ -329,7 +367,11 @@ class MewBotAdmin(commands.Cog):
                 skin,
                 globalid,
             )
-        await ctx.send("Successfully added skin to pokemon" if skin else "Removed Skin from Pokemon")
+        await ctx.send(
+            "Successfully added skin to pokemon"
+            if skin
+            else "Removed Skin from Pokemon"
+        )
 
     @check_admin()
     @admin.command()
@@ -338,14 +380,18 @@ class MewBotAdmin(commands.Cog):
         pokname = pokname.lower()
         skinname = skinname.lower()
         async with ctx.bot.db[0].acquire() as pconn:
-            skins = await pconn.fetchval("SELECT skins::json FROM users WHERE u_id = $1", user.id)
+            skins = await pconn.fetchval(
+                "SELECT skins::json FROM users WHERE u_id = $1", user.id
+            )
             if pokname not in skins:
                 skins[pokname] = {}
             if skinname not in skins[pokname]:
                 skins[pokname][skinname] = 1
             else:
                 skins[pokname][skinname] += 1
-            await pconn.execute("UPDATE users SET skins = $1::json WHERE u_id = $2", skins, user.id)
+            await pconn.execute(
+                "UPDATE users SET skins = $1::json WHERE u_id = $2", skins, user.id
+            )
         await ctx.send(f"Gave `{user}` a `{skinname}` skin for `{pokname}`.")
 
     @check_admin()
@@ -353,18 +399,27 @@ class MewBotAdmin(commands.Cog):
     async def set_ot(self, ctx, pokeid: int, user: discord.Member):
         """ADMIN: Set pokes OT"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE pokes SET caught_by = $1 where id = $2", user.id, pokeid)
+            await pconn.execute(
+                "UPDATE pokes SET caught_by = $1 where id = $2", user.id, pokeid
+            )
             await ctx.send(f"```Elm\n- Successflly set OT of `{pokeid}` to {user}```")
 
     @check_admin()
     @admin.command()
-    async def editiv(self, ctx, iv: Literal["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"], amount: int, globalid: int):
+    async def editiv(
+        self,
+        ctx,
+        iv: Literal["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"],
+        amount: int,
+        globalid: int,
+    ):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid)
+            await pconn.execute(
+                f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid
+            )
             await ctx.send(":white_check_mark:")
-    
 
     @commands.hybrid_group()
     async def gym(self, ctx):
@@ -381,7 +436,9 @@ class MewBotAdmin(commands.Cog):
                 mewcoins,
                 user,
             )
-        await ctx.bot.get_partial_messageable(998316464719278280).send(f"{ctx.author}: <@{user}> has been awarded {mewcoins} for a gym challenge.")
+        await ctx.bot.get_partial_messageable(998316464719278280).send(
+            f"{ctx.author}: <@{user}> has been awarded {mewcoins} for a gym challenge."
+        )
         await ctx.send(f"<@{user}> has been awarded {mewcoins} for a gym challenge.\n")
 
     @check_gymauth()
@@ -406,48 +463,76 @@ class MewBotAdmin(commands.Cog):
     async def tradelog_user(self, ctx, u_id: str):
         u_id = int(u_id)
         async with ctx.bot.db[0].acquire() as pconn:
-            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = sender ORDER BY t_id ASC", u_id)
-            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = receiver ORDER BY t_id ASC", u_id)
+            trade_sender = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = sender ORDER BY t_id ASC", u_id
+            )
+            trade_receiver = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = receiver ORDER BY t_id ASC", u_id
+            )
         # List[Tuple] -> (T_ID, Optional[DateTime], Traded With, Sent Creds, Sent Redeems, # Sent Pokes, Rec Creds, Rec Redeems, # Rec Pokes)
         trade = []
         t_s = trade_sender.pop(0) if trade_sender else None
         t_r = trade_receiver.pop(0) if trade_receiver else None
         while t_s or t_r:
             if t_s is None:
-                trade.append((
-                    t_r["t_id"], t_r["time"], t_r["sender"],
-                    t_r["receiver_credits"], t_r["receiver_redeems"], len(
-                        t_r["receiver_pokes"]),
-                    t_r["sender_credits"], t_r["sender_redeems"], len(
-                        t_r["sender_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_r["t_id"],
+                        t_r["time"],
+                        t_r["sender"],
+                        t_r["receiver_credits"],
+                        t_r["receiver_redeems"],
+                        len(t_r["receiver_pokes"]),
+                        t_r["sender_credits"],
+                        t_r["sender_redeems"],
+                        len(t_r["sender_pokes"]),
+                    )
+                )
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             elif t_r is None:
-                trade.append((
-                    t_s["t_id"], t_s["time"], t_s["receiver"],
-                    t_s["sender_credits"], t_s["sender_redeems"], len(
-                        t_s["sender_pokes"]),
-                    t_s["receiver_credits"], t_s["receiver_redeems"], len(
-                        t_s["receiver_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_s["t_id"],
+                        t_s["time"],
+                        t_s["receiver"],
+                        t_s["sender_credits"],
+                        t_s["sender_redeems"],
+                        len(t_s["sender_pokes"]),
+                        t_s["receiver_credits"],
+                        t_s["receiver_redeems"],
+                        len(t_s["receiver_pokes"]),
+                    )
+                )
                 t_s = trade_sender.pop(0) if trade_sender else None
             elif t_s["t_id"] > t_r["t_id"]:
-                trade.append((
-                    t_r["t_id"], t_r["time"], t_r["sender"],
-                    t_r["receiver_credits"], t_r["receiver_redeems"], len(
-                        t_r["receiver_pokes"]),
-                    t_r["sender_credits"], t_r["sender_redeems"], len(
-                        t_r["sender_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_r["t_id"],
+                        t_r["time"],
+                        t_r["sender"],
+                        t_r["receiver_credits"],
+                        t_r["receiver_redeems"],
+                        len(t_r["receiver_pokes"]),
+                        t_r["sender_credits"],
+                        t_r["sender_redeems"],
+                        len(t_r["sender_pokes"]),
+                    )
+                )
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             else:
-                trade.append((
-                    t_s["t_id"], t_s["time"], t_s["receiver"],
-                    t_s["sender_credits"], t_s["sender_redeems"], len(
-                        t_s["sender_pokes"]),
-                    t_s["receiver_credits"], t_s["receiver_redeems"], len(
-                        t_s["receiver_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_s["t_id"],
+                        t_s["time"],
+                        t_s["receiver"],
+                        t_s["sender_credits"],
+                        t_s["sender_redeems"],
+                        len(t_s["sender_pokes"]),
+                        t_s["receiver_credits"],
+                        t_s["receiver_redeems"],
+                        len(t_s["receiver_pokes"]),
+                    )
+                )
                 t_s = trade_sender.pop(0) if trade_sender else None
 
         if not trade:
@@ -459,20 +544,20 @@ class MewBotAdmin(commands.Cog):
         name_map = {}
         for t in trade:
             if t[1] is None:
-                time = '?'
+                time = "?"
             else:
                 d = t[1]
                 d = now - d
                 if d.days:
-                    time = str(d.days) + 'd'
+                    time = str(d.days) + "d"
                 elif d.seconds // 3600:
-                    time = str(d.seconds // 3600) + 'h'
+                    time = str(d.seconds // 3600) + "h"
                 elif d.seconds // 60:
-                    time = str(d.seconds // 60) + 'm'
+                    time = str(d.seconds // 60) + "m"
                 elif d.seconds:
-                    time = str(d.seconds) + 's'
+                    time = str(d.seconds) + "s"
                 else:
-                    time = '?'
+                    time = "?"
             if t[2] in name_map:
                 un = name_map[t[2]]
             else:
@@ -494,9 +579,11 @@ class MewBotAdmin(commands.Cog):
             page += part + "\n\n"
             if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
                 embed = discord.Embed(
-                    title=f"Trade history of user {u_id}", description=page, color=0xDD00DD)
-                embed.set_footer(
-                    text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
+                    title=f"Trade history of user {u_id}",
+                    description=page,
+                    color=0xDD00DD,
+                )
+                embed.set_footer(text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
                 pages.append(embed)
                 page = ""
 
@@ -505,28 +592,30 @@ class MewBotAdmin(commands.Cog):
     @tradelog.command(name="poke")
     async def tradelog_poke(self, ctx, p_id: int):
         async with ctx.bot.db[0].acquire() as pconn:
-            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) ORDER BY t_id ASC", p_id)
-            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(receiver_pokes) ORDER BY t_id ASC", p_id)
+            trade_sender = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) ORDER BY t_id ASC",
+                p_id,
+            )
+            trade_receiver = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = any(receiver_pokes) ORDER BY t_id ASC",
+                p_id,
+            )
         # List[Tuple] -> (T_ID, Optional[DateTime], Sender, Receiver)
         trade = []
         t_s = trade_sender.pop(0) if trade_sender else None
         t_r = trade_receiver.pop(0) if trade_receiver else None
         while t_s or t_r:
             if t_s is None:
-                trade.append((t_r["t_id"], t_r["time"],
-                             t_r["receiver"], t_r["sender"]))
+                trade.append((t_r["t_id"], t_r["time"], t_r["receiver"], t_r["sender"]))
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             elif t_r is None:
-                trade.append((t_s["t_id"], t_s["time"],
-                             t_s["sender"], t_s["receiver"]))
+                trade.append((t_s["t_id"], t_s["time"], t_s["sender"], t_s["receiver"]))
                 t_s = trade_sender.pop(0) if trade_sender else None
             elif t_s["t_id"] > t_r["t_id"]:
-                trade.append((t_r["t_id"], t_r["time"],
-                             t_r["receiver"], t_r["sender"]))
+                trade.append((t_r["t_id"], t_r["time"], t_r["receiver"], t_r["sender"]))
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             else:
-                trade.append((t_s["t_id"], t_s["time"],
-                             t_s["sender"], t_s["receiver"]))
+                trade.append((t_s["t_id"], t_s["time"], t_s["sender"], t_s["receiver"]))
                 t_s = trade_sender.pop(0) if trade_sender else None
 
         if not trade:
@@ -537,20 +626,20 @@ class MewBotAdmin(commands.Cog):
         now = datetime.datetime.now(datetime.timezone.utc)
         for t in trade:
             if t[1] is None:
-                time = '?'
+                time = "?"
             else:
                 d = t[1]
                 d = now - d
                 if d.days:
-                    time = str(d.days) + 'd'
+                    time = str(d.days) + "d"
                 elif d.seconds // 3600:
-                    time = str(d.seconds // 3600) + 'h'
+                    time = str(d.seconds // 3600) + "h"
                 elif d.seconds // 60:
-                    time = str(d.seconds // 60) + 'm'
+                    time = str(d.seconds // 60) + "m"
                 elif d.seconds:
-                    time = str(d.seconds) + 's'
+                    time = str(d.seconds) + "s"
                 else:
-                    time = '?'
+                    time = "?"
             raw += f"**{t[0]}**: {t[2]} -> {t[3]} ({time} ago)\n"
 
         PER_PAGE = 15
@@ -562,9 +651,11 @@ class MewBotAdmin(commands.Cog):
             page += part + "\n"
             if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
                 embed = discord.Embed(
-                    title=f"Trade history of poke {p_id}", description=page, color=0xDD00DD)
-                embed.set_footer(
-                    text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
+                    title=f"Trade history of poke {p_id}",
+                    description=page,
+                    color=0xDD00DD,
+                )
+                embed.set_footer(text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
                 pages.append(embed)
                 page = ""
 
@@ -574,7 +665,9 @@ class MewBotAdmin(commands.Cog):
     async def tradelog_info(self, ctx, t_id: int):
         """Get information on a specific trade by transaction id."""
         async with ctx.bot.db[0].acquire() as pconn:
-            trade = await pconn.fetchrow("SELECT * FROM trade_logs WHERE t_id = $1", t_id)
+            trade = await pconn.fetchrow(
+                "SELECT * FROM trade_logs WHERE t_id = $1", t_id
+            )
         if trade is None:
             await ctx.send("That transaction id does not exist!")
             return
@@ -588,7 +681,11 @@ class MewBotAdmin(commands.Cog):
             if trade["sender_pokes"]:
                 desc += f"__Pokes:__ {trade['sender_pokes']}\n"
             desc += "\n"
-        if trade["receiver_credits"] or trade["receiver_pokes"] or trade["receiver_redeems"]:
+        if (
+            trade["receiver_credits"]
+            or trade["receiver_pokes"]
+            or trade["receiver_redeems"]
+        ):
             desc += f"**{trade['sender']} received:**\n"
             if trade["receiver_credits"]:
                 desc += f"__Credits:__ {trade['receiver_credits']}\n"
@@ -597,7 +694,8 @@ class MewBotAdmin(commands.Cog):
             if trade["receiver_pokes"]:
                 desc += f"__Pokes:__ {trade['receiver_pokes']}\n"
         embed = discord.Embed(
-            title=f"Trade ID {t_id}", description=desc, color=0xDD00DD)
+            title=f"Trade ID {t_id}", description=desc, color=0xDD00DD
+        )
         if trade["time"] is not None:
             embed.set_footer(text=trade["time"].isoformat(" "))
         await ctx.send(embed=embed)
@@ -702,11 +800,15 @@ class MewBotAdmin(commands.Cog):
         no = Button(style=discord.ButtonStyle.red, label="No")
 
         async def no_click(interaction: discord.Interaction):
-            await interaction.response.edit_message(content=f"Canceled", embed=None, view=None)
+            await interaction.response.edit_message(
+                content=f"Canceled", embed=None, view=None
+            )
             return
-        
+
         async def yes_click(interaction: discord.Interaction):
-            await interaction.response.edit_message(content=f"Combining Pokemon...", embed=None, view=None)
+            await interaction.response.edit_message(
+                content=f"Combining Pokemon...", embed=None, view=None
+            )
             async with ctx.bot.db[0].acquire() as pconn:
                 user1 = await pconn.fetchval(
                     "SELECT pokes FROM users WHERE u_id = $1", u_id1
@@ -722,14 +824,19 @@ class MewBotAdmin(commands.Cog):
                 await pconn.execute(
                     "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id2, user2
                 )
-            await ctx.send(f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```")
+            await ctx.send(
+                f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```"
+            )
 
         yes.callback = yes_click
         no.callback = no_click
         view = View()
         view.add_item(item=yes)
         view.add_item(item=no)
-        await ctx.send(f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?", view=view)
+        await ctx.send(
+            f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?",
+            view=view,
+        )
 
     @check_mod()
     @admin.command()
@@ -737,9 +844,7 @@ class MewBotAdmin(commands.Cog):
         """MOD: Get user info by ID"""
         user = int(user)
         async with ctx.bot.db[0].acquire() as pconn:
-            info = await pconn.fetchrow(
-                "SELECT * FROM users WHERE u_id = $1", user
-            )
+            info = await pconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user)
         if info is None:
             await ctx.send("User has not started.")
             return
@@ -807,9 +912,11 @@ class MewBotAdmin(commands.Cog):
 
     @check_mod()
     @admin.command()
-    @discord.app_commands.describe(command="The command to mock, prefix must not be entered.")
+    @discord.app_commands.describe(
+        command="The command to mock, prefix must not be entered."
+    )
     async def mock(self, ctx, user_id, *, command):
-        """MOD: 
+        """MOD:
         Mock another user invoking a command.
         """
         user_id = int(user_id)
@@ -823,8 +930,9 @@ class MewBotAdmin(commands.Cog):
                 return
         ctx.author = user
 
-        class FakeInteraction():
+        class FakeInteraction:
             pass
+
         ctx._interaction = FakeInteraction()
         ctx._interaction.id = ctx.message.id
 
@@ -845,8 +953,10 @@ class MewBotAdmin(commands.Cog):
             await ctx.send("I can't find a command that matches that input.")
             return
         # Just... trust me, this gets a list of type objects for the command's args
-        signature = [x.annotation for x in inspect.signature(
-            command.callback).parameters.values()][2:]
+        signature = [
+            x.annotation
+            for x in inspect.signature(command.callback).parameters.values()
+        ][2:]
         view = StringView(args.strip())
         args = []
         for arg_type in signature:
@@ -909,8 +1019,7 @@ class MewBotAdmin(commands.Cog):
             title=f"Cluster #{cluster_id} ({cluster_name})",
             color=0xFFB6C1,
         )
-        current.set_footer(
-            text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]")
+        current.set_footer(text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]")
         for s in shard_groups.values():
             msg = (
                 "```prolog\n"
@@ -921,7 +1030,8 @@ class MewBotAdmin(commands.Cog):
                 "```"
             )
             current.add_field(
-                name=f"Shard `{s['id']}/{ctx.bot.shard_count}`", value=msg)
+                name=f"Shard `{s['id']}/{ctx.bot.shard_count}`", value=msg
+            )
 
         pages.append(current)
 
@@ -955,7 +1065,8 @@ class MewBotAdmin(commands.Cog):
             try:
                 message = await ctx.bot.wait_for(
                     "message",
-                    check=lambda m: m.author == ctx.author and m.content.lower() in commands,
+                    check=lambda m: m.author == ctx.author
+                    and m.content.lower() in commands,
                     timeout=60,
                 )
             except asyncio.TimeoutError:

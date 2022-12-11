@@ -7,7 +7,7 @@ from mewcogs.json_files import *
 class Missions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_group()
     async def missions(self, ctx):
         """
@@ -20,7 +20,9 @@ class Missions(commands.Cog):
         """List all missions available to you"""
         raw = await ctx.bot.db[1].missions.find_one()
         if raw is None:
-            await ctx.send("Missions are resetting, please wait a few minutes and try again!")
+            await ctx.send(
+                "Missions are resetting, please wait a few minutes and try again!"
+            )
             return
         primary, secondary = raw["missions"]
         user = await ctx.bot.mongo_find(
@@ -49,7 +51,9 @@ class Missions(commands.Cog):
         )
         e.add_field(
             name="Secondary Mission",
-            value=secondary_text.format(x=secondary[1], done=progress.get(secondary[0], 0)),
+            value=secondary_text.format(
+                x=secondary[1], done=progress.get(secondary[0], 0)
+            ),
         )
         e.add_field(
             name="Claimed",

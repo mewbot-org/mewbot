@@ -14,7 +14,14 @@ from discord.ext import commands, tasks
 import discord
 from mewcogs.pokemon_list import LegendList
 from mewcore import commondb
-from mewutils.checks import check_admin, check_gymauth, check_helper, check_investigator, check_mod, check_owner
+from mewutils.checks import (
+    check_admin,
+    check_gymauth,
+    check_helper,
+    check_investigator,
+    check_mod,
+    check_owner,
+)
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER
 from pokemon_utils.utils import get_pokemon_info
 
@@ -23,18 +30,19 @@ YELLOW = "\N{LARGE YELLOW CIRCLE}"
 RED = "\N{LARGE RED CIRCLE}"
 
 
-class EvalContext():
+class EvalContext:
     def __init__(self, interaction):
         self.interaction = interaction
         self.message = interaction.message
         self.bot = interaction.client
         self.author = interaction.user
-    
+
     async def send(self, *args, **kwargs):
         await self.interaction.followup.send(*args, **kwargs)
 
-class EvalModal(discord.ui.Modal, title='Evaluate Code'):
-    body = discord.ui.TextInput(label='Code', style=discord.TextStyle.paragraph)
+
+class EvalModal(discord.ui.Modal, title="Evaluate Code"):
+    body = discord.ui.TextInput(label="Code", style=discord.TextStyle.paragraph)
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -104,16 +112,19 @@ class EvalModal(discord.ui.Modal, title='Evaluate Code'):
             out = await paginate_send(ectx, f"{value}{ret}")
         await interaction.message.add_reaction("\u2705")  # tick
 
+
 class EvalView(discord.ui.View):
-    def __init__(self,author: int, *args, **kwargs):
+    def __init__(self, author: int, *args, **kwargs):
         self.modal = EvalModal()
         self.author = author
         super().__init__(timeout=120)
-    
+
     @discord.ui.button(label="Click Here")
     async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
         if self.author != interaction.user.id:
-            return await interaction.response.send_message("You can't do this!", ephemeral=True)
+            return await interaction.response.send_message(
+                "You can't do this!", ephemeral=True
+            )
         await interaction.response.send_modal(self.modal)
         self.stop()
 
@@ -184,9 +195,13 @@ class KittyCat(commands.Cog):
         processes = len(launcher_res[0])
         body = "await bot.load_bans()"
         await self.bot.handler(
-            "_eval", processes, args={"body": body, "cluster_id": "-1"}, scope="bot", _timeout=10
+            "_eval",
+            processes,
+            args={"body": body, "cluster_id": "-1"},
+            scope="bot",
+            _timeout=10,
         )
-    
+
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def owner(self, ctx):
@@ -194,7 +209,9 @@ class KittyCat(commands.Cog):
         pass
 
     @check_owner()
-    @discord.app_commands.describe(extension_name="The name of the extension to reload.")
+    @discord.app_commands.describe(
+        extension_name="The name of the extension to reload."
+    )
     @owner.command(name="reload")
     async def _owner_reload(self, ctx, extension_name: str):
         """Reloads an extension."""
@@ -213,7 +230,9 @@ class KittyCat(commands.Cog):
 
         processes = len(launcher_res[0])
         # We don't really care whether or not it fails to unload... the main thing is just to get it loaded with a refresh
-        await ctx.bot.handler("unload", processes, args={"cogs": [extension_name]}, scope="bot")
+        await ctx.bot.handler(
+            "unload", processes, args={"cogs": [extension_name]}, scope="bot"
+        )
         load_res = await ctx.bot.handler(
             "load", processes, args={"cogs": [extension_name]}, scope="bot"
         )
@@ -236,13 +255,15 @@ class KittyCat(commands.Cog):
         else:
             for cluster in load_res:
                 if cluster["cogs"][extension_name]["success"]:
-                    builder += f"`Cluster #{cluster['cluster_id']}`: Successfully reloaded\n"
+                    builder += (
+                        f"`Cluster #{cluster['cluster_id']}`: Successfully reloaded\n"
+                    )
                 else:
                     msg = cluster["cogs"][extension_name]["message"]
                     builder += f"`Cluster #{cluster['cluster_id']}`: {msg}\n"
             e.description = builder
 
-        class FSnow():
+        class FSnow:
             def __init__(self, id):
                 self.id = id
 
@@ -293,7 +314,6 @@ class KittyCat(commands.Cog):
         for page in paginate(ctx.bot.traceback):
             await destination.send("```py\n" + page + "```")
 
-    
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def bb(self, ctx):
@@ -311,7 +331,9 @@ class KittyCat(commands.Cog):
             return
         banned.add(id)
         await ctx.bot.mongo_update("blacklist", {}, {"users": list(banned)})
-        await ctx.send(f"```Elm\n-Successfully Botbanned {await ctx.bot.fetch_user(id)}```")
+        await ctx.send(
+            f"```Elm\n-Successfully Botbanned {await ctx.bot.fetch_user(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_investigator()
@@ -326,7 +348,9 @@ class KittyCat(commands.Cog):
             return
         banned.remove(id)
         await ctx.bot.mongo_update("blacklist", {}, {"users": list(banned)})
-        await ctx.send(f"```Elm\n- Successfully Unbotbanned {await ctx.bot.fetch_user(id)}```")
+        await ctx.send(
+            f"```Elm\n- Successfully Unbotbanned {await ctx.bot.fetch_user(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_mod()
@@ -336,14 +360,18 @@ class KittyCat(commands.Cog):
         """MOD: Returns a users special pokemon counts, such as shiny and radiant"""
         async with ctx.bot.db[0].acquire() as pconn:
             shiny = await pconn.fetchval(
-                "select count(*) from pokes where shiny = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)", userid.id
+                "select count(*) from pokes where shiny = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)",
+                userid.id,
             )
             radiant = await pconn.fetchval(
-                "select count(*) from pokes where radiant = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)", userid.id
+                "select count(*) from pokes where radiant = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)",
+                userid.id,
             )
         embed = discord.Embed()
         embed.add_field(name="Number of Shiny pokemon", value=f"{shiny}", inline=True)
-        embed.add_field(name="Number of Radiant pokemon", value=f"{radiant}", inline=False)
+        embed.add_field(
+            name="Number of Radiant pokemon", value=f"{radiant}", inline=False
+        )
         embed.set_footer(text="Special Pokemon Counts")
         await ctx.send(embed=embed)
 
@@ -379,7 +407,9 @@ class KittyCat(commands.Cog):
     async def whoowns(self, ctx, poke: int):
         """MOD: Shows who owns a specific pokemon by its global ID"""
         async with ctx.bot.db[0].acquire() as pconn:
-            user = await pconn.fetch("SELECT u_id FROM users WHERE $1 = ANY(pokes)", poke)
+            user = await pconn.fetch(
+                "SELECT u_id FROM users WHERE $1 = ANY(pokes)", poke
+            )
             market = await pconn.fetch(
                 "SELECT id FROM market WHERE poke = $1 AND buyer IS NULL", poke
             )
@@ -511,7 +541,8 @@ class KittyCat(commands.Cog):
                 return
             await pconn.execute("UPDATE market SET buyer = 0 WHERE id = $1", market_id)
             await pconn.execute(
-                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = 1227", poke
+                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = 1227",
+                poke,
             )
         await ctx.send(f"User `1227` now owns poke `{poke}`.")
 
@@ -528,7 +559,7 @@ class KittyCat(commands.Cog):
         if not _ids:
             await ctx.send("No valid ids provided.")
             return
-        
+
         ids = _ids
 
         c = ctx.bot.get_cog("Market")
@@ -582,14 +613,14 @@ class KittyCat(commands.Cog):
             msg += f"The poke was already bought for the following listings: `{data}`\n"
         if types.count("InvalidPoke"):
             data = ", ".join([str(x[1]) for x in results if x[0] == "InvalidPoke"])
-            msg += (
-                f"The pokemon from the listing was deleted for the following listings: `{data}`\n"
-            )
+            msg += f"The pokemon from the listing was deleted for the following listings: `{data}`\n"
         if types.count("LowBal"):
             data = ", ".join([str(x[1]) for x in results if x[0] == "LowBal"])
             msg += f"You could not afford the following listings: `{data}`\n"
         if types.count("Error"):
-            data = ", ".join([str(x[1]) for x in results if isinstance(x[0], Exception)])
+            data = ", ".join(
+                [str(x[1]) for x in results if isinstance(x[0], Exception)]
+            )
             msg += f"An unknown error occurred in the following listings: `{data}`\n"
             data = [x[0] for x in results if isinstance(x[0], Exception)]
             msg += f"These are the exceptions: `{data}`\n"
@@ -603,11 +634,14 @@ class KittyCat(commands.Cog):
         """Helper function to buy a poke from the market."""
         if listing_id in locked:
             return ("Locked", listing_id)
-        await ctx.bot.redis_manager.redis.execute("LPUSH", "marketlock", str(listing_id))
+        await ctx.bot.redis_manager.redis.execute(
+            "LPUSH", "marketlock", str(listing_id)
+        )
         try:
             async with ctx.bot.db[0].acquire() as pconn:
                 details = await pconn.fetchrow(
-                    "SELECT poke, owner, price, buyer FROM market WHERE id = $1", listing_id
+                    "SELECT poke, owner, price, buyer FROM market WHERE id = $1",
+                    listing_id,
                 )
                 if not details:
                     return ("InvalidID", listing_id)
@@ -629,7 +663,9 @@ class KittyCat(commands.Cog):
                 if price > credits:
                     return ("LowBal", listing_id)
                 await pconn.execute(
-                    "UPDATE market SET buyer = $1 WHERE id = $2", ctx.author.id, listing_id
+                    "UPDATE market SET buyer = $1 WHERE id = $2",
+                    ctx.author.id,
+                    listing_id,
                 )
                 await pconn.execute(
                     "UPDATE users SET pokes = array_append(pokes, $1), mewcoins = mewcoins - $2 WHERE u_id = $3",
@@ -675,22 +711,16 @@ class KittyCat(commands.Cog):
         result = []
         for k, v in data.items():
             result += [k, v]
-        await ctx.bot.redis_manager.redis.execute(
-            "DEL", "patreontier"
-        )
-        await ctx.bot.redis_manager.redis.execute(
-            "HMSET", "patreontier", *result
-        )
+        await ctx.bot.redis_manager.redis.execute("DEL", "patreontier")
+        await ctx.bot.redis_manager.redis.execute("HMSET", "patreontier", *result)
         await ctx.send("Refreshed.")
-
-    
 
     @commands.hybrid_group(name="mewstats")
     @discord.app_commands.guilds(STAFFSERVER)
     async def mew_stats(self, ctx):
         """HELPER: Base command"""
         ...
-    
+
     @check_helper()
     @mew_stats.command(name="db")
     @discord.app_commands.guilds(STAFFSERVER)
@@ -708,12 +738,16 @@ class KittyCat(commands.Cog):
     async def radiantot(self, ctx):
         """HELPER: Show radiant OT statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select caught_by, count(caught_by) from pokes where radiant = true group by caught_by order by count desc limit 25')
-        result = '\n'.join([f'{x["count"]} | {x["caught_by"]}' for x in data])
-        embed = discord.Embed(title="***Radiant pokemon by Original Trainer***", description=f"```{result}```")
+            data = await pconn.fetch(
+                "select caught_by, count(caught_by) from pokes where radiant = true group by caught_by order by count desc limit 25"
+            )
+        result = "\n".join([f'{x["count"]} | {x["caught_by"]}' for x in data])
+        embed = discord.Embed(
+            title="***Radiant pokemon by Original Trainer***",
+            description=f"```{result}```",
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
-
 
     @check_helper()
     @mew_stats.command()
@@ -721,8 +755,10 @@ class KittyCat(commands.Cog):
     async def radiantcount(self, ctx):
         """HELPER: Show radiant count statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select count(*), pokname from pokes where radiant = true group by pokname order by count desc')
-        desc = '\n'.join([f'{x["count"]} | {x["pokname"]}' for x in data])
+            data = await pconn.fetch(
+                "select count(*), pokname from pokes where radiant = true group by pokname order by count desc"
+            )
+        desc = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
         pages = pagify(desc, base_embed=discord.Embed(title="***Radiant Counts***"))
         await MenuView(ctx, pages).start()
 
@@ -732,9 +768,13 @@ class KittyCat(commands.Cog):
     async def shinyot(self, ctx):
         """HELPER: Show shiny OT statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select caught_by, count(caught_by) from pokes where shiny = true group by caught_by order by count desc limit 25')
-        result = '\n'.join([f'{x["count"]} | {x["caught_by"]}' for x in data])
-        embed = discord.Embed(title="Shiny pokemon by Original Trainer", description=f"```{result}```")
+            data = await pconn.fetch(
+                "select caught_by, count(caught_by) from pokes where shiny = true group by caught_by order by count desc limit 25"
+            )
+        result = "\n".join([f'{x["count"]} | {x["caught_by"]}' for x in data])
+        embed = discord.Embed(
+            title="Shiny pokemon by Original Trainer", description=f"```{result}```"
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -744,9 +784,13 @@ class KittyCat(commands.Cog):
     async def shinyrare(self, ctx):
         """HELPER: Show shiny rare count statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select count(*), pokname from pokes where shiny = true group by pokname order by count asc limit 25')
-        result = '\n'.join([f'{x["count"]} | {x["pokname"]}' for x in data])
-        embed = discord.Embed(title="Top 25 Rarest Shiny pokemon", description=f"```{result}```")
+            data = await pconn.fetch(
+                "select count(*), pokname from pokes where shiny = true group by pokname order by count asc limit 25"
+            )
+        result = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
+        embed = discord.Embed(
+            title="Top 25 Rarest Shiny pokemon", description=f"```{result}```"
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -756,9 +800,13 @@ class KittyCat(commands.Cog):
     async def shinycommon(self, ctx):
         """HELPER: Show shiny count statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select count(*), pokname from pokes where shiny = true group by pokname order by count desc limit 25')
-        result = '\n'.join([f'{x["count"]} | {x["pokname"]}' for x in data])
-        embed = discord.Embed(title="Top 25 Most Common Shiny pokemon", description=f"```{result}```")
+            data = await pconn.fetch(
+                "select count(*), pokname from pokes where shiny = true group by pokname order by count desc limit 25"
+            )
+        result = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
+        embed = discord.Embed(
+            title="Top 25 Most Common Shiny pokemon", description=f"```{result}```"
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -768,9 +816,13 @@ class KittyCat(commands.Cog):
     async def all_ot(self, ctx):
         """HELPER: Show all OT statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('select caught_by, count(caught_by) from pokes group by caught_by order by count desc limit 25')
-        result = '\n'.join([f'{x["count"]} | {x["caught_by"]}' for x in data])
-        embed = discord.Embed(title="Pokemon by Original Trainer", description=f"```{result}```")
+            data = await pconn.fetch(
+                "select caught_by, count(caught_by) from pokes group by caught_by order by count desc limit 25"
+            )
+        result = "\n".join([f'{x["count"]} | {x["caught_by"]}' for x in data])
+        embed = discord.Embed(
+            title="Pokemon by Original Trainer", description=f"```{result}```"
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -780,9 +832,15 @@ class KittyCat(commands.Cog):
     async def legend_ot(self, ctx):
         """HELPER: Show legend OT statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch("SELECT caught_by, count(caught_by) FROM pokes WHERE pokname = ANY($1) group by caught_by order by count desc LIMIT 25", LegendList)
-        result = '\n'.join([f'{x["count"]} | {x["caught_by"]}' for x in data])
-        embed = discord.Embed(title="**Legendary Pokemon by Original Trainer**", description=f"```{result}```")
+            data = await pconn.fetch(
+                "SELECT caught_by, count(caught_by) FROM pokes WHERE pokname = ANY($1) group by caught_by order by count desc LIMIT 25",
+                LegendList,
+            )
+        result = "\n".join([f'{x["count"]} | {x["caught_by"]}' for x in data])
+        embed = discord.Embed(
+            title="**Legendary Pokemon by Original Trainer**",
+            description=f"```{result}```",
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -792,9 +850,14 @@ class KittyCat(commands.Cog):
     async def penta_ot(self, ctx):
         """HELPER: Show penta OT statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch('SELECT caught_by, count(caught_by) FROM (SELECT caught_by, (div(atkiv, 31) + div(defiv, 31) + div(hpiv, 31) + div(speediv, 31) + div(spdefiv, 31) + div(spatkiv, 31))::int as perfects FROM pokes) data WHERE perfects = 5 group by caught_by order by count desc limit 25', timeout=30.0)
-        result = '\n'.join([f'{x["count"]} | {x["caught_by"]}' for x in data])
-        embed = discord.Embed(title="Top 25 Pentas by Original Trainer", description=f"```{result}```")
+            data = await pconn.fetch(
+                "SELECT caught_by, count(caught_by) FROM (SELECT caught_by, (div(atkiv, 31) + div(defiv, 31) + div(hpiv, 31) + div(speediv, 31) + div(spdefiv, 31) + div(spatkiv, 31))::int as perfects FROM pokes) data WHERE perfects = 5 group by caught_by order by count desc limit 25",
+                timeout=30.0,
+            )
+        result = "\n".join([f'{x["count"]} | {x["caught_by"]}' for x in data])
+        embed = discord.Embed(
+            title="Top 25 Pentas by Original Trainer", description=f"```{result}```"
+        )
         embed.set_footer(text="Mewbot Statistics")
         await ctx.send(embed=embed)
 
@@ -815,7 +878,7 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def gib(self, ctx):
         ...
-    
+
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -824,12 +887,16 @@ class KittyCat(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET last_vote = $1, vote_streak = vote_streak + $2 WHERE u_id = $3",
-                int(time.time()), amount, user.id
+                int(time.time()),
+                amount,
+                user.id,
             )
-            embed = discord.Embed(title="Success!", description=f"{user} Got {amount} vote streak points.")
+            embed = discord.Embed(
+                title="Success!", description=f"{user} Got {amount} vote streak points."
+            )
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
-    
+
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -840,11 +907,13 @@ class KittyCat(commands.Cog):
                 "UPDATE users SET redeems = redeems + $1 where u_id = $2",
                 amount,
                 user.id,
-                )
-            embed = discord.Embed(title="Success!", description=f"{user} Got {amount} redeems.")
+            )
+            embed = discord.Embed(
+                title="Success!", description=f"{user} Got {amount} redeems."
+            )
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
-    
+
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -855,8 +924,10 @@ class KittyCat(commands.Cog):
                 "UPDATE users SET mewcoins = mewcoins + $1 where u_id = $2",
                 amount,
                 user.id,
-                )
-            embed = discord.Embed(title="Success!", description=f"{user} Got {amount} credits.")
+            )
+            embed = discord.Embed(
+                title="Success!", description=f"{user} Got {amount} credits."
+            )
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
@@ -868,14 +939,16 @@ class KittyCat(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchval(
                 "SELECT inventory::json FROM users WHERE u_id = $1", user.id
-                )
+            )
             inventory["radiant gem"] = inventory.get("radiant gem", 0) + gems
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json where u_id = $2",
                 inventory,
                 user.id,
-                )
-            embed = discord.Embed(title="Success!", description=f"{user} gained {gems} radiant gem(s)")
+            )
+            embed = discord.Embed(
+                title="Success!", description=f"{user} gained {gems} radiant gem(s)"
+            )
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
@@ -890,7 +963,9 @@ class KittyCat(commands.Cog):
             return
         sbans.add(id)
         await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
-        await ctx.send(f"```Elm\n-Successfully Banned {await ctx.bot.fetch_guild(id)}```")
+        await ctx.send(
+            f"```Elm\n-Successfully Banned {await ctx.bot.fetch_guild(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_investigator()
@@ -904,26 +979,40 @@ class KittyCat(commands.Cog):
             return
         sbans.remove(id)
         await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
-        await ctx.send(f"```Elm\n- Successfully Unbanned {await ctx.bot.fetch_guild(id)}```")
+        await ctx.send(
+            f"```Elm\n- Successfully Unbanned {await ctx.bot.fetch_guild(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def chest(self, ctx, user_id, chest: Literal["legend chest", "mythic chest", "rare chest", "common chest", "horrific chest"], amount: int):
+    async def chest(
+        self,
+        ctx,
+        user_id,
+        chest: Literal[
+            "legend chest",
+            "mythic chest",
+            "rare chest",
+            "common chest",
+            "horrific chest",
+        ],
+        amount: int,
+    ):
         """Add a chest"""
         user_id = int(user_id)
         async with ctx.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", user_id 
+                "SELECT inventory::json FROM users WHERE u_id = $1", user_id
             )
-            inventory[chest ] = inventory.get(chest , 0) + amount
+            inventory[chest] = inventory.get(chest, 0) + amount
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json where u_id = $2",
                 inventory,
                 user_id,
             )
-            await ctx.send(f"<@{user_id}> gained `{amount}` `{chest}'s`")       
+            await ctx.send(f"<@{user_id}> gained `{amount}` `{chest}'s`")
 
     @check_mod()
     @commands.hybrid_command()
@@ -955,9 +1044,12 @@ class KittyCat(commands.Cog):
                 if current:
                     pages.append(current)
                 current = discord.Embed(
-                    title=f"Clusters {cluster['id']} - {cluster['id'] + 2}", color=0xFFB6C1
+                    title=f"Clusters {cluster['id']} - {cluster['id'] + 2}",
+                    color=0xFFB6C1,
                 )
-                current.set_footer(text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]")
+                current.set_footer(
+                    text=f"{ctx.prefix}[ n|next, b|back, s|start, e|end ]"
+                )
                 count += 1
             msg = (
                 "```prolog\n"
@@ -968,7 +1060,9 @@ class KittyCat(commands.Cog):
                 f"Users:      {cluster['users']}\n"
                 "```"
             )
-            current.add_field(name=f"Cluster #{cluster['id']} ({cluster['name']})", value=msg)
+            current.add_field(
+                name=f"Cluster #{cluster['id']} ({cluster['name']})", value=msg
+            )
 
         current.title = current.title[: -len(str(cluster["id"]))] + str(cluster["id"])
         pages.append(current)
@@ -1003,7 +1097,8 @@ class KittyCat(commands.Cog):
             try:
                 message = await ctx.bot.wait_for(
                     "message",
-                    check=lambda m: m.author == ctx.author and m.content.lower() in commands,
+                    check=lambda m: m.author == ctx.author
+                    and m.content.lower() in commands,
                     timeout=60,
                 )
             except asyncio.TimeoutError:
@@ -1027,12 +1122,15 @@ class KittyCat(commands.Cog):
     @check_admin()
     @pokenick.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def change(self, ctx, *, search_term:str):
+    async def change(self, ctx, *, search_term: str):
         """ADMIN: Change all pokemon nicknames that meet your search"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchval("SELECT count(*) FROM pokes WHERE poknick like $1", search_term)
+            data = await pconn.fetchval(
+                "SELECT count(*) FROM pokes WHERE poknick like $1", search_term
+            )
         counttext = f'{data["count"]} pokemon nicknames will be changed, are you sure you wish to do this?'
         await ctx.send(f"{counttext}")
+
         def check(m):
             return m.author.id == ctx.author.id and m.content.lower() in (
                 "yes",
@@ -1040,6 +1138,7 @@ class KittyCat(commands.Cog):
                 "y",
                 "n",
             )
+
         try:
             m = await ctx.bot.wait_for("message", check=check, timeout=30)
         except asyncio.TimeoutError:
@@ -1050,18 +1149,26 @@ class KittyCat(commands.Cog):
             return
         warning = "Nickname Violation"
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE pokes SET poknick = $2 WHERE poknick like $1", search_term, warning)
-        await ctx.send(f"Changed {counttext} pokemon nicknames to `Nickname Violation`.")
+            await pconn.execute(
+                "UPDATE pokes SET poknick = $2 WHERE poknick like $1",
+                search_term,
+                warning,
+            )
+        await ctx.send(
+            f"Changed {counttext} pokemon nicknames to `Nickname Violation`."
+        )
 
     @check_gymauth()
-    @commands.hybrid_command() 
+    @commands.hybrid_command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def gymcalc(self, ctx, chan: str, messageid: str):
         chan, messageid = int(chan), int(messageid)
         winrate = defaultdict(int)
         lossrate = defaultdict(int)
         leaders = set()
-        async for m in ctx.guild.get_channel(chan).history(after=discord.Object(messageid), limit=None):
+        async for m in ctx.guild.get_channel(chan).history(
+            after=discord.Object(messageid), limit=None
+        ):
             leaders.add(m.author)
             if "lost" in m.content:
                 winrate[m.author] += 1
@@ -1071,7 +1178,7 @@ class KittyCat(commands.Cog):
         result = []
         for leader in leaders:
             games = winrate[leader] + lossrate[leader]
-            if games == 0:      
+            if games == 0:
                 continue
             percent = round((winrate[leader] / games) * 100, 2)
             result.append([leader, percent, games])
@@ -1080,14 +1187,21 @@ class KittyCat(commands.Cog):
         for val in result:
             msg += f"**{val[0]}** | `{val[2]} battles`\n> `{val[1]}% win rate`\n"
         await ctx.send(ctx.author.mention)
-        embed=discord.Embed(title="NAME - WIN% - TOTAL BATTLES", description=msg)
+        embed = discord.Embed(title="NAME - WIN% - TOTAL BATTLES", description=msg)
         await ctx.send(embed=embed)
 
     @check_gymauth()
     @commands.hybrid_command(aliases=["gymstat"])
     @discord.app_commands.guilds(STAFFSERVER)
     async def gym_stats(self, ctx):
-        roles = [931549759104221215, 909542667774480424, 931479318297739344, 857746524527001611, 857746524527001616, 857746524527001618]
+        roles = [
+            931549759104221215,
+            909542667774480424,
+            931479318297739344,
+            857746524527001611,
+            857746524527001616,
+            857746524527001618,
+        ]
         a = ""
         for role in roles:
             role = ctx.guild.get_role(role)
@@ -1096,11 +1210,13 @@ class KittyCat(commands.Cog):
             count = len(role.members)
             a += f"{role.name} - {count}\n"
 
-        b=discord.Embed(title=f"members in {ctx.guild.name}",description=a,color=discord.Color((0xffff00)))
+        b = discord.Embed(
+            title=f"members in {ctx.guild.name}",
+            description=a,
+            color=discord.Color((0xFFFF00)),
+        )
         await ctx.send(embed=b)
 
-
-        
     @check_investigator()
     @commands.hybrid_group(aliases=["r", "repo"])
     @discord.app_commands.guilds(STAFFSERVER)
@@ -1108,17 +1224,20 @@ class KittyCat(commands.Cog):
         """INVESTIGATOR: COMMANDS FOR REPOSSESSING THINGS FROM OFFENDERS"""
         pass
 
-
     @check_investigator()
     @repossess.command(aliases=["c", "bread", "cheese"])
     @discord.app_commands.guilds(STAFFSERVER)
     async def credits(self, ctx, user: discord.Member, val: int):
         """INVESTIGATOR: REPOSSESS CREDITS"""
         if ctx.author.id == user.id:
-            await ctx.send("<:err:997377264511623269>!:\nYou cant take your own credits!")
+            await ctx.send(
+                "<:err:997377264511623269>!:\nYou cant take your own credits!"
+            )
             return
         if val <= 0:
-            await ctx.send("<:err:997377264511623269>!:\nYou need to transfer at least 1 credit!")
+            await ctx.send(
+                "<:err:997377264511623269>!:\nYou need to transfer at least 1 credit!"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
             giver_creds = await pconn.fetchval(
@@ -1127,24 +1246,35 @@ class KittyCat(commands.Cog):
             getter_creds = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = 123"
             )
-       
+
         if getter_creds is None:
             await ctx.send(f"<:err:997377264511623269>!:\nIssue with fake UserID (123)")
             return
         if giver_creds is None:
-            await ctx.send(f"<:err:997377264511623269>!:\n{user.name}({user.id}) has not started.")
+            await ctx.send(
+                f"<:err:997377264511623269>!:\n{user.name}({user.id}) has not started."
+            )
             return
         if val > giver_creds:
-            await ctx.send(f"<:err:997377264511623269>!:\n{user.name}({user.id}) does not have that many credits!")
+            await ctx.send(
+                f"<:err:997377264511623269>!:\n{user.name}({user.id}) does not have that many credits!"
+            )
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to move **{val}** credits from **{user.name}**({user.id}) to **Mewbot's Central Bank?**").wait():
+        if not await ConfirmView(
+            ctx,
+            f"Are you sure you want to move **{val}** credits from **{user.name}**({user.id}) to **Mewbot's Central Bank?**",
+        ).wait():
             await ctx.send("<:err:997377264511623269>!:\nTransfer **Cancelled.**")
             return
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchval("SELECT mewcoins FROM users WHERE u_id = $1", user.id)
+            curcreds = await pconn.fetchval(
+                "SELECT mewcoins FROM users WHERE u_id = $1", user.id
+            )
             if val > curcreds:
-                await ctx.send("<:err:997377264511623269>!:\nUser does not have that many credits anymore...")
+                await ctx.send(
+                    "<:err:997377264511623269>!:\nUser does not have that many credits anymore..."
+                )
                 return
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
@@ -1158,11 +1288,13 @@ class KittyCat(commands.Cog):
             await ctx.send(
                 f"{val} Credits taken from {user.name}({user.id}), added to fake u_id `123`."
             )
-            await ctx.bot.get_partial_messageable(999442907465523220).send(f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nCredits Taken From: {user.name}-`{user.id}`\nAmount: ```{val} credits```\n")
-            #await pconn.execute(
+            await ctx.bot.get_partial_messageable(999442907465523220).send(
+                f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nCredits Taken From: {user.name}-`{user.id}`\nAmount: ```{val} credits```\n"
+            )
+            # await pconn.execute(
             #    "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
             #    ctx.author.id, user.id, val, "repo", datetime.now()
-            #)
+            # )
 
     @check_investigator()
     @repossess.command(aliases=["d", "deems", "r"])
@@ -1170,10 +1302,14 @@ class KittyCat(commands.Cog):
     async def redeems(self, ctx, user: discord.Member, val: int):
         """INVESTIGATOR: REPOSSESS REDEEMS"""
         if ctx.author.id == user.id:
-            await ctx.send("<:err:997377264511623269>!:\nYou cant take your own Redeems!")
+            await ctx.send(
+                "<:err:997377264511623269>!:\nYou cant take your own Redeems!"
+            )
             return
         if val <= 0:
-            await ctx.send("<:err:997377264511623269>!:\nYou need to transfer at least 1 Redeem!")
+            await ctx.send(
+                "<:err:997377264511623269>!:\nYou need to transfer at least 1 Redeem!"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
             giver_creds = await pconn.fetchval(
@@ -1182,24 +1318,35 @@ class KittyCat(commands.Cog):
             getter_creds = await pconn.fetchval(
                 "SELECT redeems FROM users WHERE u_id = 123"
             )
-       
+
         if getter_creds is None:
             await ctx.send(f"<:err:997377264511623269>!:\nIssue with fake UserID (123)")
             return
         if giver_creds is None:
-            await ctx.send(f"<:err:997377264511623269>!:\n{user.name}({user.id}) has not started.")
+            await ctx.send(
+                f"<:err:997377264511623269>!:\n{user.name}({user.id}) has not started."
+            )
             return
         if val > giver_creds:
-            await ctx.send(f"<:err:997377264511623269>!:\n{user.name}({user.id}) does not have that many redeems!!")
+            await ctx.send(
+                f"<:err:997377264511623269>!:\n{user.name}({user.id}) does not have that many redeems!!"
+            )
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to move **{val}** redeems from\n**{user.name}**({user.id})\nto **Mewbot's Central Bank?**").wait():
+        if not await ConfirmView(
+            ctx,
+            f"Are you sure you want to move **{val}** redeems from\n**{user.name}**({user.id})\nto **Mewbot's Central Bank?**",
+        ).wait():
             await ctx.send("<:err:997377264511623269>!:\nTransfer **Cancelled.**")
             return
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchval("SELECT redeems FROM users WHERE u_id = $1", user.id)
+            curcreds = await pconn.fetchval(
+                "SELECT redeems FROM users WHERE u_id = $1", user.id
+            )
             if val > curcreds:
-                await ctx.send("<:err:997377264511623269>!:\nUser does not have that many redeems anymore...")
+                await ctx.send(
+                    "<:err:997377264511623269>!:\nUser does not have that many redeems anymore..."
+                )
                 return
             await pconn.execute(
                 "UPDATE users SET redeems = redeems - $1 WHERE u_id = $2",
@@ -1213,11 +1360,13 @@ class KittyCat(commands.Cog):
             await ctx.send(
                 f"{val} redeems taken from {user.name}({user.id}), added to fake u_id `123`."
             )
-            await ctx.bot.get_partial_messageable(999442907465523220).send(f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nredeems Taken From: {user.name}-`{user.id}`\nAmount: ```{val} redeems```\n")
-            #await pconn.execute(
+            await ctx.bot.get_partial_messageable(999442907465523220).send(
+                f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nredeems Taken From: {user.name}-`{user.id}`\nAmount: ```{val} redeems```\n"
+            )
+            # await pconn.execute(
             #    "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
             #    ctx.author.id, user.id, val, "repo", datetime.now()
-            #)
+            # )
 
     @check_investigator()
     @repossess.command(aliases=["a", "everything"])
@@ -1234,19 +1383,26 @@ class KittyCat(commands.Cog):
             getter_creds = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = 123"
             )
-       
+
         if getter_creds is None:
             await ctx.send(f"<:err:997377264511623269>!: Issue with fake UserID (123)")
             return
         if giver_creds is None:
-            await ctx.send(f"<:err:997377264511623269>!: {user.name}({user.id}) has not started.")
+            await ctx.send(
+                f"<:err:997377264511623269>!: {user.name}({user.id}) has not started."
+            )
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to move all **REDEEMS AND CREDITS** from\n**{user.name}**({user.id})\nto **Mewbot's Central Bank?**").wait():
+        if not await ConfirmView(
+            ctx,
+            f"Are you sure you want to move all **REDEEMS AND CREDITS** from\n**{user.name}**({user.id})\nto **Mewbot's Central Bank?**",
+        ).wait():
             await ctx.send("<:err:997377264511623269>!:\nTransfer **Cancelled.**")
             return
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchrow("SELECT mewcoins, redeems FROM users WHERE u_id = $1", user.id)
+            curcreds = await pconn.fetchrow(
+                "SELECT mewcoins, redeems FROM users WHERE u_id = $1", user.id
+            )
             credits = curcreds["mewcoins"]
             redeems = curcreds["redeems"]
             await pconn.execute(
@@ -1261,11 +1417,13 @@ class KittyCat(commands.Cog):
             await ctx.send(
                 f"{redeems} redeems\n{credits} credits\ntaken from {user.name}({user.id}), added to fake u_id `123`."
             )
-            await ctx.bot.get_partial_messageable(999442907465523220).send(f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nEVERYTHING Taken From: {user.name}-`{user.id}`\nAmount: ```{credits} credits\n{redeems} redeems```\n")
-            #await pconn.execute(
+            await ctx.bot.get_partial_messageable(999442907465523220).send(
+                f"<:err:997377264511623269>-Staff Member: {ctx.author.name}-``{ctx.author.id}``\nEVERYTHING Taken From: {user.name}-`{user.id}`\nAmount: ```{credits} credits\n{redeems} redeems```\n"
+            )
+            # await pconn.execute(
             #    "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
             #    ctx.author.id, user.id, val, "repo", datetime.now()
-            #)
+            # )
 
     @check_investigator()
     @repossess.command(aliases=["b", "balance"])
@@ -1273,15 +1431,18 @@ class KittyCat(commands.Cog):
     async def bank(self, ctx):
         """INVESTIGATOR: BANK BALANCES"""
         async with ctx.bot.db[0].acquire() as pconn:
-            redeems = await pconn.fetchval(
-                "SELECT redeems FROM users WHERE u_id = 123"
-            )
+            redeems = await pconn.fetchval("SELECT redeems FROM users WHERE u_id = 123")
             mewcoins = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = 123"
             )
-        embed=discord.Embed(title="Balances", color=0xff0000)
-        embed.set_author(name="Mewbot Central Bank", url=f"https://discord.com/channels/{os.environ['OFFICIAL_SERVER']}/793744327746519081/")
-        embed.set_thumbnail(url="https://bot.to/wp-content/uploads/edd/2020/09/d5a4713693a852257ca24ec8d251e295.png")
+        embed = discord.Embed(title="Balances", color=0xFF0000)
+        embed.set_author(
+            name="Mewbot Central Bank",
+            url=f"https://discord.com/channels/{os.environ['OFFICIAL_SERVER']}/793744327746519081/",
+        )
+        embed.set_thumbnail(
+            url="https://bot.to/wp-content/uploads/edd/2020/09/d5a4713693a852257ca24ec8d251e295.png"
+        )
         embed.add_field(name="Total Credits:", value=f"{mewcoins}", inline=False)
         embed.add_field(name="Total Redeems:", value=f"{redeems}", inline=False)
         embed.set_footer(text="All credits/redeems are from Bot-banned Users")
@@ -1292,12 +1453,34 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def help(self, ctx):
         """INVESTIGATOR: COMMANDS"""
-        embed=discord.Embed(title="Repossess Command", description="**Base Command:** `;repossess <sub-command>`\n**Aliases:** `;r`", color=0xff0000)
-        embed.set_author(name="Investigation Team Only", url="https://discord.com/channels/519466243342991360/793744327746519081/", icon_url="https://static.thenounproject.com/png/3022281-200.png")
-        embed.set_thumbnail(url="https://bot.to/wp-content/uploads/edd/2020/09/d5a4713693a852257ca24ec8d251e295.png")
-        embed.add_field(name=";r redeems <user id> <amount>", value="Moves redeems to bank\n**Aliases**: `r, d, deems`", inline=False)
-        embed.add_field(name=";r credits <user id> <amount>", value="Moves credits to bank\n**Aliases**: `c, bread, cheese`", inline=False)
-        embed.add_field(name=";r everything <user id>", value="Moves all redeems and credits to bank\n**Aliases**: `r, d, deems`", inline=True)
+        embed = discord.Embed(
+            title="Repossess Command",
+            description="**Base Command:** `;repossess <sub-command>`\n**Aliases:** `;r`",
+            color=0xFF0000,
+        )
+        embed.set_author(
+            name="Investigation Team Only",
+            url="https://discord.com/channels/519466243342991360/793744327746519081/",
+            icon_url="https://static.thenounproject.com/png/3022281-200.png",
+        )
+        embed.set_thumbnail(
+            url="https://bot.to/wp-content/uploads/edd/2020/09/d5a4713693a852257ca24ec8d251e295.png"
+        )
+        embed.add_field(
+            name=";r redeems <user id> <amount>",
+            value="Moves redeems to bank\n**Aliases**: `r, d, deems`",
+            inline=False,
+        )
+        embed.add_field(
+            name=";r credits <user id> <amount>",
+            value="Moves credits to bank\n**Aliases**: `c, bread, cheese`",
+            inline=False,
+        )
+        embed.add_field(
+            name=";r everything <user id>",
+            value="Moves all redeems and credits to bank\n**Aliases**: `r, d, deems`",
+            inline=True,
+        )
         embed.set_footer(text="All commands are logged in support bot server!")
         await ctx.send(embed=embed)
 
@@ -1314,11 +1497,15 @@ class KittyCat(commands.Cog):
     async def _demote_staff(self, ctx, member: discord.Member):
         """ADMIN: Demote a user from Staff."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET staff = 'User' WHERE u_id = $1", member.id)
-        
+            await pconn.execute(
+                "UPDATE users SET staff = 'User' WHERE u_id = $1", member.id
+            )
+
         msg = f"{GREEN} Removed bot permissions.\n"
         if ctx.guild != ctx.bot.official_server:
-            msg += f"{RED} Could not remove OS roles, as this command was not run in OS.\n"
+            msg += (
+                f"{RED} Could not remove OS roles, as this command was not run in OS.\n"
+            )
             await ctx.send(msg)
             return
         ranks = {
@@ -1336,15 +1523,21 @@ class KittyCat(commands.Cog):
             msg += f"{YELLOW} User had no rank roles to remove.\n"
         else:
             removelist = list(removeset)
-            await member.remove_roles(*removelist, reason=f'Staff demotion - {ctx.author}')
+            await member.remove_roles(
+                *removelist, reason=f"Staff demotion - {ctx.author}"
+            )
             removelist = [str(x) for x in removelist]
-            msg += f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
-        
+            msg += (
+                f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
+            )
+
         staff_role = ctx.guild.get_role(1009277747677372458)
         if staff_role not in member.roles:
             msg += f"{YELLOW} User did not have the **{staff_role}** role.\n"
         else:
-            await member.remove_roles(staff_role, reason=f'Staff demotion - {ctx.author}')
+            await member.remove_roles(
+                staff_role, reason=f"Staff demotion - {ctx.author}"
+            )
             msg += f"{GREEN} Removed the **{staff_role}** role.\n"
 
         await ctx.send(msg)
@@ -1355,9 +1548,10 @@ class KittyCat(commands.Cog):
     async def _demote_gym(self, ctx, user_id: discord.Member):
         """ADMIN: Demote a user from Gym Leader."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET gym_leader = false WHERE u_id = $1", user_id.id)
+            await pconn.execute(
+                "UPDATE users SET gym_leader = false WHERE u_id = $1", user_id.id
+            )
         await ctx.send("Done.")
-
 
     @check_admin()
     @commands.hybrid_group()
@@ -1365,14 +1559,37 @@ class KittyCat(commands.Cog):
     async def promote(self, ctx):
         """ADMIN: Promote users."""
         pass
-    
+
     @check_admin()
     @promote.command(name="staff")
     @discord.app_commands.guilds(STAFFSERVER)
-    async def _promote_staff(self, ctx, rank: Literal["User", "Support", "Trial", "Mod", "Investigator", "Gymauth", "Admin", "Developer"], member: discord.Member):
+    async def _promote_staff(
+        self,
+        ctx,
+        rank: Literal[
+            "User",
+            "Support",
+            "Trial",
+            "Mod",
+            "Investigator",
+            "Gymauth",
+            "Admin",
+            "Developer",
+        ],
+        member: discord.Member,
+    ):
         """ADMIN: Promote a user to a Staff rank."""
         rank = rank.title()
-        if rank not in ("User", "Support", "Trial", "Mod", "Investigator", "Gymauth", "Admin", "Developer"):
+        if rank not in (
+            "User",
+            "Support",
+            "Trial",
+            "Mod",
+            "Investigator",
+            "Gymauth",
+            "Admin",
+            "Developer",
+        ):
             await ctx.send(f"{RED} Invalid rank.")
             return
         if rank == "Developer":
@@ -1384,10 +1601,12 @@ class KittyCat(commands.Cog):
 
         if rank != "Trial":
             async with ctx.bot.db[0].acquire() as pconn:
-                await pconn.execute("UPDATE users SET staff = $2 WHERE u_id = $1", member.id, rank)
+                await pconn.execute(
+                    "UPDATE users SET staff = $2 WHERE u_id = $1", member.id, rank
+                )
             msg = f"{GREEN} Gave bot permission level **{rank}**.\n"
-        
-        if ctx.guild.id != int(os.environ['OFFICIAL_SERVER']):
+
+        if ctx.guild.id != int(os.environ["OFFICIAL_SERVER"]):
             msg += f"{RED} Could not add or remove OS roles, as this command was not run in OS.\n"
             await ctx.send(msg)
             return
@@ -1408,22 +1627,30 @@ class KittyCat(commands.Cog):
             msg += f"{YELLOW} User had no other rank roles to remove.\n"
         else:
             removelist = list(removeset)
-            await member.remove_roles(*removelist, reason=f'Staff promotion - {ctx.author}')
+            await member.remove_roles(
+                *removelist, reason=f"Staff promotion - {ctx.author}"
+            )
             removelist = [str(x) for x in removelist]
-            msg += f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
-        
+            msg += (
+                f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
+            )
+
         if ranks[rank] in member.roles:
             msg += f"{YELLOW} User already had the **{ranks[rank]}** role.\n"
         else:
-            await member.add_roles(ranks[rank], reason=f'Staff promotion - {ctx.author}')
+            await member.add_roles(
+                ranks[rank], reason=f"Staff promotion - {ctx.author}"
+            )
             msg += f"{GREEN} Added new rank role **{ranks[rank]}**.\n"
-        
+
         if rank != "Support":
             staff_role = ctx.guild.get_role(1009277747677372458)
             if staff_role in member.roles:
                 msg += f"{YELLOW} User already had the **{staff_role}** role.\n"
             else:
-                await member.add_roles(staff_role, reason=f'Staff promotion - {ctx.author}')
+                await member.add_roles(
+                    staff_role, reason=f"Staff promotion - {ctx.author}"
+                )
                 msg += f"{GREEN} Added the **{staff_role}** role.\n"
 
         await ctx.send(msg)
@@ -1434,11 +1661,13 @@ class KittyCat(commands.Cog):
     async def _promote_gym(self, ctx, user_id: discord.Member):
         """ADMIN: Promote a user to Gym Leader."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET gym_leader = true WHERE u_id = $1", user_id.id)
+            await pconn.execute(
+                "UPDATE users SET gym_leader = true WHERE u_id = $1", user_id.id
+            )
         await ctx.send("Done.")
 
-    #@check_mod()
-    #@commands.hybrid_command()
+    # @check_mod()
+    # @commands.hybrid_command()
     async def modcmds(self, ctx):
         """MOD: Mod level commands. CURRENTLY DEPRECATED"""
         desc = ""
@@ -1467,7 +1696,7 @@ class KittyCat(commands.Cog):
         desc += "`marketmany` - **Buy multiple pokes from the market at once.**\n"
         desc += "`marketinfo` - **Hidden info about marketed pokes.**\n"
         desc += "`tradable` - **Set pokemon trade-able or not**\n"
-        embed=discord.Embed(title="Moderators", description=desc, color=0xff0000)
+        embed = discord.Embed(title="Moderators", description=desc, color=0xFF0000)
         embed.set_author(name="Commands Usable by:")
         embed.set_footer(text="Use of these commands is logged in detail")
         await ctx.send(embed=embed)
@@ -1478,7 +1707,9 @@ class KittyCat(commands.Cog):
     async def search(self, ctx, search_term: str):
         """MOD: Global Pokemon Nickname search"""
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch("SELECT * FROM pokes WHERE poknick like $1", search_term)
+            data = await pconn.fetch(
+                "SELECT * FROM pokes WHERE poknick like $1", search_term
+            )
         msg = ""
         for x in data:
             msg += f'`{x["id"]} | {x["poknick"]}`\n'
@@ -1493,7 +1724,9 @@ class KittyCat(commands.Cog):
         """ADMIN: Global Pokemon Nickname search (REGEX)"""
         search_term_regex = f"^{search_term}$"
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetch("SELECT * FROM pokes WHERE poknick ~ $1", search_term_regex)
+            data = await pconn.fetch(
+                "SELECT * FROM pokes WHERE poknick ~ $1", search_term_regex
+            )
         msg = ""
         for x in data:
             msg += f'`{x["id"]} | {x["poknick"]}`\n'
@@ -1506,17 +1739,21 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def _eval(self, ctx):
         """Evaluates python code"""
-        await ctx.send("Please click the below button to evaluate your code.", view=EvalView(ctx.author.id))
+        await ctx.send(
+            "Please click the below button to evaluate your code.",
+            view=EvalView(ctx.author.id),
+        )
 
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def sync(self, ctx):
         """Syncs all commands with discord"""
-        class FSnow():
+
+        class FSnow:
             def __init__(self, id):
                 self.id = id
-        
+
         await ctx.send("syncing...")
         await ctx.bot.tree.sync()
         await ctx.bot.tree.sync(guild=FSnow(STAFFSERVER))
@@ -1525,9 +1762,11 @@ class KittyCat(commands.Cog):
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def restart(self, ctx, cluster_id: int): 
+    async def restart(self, ctx, cluster_id: int):
         """Restart a bots cluster"""
-        if not await ConfirmView(ctx, f"Are you sure you want to restart cluster #{cluster_id}?").wait():
+        if not await ConfirmView(
+            ctx, f"Are you sure you want to restart cluster #{cluster_id}?"
+        ).wait():
             await ctx.send("Restart cancelled.")
             return
 
@@ -1555,27 +1794,39 @@ class KittyCat(commands.Cog):
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def executedb(self, ctx: commands.Context, type: Literal["row", "fetch", "val", "execute"], execution: str):
+    async def executedb(
+        self,
+        ctx: commands.Context,
+        type: Literal["row", "fetch", "val", "execute"],
+        execution: str,
+    ):
         """Run SQL commands directly"""
         try:
             await ctx.bot.log(
-                527031932110897152, f"{ctx.author.name} used edb - Execution = `{execution}`"
+                527031932110897152,
+                f"{ctx.author.name} used edb - Execution = `{execution}`",
             )
         except:
             pass
-        
+
         # Sanity checks
         low_exe = execution.lower()
         if low_exe != self.safe_edb:
             self.safe_edb = low_exe
             if "update" in low_exe and "where" not in low_exe:
-                await ctx.send("**WARNING**: You attempted to run an `UPDATE` without a `WHERE` clause. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run an `UPDATE` without a `WHERE` clause. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
             if "drop" in low_exe:
-                await ctx.send("**WARNING**: You attempted to run a `DROP`. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run a `DROP`. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
             if "delete from" in low_exe:
-                await ctx.send("**WARNING**: You attempted to run a `DELETE FROM`. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run a `DELETE FROM`. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
 
         try:
@@ -1591,19 +1842,21 @@ class KittyCat(commands.Cog):
         except Exception as e:
             await ctx.send(f"```py\n{e}```")
             raise
-       
+
         result = str(result)
         if len(result) > 1950:
             result = result[:1950] + "\n\n..."
         await ctx.send(f"```py\n{result}```")
-
 
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def rollingrestart(self, ctx):
         """Restarts the entire bot process"""
-        if not await ConfirmView(ctx, f"**Are you sure you want to restart the process?**\n\nThis includes the cluster launcher!  This will default back to Systemctl handling the program exit.").wait():
+        if not await ConfirmView(
+            ctx,
+            f"**Are you sure you want to restart the process?**\n\nThis includes the cluster launcher!  This will default back to Systemctl handling the program exit.",
+        ).wait():
             await ctx.send("Restart cancelled.")
             return
 
@@ -1629,7 +1882,9 @@ class KittyCat(commands.Cog):
     async def get_commit(self, ctx):
         COMMAND = f"cd {ctx.bot.app_directory} && git branch -vv"
 
-        proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        proc = await asyncio.create_subprocess_shell(
+            COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
 
         stdout, stderr = await proc.communicate()
         stdout = stdout.decode().split("\n")
@@ -1637,19 +1892,23 @@ class KittyCat(commands.Cog):
         for branch in stdout:
             if branch.startswith("*"):
                 return branch
-        
+
         raise ValueError()
-    
+
     @commands.hybrid_command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def chdo(self, ctx, date: str=None):
+    async def chdo(self, ctx, date: str = None):
         try:
-            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = datetime.datetime.strptime(date, "%Y-%m-%d")
         except:
-            await ctx.send("Incorrect date format passed. Format must be, `;[ chdo ] YYYY-MM-DD`\n`;chdo 2021-04-10`")
+            await ctx.send(
+                "Incorrect date format passed. Format must be, `;[ chdo ] YYYY-MM-DD`\n`;chdo 2021-04-10`"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            result = await pconn.fetchval("SELECT sum(amount) FROM donations WHERE date_donated >= $1", date)
+            result = await pconn.fetchval(
+                "SELECT sum(amount) FROM donations WHERE date_donated >= $1", date
+            )
             await ctx.author.send(f"{date} - {datetime.datetime.now()} = ${result}")
 
     @check_admin()
@@ -1659,14 +1918,18 @@ class KittyCat(commands.Cog):
         COMMAND = f"cd {ctx.bot.app_directory} && git pull"
         addendum = ""
 
-        proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        proc = await asyncio.create_subprocess_shell(
+            COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
 
         stdout, stderr = await proc.communicate()
         stdout = stdout.decode()
         await ctx.send(stdout)
         if "no tracking information" in stderr.decode():
             COMMAND = f"cd {ctx.bot.app_directory} && git pull origin main"
-            proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            proc = await asyncio.create_subprocess_shell(
+                COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
             stdout, stderr = await proc.communicate()
             stdout = stdout.decode()
             addendum = "\n\n**Warning: no upstream branch is set.  I automatically pulled from origin/main but this may be wrong.  To remove this message and make it dynamic, please run `git branch --set-upstream-to=origin/<branch> <branch>`**"
@@ -1724,6 +1987,7 @@ class KittyCat(commands.Cog):
         embed.description += addendum
 
         await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(KittyCat(bot))

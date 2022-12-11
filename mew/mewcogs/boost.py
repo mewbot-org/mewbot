@@ -11,40 +11,46 @@ CHOICES = (
     "Credits - 150,000\nRedeems - x3",
 )
 
+
 class ChoicesView(discord.ui.View):
     def __init__(self, ctx):
         self.ctx = ctx
         super().__init__(timeout=60)
-    
+
     def set_message(self, msg: discord.Message):
         self.msg = msg
 
     async def on_timeout(self):
         ctx = self.ctx
-        await self.msg.edit(content="You took too long to pick a nitro reward.", embed=None, view=None)
+        await self.msg.edit(
+            content="You took too long to pick a nitro reward.", embed=None, view=None
+        )
         await ctx.bot.redis_manager.redis.execute(
             "LREM", "nitrorace", "1", str(ctx.author.id)
         )
 
     @discord.ui.select(
-        placeholder = "Choose a reward for boosting!",
-        min_values = 1,
-        max_values = 1,
-        options = [
+        placeholder="Choose a reward for boosting!",
+        min_values=1,
+        max_values=1,
+        options=[
             discord.SelectOption(
-                label = "1 - Rare chest - x1",
-            ),discord.SelectOption(
-                label =  "2 - Battle/shiny multi - x5\nBreed/IV multi - x3",
-            ),discord.SelectOption(
-                label =  "3 - Credits - 150,000\nRedeems - x3",
+                label="1 - Rare chest - x1",
             ),
-        ]
+            discord.SelectOption(
+                label="2 - Battle/shiny multi - x5\nBreed/IV multi - x3",
+            ),
+            discord.SelectOption(
+                label="3 - Credits - 150,000\nRedeems - x3",
+            ),
+        ],
     )
-
     async def callback(self, interaction, select):
         ctx = self.ctx
         choice = int(self.children[0].values[0][0])
-        await ctx.bot.db[1].boosters.update_one({}, {"$push": {"boosters": ctx.author.id}})
+        await ctx.bot.db[1].boosters.update_one(
+            {}, {"$push": {"boosters": ctx.author.id}}
+        )
         async with ctx.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchval(
                 "SELECT inventory::json FROM users WHERE u_id = $1",
@@ -53,22 +59,39 @@ class ChoicesView(discord.ui.View):
             if choice == 1:
                 inventory["rare chest"] = inventory.get("rare chest", 0) + 1
             elif choice == 2:
-                inventory["battle-multiplier"] = min(50, inventory.get("battle-multiplier", 0) + 5)
-                inventory["shiny-multiplier"] = min(50, inventory.get("shiny-multiplier", 0) + 5)
-                inventory["iv-multiplier"] = min(50, inventory.get("iv-multiplier", 0) + 3)
-                inventory["breeding-multiplier"] = min(50, inventory.get("breeding-multiplier", 0) + 3)
+                inventory["battle-multiplier"] = min(
+                    50, inventory.get("battle-multiplier", 0) + 5
+                )
+                inventory["shiny-multiplier"] = min(
+                    50, inventory.get("shiny-multiplier", 0) + 5
+                )
+                inventory["iv-multiplier"] = min(
+                    50, inventory.get("iv-multiplier", 0) + 3
+                )
+                inventory["breeding-multiplier"] = min(
+                    50, inventory.get("breeding-multiplier", 0) + 3
+                )
             elif choice == 3:
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + 3, mewcoins = mewcoins + 150000 WHERE u_id = $1", ctx.author.id
+                    "UPDATE users SET redeems = redeems + 3, mewcoins = mewcoins + 150000 WHERE u_id = $1",
+                    ctx.author.id,
                 )
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json WHERE u_id = $2",
                 inventory,
                 ctx.author.id,
             )
-        await self.msg.edit(embed=make_embed(title=f"You have received\n{CHOICES[choice-1]}\n**Can be claimed monthly!**"), view=None)
-        await ctx.bot.redis_manager.redis.execute("LREM", "nitrorace", "1", str(ctx.author.id))
+        await self.msg.edit(
+            embed=make_embed(
+                title=f"You have received\n{CHOICES[choice-1]}\n**Can be claimed monthly!**"
+            ),
+            view=None,
+        )
+        await ctx.bot.redis_manager.redis.execute(
+            "LREM", "nitrorace", "1", str(ctx.author.id)
+        )
         self.stop()
+
 
 class Boost(commands.Cog):
     def __init__(self, bot):
@@ -86,17 +109,23 @@ class Boost(commands.Cog):
     async def claim(self, ctx):
         """Claim rewards for Boosting our Official Server!"""
         if ctx.guild != ctx.bot.official_server:
-            await ctx.send("You can only use this command in the Mewbot Official Server.")
+            await ctx.send(
+                "You can only use this command in the Mewbot Official Server."
+            )
             return
         if ctx.bot.booster_role not in ctx.author.roles:
-            await ctx.send("You can only use this command if you have nitro boosted this server.")
+            await ctx.send(
+                "You can only use this command if you have nitro boosted this server."
+            )
             return
 
         boosters = (await ctx.bot.db[1].boosters.find_one())["boosters"]
 
         in_process = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute("LRANGE", "nitrorace", "0", "-1")
+            for id_ in await self.bot.redis_manager.redis.execute(
+                "LRANGE", "nitrorace", "0", "-1"
+            )
             if id_.decode("utf-8").isdigit()
         ]
 
@@ -105,13 +134,19 @@ class Boost(commands.Cog):
             return
 
         if ctx.author.id in in_process:
-            await ctx.send("You are already in the process of claiming your Nitro Boost!")
+            await ctx.send(
+                "You are already in the process of claiming your Nitro Boost!"
+            )
             return
 
-        await self.bot.redis_manager.redis.execute("LPUSH", "nitrorace", str(ctx.author.id))
+        await self.bot.redis_manager.redis.execute(
+            "LPUSH", "nitrorace", str(ctx.author.id)
+        )
 
         async with ctx.bot.db[0].acquire() as pconn:
-            u_id = await pconn.fetchval("SELECT u_id FROM users WHERE u_id = $1", ctx.author.id)
+            u_id = await pconn.fetchval(
+                "SELECT u_id FROM users WHERE u_id = $1", ctx.author.id
+            )
 
         if u_id is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
@@ -121,9 +156,9 @@ class Boost(commands.Cog):
             return
         # Pick reward
 
-        view = ChoicesView(ctx = ctx)
+        view = ChoicesView(ctx=ctx)
         msg = await ctx.send(
-            embed = make_embed(title="Choose your desired Nitro Boost reward."), view=view
+            embed=make_embed(title="Choose your desired Nitro Boost reward."), view=view
         )
         view.set_message(msg)
 
@@ -146,7 +181,9 @@ class Boost(commands.Cog):
         """Reset all Nitro Boosts"""
         boosters_collection = ctx.bot.db[1].boosters
         boosters = (await ctx.bot.db[1].boosters.find_one())["boosters"]
-        await ctx.bot.db[1].boosters.update_one({"key": "boosters"}, {"$set": {"boosters": []}})
+        await ctx.bot.db[1].boosters.update_one(
+            {"key": "boosters"}, {"$set": {"boosters": []}}
+        )
         await ctx.send("Reset Boosts for this month")
 
 

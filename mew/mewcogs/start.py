@@ -22,10 +22,41 @@ def replace_value_with_definition(key_to_find, definition, dictionary):
 class Start(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_command()
-    @discord.app_commands.describe(starter="The starter you wish to begin your Pokémon journey with!")
-    async def start(self, ctx, starter: Literal['Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey', 'Charmander', 'Cyndaquil', 'Torchic', 'Chimchar', 'Tepig', 'Fennekin', 'Litten', 'Scorbunny', 'Squirtle', 'Totodile', 'Mudkip', 'Piplup', 'Oshawott', 'Froakie', 'Popplio', 'Sobble']):
+    @discord.app_commands.describe(
+        starter="The starter you wish to begin your Pokémon journey with!"
+    )
+    async def start(
+        self,
+        ctx,
+        starter: Literal[
+            "Bulbasaur",
+            "Chikorita",
+            "Treecko",
+            "Turtwig",
+            "Snivy",
+            "Chespin",
+            "Rowlet",
+            "Grookey",
+            "Charmander",
+            "Cyndaquil",
+            "Torchic",
+            "Chimchar",
+            "Tepig",
+            "Fennekin",
+            "Litten",
+            "Scorbunny",
+            "Squirtle",
+            "Totodile",
+            "Mudkip",
+            "Piplup",
+            "Oshawott",
+            "Froakie",
+            "Popplio",
+            "Sobble",
+        ],
+    ):
         """Begin your Pokémon journey with MewBot!!!"""
         async with ctx.bot.db[0].acquire() as pconn:
             if await pconn.fetchval(
@@ -62,9 +93,7 @@ class Start(commands.Cog):
                 inline=True,
             )
             embed.set_image(url="https://i.imgur.com/kFlj6ke.jpg")
-            embed.set_footer(
-                text="Run /start <starter> to begin!"
-            )
+            embed.set_footer(text="Run /start <starter> to begin!")
             await ctx.send(embed=embed)
             return
         starter = starter.capitalize()
@@ -92,9 +121,13 @@ class Start(commands.Cog):
         )
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(user_query, *user_args)
-        await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, starter, boosted=True)
-        
-        new_embed = discord.Embed(title="Welcome to MewBot", color=ctx.bot.get_random_color())
+        await ctx.bot.commondb.create_poke(
+            ctx.bot, ctx.author.id, starter, boosted=True
+        )
+
+        new_embed = discord.Embed(
+            title="Welcome to MewBot", color=ctx.bot.get_random_color()
+        )
         new_embed.description = f"""See your owned Pokemon using `/p`\nSelect your starter with `/select 1`\n
         Go through the MewBot tutorial - `/tutorial`\n
         **Now begin your adventure!**"""
@@ -319,6 +352,7 @@ class Start(commands.Cog):
     #             ctx.message.created_at,
     #         )
     #         await ctx.author.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Start(bot))

@@ -3,6 +3,7 @@ from enum import IntEnum
 
 class Ability(IntEnum):
     """Helper enum for ability ids to make them more readable."""
+
     STENCH = 1
     DRIZZLE = 2
     SPEED_BOOST = 3
@@ -270,14 +271,15 @@ class Ability(IntEnum):
     AS_ONE_ICE = 265
     CURIOUS_MEDICINE = 266
     UNSEEN_FIST = 267
-    
+
     @property
     def pretty_name(self):
         return self.name.lower().replace("_", " ")
-    
+
 
 class DamageClass(IntEnum):
     """Helper enum for damage classes to make them more readable."""
+
     STATUS = 1
     PHYSICAL = 2
     SPECIAL = 3
@@ -285,6 +287,7 @@ class DamageClass(IntEnum):
 
 class ElementType(IntEnum):
     """Helper enum for element types to make them more readable."""
+
     NORMAL = 1
     FIGHTING = 2
     FLYING = 3
@@ -308,6 +311,7 @@ class ElementType(IntEnum):
 
 class MoveTarget(IntEnum):
     """Helper enum for move targets to make them more readable."""
+
     SPECIFIC_MOVE = 1
     SELECTED_POKEMON_ME_FIRST = 2
     ALLY = 3

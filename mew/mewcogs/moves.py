@@ -14,16 +14,99 @@ async def get_moves(ctx, pokemon_name):
     if pokemon_name == "smeargle":
         # Moves which are not coded in the bot
         uncoded_ids = [
-            266, 270, 476, 495, 502, 511, 597, 602, 603, 607, 622, 623, 624, 625, 626, 627,
-            628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643,
-            644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 671,
-            695, 696, 697, 698, 699, 700, 701, 702, 703, 719, 723, 724, 725, 726, 727, 728,
-            811, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011,
-            10012, 10013, 10014, 10015, 10016, 10017, 10018
+            266,
+            270,
+            476,
+            495,
+            502,
+            511,
+            597,
+            602,
+            603,
+            607,
+            622,
+            623,
+            624,
+            625,
+            626,
+            627,
+            628,
+            629,
+            630,
+            631,
+            632,
+            633,
+            634,
+            635,
+            636,
+            637,
+            638,
+            639,
+            640,
+            641,
+            642,
+            643,
+            644,
+            645,
+            646,
+            647,
+            648,
+            649,
+            650,
+            651,
+            652,
+            653,
+            654,
+            655,
+            656,
+            657,
+            658,
+            671,
+            695,
+            696,
+            697,
+            698,
+            699,
+            700,
+            701,
+            702,
+            703,
+            719,
+            723,
+            724,
+            725,
+            726,
+            727,
+            728,
+            811,
+            10001,
+            10002,
+            10003,
+            10004,
+            10005,
+            10006,
+            10007,
+            10008,
+            10009,
+            10010,
+            10011,
+            10012,
+            10013,
+            10014,
+            10015,
+            10016,
+            10017,
+            10018,
         ]
-        all_moves = await ctx.bot.db[1].moves.find({
-            "id": {"$nin": uncoded_ids},
-        }).to_list(None)
+        all_moves = (
+            await ctx.bot.db[1]
+            .moves.find(
+                {
+                    "id": {"$nin": uncoded_ids},
+                }
+            )
+            .to_list(None)
+        )
         return [t["identifier"] for t in all_moves]
     moves = await ctx.bot.db[1].pokemon_moves.find_one({"pokemon": pokemon_name})
     if moves is None:
@@ -37,7 +120,7 @@ async def get_moves(ctx, pokemon_name):
 class Moves(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_command()
     async def learn(self, ctx, slot: int, move: str):
         if slot > 4 or slot < 1:
@@ -54,7 +137,9 @@ class Moves(commands.Cog):
             poke = dets["pokname"]
             moves = await get_moves(ctx, poke.lower())
             if moves is None:
-                await ctx.send("That pokemon cannot learn any moves! You might need to `/deform` it first.")
+                await ctx.send(
+                    "That pokemon cannot learn any moves! You might need to `/deform` it first."
+                )
                 ctx.bot.logger.warning(f"Could not get moves for {poke}")
                 return
             if not move in moves:
@@ -66,11 +151,17 @@ class Moves(commands.Cog):
                 move.lower(),
                 dets["id"],
             )
-            await ctx.send(f"You have successfully learnt {move} as your slot {slot} move")
+            await ctx.send(
+                f"You have successfully learnt {move} as your slot {slot} move"
+            )
             await evolve(
                 ctx,
                 ctx.bot,
-                dict(await pconn.fetchrow("SELECT * FROM pokes WHERE id = $1", dets["id"])),
+                dict(
+                    await pconn.fetchrow(
+                        "SELECT * FROM pokes WHERE id = $1", dets["id"]
+                    )
+                ),
                 ctx.author,
                 channel=ctx.channel,
             )
@@ -84,7 +175,9 @@ class Moves(commands.Cog):
                 ctx.author.id,
             )
             if details is None:
-                await ctx.send(f"You do not have a selected pokemon. Select one with `/select` first.")
+                await ctx.send(
+                    f"You do not have a selected pokemon. Select one with `/select` first."
+                )
                 return
             pokename = details["pokname"]
             m1, m2, m3, m4 = (
@@ -120,7 +213,9 @@ class Moves(commands.Cog):
             return
         moves = await get_moves(ctx, pokename)
         if moves is None:
-            await ctx.send("That pokemon cannot learn any moves! You might need to `/deform` it first.")
+            await ctx.send(
+                "That pokemon cannot learn any moves! You might need to `/deform` it first."
+            )
             ctx.bot.logger.warning(f"Could not get moves for {pokename}")
             return
         moves_length = len(moves)
@@ -148,11 +243,16 @@ class Moves(commands.Cog):
                 damage_class = "<:phy:1030141843855396914>"
             elif damage_class == 3:
                 damage_class = "<:sp:1030141934313947166>"
-            type = [t["identifier"] for t in TYPES if t["id"] == type_id][0].capitalize()
+            type = [t["identifier"] for t in TYPES if t["id"] == type_id][
+                0
+            ].capitalize()
             desc += f"**{damage_class}{move.replace('-', ' ')}** - Power:`{power}` Acc:`{accuracy}` Type:`{type}`\n"
-        embed = discord.Embed(title="Learnable Move List", colour=random.choice(ctx.bot.colors))
+        embed = discord.Embed(
+            title="Learnable Move List", colour=random.choice(ctx.bot.colors)
+        )
         pages = pagify(desc, base_embed=embed)
         await MenuView(ctx, pages).start()
+
 
 async def setup(bot):
     await bot.add_cog(Moves(bot))

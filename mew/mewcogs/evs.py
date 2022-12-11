@@ -14,7 +14,14 @@ class Evs(commands.Cog):
         pass
 
     @evs.command(name="add")
-    async def add_evs(self, ctx, amount: int, stat: Literal["attack", "hp", "defense", "special attack", "special defense", "speed"]):
+    async def add_evs(
+        self,
+        ctx,
+        amount: int,
+        stat: Literal[
+            "attack", "hp", "defense", "special attack", "special defense", "speed"
+        ],
+    ):
         """Add a stat to a specific pokemon"""
         stat = stat.lower()
         if not stat in (
@@ -37,7 +44,9 @@ class Evs(commands.Cog):
             await ctx.send("You must add at least 1 EV to a stat")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
         if not _id:
             await ctx.send(
                 f"You do not have a selected pokemon!\nUse `/select` to select a pokemon."

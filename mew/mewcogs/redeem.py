@@ -10,6 +10,7 @@ from typing import Literal
 
 multiplier_max = {"battle-multiplier": 50, "shiny-multiplier": 50}
 
+
 def get_perks(plan):
     dets = {}
     if plan == "regular":
@@ -105,7 +106,9 @@ class Redeem(commands.Cog):
             except discord.HTTPException:
                 await ctx.send("I could not DM you the Pack information!")
                 return
-        await ctx.send("All available Packs and their information has been sent to DMs!")
+        await ctx.send(
+            "All available Packs and their information has been sent to DMs!"
+        )
 
     @commands.hybrid_group()
     async def redeem(self, ctx):
@@ -121,7 +124,7 @@ class Redeem(commands.Cog):
             if redeems is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
-    
+
         e = discord.Embed(title="Redeem Shop", color=ctx.bot.get_random_color())
         e.description = (
             f"You have {redeems} Redeems, get more with `/donate` or `/vote`"
@@ -169,10 +172,12 @@ class Redeem(commands.Cog):
         )
         await ctx.send(embed=e)
         return
-    
+
     @tradelock
     @redeem.command()
-    @discord.app_commands.describe(pack="The ID of the pack you want to redeem. View available packs with `/packs`.")
+    @discord.app_commands.describe(
+        pack="The ID of the pack you want to redeem. View available packs with `/packs`."
+    )
     async def pack(self, ctx, pack: Literal[1, 2, 3, 4, 5]):
         """Spend your redeems a pack to get extra perks, bundles, features & items"""
         if pack == 1:
@@ -232,10 +237,15 @@ class Redeem(commands.Cog):
                             True,
                         )
                 else:
-                    extra = max(0, (current_inv.get(item, 0) + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)))
+                    extra = max(
+                        0,
+                        (current_inv.get(item, 0) + pack[item])
+                        - (multiplier_max.get(item, 9999999999999999999999999)),
+                    )
                     extra_creds += extra * self.CREDITS_PER_MULTI
                     current_inv[item] = min(
-                        current_inv.get(item, 0) + pack[item], multiplier_max.get(item, 9999999999999999999999999)
+                        current_inv.get(item, 0) + pack[item],
+                        multiplier_max.get(item, 9999999999999999999999999),
                     )
             except:
                 continue
@@ -278,7 +288,7 @@ class Redeem(commands.Cog):
                 inline=False,
             )
         await ctx.send(embed=e)
-    
+
     @tradelock
     @redeem.command()
     async def shiny(self, ctx):
@@ -299,12 +309,18 @@ class Redeem(commands.Cog):
                 "UPDATE users SET redeems = redeems - 30 WHERE u_id = $1",
                 ctx.author.id,
             )
-        pokedata = await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, shiny, shiny=True)
+        pokedata = await ctx.bot.commondb.create_poke(
+            ctx.bot, ctx.author.id, shiny, shiny=True
+        )
         ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
-        await ctx.bot.get_partial_messageable(998341289164689459).send(f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a random shiny {shiny} (`{pokedata.id}`)\n----------------------------------")
-        e.add_field(name="Random Shiny", value=f"{shiny} ({ivpercent}% iv)", inline=False)
+        await ctx.bot.get_partial_messageable(998341289164689459).send(
+            f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a random shiny {shiny} (`{pokedata.id}`)\n----------------------------------"
+        )
+        e.add_field(
+            name="Random Shiny", value=f"{shiny} ({ivpercent}% iv)", inline=False
+        )
         await ctx.send(embed=e)
-    
+
     @tradelock
     @redeem.command()
     async def bike(self, ctx):
@@ -332,8 +348,8 @@ class Redeem(commands.Cog):
         """Trade 1 redeem for 50,000 credits."""
         async with ctx.bot.db[0].acquire() as pconn:
             redeems = await pconn.fetchval(
-                    "SELECT redeems FROM users WHERE u_id = $1", ctx.author.id
-                )
+                "SELECT redeems FROM users WHERE u_id = $1", ctx.author.id
+            )
             try:
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins + 50000, redeems = redeems - 1 Where u_id = $1",
@@ -363,7 +379,7 @@ class Redeem(commands.Cog):
                 await ctx.send("You do not have enough redeems")
                 return
             await ctx.send("You redeemed 1x honey!")
-    
+
     @tradelock
     @redeem.command()
     async def evs(self, ctx):
@@ -380,7 +396,7 @@ class Redeem(commands.Cog):
             await ctx.send(
                 "You now have 255 Effort Value Points!\nSee them on your Trainer Card!"
             )
-    
+
     @tradelock
     @redeem.group()
     async def nature(self, ctx):
@@ -407,12 +423,14 @@ class Redeem(commands.Cog):
 
     @tradelock
     @discord.app_commands.describe(pokemon="The Pokemon you want to redeem.")
-    @redeem.command(with_app_command=True) # This has to be registered
+    @redeem.command(with_app_command=True)  # This has to be registered
     async def pokemon(self, ctx, pokemon: str):
         """Redeem a specific Pokemon"""
         pokemon = pokemon.capitalize().replace(" ", "-")
         if not pokemon in totalList:
-            await ctx.send("That Pokemon does not exist!\nView the redeem shop with `/redeem`")
+            await ctx.send(
+                "That Pokemon does not exist!\nView the redeem shop with `/redeem`"
+            )
             return
         threshold = 4000
         async with ctx.bot.db[0].acquire() as pconn:
@@ -441,9 +459,13 @@ class Redeem(commands.Cog):
                 inventory,
                 ctx.author.id,
             )
-        pokedata = await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny)
+        pokedata = await ctx.bot.commondb.create_poke(
+            ctx.bot, ctx.author.id, pokemon, shiny=shiny
+        )
         ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
-        await ctx.bot.get_partial_messageable(998341289164689459).send(f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a {pokedata.emoji}{pokemon} (`{pokedata.id}`)\n----------------------------------")
+        await ctx.bot.get_partial_messageable(998341289164689459).send(
+            f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a {pokedata.emoji}{pokemon} (`{pokedata.id}`)\n----------------------------------"
+        )
         msg = f"Here's your {pokedata.emoji}{pokemon} ({ivpercent}% iv)!\n"
         if item:
             msg += f"Dropped - {item}"
@@ -455,9 +477,11 @@ class Redeem(commands.Cog):
         )
         progress = user["progress"]
         progress["redeem"] = progress.get("redeem", 0) + 1
-        await ctx.bot.mongo_update("users", {"user": ctx.author.id}, {"progress": progress})
+        await ctx.bot.mongo_update(
+            "users", {"user": ctx.author.id}, {"progress": progress}
+        )
 
-    @redeem.command(with_app_command=True) # This has to be registered
+    @redeem.command(with_app_command=True)  # This has to be registered
     @discord.app_commands.describe(option="Either Credits or a Pokemon")
     @tradelock
     async def multiple(self, ctx, amount: int, option: str):
@@ -476,8 +500,12 @@ class Redeem(commands.Cog):
                     amount,
                     ctx.author.id,
                 )
-            await ctx.bot.get_partial_messageable(998341289164689459).send(f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed {amount} redeems for {50000*amount:,} credits!\n----------------------------------")
-            await ctx.send(f"You redeemed {amount} redeems for {50000*amount:,} credits!")
+            await ctx.bot.get_partial_messageable(998341289164689459).send(
+                f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed {amount} redeems for {50000*amount:,} credits!\n----------------------------------"
+            )
+            await ctx.send(
+                f"You redeemed {amount} redeems for {50000*amount:,} credits!"
+            )
             return
         # Option is probably a pokemon name
         pokemon = option
@@ -501,7 +529,9 @@ class Redeem(commands.Cog):
             await ctx.send(f"You do not have enough redeems")
             return
         else:
-            await ctx.bot.get_partial_messageable(998341289164689459).send(f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed {amount} {pokemon} with redeemmultiple!\n----------------------------------")
+            await ctx.bot.get_partial_messageable(998341289164689459).send(
+                f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed {amount} {pokemon} with redeemmultiple!\n----------------------------------"
+            )
             await ctx.send(f"Redeeming {amount} {pokemon}...")
             async with ctx.bot.db[0].acquire() as pconn:
                 for i in range(amount):
@@ -516,8 +546,12 @@ class Redeem(commands.Cog):
                         ctx.author.id,
                     )
                     shiny = not random.randrange(threshold)
-                    pokedata = await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon, shiny=shiny)
-                    await ctx.bot.get_partial_messageable(998341289164689459).send(f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a {pokedata.emoji}{pokemon} (`{pokedata.id}`) with redeem-multiple command.\n----------------------------------")
+                    pokedata = await ctx.bot.commondb.create_poke(
+                        ctx.bot, ctx.author.id, pokemon, shiny=shiny
+                    )
+                    await ctx.bot.get_partial_messageable(998341289164689459).send(
+                        f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a {pokedata.emoji}{pokemon} (`{pokedata.id}`) with redeem-multiple command.\n----------------------------------"
+                    )
                     #
                     user = await ctx.bot.mongo_find(
                         "users",

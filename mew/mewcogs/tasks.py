@@ -21,7 +21,9 @@ class Mother(commands.Cog):
     @tasks.loop(seconds=1440)
     async def energy(self):
         async with self.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET energy = energy + 1 WHERE energy < 10")
+            await pconn.execute(
+                "UPDATE users SET energy = energy + 1 WHERE energy < 10"
+            )
 
     @tasks.loop(seconds=60 * 10)
     async def mother(self):
@@ -38,9 +40,9 @@ class Mother(commands.Cog):
                     [secondary_key, random.randint(1, secondary_value)],
                 ],
             }
-            #Add the new mission reqs
+            # Add the new mission reqs
             await self.bot.db[1].missions.insert_one(insert)
-            #Reset the missions progress for all users
+            # Reset the missions progress for all users
             await self.bot.db[1].users.delete_many({})
 
         async with self.bot.db[0].acquire() as pconn:
@@ -68,6 +70,7 @@ class Mother(commands.Cog):
     def cog_unload(self):
         self.energy.cancel()
         self.mother.cancel()
+
 
 async def setup(bot):
     await bot.add_cog(Mother(bot))

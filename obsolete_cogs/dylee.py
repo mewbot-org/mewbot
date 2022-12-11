@@ -35,9 +35,11 @@ from mewcogs.json_files import *
 def hasNumber(inputString):
     return any(char.isdigit() for char in inputString)
 
+
 GREEN = "\N{LARGE GREEN CIRCLE}"
 YELLOW = "\N{LARGE YELLOW CIRCLE}"
 RED = "\N{LARGE RED CIRCLE}"
+
 
 class Admin(commands.Cog):
     def __init__(self):
@@ -73,7 +75,9 @@ class Admin(commands.Cog):
         try:
             pkid = [i["pokemon_id"] for i in FORMS if i["identifier"] == val.lower()][0]
             tids = [i["type_id"] for i in PTYPES[str(pkid)]]
-            ab_ids = [t["ability_id"] for t in POKE_ABILITIES if t["pokemon_id"] == int(pkid)]
+            ab_ids = [
+                t["ability_id"] for t in POKE_ABILITIES if t["pokemon_id"] == int(pkid)
+            ]
             if len(tids) == 2:
                 id1 = [i["identifier"] for i in TYPES if i["id"] == tids[0]][0]
                 id2 = [i["identifier"] for i in TYPES if i["id"] == tids[1]][0]
@@ -175,7 +179,11 @@ class Admin(commands.Cog):
             gender = "-f"
         else:
             gender = "-m"
-        msg = msg.replace("Level", "").replace("<:sparkless:506398917475434496>", "").split()
+        msg = (
+            msg.replace("Level", "")
+            .replace("<:sparkless:506398917475434496>", "")
+            .split()
+        )
         for lt in msg:
             if lt.isdigit():
                 levels.append(int(lt))
@@ -192,15 +200,19 @@ class Admin(commands.Cog):
     def check_title_conditions(self, embed):
         return not "Market" in embed.title and "Level" in embed.title
 
-    @commands.hybrid_command(aliases=['hms', 'howmuchsince'])
-    async def how_much_since(self, ctx, date: str=None):
+    @commands.hybrid_command(aliases=["hms", "howmuchsince"])
+    async def how_much_since(self, ctx, date: str = None):
         try:
-            date = datetime.strptime(date, '%Y-%m-%d')
+            date = datetime.strptime(date, "%Y-%m-%d")
         except:
-            await ctx.send("Incorrect date format passed. Format must be, `;[ how_much_since | hms | howmuchsince ] YYYY-MM-DD`\n`;hms 2021-04-10`")
+            await ctx.send(
+                "Incorrect date format passed. Format must be, `;[ how_much_since | hms | howmuchsince ] YYYY-MM-DD`\n`;hms 2021-04-10`"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            result = await pconn.fetchval("SELECT sum(amount) FROM donations WHERE date_donated >= $1", date)
+            result = await pconn.fetchval(
+                "SELECT sum(amount) FROM donations WHERE date_donated >= $1", date
+            )
             await ctx.send(f"Total donations since {date} = ${result}")
 
     @commands.hybrid_command()
@@ -243,24 +255,32 @@ class Admin(commands.Cog):
     @commands.hybrid_command()
     async def additem(self, ctx, id: int, item, amount: int):
         async with ctx.bot.db[0].acquire() as pconn:
-            items = await pconn.fetchval("SELECT items::json FROM users WHERE u_id = $1", id)
+            items = await pconn.fetchval(
+                "SELECT items::json FROM users WHERE u_id = $1", id
+            )
             if item in items:
                 items[item] += amount
             else:
                 items[item] = amount
-            await pconn.execute("UPDATE users SET items = $1::json WHERE u_id = $2", items, id)
+            await pconn.execute(
+                "UPDATE users SET items = $1::json WHERE u_id = $2", items, id
+            )
             name = (await ctx.bot.fetch_user(id)).name
             await ctx.send(f".")
 
     @commands.hybrid_command()
     async def addinv(self, ctx, id: int, item, amount: int):
         async with ctx.bot.db[0].acquire() as pconn:
-            items = await pconn.fetchval("SELECT inventory::json FROM users WHERE u_id = $1", id)
+            items = await pconn.fetchval(
+                "SELECT inventory::json FROM users WHERE u_id = $1", id
+            )
             if item in items:
                 items[item] += amount
             else:
                 items[item] = amount
-            await pconn.execute("UPDATE users SET inventory = $1::json WHERE u_id = $2", items, id)
+            await pconn.execute(
+                "UPDATE users SET inventory = $1::json WHERE u_id = $2", items, id
+            )
             name = (await ctx.bot.fetch_user(id)).name
             await ctx.send(f".")
 
@@ -298,7 +318,9 @@ class Admin(commands.Cog):
             )
 
             if not res:
-                await ctx.send("Launcher did not respond.  Did you start with launcher?")
+                await ctx.send(
+                    "Launcher did not respond.  Did you start with launcher?"
+                )
                 return
 
         else:
@@ -338,7 +360,9 @@ class Admin(commands.Cog):
             )
 
             if not res:
-                await ctx.send("Launcher did not respond.  Did you start with launcher?")
+                await ctx.send(
+                    "Launcher did not respond.  Did you start with launcher?"
+                )
                 return
 
         else:
@@ -349,9 +373,13 @@ class Admin(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             if id == 0:
                 id = await pconn.fetchval("SELECT max(id) FROM updates")
-            old_update = await pconn.fetchval("SELECT update FROM updates WHERE id = $1", id)
+            old_update = await pconn.fetchval(
+                "SELECT update FROM updates WHERE id = $1", id
+            )
             update = old_update + "\n" + update
-            await pconn.execute("UPDATE updates SET update = $1 WHERE id = $2", update, id)
+            await pconn.execute(
+                "UPDATE updates SET update = $1 WHERE id = $2", update, id
+            )
         await ctx.send("Updated Update")
 
     @commands.hybrid_command()
@@ -422,7 +450,10 @@ class Admin(commands.Cog):
 
     @commands.hybrid_command()
     async def swap(self, ctx, id1: int, id2: int):
-        await ctx.send(f"Are you sure you want to move all trainer data from {id2} to {id1}?")
+        await ctx.send(
+            f"Are you sure you want to move all trainer data from {id2} to {id1}?"
+        )
+
         def check(m):
             return m.author.id == ctx.author.id and m.content.lower() in (
                 "yes",
@@ -430,6 +461,7 @@ class Admin(commands.Cog):
                 "y",
                 "n",
             )
+
         try:
             m = await ctx.bot.wait_for("message", check=check, timeout=30)
         except asyncio.TimeoutError:
@@ -449,7 +481,9 @@ class Admin(commands.Cog):
         if not user:
             user = ctx.author
         async with ctx.bot.db[0].acquire() as tconn:
-            pokes = await tconn.fetchval("SELECT pokes FROM users WHERE u_id = $1", user.id)
+            pokes = await tconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", user.id
+            )
             if not pokes:
                 await ctx.send(f"{user.mention} has not started!")
                 return
@@ -463,7 +497,9 @@ class Admin(commands.Cog):
             count = await tconn.fetchval(
                 "SELECT array_length(pokes, 1) FROM users WHERE u_id = $1", user.id
             )
-            details = await tconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user.id)
+            details = await tconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user.id
+            )
         u_id = details["u_id"]
         redeems = details["redeems"]
         tnick = details["tnick"]
@@ -486,7 +522,9 @@ class Admin(commands.Cog):
         )
         embed.add_field(name="Pokemon Count", value=f"{count}", inline=True)
         embed.add_field(name="EV Points", value=f"{evpoints}", inline=True)
-        embed.add_field(name="Daycare spaces", value=f"{daycared}/{dlimit}", inline=True)
+        embed.add_field(
+            name="Daycare spaces", value=f"{daycared}/{dlimit}", inline=True
+        )
         # dets.pop('coin-case', None) if 'coin-case' in dets else None
         for item in dets:
             embed.add_field(
@@ -498,7 +536,13 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command()
-    async def newspawn(self, ctx, *, pokemon: str, boosted: bool, ):
+    async def newspawn(
+        self,
+        ctx,
+        *,
+        pokemon: str,
+        boosted: bool,
+    ):
         val = pokemon
         try:
             await ctx.message.delete()
@@ -534,21 +578,28 @@ class Admin(commands.Cog):
         embedmsg = await channel.send(embed=embed)
 
         def check(m):
-            return m.content.lower() in (val.replace("-", " "), val) and m.channel == channel
+            return (
+                m.content.lower() in (val.replace("-", " "), val)
+                and m.channel == channel
+            )
 
         msg = await ctx.bot.wait_for("message", check=check, timeout=60)
 
         # db code starts here
 
         form_info = await ctx.bot.db[1].forms.find_one({"identifier": val.lower()})
-        pokemon_info = await ctx.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
+        pokemon_info = await ctx.bot.db[1].pfile.find_one(
+            {"id": form_info["pokemon_id"]}
+        )
         try:
             gender_rate = pokemon_info["gender_rate"]
         except:
             print(f"\n\nCould not spawn {form_info['identifier']}\n\n")
 
         gender_rate = pokemon_info["gender_rate"]
-        types = (await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]}))["types"]
+        types = (await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]}))[
+            "types"
+        ]
         ab_ids = []
         async for record in ctx.bot.db[1].poke_abilities.find(
             {"pokemon_id": form_info["pokemon_id"]}
@@ -563,7 +614,7 @@ class Admin(commands.Cog):
         speiv = random.randint(1, 31)
         plevel = random.randint(1, 100)
         nature = random.choice(natlist)
-        expc = plevel ** 2
+        expc = plevel**2
         if "idoran" in val.lower():
             gender = val[-2:]
         elif val.lower() == "volbeat":
@@ -691,7 +742,9 @@ class Admin(commands.Cog):
 
     #   db code goes here
     @commands.hybrid_command()
-    async def evalc(self, ctx, cluster_id: int, wait: typing.Optional[int] = 5, *, body):
+    async def evalc(
+        self, ctx, cluster_id: int, wait: typing.Optional[int] = 5, *, body
+    ):
         def cleanup_code(content):
             """Automatically removes code blocks from the code."""
             # remove ```py\n```
@@ -704,11 +757,17 @@ class Admin(commands.Cog):
         body = cleanup_code(body)
 
         eval_res = await ctx.bot.handler(
-            "_eval", 1, args={"body": body, "cluster_id": cluster_id}, scope="bot", _timeout=wait
+            "_eval",
+            1,
+            args={"body": body, "cluster_id": cluster_id},
+            scope="bot",
+            _timeout=wait,
         )
 
         if not eval_res:
-            await ctx.send("No response from cluster or it timed out after 5 seconds.  Ensure the cluster is running and that the wait is long enough for your eval.")
+            await ctx.send(
+                "No response from cluster or it timed out after 5 seconds.  Ensure the cluster is running and that the wait is long enough for your eval."
+            )
             return
 
         async def paginate_send(ctx, text: str):
@@ -755,11 +814,17 @@ class Admin(commands.Cog):
         body = cleanup_code(body)
 
         eval_res = await ctx.bot.handler(
-            "_eval", processes, args={"body": body, "cluster_id": "-1"}, scope="bot", _timeout=wait
+            "_eval",
+            processes,
+            args={"body": body, "cluster_id": "-1"},
+            scope="bot",
+            _timeout=wait,
         )
 
         if not eval_res:
-            await ctx.send("No response from cluster or it timed out after 5 seconds.  Ensure the cluster is running and that the wait is long enough for your eval.")
+            await ctx.send(
+                "No response from cluster or it timed out after 5 seconds.  Ensure the cluster is running and that the wait is long enough for your eval."
+            )
             return
 
         async def paginate_send(ctx, text: str):
@@ -776,31 +841,31 @@ class Admin(commands.Cog):
 
         eval_res.sort(key=lambda x: x["cluster_id"])
         message = ""
-        
+
         for response in eval_res:
             if not response["message"]:
                 response["message"] = "No message returned"
             message += f"[Cluster {response['cluster_id']}]: {response['message']}\n"
 
-        await paginate_send(ctx, message)    
+        await paginate_send(ctx, message)
 
-    #@commands.hybrid_group()
-    #async def demote(self, ctx):
+    # @commands.hybrid_group()
+    # async def demote(self, ctx):
     #    """Demote users."""
     #    pass
-#
-    #@demote.command(name="staff")
-    #async def _demote_staff(self, ctx, member: discord.Member):
+    #
+    # @demote.command(name="staff")
+    # async def _demote_staff(self, ctx, member: discord.Member):
     #    """Demote a user from Staff."""
     #    async with ctx.bot.db[0].acquire() as pconn:
     #        await pconn.execute("UPDATE users SET staff = 'User' WHERE u_id = $1", member.id)
-    #    
+    #
     #    msg = f"{GREEN} Removed bot permissions.\n"
     #    if ctx.guild.id != int(os.environ['OFFICIAL_SERVER']):
     #        msg += f"{RED} Could not remove OS roles, as this command was not run in OS.\n"
     #        await ctx.send(msg)
     #        return
-    #    
+    #
     #    ranks = {
     #        "Support": ctx.guild.get_role(544630193449598986),
     #        "Helper": ctx.guild.get_role(728937101285916772),
@@ -819,18 +884,18 @@ class Admin(commands.Cog):
     #        await member.remove_roles(*removelist, reason=f'Staff demotion - {ctx.author}')
     #        removelist = [str(x) for x in removelist]
     #        msg += f"{GREEN} Removed existing rank role(s) **{', '.join(removelist)}.**\n"
-    #    
+    #
     #    staff_role = ctx.guild.get_role(764870105741393942)
     #    if staff_role not in member.roles:
     #        msg += f"{YELLOW} User did not have the **{staff_role}** role.\n"
     #    else:
     #        await member.remove_roles(staff_role, reason=f'Staff demotion - {ctx.author}')
     #        msg += f"{GREEN} Removed the **{staff_role}** role.\n"
-#
+    #
     #    await ctx.send(msg)
-#
-    #@demote.command(name="gym")
-    #async def _demote_gym(self, ctx, user_id: int):
+    #
+    # @demote.command(name="gym")
+    # async def _demote_gym(self, ctx, user_id: int):
     #    """Demote a user from Gym Leader."""
     #    async with ctx.bot.db[0].acquire() as pconn:
     #        await pconn.execute("UPDATE users SET gym_leader = false WHERE u_id = $1", user_id)
@@ -870,6 +935,7 @@ class Admin(commands.Cog):
 
         temp_pages = []
         pages = []
+
         def paginate(text: str):
             """Paginates arbatrary length text."""
             last = 0
@@ -880,7 +946,7 @@ class Admin(commands.Cog):
             pages.append(text[last : len(text)])
             pages = list(filter(lambda a: a != "", pages))
             return pages
-        
+
         for page in paginate(source_code):
             temp_pages.append(f"```py\n{page}```")
         max_i = len(temp_pages)
@@ -889,7 +955,6 @@ class Admin(commands.Cog):
             pages.append(f"`Page {i}/{max_i}`\n" + page)
             i += 1
         await menu(ctx, pages, controls=DEFAULT_CONTROLS)
-
 
     @commands.hybrid_command()
     async def redis(self, ctx, call: str, expected: int, scope: str, *, args: str):
@@ -904,43 +969,64 @@ class Admin(commands.Cog):
     @commands.hybrid_command()
     async def refreshenv(self, ctx, *env):
         if env is None or not len(env):
-            env = (x for x in os.listdir(ctx.bot.app_directory / "env") if x.endswith(".env"))
+            env = (
+                x
+                for x in os.listdir(ctx.bot.app_directory / "env")
+                if x.endswith(".env")
+            )
 
         for env_file in env:
-            load_dotenv(ctx.bot.app_directory / "env" / (env_file if env_file.endswith(".env") else f"{env_file}.env"), override=True)
+            load_dotenv(
+                ctx.bot.app_directory
+                / "env"
+                / (env_file if env_file.endswith(".env") else f"{env_file}.env"),
+                override=True,
+            )
 
         await ctx.send("Successfully refreshed environment variables.")
 
-
     @commands.hybrid_command()
-    async def duelupload(self, ctx, confirmed: typing.Optional[bool] = False, *, filename: str = None):
+    async def duelupload(
+        self, ctx, confirmed: typing.Optional[bool] = False, *, filename: str = None
+    ):
         if not filename:
             await ctx.send("A filename must be provided.")
             return
 
         if (
-            not len(ctx.message.attachments) == 1 or
-            not ctx.message.attachments[0].url.endswith(".png") or
-            not (ctx.message.attachments[0].width + ctx.message.attachments[0].height) == 1024
+            not len(ctx.message.attachments) == 1
+            or not ctx.message.attachments[0].url.endswith(".png")
+            or not (
+                ctx.message.attachments[0].width + ctx.message.attachments[0].height
+            )
+            == 1024
         ):
-            await ctx.send("You must send only one attachment with the PNG extension with size 512x512.")
+            await ctx.send(
+                "You must send only one attachment with the PNG extension with size 512x512."
+            )
             return
 
         # I love regex
-        r = re.compile(r"^(?:radiant/|)(?:shiny/|)(?:skins/|)\d{1,4}-\d{1,2}-(?:_\w+|)$")
+        r = re.compile(
+            r"^(?:radiant/|)(?:shiny/|)(?:skins/|)\d{1,4}-\d{1,2}-(?:_\w+|)$"
+        )
         if not r.match(filename):
-            await ctx.send("Your given filename does not match the set regex `^(?:radiant/|)(?:shiny/|)(?:skins/|)\d{1,4}-\d{1,2}-(?:_\w+|)$`.  Something must be improperly typed, try again.")
+            await ctx.send(
+                "Your given filename does not match the set regex `^(?:radiant/|)(?:shiny/|)(?:skins/|)\d{1,4}-\d{1,2}-(?:_\w+|)$`.  Something must be improperly typed, try again."
+            )
             return
 
         filename += ".png"
         savepath = ctx.bot.app_directory / "shared" / "duel" / "sprites" / filename
         if savepath.exists() and not confirmed:
-            await ctx.send("An image already exists in this directory.  If you wish to replace it, please run this command with a `True` before the filename.")
+            await ctx.send(
+                "An image already exists in this directory.  If you wish to replace it, please run this command with a `True` before the filename."
+            )
             return
 
         await ctx.message.attachments[0].save(savepath)
         await ctx.send("Successfully saved attachment to the specified directory.")
-    
+
     @commands.hybrid_command()
     async def create_custom(self, ctx, skin: str, *, val):
         shiny = False
@@ -965,6 +1051,7 @@ class Admin(commands.Cog):
             )
         teext = f"{ctx.author.mention} has created a **{skin}** skinned **{val}**!\nIt has been added as your newest pokemon."
         await ctx.channel.send(embed=make_embed(title="", description=teext))
+
 
 async def setup(bot):
     await bot.add_cog(Admin())

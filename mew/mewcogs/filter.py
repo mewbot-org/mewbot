@@ -12,7 +12,7 @@ from mewcogs.json_files import *
 
 
 KEYS = {
-    "name": "name", # FILTER AND ORDER
+    "name": "name",  # FILTER AND ORDER
     "names": "name",
     "evo": "evo",
     "starter": "starter",
@@ -23,6 +23,7 @@ KEYS = {
     "alola": "alola",
     "galar": "galar",
     "hisui": "hisui",
+    "paldea": "paldea",
     "type": "type",
     "types": "type",
     "egg-group": "egg-group",
@@ -43,7 +44,7 @@ KEYS = {
     "ot": "ot",
     "notot": "notot",
     "fav": "fav",
-    "level": "level", # FILTER AND ORDER
+    "level": "level",  # FILTER AND ORDER
     "atkiv": "atkiv",
     "defiv": "defiv",
     "spatkiv": "spatkiv",
@@ -61,10 +62,10 @@ KEYS = {
     "hidden-power": "hidden-power",
     "hp": "hidden-power",
     #'fossil':   'fossil', TODO
-    "price": "price", # FILTER AND ORDER
-    "iv": "iv", # ORDER
-    "ev": "ev", # ORDER
-    "id": "id", # ORDER
+    "price": "price",  # FILTER AND ORDER
+    "iv": "iv",  # ORDER
+    "ev": "ev",  # ORDER
+    "id": "id",  # ORDER
 }
 PRECEDENCE = {"!": 3, "&": 2, "|": 1}
 PER_PAGE = 15
@@ -110,11 +111,30 @@ class Filter(commands.Cog):
             if name == "Egg":
                 continue
             region = ""
-            if any([name.endswith(x) for x in ["-galar", "-alola", "-hisui"]]):
-                region = name[:-6]
-                name = name[:-6]
-            cursor = ctx.bot.db[1].forms.find({"identifier": {"$regex": f"{name.lower()}-.*"}})
-            forms |= set([t.capitalize() + region for t in await cursor.distinct("identifier") if not any([t.endswith(x) for x in ["-galar", "-alola", "-hisui"]])])
+            if any(
+                [name.endswith(x) for x in ["-galar", "-alola", "-hisui", "-paldea"]]
+            ):
+                if name.endswith("-paldea"):
+                    region = name[:-7]
+                    name = name[:-7]
+                else:
+                    region = name[:-6]
+                    name = name[:-6]
+            cursor = ctx.bot.db[1].forms.find(
+                {"identifier": {"$regex": f"{name.lower()}-.*"}}
+            )
+            forms |= set(
+                [
+                    t.capitalize() + region
+                    for t in await cursor.distinct("identifier")
+                    if not any(
+                        [
+                            t.endswith(x)
+                            for x in ["-galar", "-alola", "-hisui", "-paldea"]
+                        ]
+                    )
+                ]
+            )
         return forms
 
     async def _build_query(self, ctx, args, filter_type):
@@ -127,11 +147,13 @@ class Filter(commands.Cog):
         https://www.digitalocean.com/community/conceptual_articles/understanding-order-of-operations
         """
         args = args.strip(".&| ")
-        order_col = None # The column to sort by.
-        order_dir = "DESC" # The direction of the sort.
-        sql_data = [] # The raw data values by the user to be past to postgres. Using $1 notation to prevent an SQL injection.
+        order_col = None  # The column to sort by.
+        order_dir = "DESC"  # The direction of the sort.
+        sql_data = (
+            []
+        )  # The raw data values by the user to be past to postgres. Using $1 notation to prevent an SQL injection.
         mothers = {}
-        
+
         if filter_type == "p":
             async with ctx.bot.db[0].acquire() as pconn:
                 pokes = await pconn.fetchval(
@@ -147,7 +169,7 @@ class Filter(commands.Cog):
                 return
             pokes = tuple(pokes)
             sql_data.append(pokes)
-        
+
         # Splits the raw args string into a list of "tokens" that are easier for the code to understand.
         tokens = []
         hold = ""
@@ -179,7 +201,11 @@ class Filter(commands.Cog):
                     postfix.append(operator_stack.pop())
                 operator_stack.pop()
             elif token in ("!", "&", "|"):
-                while operator_stack and operator_stack[-1] != "(" and PRECEDENCE[operator_stack[-1]] > PRECEDENCE[token]:
+                while (
+                    operator_stack
+                    and operator_stack[-1] != "("
+                    and PRECEDENCE[operator_stack[-1]] > PRECEDENCE[token]
+                ):
                     postfix.append(operator_stack.pop())
                 operator_stack.append(token)
             else:
@@ -190,7 +216,7 @@ class Filter(commands.Cog):
                     raise ExtractionException(f"`{part[0]}` is not a valid arg.")
                 key = KEYS[part[0]]
                 data = part[1:]
-                
+
                 # Converts key/data into a postgres conditional
                 if key == "name":
                     if not data:
@@ -217,11 +243,15 @@ class Filter(commands.Cog):
                     names = set()
                     for evo in data:
                         evo = evo.replace(".", "").lower()
-                        evo_poke = await ctx.bot.db[1].pfile.find_one({"identifier": evo.lower()})
+                        evo_poke = await ctx.bot.db[1].pfile.find_one(
+                            {"identifier": evo.lower()}
+                        )
                         if not evo_poke:
                             continue
                         evo_chain = evo_poke["evolution_chain_id"]
-                        async for file in ctx.bot.db[1].pfile.find({"evolution_chain_id": evo_chain}):
+                        async for file in ctx.bot.db[1].pfile.find(
+                            {"evolution_chain_id": evo_chain}
+                        ):
                             names.add(file["identifier"].capitalize())
                     names = await self._expand_forms(ctx, names)
                     sql_data.append(list(names))
@@ -261,16 +291,27 @@ class Filter(commands.Cog):
                     names = await self._expand_forms(ctx, names)
                     sql_data.append(list(names))
                     postfix.append(f"pokname = ANY(${len(sql_data)})")
+                elif key == "paldea":
+                    names = set(paldeans)
+                    names = await self._expand_forms(ctx, names)
+                    sql_data.append(list(names))
+                    postfix.append(f"pokname = ANY(${len(sql_data)})")
                 elif key == "type":
                     names = set()
                     for type in data:
                         type = type.lower()
-                        type_info = await ctx.bot.db[1].types.find_one({"identifier": type})
+                        type_info = await ctx.bot.db[1].types.find_one(
+                            {"identifier": type}
+                        )
                         if not type_info:
                             continue
                         cursor = ctx.bot.db[1].ptypes.find({"types": type_info["id"]})
-                        pokemon_ids = [record["id"] for record in await cursor.to_list(length=None)]
-                        cursor = ctx.bot.db[1].forms.find({"pokemon_id": {"$in": pokemon_ids}})
+                        pokemon_ids = [
+                            record["id"] for record in await cursor.to_list(length=None)
+                        ]
+                        cursor = ctx.bot.db[1].forms.find(
+                            {"pokemon_id": {"$in": pokemon_ids}}
+                        )
                         names.update(
                             [
                                 record["identifier"].capitalize()
@@ -296,9 +337,14 @@ class Filter(commands.Cog):
                         .egg_groups.find({"egg_groups": {"$in": egg_group_ids}})
                         .to_list(length=800)
                     ]
-                    cursor = ctx.bot.db[1].forms.find({"pokemon_id": {"$in": pokemon_ids}})
+                    cursor = ctx.bot.db[1].forms.find(
+                        {"pokemon_id": {"$in": pokemon_ids}}
+                    )
                     names.update(
-                        [record["identifier"].capitalize() for record in await cursor.to_list(length=None)]
+                        [
+                            record["identifier"].capitalize()
+                            for record in await cursor.to_list(length=None)
+                        ]
                     )
                     names = await self._expand_forms(ctx, names)
                     sql_data.append(list(names))
@@ -336,7 +382,9 @@ class Filter(commands.Cog):
                         postfix.append(f"skin = ANY(${len(sql_data)})")
                 elif key == "cooldown":
                     if filter_type != "p":
-                        raise ExtractionException("`cooldown` is only a valid key in pokemon filters.")
+                        raise ExtractionException(
+                            "`cooldown` is only a valid key in pokemon filters."
+                        )
                     sql_data.append(tuple(mothers.keys()))
                     postfix.append(f"id = ANY(${len(sql_data)})")
                 elif key == "female":
@@ -349,13 +397,15 @@ class Filter(commands.Cog):
                     postfix.append("shiny = true")
                 elif key == "gleam":
                     postfix.append("skin = 'gleam'")
-                elif key == 'radiant':
+                elif key == "radiant":
                     postfix.append("skin = 'radiant'")
                 elif key == "regular":
                     postfix.append("(NOT shiny)")
                 elif key == "owned":
                     if filter_type != "m":
-                        raise ExtractionException("`owned` is only a valid key in market filters.")
+                        raise ExtractionException(
+                            "`owned` is only a valid key in market filters."
+                        )
                     sql_data.append(ctx.author.id)
                     postfix.append(f"owner = ${len(sql_data)}")
                 elif key == "ot":
@@ -365,7 +415,9 @@ class Filter(commands.Cog):
                         try:
                             sql_data.append(int(data[0]))
                         except ValueError:
-                            raise ExtractionException("`ot` only accepts a discord user id.")
+                            raise ExtractionException(
+                                "`ot` only accepts a discord user id."
+                            )
                     postfix.append(f"caught_by = ${len(sql_data)}")
                 elif key == "notot":
                     sql_data.append(ctx.author.id)
@@ -401,16 +453,22 @@ class Filter(commands.Cog):
                             level_max = level
                             is_filter = True
                     except ValueError:
-                        raise ExtractionException("`level` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`level` received invalid non-numeric input."
+                        )
                     else:
                         if is_filter:
                             sql_data.append(level_max)
                             sql_data.append(level_min)
-                            postfix.append(f"(pokelevel <= ${len(sql_data) - 1} AND pokelevel >= ${len(sql_data)})")
+                            postfix.append(
+                                f"(pokelevel <= ${len(sql_data) - 1} AND pokelevel >= ${len(sql_data)})"
+                            )
                 elif key == "atkiv":
                     try:
                         if not data:
-                            raise ExtractionException("`atkiv` requires additional information.")
+                            raise ExtractionException(
+                                "`atkiv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             atkiv_min = int(data[1])
                             atkiv_max = 31
@@ -422,15 +480,21 @@ class Filter(commands.Cog):
                             atkiv_min = atkiv
                             atkiv_max = atkiv
                     except ValueError:
-                        raise ExtractionException("`atkiv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`atkiv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(atkiv_max)
                         sql_data.append(atkiv_min)
-                        postfix.append(f"(atkiv <= ${len(sql_data) - 1} AND atkiv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(atkiv <= ${len(sql_data) - 1} AND atkiv >= ${len(sql_data)})"
+                        )
                 elif key == "defiv":
                     try:
                         if not data:
-                            raise ExtractionException("`defiv` requires additional information.")
+                            raise ExtractionException(
+                                "`defiv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             defiv_min = int(data[1])
                             defiv_max = 31
@@ -442,15 +506,21 @@ class Filter(commands.Cog):
                             defiv_min = defiv
                             defiv_max = defiv
                     except ValueError:
-                        raise ExtractionException("`defiv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`defiv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(defiv_max)
                         sql_data.append(defiv_min)
-                        postfix.append(f"(defiv <= ${len(sql_data) - 1} AND defiv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(defiv <= ${len(sql_data) - 1} AND defiv >= ${len(sql_data)})"
+                        )
                 elif key == "spatkiv":
                     try:
                         if not data:
-                            raise ExtractionException("`spatkiv` requires additional information.")
+                            raise ExtractionException(
+                                "`spatkiv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             spatkiv_min = int(data[1])
                             spatkiv_max = 31
@@ -462,15 +532,21 @@ class Filter(commands.Cog):
                             spatkiv_min = spatkiv
                             spatkiv_max = spatkiv
                     except ValueError:
-                        raise ExtractionException("`spatkiv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`spatkiv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(spatkiv_max)
                         sql_data.append(spatkiv_min)
-                        postfix.append(f"(spatkiv <= ${len(sql_data) - 1} AND spatkiv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(spatkiv <= ${len(sql_data) - 1} AND spatkiv >= ${len(sql_data)})"
+                        )
                 elif key == "spdefiv":
                     try:
                         if not data:
-                            raise ExtractionException("`spdefiv` requires additional information.")
+                            raise ExtractionException(
+                                "`spdefiv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             spdefiv_min = int(data[1])
                             spdefiv_max = 31
@@ -482,15 +558,21 @@ class Filter(commands.Cog):
                             spdefiv_min = spdefiv
                             spdefiv_max = spdefiv
                     except ValueError:
-                        raise ExtractionException("`spdefiv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`spdefiv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(spdefiv_max)
                         sql_data.append(spdefiv_min)
-                        postfix.append(f"(spdefiv <= ${len(sql_data) - 1} AND spdefiv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(spdefiv <= ${len(sql_data) - 1} AND spdefiv >= ${len(sql_data)})"
+                        )
                 elif key == "hpiv":
                     try:
                         if not data:
-                            raise ExtractionException("`hpiv` requires additional information.")
+                            raise ExtractionException(
+                                "`hpiv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             hpiv_min = int(data[1])
                             hpiv_max = 31
@@ -502,15 +584,21 @@ class Filter(commands.Cog):
                             hpiv_min = hpiv
                             hpiv_max = hpiv
                     except ValueError:
-                        raise ExtractionException("`hpiv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`hpiv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(hpiv_max)
                         sql_data.append(hpiv_min)
-                        postfix.append(f"(hpiv <= ${len(sql_data) - 1} AND hpiv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(hpiv <= ${len(sql_data) - 1} AND hpiv >= ${len(sql_data)})"
+                        )
                 elif key == "speediv":
                     try:
                         if not data:
-                            raise ExtractionException("`speediv` requires additional information.")
+                            raise ExtractionException(
+                                "`speediv` requires additional information."
+                            )
                         elif data[0] == ">" and len(data) > 1:
                             speediv_min = int(data[1])
                             speediv_max = 31
@@ -522,14 +610,20 @@ class Filter(commands.Cog):
                             speediv_min = speediv
                             speediv_max = speediv
                     except ValueError:
-                        raise ExtractionException("`speediv` received invalid non-numeric input.")
+                        raise ExtractionException(
+                            "`speediv` received invalid non-numeric input."
+                        )
                     else:
                         sql_data.append(speediv_max)
                         sql_data.append(speediv_min)
-                        postfix.append(f"(speediv <= ${len(sql_data) - 1} AND speediv >= ${len(sql_data)})")
+                        postfix.append(
+                            f"(speediv <= ${len(sql_data) - 1} AND speediv >= ${len(sql_data)})"
+                        )
                 elif key == "price":
                     if filter_type != "m":
-                        raise ExtractionException("`price` is only a valid key in market filters.")
+                        raise ExtractionException(
+                            "`price` is only a valid key in market filters."
+                        )
                     if not data:
                         order_col = "pokeprice"
                         order_dir = "DESC"
@@ -555,11 +649,15 @@ class Filter(commands.Cog):
                                 price_min = price
                                 price_max = price
                         except ValueError:
-                            raise ExtractionException("`price` received invalid non-numeric input.")
+                            raise ExtractionException(
+                                "`price` received invalid non-numeric input."
+                            )
                         else:
                             sql_data.append(price_max)
                             sql_data.append(price_min)
-                            postfix.append(f"(market.price <= ${len(sql_data) - 1} AND market.price >= ${len(sql_data)})")
+                            postfix.append(
+                                f"(market.price <= ${len(sql_data) - 1} AND market.price >= ${len(sql_data)})"
+                            )
                 elif key == "iv":
                     order_col = 1
                     if not data:
@@ -587,8 +685,8 @@ class Filter(commands.Cog):
                     elif data[0].startswith("a"):
                         order_dir = "ASC"
                     if filter_type != "m":
-                        #Extract out only the pokemon that actually need to get searched
-                        #to reduce O(N^2)'s N from len(pokes) to min(len(pokes), POKE_COUNT)
+                        # Extract out only the pokemon that actually need to get searched
+                        # to reduce O(N^2)'s N from len(pokes) to min(len(pokes), POKE_COUNT)
                         if order_dir == "ASC":
                             sql_data[0] = sql_data[0][:POKE_COUNT]
                         else:
@@ -596,7 +694,9 @@ class Filter(commands.Cog):
                     postfix.append("false")
                 elif key == "hidden-power":
                     if not data:
-                        raise ExtractionException("`hidden-power` requires specifying a type.")
+                        raise ExtractionException(
+                            "`hidden-power` requires specifying a type."
+                        )
                     raw = data[0]
                     t = {
                         "FIGHTING": 0,
@@ -617,12 +717,16 @@ class Filter(commands.Cog):
                         "DARK": 15,
                     }.get(raw.upper(), None)
                     if t is None:
-                        raise ExtractionException("`{raw}` is not a valid type for `hidden-power`.")
+                        raise ExtractionException(
+                            "`{raw}` is not a valid type for `hidden-power`."
+                        )
                     sql_data.append(t)
-                    postfix.append((
-                        "(MOD(hpiv, 2) + 2 * MOD(atkiv, 2) + 4 * MOD(defiv, 2) + 8 * MOD(speediv, 2) + "
-                        f"16 * MOD(spatkiv, 2) + 32 * MOD(spdefiv, 2)) * 15 / 63 = ${len(sql_data)}"
-                    ))
+                    postfix.append(
+                        (
+                            "(MOD(hpiv, 2) + 2 * MOD(atkiv, 2) + 4 * MOD(defiv, 2) + 8 * MOD(speediv, 2) + "
+                            f"16 * MOD(spatkiv, 2) + 32 * MOD(spdefiv, 2)) * 15 / 63 = ${len(sql_data)}"
+                        )
+                    )
 
         while operator_stack:
             postfix.append(operator_stack.pop())
@@ -645,14 +749,20 @@ class Filter(commands.Cog):
                 else:
                     stack.append(item)
         except IndexError:
-            raise ExtractionException("A `!`, `&`, or `|` symbol does not have associated conditions.")
+            raise ExtractionException(
+                "A `!`, `&`, or `|` symbol does not have associated conditions."
+            )
         if len(stack) != 1:
-            raise ExtractionException("All tokens must be split by either a `&` or a `|` symbol.")
+            raise ExtractionException(
+                "All tokens must be split by either a `&` or a `|` symbol."
+            )
         conditions = stack[0]
 
         # Build the full query based on what type of filter this is
         if filter_type == "p":
-            extra = ", array_position($1, id) as orderid" if order_col == "orderid" else ""
+            extra = (
+                ", array_position($1, id) as orderid" if order_col == "orderid" else ""
+            )
             query = (
                 "SELECT COALESCE(atkiv,0) + COALESCE(defiv,0) + COALESCE(spatkiv,0) + COALESCE(spdefiv,0) + COALESCE(speediv,0) + COALESCE(hpiv,0) AS ivs, "
                 "COALESCE(atkev,0) + COALESCE(defev,0) + COALESCE(spatkev,0) + COALESCE(spdefev,0) + COALESCE(speedev,0) + COALESCE(hpev,0) as evs, "
@@ -677,9 +787,11 @@ class Filter(commands.Cog):
                 cur = await pconn.cursor(query, *sql_data)
                 records = await cur.fetch(POKE_COUNT, timeout=20)
         if not records:
-            await ctx.send("Your filter did not find any pokemon. Try a less narrow search.")
+            await ctx.send(
+                "Your filter did not find any pokemon. Try a less narrow search."
+            )
             return
-        
+
         # Prep the results for formatting
         max_id = 0
         max_lvl = 0
@@ -707,7 +819,7 @@ class Filter(commands.Cog):
             is_egg = False
             if nr == "Egg":
                 is_egg = True
-                nr = record['name'].capitalize()
+                nr = record["name"].capitalize()
             formatted_name = nr.ljust(max_name, " ")
             if filter_type == "p":
                 pn = pokes.index(record["id"]) + 1
@@ -721,18 +833,18 @@ class Filter(commands.Cog):
             iv = record["ivs"]
             shiny = record["shiny"]
             gleam = record["radiant"]
-            level = str(record['pokelevel']).rjust(max_lvl, ' ')
+            level = str(record["pokelevel"]).rjust(max_lvl, " ")
             level = f"<:lvl:1029030189981765673>`{level}`"
             emoji = get_emoji(
                 blank="<:blank:1012504803496177685>",
                 shiny=shiny,
-                radiant=gleam, # Will change later
+                radiant=gleam,  # Will change later
                 skin=record["skin"],
             )
             price_text = f" | **Price** {price:,.0f}" if filter_type == "m" else ""
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
             iv = f"{iv/186:02.0%}".rjust(4, " ")
-            
+
             desc += (
                 f"{emoji}{'' if not is_egg else ':egg:`' + str(counter) + '`'}{gender}"
                 f"<:num:1029030329350111232>**`{pn}`** "
@@ -748,6 +860,7 @@ class Filter(commands.Cog):
         embed = discord.Embed(title="Filtered Pokemon", color=0xFFB6C1)
         pages = pagify(desc, per_page=PER_PAGE, base_embed=embed)
         await MenuView(ctx, pages).start()
+
 
 async def setup(bot):
     await bot.add_cog(Filter(bot))

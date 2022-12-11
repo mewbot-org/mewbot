@@ -1,4 +1,3 @@
-
 from typing import List, Optional, Union
 import discord
 from discord.ext import commands
@@ -9,14 +8,15 @@ from mewutils.misc import ConfirmView
 import asyncio
 from datetime import datetime
 
-class Poke():
+
+class Poke:
     def __init__(self, sender: int, poke_id: int):
         self.sender = sender
         self.poke_id = poke_id
         self.time = datetime.now()
         self.cached_info = None
-    
-    def  __eq__(self, other):
+
+    def __eq__(self, other):
         if isinstance(other, int):
             return self.poke_id == other
 
@@ -24,24 +24,27 @@ class Poke():
             return False
         return (self.poke_id == other.poke_id) and (self.sender == other.sender)
 
-class Credit():
+
+class Credit:
     def __init__(self):
         self.p1 = 0
         self.p2 = 0
 
-class TradeList():
+
+class TradeList:
     def __init__(self, val: List[Poke]):
         self.val = val
-    
+
     def sender(self, sender: int):
         """Returns the sender's poke list"""
         return [poke for poke in self.val if poke.sender == sender]
-    
+
     def iter(self, sender: int):
         """Iterates over the poke list"""
         for poke in self.val:
             if poke.sender == sender:
                 yield poke
+
 
 class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
     def __init__(self, view: discord.ui.View):
@@ -51,13 +54,17 @@ class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
         self.out_interaction = None
         super().__init__()
 
-    poke_id = discord.ui.TextInput(label='Pokemon ID', placeholder="ID of the pokemon you want to add")
+    poke_id = discord.ui.TextInput(
+        label="Pokemon ID", placeholder="ID of the pokemon you want to add"
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         id = str(self.poke_id).replace(" ", "")
         if not id.isdigit():
             self.output = None
-            await interaction.response.send_message(f"Please enter a valid pokemon ID: {id}", ephemeral=True)
+            await interaction.response.send_message(
+                f"Please enter a valid pokemon ID: {id}", ephemeral=True
+            )
             self.event.set()
             return
 
@@ -65,6 +72,7 @@ class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
 
         self.out_interaction = interaction
         self.event.set()
+
 
 class PokeRemoveModal(discord.ui.Modal, title="Remove A Pokemon!"):
     def __init__(self, view: discord.ui.View):
@@ -74,13 +82,17 @@ class PokeRemoveModal(discord.ui.Modal, title="Remove A Pokemon!"):
         self.out_interaction = None
         super().__init__()
 
-    poke_id = discord.ui.TextInput(label='Pokemon ID', placeholder="ID of the pokemon you want to remove")
+    poke_id = discord.ui.TextInput(
+        label="Pokemon ID", placeholder="ID of the pokemon you want to remove"
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         id = str(self.poke_id).replace(" ", "")
         if not id.isdigit():
             self.output = None
-            await interaction.response.send_message(f"Please enter a valid pokemon ID: {id}", ephemeral=True)
+            await interaction.response.send_message(
+                f"Please enter a valid pokemon ID: {id}", ephemeral=True
+            )
             self.event.set()
             return
 
@@ -88,6 +100,7 @@ class PokeRemoveModal(discord.ui.Modal, title="Remove A Pokemon!"):
 
         self.out_interaction = interaction
         self.event.set()
+
 
 class CreditsSetModal(discord.ui.Modal, title="Set Credits!"):
     def __init__(self, view: discord.ui.View):
@@ -97,13 +110,23 @@ class CreditsSetModal(discord.ui.Modal, title="Set Credits!"):
         self.out_interaction = None
         super().__init__()
 
-    credits = discord.ui.TextInput(label='Credit Number', placeholder="Number of credits to trade")
+    credits = discord.ui.TextInput(
+        label="Credit Number", placeholder="Number of credits to trade"
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
-        id = str(self.credits).lower().replace(" ", "").replace("k", "000").replace("m", "000000")
+        id = (
+            str(self.credits)
+            .lower()
+            .replace(" ", "")
+            .replace("k", "000")
+            .replace("m", "000000")
+        )
         if not id.isdigit():
             self.output = None
-            await interaction.response.send_message(f"Please enter a valid number of credits: {id}", ephemeral=True)
+            await interaction.response.send_message(
+                f"Please enter a valid number of credits: {id}", ephemeral=True
+            )
             self.event.set()
             return
 
@@ -111,14 +134,18 @@ class CreditsSetModal(discord.ui.Modal, title="Set Credits!"):
 
         if self.output < 0:
             self.output = None
-            await interaction.response.send_message("You can't trade negative credits!", ephemeral=True)
+            await interaction.response.send_message(
+                "You can't trade negative credits!", ephemeral=True
+            )
             self.event.set()
             return
 
         self.out_interaction = interaction
         self.event.set()
 
+
 ATTEMPT_TRADE = "Confirm Trade"
+
 
 class TradeMainView(discord.ui.View):
     def __init__(self, ctx, p1: int, p2: int):
@@ -129,27 +156,32 @@ class TradeMainView(discord.ui.View):
         self.attempting = False
         self.cancelled = False
         super().__init__(timeout=360)
-        self.msg: Optional[discord.Message] = None 
+        self.msg: Optional[discord.Message] = None
 
         # Trade values
         self.pokes: List[Poke] = []
         self.credits: Credit = Credit()
-    
+
     def set_message(self, msg: discord.Message):
         self.msg = msg
-        
+
     async def interaction_check(self, interaction):
         if interaction.user.id not in (self.p1, self.p2):
             return False
         return True
-    
+
     async def on_error(self, interaction, error, item):
-        await interaction.response.send_message(f"Something went wrong: {error} in item {item}", ephemeral=True)
+        await interaction.response.send_message(
+            f"Something went wrong: {error} in item {item}", ephemeral=True
+        )
 
     async def on_timeout(self):
         await self.unlock_trade()
         if self.msg:
-            await self.msg.edit(content=f"**Trade between <@{self.p1}> and <@{self.p2}> cancelled**", view=None)
+            await self.msg.edit(
+                content=f"**Trade between <@{self.p1}> and <@{self.p2}> cancelled**",
+                view=None,
+            )
         self.cancelled = True
 
     async def _attrs(self, pconn, poke):
@@ -158,35 +190,27 @@ class TradeMainView(discord.ui.View):
         else:
             name = await pconn.fetchrow(
                 "SELECT pokname, tradable, shiny, radiant, skin FROM pokes WHERE id = $1",
-                poke.poke_id
+                poke.poke_id,
             )
             poke.cached_info = name
 
         attrs = []
 
         if name["shiny"]:
-            attrs.append(
-                self.ctx.bot.misc.get_skin_emote(shiny=True)
-            )
+            attrs.append(self.ctx.bot.misc.get_skin_emote(shiny=True))
         elif name["radiant"]:
-            attrs.append(
-                self.ctx.bot.misc.get_skin_emote(skin='gleam')
-            )
+            attrs.append(self.ctx.bot.misc.get_skin_emote(skin="gleam"))
         elif name["skin"]:
-            attrs.append(
-                self.ctx.bot.misc.get_skin_emote(skin=name["skin"])
-            )
+            attrs.append(self.ctx.bot.misc.get_skin_emote(skin=name["skin"]))
         else:
-            attrs.append(
-                self.ctx.bot.misc.get_skin_emote(blank="blank")
-            )
+            attrs.append(self.ctx.bot.misc.get_skin_emote(blank="blank"))
 
         return name, attrs
-    
+
     async def _trade_evo(self, p, interaction, _id):
         """
         p - The user of said pokemon
-        interaction - The interaction 
+        interaction - The interaction
         _id - The id of the pokemon
         """
         async with self.ctx.bot.db[0].acquire() as pconn:
@@ -225,9 +249,7 @@ class TradeMainView(discord.ui.View):
                             continue
 
                         else:
-                            evoname = [
-                                t["identifier"] for t in PFILE if t["id"] == eid
-                            ]
+                            evoname = [t["identifier"] for t in PFILE if t["id"] == eid]
                             evoname = evoname[0]
                             await pconn.execute(
                                 "UPDATE pokes SET pokname = $1 WHERE id = $2",
@@ -259,7 +281,6 @@ class TradeMainView(discord.ui.View):
             except:
                 pass
 
-
     async def _to_trade_msg(self) -> str:
         msg = []
 
@@ -281,7 +302,7 @@ class TradeMainView(discord.ui.View):
 
             if not p1_has:
                 msg.append("No pokemon added to trade")
-            
+
             if self.credits.p1 > 0:
                 msg.append(f"*Credits*\n{self.credits.p1} credits")
                 flag = True
@@ -296,29 +317,31 @@ class TradeMainView(discord.ui.View):
                 name, attrs = await self._attrs(pconn, poke)
 
                 msg.append(f"{name['pokname']} ({poke.poke_id}) {attrs[0]}")
-            
+
             if not p2_has:
                 msg.append("No pokemon added to trade")
 
             if self.credits.p2 > 0:
                 msg.append(f"*Credits*\n{self.credits.p2} credits")
                 flag = True
-        
+
         self.can_trade = flag
-            
+
         return "\n".join(msg)
-    
+
     async def update_msg(self):
         trade_msg = await self._to_trade_msg()
-        
+
         for child in self.children:
             if child.label == ATTEMPT_TRADE:
                 child.disabled = not self.can_trade
-                
+
         if self.msg:
-            await self.msg.edit(content=f"**__Trade Summary__**\n{trade_msg}", view=self)
-    
-    @discord.ui.button(label='Add Pokemon', style=discord.ButtonStyle.success, row=1)
+            await self.msg.edit(
+                content=f"**__Trade Summary__**\n{trade_msg}", view=self
+            )
+
+    @discord.ui.button(label="Add Pokemon", style=discord.ButtonStyle.success, row=1)
     async def add_poke(self, interaction, button):
         modal = PokeAddModal(self)
         await interaction.response.send_modal(modal)
@@ -327,13 +350,17 @@ class TradeMainView(discord.ui.View):
 
         if not modal.output:
             return
-        
+
         if modal.output == 1:
-            await modal.out_interaction.response.send_message("You can not give off your Number 1 Pokemon", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                "You can not give off your Number 1 Pokemon", ephemeral=True
+            )
             return
 
         if modal.output in self.pokes:
-            await modal.out_interaction.response.send_message("You already have this pokemon in your trade", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                "You already have this pokemon in your trade", ephemeral=True
+            )
             return
 
         async with self.ctx.bot.db[0].acquire() as pconn:
@@ -346,29 +373,38 @@ class TradeMainView(discord.ui.View):
             if not details:
                 await modal.out_interaction.response.send_message(
                     "You do not have that Pokemon or that Pokemon is currently in the market!",
-                    ephemeral=True
+                    ephemeral=True,
                 )
                 return
 
         if details["id"] in self.pokes:
-            await modal.out_interaction.response.send_message("You already have this pokemon in your trade", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                "You already have this pokemon in your trade", ephemeral=True
+            )
             return
 
         if details["pokname"] == "Egg":
-            await modal.out_interaction.response.send_message("You cannot trade eggs!", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                "You cannot trade eggs!", ephemeral=True
+            )
             return
-        
+
         if not details["tradable"]:
-            await modal.out_interaction.response.send_message("This pokemon is not tradable", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                "This pokemon is not tradable", ephemeral=True
+            )
             return
 
         self.pokes.append(Poke(interaction.user.id, details["id"]))
 
-        await modal.out_interaction.response.send_message(f"Added {modal.output} to your trade list (message will update in a second or two!)", ephemeral=True)
+        await modal.out_interaction.response.send_message(
+            f"Added {modal.output} to your trade list (message will update in a second or two!)",
+            ephemeral=True,
+        )
 
         await self.update_msg()
-    
-    @discord.ui.button(label='Remove Pokemon', style=discord.ButtonStyle.danger, row=1)
+
+    @discord.ui.button(label="Remove Pokemon", style=discord.ButtonStyle.danger, row=1)
     async def remove_poke(self, interaction, button):
         modal = PokeRemoveModal(self)
         await interaction.response.send_modal(modal)
@@ -377,7 +413,7 @@ class TradeMainView(discord.ui.View):
 
         if not modal.output:
             return
-        
+
         flag = False
 
         ext_check = None
@@ -396,15 +432,23 @@ class TradeMainView(discord.ui.View):
             if poke.poke_id == modal.output or poke.poke_id == ext_check:
                 flag = True
                 self.pokes.remove(poke)
-        
-        if flag:    
-            await modal.out_interaction.response.send_message(f"Removed {modal.output} from your trade list at all places it was found!", ephemeral=True)
+
+        if flag:
+            await modal.out_interaction.response.send_message(
+                f"Removed {modal.output} from your trade list at all places it was found!",
+                ephemeral=True,
+            )
         else:
-            await modal.out_interaction.response.send_message(f"You do not have {modal.output} in your trade list!\n**Hint:** Are you using the ID next to the name", ephemeral=True) 
+            await modal.out_interaction.response.send_message(
+                f"You do not have {modal.output} in your trade list!\n**Hint:** Are you using the ID next to the name",
+                ephemeral=True,
+            )
 
         await self.update_msg()
-    
-    @discord.ui.button(label='Set Credits', emoji="💳", style=discord.ButtonStyle.success, row=1)
+
+    @discord.ui.button(
+        label="Set Credits", emoji="💳", style=discord.ButtonStyle.success, row=1
+    )
     async def set_credits(self, interaction, button):
         modal = CreditsSetModal(self)
         await interaction.response.send_modal(modal)
@@ -415,20 +459,28 @@ class TradeMainView(discord.ui.View):
             return
 
         async with self.ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchval("SELECT mewcoins FROM users WHERE u_id = $1", interaction.user.id)
+            curcreds = await pconn.fetchval(
+                "SELECT mewcoins FROM users WHERE u_id = $1", interaction.user.id
+            )
             if modal.output > curcreds:
-                await modal.out_interaction.response.send_message("You don't have that many credits at this time...")
+                await modal.out_interaction.response.send_message(
+                    "You don't have that many credits at this time..."
+                )
                 return
-        
+
         if interaction.user.id == self.p1:
             self.credits.p1 = modal.output
-            await modal.out_interaction.response.send_message(f"Set {modal.output} credits for Player 1", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                f"Set {modal.output} credits for Player 1", ephemeral=True
+            )
         if interaction.user.id == self.p2:
             self.credits.p2 = modal.output
-            await modal.out_interaction.response.send_message(f"Set {modal.output} credits for Player 2", ephemeral=True)
+            await modal.out_interaction.response.send_message(
+                f"Set {modal.output} credits for Player 2", ephemeral=True
+            )
 
         await self.update_msg()
-    
+
     async def unlock_trade(self):
         await self.ctx.bot.redis_manager.redis.execute(
             "LREM", "tradelock", "1", str(self.p1)
@@ -437,32 +489,42 @@ class TradeMainView(discord.ui.View):
             "LREM", "tradelock", "1", str(self.p2)
         )
 
-    @discord.ui.button(label=ATTEMPT_TRADE, style=discord.ButtonStyle.primary, row=2, disabled=True)
+    @discord.ui.button(
+        label=ATTEMPT_TRADE, style=discord.ButtonStyle.primary, row=2, disabled=True
+    )
     async def attempt_trade(self, interaction, button):
         if not self.can_trade:
-            await interaction.response.send_message("You can not attempt a trade with this trade list", ephemeral=True)
+            await interaction.response.send_message(
+                "You can not attempt a trade with this trade list", ephemeral=True
+            )
             return
-        
+
         if self.attempting:
-            await interaction.response.send_message("You are already attempting a trade", ephemeral=True)
+            await interaction.response.send_message(
+                "You are already attempting a trade", ephemeral=True
+            )
             return
-        
+
         if self.cancelled:
-            await interaction.response.send_message("You have cancelled this trade", ephemeral=True)
+            await interaction.response.send_message(
+                "You have cancelled this trade", ephemeral=True
+            )
             return
-        
+
         self.attempting = True
-    
+
         async def _unlock(ctx, msg):
             await self.unlock_trade()
             self.attempting = False
-            await msg.edit(content="Trade attempt timed out. Try attempting a trade again using the 'Attempt Trade' button")
+            await msg.edit(
+                content="Trade attempt timed out. Try attempting a trade again using the 'Attempt Trade' button"
+            )
             return
 
         await interaction.response.defer(ephemeral=True)
 
         CONTENT = "To confirm this trade, both traders must click the Confirm button."
-        
+
         wait_on = [self.p1, self.p2]
 
         async def _confirm(i, msg):
@@ -473,19 +535,23 @@ class TradeMainView(discord.ui.View):
                 wait_on.remove(self.p1)
 
                 if not wait_on:
-                    return    
+                    return
 
-                await msg.edit(content=CONTENT + f"\n*Waiting for <@{self.p2}> to confirm trade*")
+                await msg.edit(
+                    content=CONTENT + f"\n*Waiting for <@{self.p2}> to confirm trade*"
+                )
             else:
                 wait_on.remove(self.p2)
 
                 if not wait_on:
-                    return    
+                    return
 
-                await msg.edit(content=CONTENT + f"\n*Waiting for <@{self.p1}> to confirm trade*")
+                await msg.edit(
+                    content=CONTENT + f"\n*Waiting for <@{self.p1}> to confirm trade*"
+                )
 
         confirm_view = ConfirmView(
-            self.ctx, 
+            self.ctx,
             CONTENT + f"\n*Waiting for <@{self.p1}> and <@{self.p2}> to confirm trade*",
             on_timeout=_unlock,
             on_confirm=_confirm,
@@ -498,12 +564,16 @@ class TradeMainView(discord.ui.View):
             await self.ctx.send("Trade Rejected!")
             self.attempting = False
             return
-        
+
         if self.cancelled:
-            await interaction.response.send_message("You have cancelled this trade", ephemeral=True)
+            await interaction.response.send_message(
+                "You have cancelled this trade", ephemeral=True
+            )
             return
-        
-        await confirm_view.message.edit(content="Catnip Trading Express is now beginning this trade, please wait...")
+
+        await confirm_view.message.edit(
+            content="Catnip Trading Express is now beginning this trade, please wait..."
+        )
 
         # Recheck pokes
         async with self.ctx.bot.db[0].acquire() as pconn:
@@ -544,7 +614,7 @@ class TradeMainView(discord.ui.View):
                 await self.on_timeout()
                 self.stop()
                 return
-            
+
             if self.credits.p1 and self.credits.p1 > p1_info["mewcoins"]:
                 await interaction.followup.send(
                     f"<@{self.p1}> does not have enough credits to complete this trade, canceling trade!"
@@ -572,33 +642,33 @@ class TradeMainView(discord.ui.View):
                 await self.on_timeout()
                 self.stop()
                 return
-            
+
             # Begin the trade
 
             # Mewcoins
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                self.credits.p2, # Credits p2 is giving to p1
-                self.p1
+                self.credits.p2,  # Credits p2 is giving to p1
+                self.p1,
             )
 
             # Remove credits from p2
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
                 self.credits.p2,
-                self.p2
+                self.p2,
             )
 
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                self.credits.p1, # Credits p1 is giving to p2
-                self.p2
+                self.credits.p1,  # Credits p1 is giving to p2
+                self.p2,
             )
 
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
                 self.credits.p1,
-                self.p1
+                self.p1,
             )
 
             # Pokemon
@@ -635,36 +705,36 @@ class TradeMainView(discord.ui.View):
                     "UPDATE pokes SET market_enlist = false WHERE id = $1",
                     poke.poke_id,
                 )
-            
+
             # Just in case
             await self.unlock_trade()
             self.stop()
-            
+
             await interaction.followup.send("Checking for trade evolutions...")
 
             # Check for trade evolutions
             for poke in self.pokes:
                 await self._trade_evo(poke.sender, interaction, poke.poke_id)
-            
+
             await interaction.followup.send("Trade Complete!")
 
-    @discord.ui.button(label='Cancel Trade', style=discord.ButtonStyle.danger, row=2)
+    @discord.ui.button(label="Cancel Trade", style=discord.ButtonStyle.danger, row=2)
     async def cancel_trade(self, interaction, button):
         await self.on_timeout()
         self.stop()
         await interaction.response.send_message("Trade cancelled", ephemeral=True)
-        
+
+
 class Trade(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.init_task = asyncio.create_task(self.initialize())
-        #2 different users could make a trade to the same person, who does `;accept` and gets both before either notices the other started.
-        #Since this issue only happens in a single guild, a cluster-local tradelock can prevent it.
+        # 2 different users could make a trade to the same person, who does `;accept` and gets both before either notices the other started.
+        # Since this issue only happens in a single guild, a cluster-local tradelock can prevent it.
         self.start_tradelock = []
 
     async def initialize(self):
         await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", "123")
-    
 
     @commands.hybrid_command()
     async def tradediag(self, ctx):
@@ -682,15 +752,20 @@ class Trade(commands.Cog):
     @commands.hybrid_group()
     async def gift(self, ctx):
         ...
-    
+
     @gift.command(aliases=["redeem"])
-    @discord.app_commands.describe(user="The User to gift Redeems", amount="The amount of redeems you want to gift.")
+    @discord.app_commands.describe(
+        user="The User to gift Redeems",
+        amount="The amount of redeems you want to gift.",
+    )
     @tradelock
     async def redeems(self, ctx, user: discord.Member, amount: int):
         """Gift redeems to another user."""
         val = amount
         if ctx.guild != ctx.bot.official_server:
-            await ctx.send("This command can only be used in the Mewbot Official Server.")
+            await ctx.send(
+                "This command can only be used in the Mewbot Official Server."
+            )
             return
         if ctx.author.id == user.id:
             await ctx.send("You can not give yourself redeems.")
@@ -722,17 +797,23 @@ class Trade(commands.Cog):
             await ctx.send(f"{user.name} has not started... Start with `/start` first!")
             return
         if giver_deems is None:
-            await ctx.send(f"{ctx.author.name} has not started... Start with `/start` first!")
+            await ctx.send(
+                f"{ctx.author.name} has not started... Start with `/start` first!"
+            )
             return
         if val > giver_deems:
             await ctx.send("You don't have that many redeems!")
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to give {val} redeems to {user.name}?").wait():
+        if not await ConfirmView(
+            ctx, f"Are you sure you want to give {val} redeems to {user.name}?"
+        ).wait():
             await ctx.send("Trade Canceled")
             return
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchval("SELECT redeems FROM users WHERE u_id = $1", ctx.author.id)
+            curcreds = await pconn.fetchval(
+                "SELECT redeems FROM users WHERE u_id = $1", ctx.author.id
+            )
             if val > curcreds:
                 await ctx.send("You don't have that many redeems anymore...")
                 return
@@ -746,17 +827,24 @@ class Trade(commands.Cog):
                 val,
                 user.id,
             )
-            await ctx.send(
-                f"{ctx.author.name} has given {user.name} {val} redeems."
+            await ctx.send(f"{ctx.author.name} has given {user.name} {val} redeems.")
+            await ctx.bot.get_partial_messageable(998559833873711204).send(
+                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n"
             )
-            await ctx.bot.get_partial_messageable(998559833873711204).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n")
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_redeems, command, time) VALUES ($1, $2, $3, $4, $5) ",
-                ctx.author.id, user.id, val, "gift_redeems", datetime.now()
+                ctx.author.id,
+                user.id,
+                val,
+                "gift_redeems",
+                datetime.now(),
             )
 
     @gift.command(aliases=["credit"])
-    @discord.app_commands.describe(user="The User to gift Credits", amount="The amount of credits you want to gift.")
+    @discord.app_commands.describe(
+        user="The User to gift Credits",
+        amount="The amount of credits you want to gift.",
+    )
     @tradelock
     async def credits(self, ctx, user: discord.Member, amount: int):
         """Gift credits to another user."""
@@ -787,22 +875,28 @@ class Trade(commands.Cog):
             getter_creds = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = $1", user.id
             )
-       
+
         if getter_creds is None:
             await ctx.send(f"{user.name} has not started... Start with `/start` first!")
             return
         if giver_creds is None:
-            await ctx.send(f"{ctx.author.name} has not started... Start with `/start` first!")
+            await ctx.send(
+                f"{ctx.author.name} has not started... Start with `/start` first!"
+            )
             return
         if val > giver_creds:
             await ctx.send("You don't have that many credits!")
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to give {val} credits to {user.name}?").wait():
+        if not await ConfirmView(
+            ctx, f"Are you sure you want to give {val} credits to {user.name}?"
+        ).wait():
             await ctx.send("Trade Canceled")
             return
-        
+
         async with ctx.bot.db[0].acquire() as pconn:
-            curcreds = await pconn.fetchval("SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id)
+            curcreds = await pconn.fetchval(
+                "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
+            )
             if val > curcreds:
                 await ctx.send("You don't have that many credits anymore...")
                 return
@@ -816,18 +910,24 @@ class Trade(commands.Cog):
                 val,
                 user.id,
             )
-            await ctx.send(
-                f"{ctx.author.name} has given {user.name} {val} credits."
+            await ctx.send(f"{ctx.author.name} has given {user.name} {val} credits.")
+            await ctx.bot.get_partial_messageable(998559833873711204).send(
+                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n"
             )
-            await ctx.bot.get_partial_messageable(998559833873711204).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n")
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
-                ctx.author.id, user.id, val, "gift", datetime.now()
+                ctx.author.id,
+                user.id,
+                val,
+                "gift",
+                datetime.now(),
             )
-    
-    
+
     @gift.command(aliases=["poke"])
-    @discord.app_commands.describe(user="The User to receive the Pokémon", pokemon="The number of the Pokémon you want to gift.")
+    @discord.app_commands.describe(
+        user="The User to receive the Pokémon",
+        pokemon="The number of the Pokémon you want to gift.",
+    )
     @tradelock
     async def pokemon(self, ctx, user: discord.Member, pokemon: int):
         """Gift a Pokémon to another user."""
@@ -840,7 +940,9 @@ class Trade(commands.Cog):
             return
         async with ctx.bot.db[0].acquire() as pconn:
             for u in (ctx.author, user):
-                id_ = await pconn.fetchval("SELECT u_id FROM users WHERE u_id = $1", u.id)
+                id_ = await pconn.fetchval(
+                    "SELECT u_id FROM users WHERE u_id = $1", u.id
+                )
                 if id_ is None:
                     await ctx.send(f"{u.name} has not started!")
                     return
@@ -862,7 +964,7 @@ class Trade(commands.Cog):
             )
             name = await pconn.fetchrow(
                 "SELECT market_enlist, pokname, shiny, radiant, fav, tradable FROM pokes WHERE id = $1",
-                poke_id
+                poke_id,
             )
         if not name:
             await ctx.send("Invalid Pokemon Number")
@@ -873,7 +975,9 @@ class Trade(commands.Cog):
         if name["radiant"]:
             shine += "Radiant "
         if name["fav"]:
-            await ctx.send("You can't give away a favorited pokemon. Unfavorite it first!")
+            await ctx.send(
+                "You can't give away a favorited pokemon. Unfavorite it first!"
+            )
             return
         if not name["tradable"]:
             await ctx.send("That pokemon is not tradable.")
@@ -883,10 +987,12 @@ class Trade(commands.Cog):
             await ctx.send("You can not give Eggs!")
             return
 
-        if not await ConfirmView(ctx, f"Are you sure you want to give a {name} to {user.name}?").wait():
+        if not await ConfirmView(
+            ctx, f"Are you sure you want to give a {name} to {user.name}?"
+        ).wait():
             await ctx.send("Trade Canceled")
             return
-        
+
         await ctx.bot.commondb.remove_poke(ctx.author.id, poke_id)
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
@@ -895,10 +1001,16 @@ class Trade(commands.Cog):
                 user.id,
             )
             await ctx.send(f"{ctx.author.name} has given {user.name} a {name}")
-            await ctx.bot.get_partial_messageable(998559833873711204).send(f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n")
+            await ctx.bot.get_partial_messageable(998559833873711204).send(
+                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n"
+            )
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_pokes, command, time) VALUES ($1, $2, $3, $4, $5) ",
-                ctx.author.id, user.id, [poke_id], "give", datetime.now()
+                ctx.author.id,
+                user.id,
+                [poke_id],
+                "give",
+                datetime.now(),
             )
 
     @commands.hybrid_command()
@@ -911,7 +1023,9 @@ class Trade(commands.Cog):
             return
         current_traders = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute("LRANGE", "tradelock", "0", "-1")
+            for id_ in await self.bot.redis_manager.redis.execute(
+                "LRANGE", "tradelock", "0", "-1"
+            )
             if id_.decode("utf-8").isdigit()
         ]
         if ctx.author.id in current_traders:
@@ -934,24 +1048,40 @@ class Trade(commands.Cog):
             ):
                 await ctx.send(f"A user is not allowed to Trade")
                 return
-            if await pconn.fetchval("SELECT 1 FROM users WHERE u_id = $1", ctx.author.id) is None:
-                await ctx.send(f"{ctx.author.display_name} has not started!\nStart with `/start` first!")
+            if (
+                await pconn.fetchval(
+                    "SELECT 1 FROM users WHERE u_id = $1", ctx.author.id
+                )
+                is None
+            ):
+                await ctx.send(
+                    f"{ctx.author.display_name} has not started!\nStart with `/start` first!"
+                )
                 return
-            if await pconn.fetchval("SELECT 1 FROM users WHERE u_id = $1", user.id) is None:
-                await ctx.send(f"{user.display_name} has not started!\nStart with `/start` first!")
+            if (
+                await pconn.fetchval("SELECT 1 FROM users WHERE u_id = $1", user.id)
+                is None
+            ):
+                await ctx.send(
+                    f"{user.display_name} has not started!\nStart with `/start` first!"
+                )
                 return
-        await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", str(ctx.author.id))
+        await self.bot.redis_manager.redis.execute(
+            "LPUSH", "tradelock", str(ctx.author.id)
+        )
         prefix = "/"
 
         async def _unlock(ctx, msg):
             await self.bot.redis_manager.redis.execute(
                 "LREM", "tradelock", "1", str(ctx.author.id)
             )
-            await msg.edit(content=f"{user.mention} took too long to accept the trade...")
+            await msg.edit(
+                content=f"{user.mention} took too long to accept the trade..."
+            )
             return
 
         cview = ConfirmView(
-            ctx, 
+            ctx,
             f"{ctx.author.mention} has requested a trade with {user.mention}!\n*Waiting for {user.mention} to confirm...*",
             on_timeout=_unlock,
             allowed_interactors=[user.id],
@@ -963,8 +1093,10 @@ class Trade(commands.Cog):
             )
             await cview.message.edit(content="Trade Rejected!")
             return
-        
-        await ctx.send(f"Trade with {ctx.author.mention} has begun {user.mention}!", ephemeral=True)
+
+        await ctx.send(
+            f"Trade with {ctx.author.mention} has begun {user.mention}!", ephemeral=True
+        )
 
         if user.id in self.start_tradelock:
             await self.bot.redis_manager.redis.execute(
@@ -975,7 +1107,9 @@ class Trade(commands.Cog):
         self.start_tradelock.append(user.id)
         current_traders = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute("LRANGE", "tradelock", "0", "-1")
+            for id_ in await self.bot.redis_manager.redis.execute(
+                "LRANGE", "tradelock", "0", "-1"
+            )
             if id_.decode("utf-8").isdigit()
         ]
         if user.id in current_traders:
@@ -987,8 +1121,12 @@ class Trade(commands.Cog):
         await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", str(user.id))
         self.start_tradelock.remove(user.id)
         view = TradeMainView(ctx, ctx.author.id, user.id)
-        msg = await ctx.send("Click any of the below actions to start adding pokemons and credits to your tradelist!", view=view)
+        msg = await ctx.send(
+            "Click any of the below actions to start adding pokemons and credits to your tradelist!",
+            view=view,
+        )
         view.set_message(msg)
+
 
 async def setup(bot):
     await bot.add_cog(Trade(bot))

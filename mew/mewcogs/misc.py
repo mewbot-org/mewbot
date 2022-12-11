@@ -23,13 +23,39 @@ GUILD_DEFAULT = {
     "silence_levels": False,
 }
 
-POKEMON_WITH_EGG_ABILITIES = {'Rapidash', 'Talonflame', 'Slugma', 'Carkol', 'Larvesta', 'Coalossal', 'Fletchinder', 'Centiskorch', 'Coalossal-Gmax', 'Magmar', 'Litwick', 'Moltres', 'Centiskorch-Gmax', 'Magmortar', 'Rolycoly', 'Camerupt', 'Ponyta', 'Volcarona', 'Lampent', 'Sizzlipede', 'Magcargo', 'Chandelure', 'Heatran', 'Magby'}
+POKEMON_WITH_EGG_ABILITIES = {
+    "Rapidash",
+    "Talonflame",
+    "Slugma",
+    "Carkol",
+    "Larvesta",
+    "Coalossal",
+    "Fletchinder",
+    "Centiskorch",
+    "Coalossal-Gmax",
+    "Magmar",
+    "Litwick",
+    "Moltres",
+    "Centiskorch-Gmax",
+    "Magmortar",
+    "Rolycoly",
+    "Camerupt",
+    "Ponyta",
+    "Volcarona",
+    "Lampent",
+    "Sizzlipede",
+    "Magcargo",
+    "Chandelure",
+    "Heatran",
+    "Magby",
+}
+
 
 class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # This might be better in Redis, but eh if someone wants to get .01% better rates by spam switching channels, let them
-        self.user_cache = defaultdict(int) 
+        self.user_cache = defaultdict(int)
 
     @commands.hybrid_command()
     async def slashinvite(self, ctx):
@@ -37,7 +63,7 @@ class Misc(commands.Cog):
         await ctx.send(
             "If you cannot see slash commands, kick me and reinvite me with the following invite link:\n"
             "<https://discordapp.com/api/oauth2/authorize?client_id=519850436899897346&permissions=387136&scope=bot+applications.commands>"
-        ) 
+        )
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -73,26 +99,41 @@ class Misc(commands.Cog):
         self.user_cache[message.author.id] = time.time() + 5
         async with self.bot.db[0].acquire() as pconn:
             try:
-                if await pconn.fetchval("SELECT true FROM users WHERE u_id = $1", message.author.id) is None:
+                if (
+                    await pconn.fetchval(
+                        "SELECT true FROM users WHERE u_id = $1", message.author.id
+                    )
+                    is None
+                ):
                     return
-                hatched_party_pokemon, hatched_pokemon, level_pokemon = await pconn.fetchrow(
+                (
+                    hatched_party_pokemon,
+                    hatched_pokemon,
+                    level_pokemon,
+                ) = await pconn.fetchrow(
                     "SELECT party_counter($1), selected_counter($1), level_pokemon($1)",
                     message.author.id,
                 )
-
 
                 """ Check For Magma Armor, Flame body bleh"""
-                party_pokemon = await pconn.fetch("SELECT pokname FROM pokes WHERE id IN (SELECT unnest(party) FROM users u WHERE u.u_id = $1)", message.author.id)
-                exists = not POKEMON_WITH_EGG_ABILITIES.isdisjoint(set(
-                    [record['pokname'] for record in party_pokemon]
-                ))
-                if exists and random.random() < 0.25: # 25% Chance.
-                    if message.author.id == 455277032625012737:
-                        await message.channel.send("Hit the spot.")
-                    hatched_party_pokemon, hatched_pokemon, level_pokemon = await pconn.fetchrow(
-                    "SELECT party_counter($1), selected_counter($1), level_pokemon($1)",
+                party_pokemon = await pconn.fetch(
+                    "SELECT pokname FROM pokes WHERE id IN (SELECT unnest(party) FROM users u WHERE u.u_id = $1)",
                     message.author.id,
                 )
+                exists = not POKEMON_WITH_EGG_ABILITIES.isdisjoint(
+                    set([record["pokname"] for record in party_pokemon])
+                )
+                if exists and random.random() < 0.25:  # 25% Chance.
+                    if message.author.id == 455277032625012737:
+                        await message.channel.send("Hit the spot.")
+                    (
+                        hatched_party_pokemon,
+                        hatched_pokemon,
+                        level_pokemon,
+                    ) = await pconn.fetchrow(
+                        "SELECT party_counter($1), selected_counter($1), level_pokemon($1)",
+                        message.author.id,
+                    )
                 """ TADA """
             except Exception:
                 return
@@ -115,7 +156,8 @@ class Misc(commands.Cog):
                     chest_chance = not random.randint(0, 200)
                     if chest_chance:
                         inventory = await pconn.fetchval(
-                            "SELECT inventory::json FROM users WHERE u_id = $1", message.author.id
+                            "SELECT inventory::json FROM users WHERE u_id = $1",
+                            message.author.id,
                         )
                         item = "common chest"
                         inventory[item] = inventory.get(item, 0) + 1
@@ -124,7 +166,7 @@ class Misc(commands.Cog):
                             inventory,
                             message.author.id,
                         )
-                        response += "It was holding a common chest!\n" 
+                        response += "It was holding a common chest!\n"
             if hatched_pokemon:
                 #
                 user = await self.bot.mongo_find(
@@ -138,11 +180,14 @@ class Misc(commands.Cog):
                     "users", {"user": message.author.id}, {"progress": progress}
                 )
                 #
-                response += f"Congratulations!\nYour {hatched_pokemon} Egg has hatched!\n"
+                response += (
+                    f"Congratulations!\nYour {hatched_pokemon} Egg has hatched!\n"
+                )
                 chest_chance = not random.randint(0, 200)
                 if chest_chance:
                     inventory = await pconn.fetchval(
-                        "SELECT inventory::json FROM users WHERE u_id = $1", message.author.id
+                        "SELECT inventory::json FROM users WHERE u_id = $1",
+                        message.author.id,
                     )
                     item = "common chest"
                     inventory[item] = inventory.get(item, 0) + 1
@@ -158,13 +203,16 @@ class Misc(commands.Cog):
                     message.author.id,
                 )
                 silenced = pokemon_details.get("silenced")
-                guild_details = await self.bot.db[1].guilds.find_one({"id": message.guild.id})
+                guild_details = await self.bot.db[1].guilds.find_one(
+                    {"id": message.guild.id}
+                )
                 if guild_details:
                     silenced = silenced or guild_details["silence_levels"]
                 if not silenced:
                     response += f"{message.author.mention} Your {level_pokemon} has leveled up!\n"
                 try:
-                    class FakeContext():
+
+                    class FakeContext:
                         def __init__(self, bot, message):
                             self.message = message
                             self.guild = message.guild
@@ -172,12 +220,14 @@ class Misc(commands.Cog):
                             self.author = message.author
                             self.bot = bot
                             self.command = None
-                        
+
                         async def send(self, *args, **kwargs):
                             return await self.channel.send(*args, **kwargs)
 
                     await evolve(
-                        FakeContext(self.bot, message), # Don't ask to evolve in this case
+                        FakeContext(
+                            self.bot, message
+                        ),  # Don't ask to evolve in this case
                         self.bot,
                         pokemon_details,
                         message.author,
@@ -187,7 +237,9 @@ class Misc(commands.Cog):
                     self.bot.logger.exception("Error in evolve", exc_info=e)
             if response:
                 try:
-                    await message.channel.send(embed=discord.Embed(description=response, color=0xFF49E6))
+                    await message.channel.send(
+                        embed=discord.Embed(description=response, color=0xFF49E6)
+                    )
                 except discord.HTTPException:
                     pass
                 return
@@ -203,7 +255,9 @@ class Misc(commands.Cog):
             owner_id = owner.id
             owner_name = owner.name
             member_count = "??"
-            e = discord.Embed(title="Thank you for adding me to your server!!", color=0xEDD5ED)
+            e = discord.Embed(
+                title="Thank you for adding me to your server!!", color=0xEDD5ED
+            )
             e.add_field(
                 name="Tutorial",
                 value="Get a tutorial of how to use Mewbot by using `/tutorial`.",
@@ -214,7 +268,7 @@ class Misc(commands.Cog):
             )
             e.add_field(
                 name="Help",
-                value="If you need any more help, join the official server with the link in `/invite` and ask for help in #questions!"
+                value="If you need any more help, join the official server with the link in `/invite` and ask for help in #questions!",
             )
             try:
                 await owner.send(embed=(e))
@@ -235,7 +289,9 @@ class Misc(commands.Cog):
         "Support MewBot & get Credit and Redeem Rewards! (Also comes with perks in our Official Server)."
         # User "is unable to control himself", so is blocked from using the command
         if ctx.author.id == 499740738138013696:
-            await ctx.send("Sorry, you are not currently able to use this command. Contact Dylee if you think this block should be removed.")
+            await ctx.send(
+                "Sorry, you are not currently able to use this command. Contact Dylee if you think this block should be removed."
+            )
             return
         name = ctx.author.name
         if " " in name:
@@ -244,20 +300,25 @@ class Misc(commands.Cog):
         donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=UAV3PH3BESMFN&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&no_note=1&no_shipping=1&rm=1&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted&custom={ctx.author.id}&notify_url=http://mewbot.xyz:15211/paypal/"
 
         payload = {"user_name": ctx.author.name, "user_id": ctx.author.id}
-        #donation_url = f"https://mewbot.xyz/donate?{urllib.parse.urlencode(payload)}"
-        
+        # donation_url = f"https://mewbot.xyz/donate?{urllib.parse.urlencode(payload)}"
+
         # e.add_field(name="READ THIS", value="We are currently experiencing problems with the automatic rewards from donations. Heres our temporary work-around.\n 1.Please use this [link](https://mewbot.wiki/en/Donations) to donate via paypal.\n2.Then DM Sky or join the [official server](https://discord.gg/mewbot) and ask in questions.\n3. Have a SS of donation ready.")
         e.add_field(name="Donation Link", value=f"[Donate Here!]({donation_url})\n")
         e.add_field(
-         name="Patreon",
-         value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotos?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.", inline=False
+            name="Patreon",
+            value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotos?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.",
+            inline=False,
         )
-        e.set_footer(text="You will receive 3 Redeems + 2,000 credits for every USD donated.")
+        e.set_footer(
+            text="You will receive 3 Redeems + 2,000 credits for every USD donated."
+        )
         await ctx.send(embed=e)
 
     @commands.Cog.listener()
     async def on_error(self, event, *args, **kwargs):
-        self.bot.logger.error("Error in event or general bot (found in on_error)", exc_info=True)
+        self.bot.logger.error(
+            "Error in event or general bot (found in on_error)", exc_info=True
+        )
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
@@ -266,7 +327,7 @@ class Misc(commands.Cog):
         ctx.bot.commands_used[ctx.command.name] = (
             ctx.bot.commands_used.get(ctx.command.name, 0) + 1
         )
-        
+
         if ctx.command.cog_name == "MewBotAdmin":
             await ctx.bot.log(
                 695322994725355621,
@@ -294,7 +355,9 @@ class Misc(commands.Cog):
             return
         if isinstance(error, discord.errors.Forbidden):
             try:
-                await ctx.author.send(f"I do not have Permissions to use in {ctx.channel}")
+                await ctx.author.send(
+                    f"I do not have Permissions to use in {ctx.channel}"
+                )
             except discord.HTTPException:
                 pass
             return
@@ -305,7 +368,10 @@ class Misc(commands.Cog):
             except Exception:
                 pass
             return
-        help_errors = (commands.errors.MissingRequiredArgument, commands.errors.BadArgument)
+        help_errors = (
+            commands.errors.MissingRequiredArgument,
+            commands.errors.BadArgument,
+        )
         if isinstance(error, help_errors):
             command = ctx.command
             try:
@@ -330,8 +396,11 @@ class Misc(commands.Cog):
                 except:
                     pass
                 return
-            ctx.bot.traceback = f"Exception in command '{ctx.command.qualified_name}'\n" + "".join(
-                traceback.format_exception(type(error), error, error.__traceback__)
+            ctx.bot.traceback = (
+                f"Exception in command '{ctx.command.qualified_name}'\n"
+                + "".join(
+                    traceback.format_exception(type(error), error, error.__traceback__)
+                )
             )
         # Since this overrides the default command listener, this raise sends this error to the
         # listener error handler as an exception in the "on_command_error" listener so it can be

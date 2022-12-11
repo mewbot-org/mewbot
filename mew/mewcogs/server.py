@@ -4,6 +4,7 @@ from discord.ext import commands
 from mewcogs.json_files import *
 from mewutils.misc import pagify, MenuView
 
+
 def default_factory():
     return {
         "prefix": ";",
@@ -35,16 +36,18 @@ class Settings(commands.Cog):
         Spawns base command.
         """
         pass
-    
+
     # @spawns.group()
     # async def mention(self, ctx):
     #     ...
-    
+
     @spawns.command(name="mention")
     async def spawns_mention_spawn(self, ctx):
         """Toggles mention spawns setting - (catch pokemon via mentions | @mewbot <pokemon_name>)"""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         await ctx.bot.mongo_update(
@@ -53,13 +56,15 @@ class Settings(commands.Cog):
             {"mention_spawns": not current_setting.get("mention_spawns", False)},
         )
 
-        current_setting["mention_spawns"] = not current_setting.get("mention_spawns", False)
+        current_setting["mention_spawns"] = not current_setting.get(
+            "mention_spawns", False
+        )
 
         if current_setting.get("mention_spawns", False):
             await ctx.send("Mention spawns are now enabled.")
         else:
             await ctx.send("Mention spawns are now disabled.")
-        
+
     @spawns.group()
     async def auto(self, ctx):
         ...
@@ -70,7 +75,9 @@ class Settings(commands.Cog):
         Deletes the spawn image when you catch a Pokemon.
         """
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         await ctx.bot.mongo_update(
@@ -88,7 +95,9 @@ class Settings(commands.Cog):
         Automatically pins rare spawns.
         """
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         await ctx.bot.mongo_update(
@@ -99,17 +108,21 @@ class Settings(commands.Cog):
         await ctx.send(
             f"Rare Spawns will {'be pinned' if not current_setting['pin_spawns'] else 'not be pinned'} in all channels"
         )
-    
+
     @spawns.group()
     async def redirect(self, ctx):
         ...
 
     @redirect.command(name="add")
-    @discord.app_commands.describe(channel="The channel to add to the spawns redirect list.")
+    @discord.app_commands.describe(
+        channel="The channel to add to the spawns redirect list."
+    )
     async def redirect_add(self, ctx, channel: discord.TextChannel = None):
         """Adds a channel for spawns to redirect to."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
@@ -124,18 +137,24 @@ class Settings(commands.Cog):
         await ctx.send(f"Successfully added {channel} to the spawn redirects list.")
 
     @redirect.command(name="remove")
-    @discord.app_commands.describe(channel="The channel to remove from the spawns redirect list.")
+    @discord.app_commands.describe(
+        channel="The channel to remove from the spawns redirect list."
+    )
     async def redirect_remove(self, ctx, channel: discord.TextChannel = None):
         """Removes a channel for spawns to redirect to."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
         current_setting = await self.get_current(ctx)
         channels = set(current_setting["redirects"])
         if channel.id not in channels:
-            await ctx.send("That channel is not in the redirect list! Use `/redirect clear` to clear all redirects.")
+            await ctx.send(
+                "That channel is not in the redirect list! Use `/redirect clear` to clear all redirects."
+            )
             return
         channels.remove(channel.id)
         await ctx.bot.mongo_update(
@@ -149,7 +168,9 @@ class Settings(commands.Cog):
     async def redirect_clear(self, ctx):
         """Resets the spawns redirect list."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         await ctx.bot.mongo_update("guilds", {"id": ctx.guild.id}, {"redirects": []})
@@ -163,9 +184,11 @@ class Settings(commands.Cog):
         ...
 
     @_commands.command()
-    async def disable(self, ctx, channel: discord.TextChannel=None):
+    async def disable(self, ctx, channel: discord.TextChannel = None):
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
@@ -184,9 +207,11 @@ class Settings(commands.Cog):
         await ctx.bot.load_bans()
 
     @_commands.command()
-    async def enable(self, ctx, channel: discord.TextChannel=None):
+    async def enable(self, ctx, channel: discord.TextChannel = None):
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
@@ -206,10 +231,12 @@ class Settings(commands.Cog):
 
     @spawns.command(name="disable")
     @discord.app_commands.describe(channel="The channel to disable spawns in.")
-    async def spawns_disable(self, ctx, channel: discord.TextChannel=None):
+    async def spawns_disable(self, ctx, channel: discord.TextChannel = None):
         """Disables spawns in a channel."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
@@ -229,10 +256,12 @@ class Settings(commands.Cog):
 
     @spawns.command(name="enable")
     @discord.app_commands.describe(channel="The channel to enable spawns in.")
-    async def spawns_enable(self, ctx, channel: discord.TextChannel=None):
+    async def spawns_enable(self, ctx, channel: discord.TextChannel = None):
         """Enables spawns in a channel."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         if not channel:
             channel = ctx.channel
@@ -254,7 +283,9 @@ class Settings(commands.Cog):
     async def spawns_small(self, ctx):
         """Toggle smaller spawn embeds in this guild."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         await ctx.bot.mongo_update(
@@ -265,12 +296,14 @@ class Settings(commands.Cog):
         await ctx.send(
             f"Spawn messages will now be {'small' if not current_setting['small_images'] else 'normal sized'} in this server."
         )
-    
+
     @spawns.command(name="check")
     async def spawns_check(self, ctx):
         """Check spawn status for channels in this guild."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         disabled_channels = current_setting["disabled_spawn_channels"]
@@ -299,29 +332,38 @@ class Settings(commands.Cog):
             embeds = "\N{WHITE HEAVY CHECK MARK}" if embeds else "\N{CROSS MARK}"
             enabled = "\N{WHITE HEAVY CHECK MARK}" if enabled else "\N{CROSS MARK}"
             msg += f"{name}|  {spawns}  ||  {read}   |  {send} |  {embeds}   |  {enabled}\n"
-        embed = discord.Embed(title="Spawn Checker", colour=random.choice(ctx.bot.colors))
+        embed = discord.Embed(
+            title="Spawn Checker", colour=random.choice(ctx.bot.colors)
+        )
         pages = pagify(msg, per_page=25, base_embed=embed)
         for page in pages:
             page.description = f"```\nName                  | Spawn || Read  | Send | Embed |Enable\n{page.description}```"
         await MenuView(ctx, pages).start()
-    
+
     @commands.hybrid_group()
     async def silence(self, ctx):
         ...
-    
+
     @silence.command()
     async def user(self, ctx):
         """Silence Level up messages for yourself."""
         async with ctx.bot.db[0].acquire() as pconn:
-            state = await pconn.fetchval("UPDATE users SET silenced = NOT silenced WHERE u_id = $1 RETURNING silenced", ctx.author.id)
+            state = await pconn.fetchval(
+                "UPDATE users SET silenced = NOT silenced WHERE u_id = $1 RETURNING silenced",
+                ctx.author.id,
+            )
         state = "off" if state else "on"
-        await ctx.send(f"Successfully toggled {state} level up messages for your Pokémon!")
+        await ctx.send(
+            f"Successfully toggled {state} level up messages for your Pokémon!"
+        )
 
     @silence.command()
     async def server(self, ctx):
         """Toggle level up messages in this server."""
         if not ctx.author.guild_permissions.manage_messages:
-            await ctx.send("You are not allowed to manage this setting. You need to have `manage_messages` permission to do so.")
+            await ctx.send(
+                "You are not allowed to manage this setting. You need to have `manage_messages` permission to do so."
+            )
             return
         current_setting = await self.get_current(ctx)
         state = not current_setting["silence_levels"]
@@ -331,7 +373,10 @@ class Settings(commands.Cog):
             {"silence_levels": state},
         )
         state = "off" if state else "on"
-        await ctx.send(f"Successfully toggled {state} level up messages in this server!")
+        await ctx.send(
+            f"Successfully toggled {state} level up messages in this server!"
+        )
+
 
 async def setup(bot):
     await bot.add_cog(Settings(bot))

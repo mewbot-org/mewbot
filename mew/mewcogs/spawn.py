@@ -11,7 +11,12 @@ from mewutils.checks import check_owner
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
 from pokemon_utils.utils import evolve
-from mewutils.misc import get_pokemon_image, get_file_name, poke_spawn_check, STAFFSERVER
+from mewutils.misc import (
+    get_pokemon_image,
+    get_file_name,
+    poke_spawn_check,
+    STAFFSERVER,
+)
 from mewcogs.json_files import make_embed
 from mewcogs.fishing import is_key
 from mewcogs.pokemon_list import _
@@ -20,29 +25,36 @@ from collections import defaultdict
 
 def despawn_embed(e, status):
     e.title = "Despawned!" if status == "despawn" else "Caught!"
-    #e.set_image(url=e.image.url)
+    # e.set_image(url=e.image.url)
     return e
 
-class SpawnResult():
+
+class SpawnResult:
     def __init__(self, text: str):
         self.text = text
 
-class PokeGuess():
+
+class PokeGuess:
     def __init__(self):
         self.guessed = False
 
     def guess_check(self):
         return self.guessed
 
-async def add_spawn(*, bot, user_id, guild_id, pokemon, shiny, inventory) -> SpawnResult:
-    """Spawn handler"""     
+
+async def add_spawn(
+    *, bot, user_id, guild_id, pokemon, shiny, inventory
+) -> SpawnResult:
+    """Spawn handler"""
     pokemon = pokemon.capitalize()
 
     ivmulti = inventory.get("iv-multiplier", 0)
     # 0%-10% chance from 0-50 iv multis
     boosted = random.randrange(500) < ivmulti
     plevel = random.randint(1, 60)
-    pokedata = await bot.commondb.create_poke(bot, user_id, pokemon, shiny=shiny, boosted=boosted, level=plevel)
+    pokedata = await bot.commondb.create_poke(
+        bot, user_id, pokemon, shiny=shiny, boosted=boosted, level=plevel
+    )
     ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
     credits = None
 
@@ -65,7 +77,9 @@ async def add_spawn(*, bot, user_id, guild_id, pokemon, shiny, inventory) -> Spa
         berry_chance = max(1, int(random.random() * 350))
         expensive_chance = max(1, int(random.random() * 25))
         if berry_chance in range(1, 8):
-            cheaps = [t["item"] for t in SHOP if t["price"] <= 8000 and not is_key(t["item"])]
+            cheaps = [
+                t["item"] for t in SHOP if t["price"] <= 8000 and not is_key(t["item"])
+            ]
             expensives = [
                 t["item"]
                 for t in SHOP
@@ -97,7 +111,7 @@ async def add_spawn(*, bot, user_id, guild_id, pokemon, shiny, inventory) -> Spa
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json where u_id = $2",
                 inventory,
-                user_id
+                user_id,
             )
         if bot.premium_server(guild_id):
             credits = random.randint(100, 250)
@@ -116,30 +130,63 @@ async def add_spawn(*, bot, user_id, guild_id, pokemon, shiny, inventory) -> Spa
         teext += f"It also dropped a {chest}!\n"
     if credits:
         teext += f"You also found {credits} credits!\n"
-    
+
     return SpawnResult(teext)
 
+
 class SpawnView(discord.ui.View):
-    def __init__(self, pokemon: str, delspawn: bool, pinspawn: bool, spawn_channel: discord.TextChannel, legendchance: int, ubchance: int, shiny: bool, poke_guess: PokeGuess):
-        self.modal = SpawnModal(pokemon, delspawn, pinspawn, spawn_channel, legendchance, ubchance, shiny, self, poke_guess)
+    def __init__(
+        self,
+        pokemon: str,
+        delspawn: bool,
+        pinspawn: bool,
+        spawn_channel: discord.TextChannel,
+        legendchance: int,
+        ubchance: int,
+        shiny: bool,
+        poke_guess: PokeGuess,
+    ):
+        self.modal = SpawnModal(
+            pokemon,
+            delspawn,
+            pinspawn,
+            spawn_channel,
+            legendchance,
+            ubchance,
+            shiny,
+            self,
+            poke_guess,
+        )
         super().__init__(timeout=360)
         self.msg = None
-    
+
     def set_message(self, msg: discord.Message):
         self.msg = msg
-    
+
     async def on_timeout(self):
         if self.msg:
             embed = self.msg.embeds[0]
             embed.title = "Timed out! Better luck next time!"
             await self.msg.edit(embed=embed, view=None)
-    
+
     @discord.ui.button(label="Catch This Pokemon!", style=discord.ButtonStyle.blurple)
     async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
         await interaction.response.send_modal(self.modal)
 
+
 class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
-    def __init__(self, pokemon: str, delspawn: bool, pinspawn: bool, spawn_channel: discord.TextChannel, legendchance: int, ubchance: int, shiny: bool, view: discord.ui.View, poke_guess: PokeGuess):
+    def __init__(
+        self,
+        pokemon: str,
+        delspawn: bool,
+        pinspawn: bool,
+        spawn_channel: discord.TextChannel,
+        legendchance: int,
+        ubchance: int,
+        shiny: bool,
+        view: discord.ui.View,
+        poke_guess: PokeGuess,
+    ):
         self.pokemon = pokemon
         self.guessed = False
         self.delspawn = delspawn
@@ -152,7 +199,9 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         self.poke_guess = poke_guess
         super().__init__()
 
-    name = discord.ui.TextInput(label='Pokemon Name', placeholder="What do you think this pokemon is named?")
+    name = discord.ui.TextInput(
+        label="Pokemon Name", placeholder="What do you think this pokemon is named?"
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         self.embedmsg = interaction.message
@@ -163,14 +212,20 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
 
         # Check if pokemon name is correct
         if self.guessed or self.poke_guess.guess_check():
-            return await interaction.followup.send("Someone's already guessed this pokemon!", ephemeral=True) 
+            return await interaction.followup.send(
+                "Someone's already guessed this pokemon!", ephemeral=True
+            )
 
         if interaction.client.botbanned(interaction.user.id):
-            return await interaction.followup.send("You are banned from using Mewbot (for now)")
+            return await interaction.followup.send(
+                "You are banned from using Mewbot (for now)"
+            )
 
         if not poke_spawn_check(str(self.name), pokemon):
-            return await interaction.followup.send("Incorrect name! Try again :(", ephemeral=True) 
-        
+            return await interaction.followup.send(
+                "Incorrect name! Try again :(", ephemeral=True
+            )
+
         # Someone caught the poke, create it
         async with interaction.client.db[0].acquire() as pconn:
             inventory = await pconn.fetchval(
@@ -178,8 +233,10 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                 interaction.user.id,
             )
             if inventory is None:
-                return await interaction.followup.send("You have not started!\nStart with `/start` first!", ephemeral=True)
-            
+                return await interaction.followup.send(
+                    "You have not started!\nStart with `/start` first!", ephemeral=True
+                )
+
         self.guessed = True
         self.poke_guess.guessed = True
 
@@ -189,25 +246,34 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             guild_id=interaction.guild.id,
             pokemon=pokemon,
             shiny=self.shiny,
-            inventory=inventory
+            inventory=inventory,
         )
 
-        await interaction.followup.send(embed=(make_embed(title="", description=res.text)))
+        await interaction.followup.send(
+            embed=(make_embed(title="", description=res.text))
+        )
         try:
             if self.delspawn:
                 await self.embedmsg.delete()
             else:
-                await self.embedmsg.edit(embed=despawn_embed(self.embedmsg.embeds[0], "caught"), view=None)
-                if self.pinspawn and self.spawn_channel.permissions_for(interaction.message.guild.me).manage_messages:
+                await self.embedmsg.edit(
+                    embed=despawn_embed(self.embedmsg.embeds[0], "caught"), view=None
+                )
+                if (
+                    self.pinspawn
+                    and self.spawn_channel.permissions_for(
+                        interaction.message.guild.me
+                    ).manage_messages
+                ):
                     if any([self.legendchance < 2, self.ubchance < 2]):
                         await self.embedmsg.pin()
         except discord.HTTPException:
             pass
-        
+
         self.view.stop()
 
-        #Dispatches an event that a poke was spawned.
-        #on_poke_spawn(self, channel, user)
+        # Dispatches an event that a poke was spawned.
+        # on_poke_spawn(self, channel, user)
         interaction.client.dispatch("poke_spawn", self.spawn_channel, interaction.user)
 
 
@@ -230,11 +296,12 @@ class Spawn(commands.Cog):
             self.always_spawn = True
             await ctx.send("Always spawning enabled.")
 
-
     async def get_type(self, type_id):
         data = await self.bot.db[1].ptypes.find({"types": type_id}).to_list(None)
         data = [x["id"] for x in data]
-        data = await self.bot.db[1].forms.find({"pokemon_id": {"$in": data}}).to_list(None)
+        data = (
+            await self.bot.db[1].forms.find({"pokemon_id": {"$in": data}}).to_list(None)
+        )
         data = [x["identifier"].title() for x in data]
         return list(set(data) & set(totalList))
 
@@ -261,23 +328,30 @@ class Spawn(commands.Cog):
         # See if we are allowed to spawn in this channel & get the spawn channel
         try:
             guild = await self.bot.mongo_find("guilds", {"id": message.guild.id})
-            redirects, delspawn, pinspawn, disabled_channels, small_images, mention_spawn = (
+            (
+                redirects,
+                delspawn,
+                pinspawn,
+                disabled_channels,
+                small_images,
+                mention_spawn,
+            ) = (
                 guild["redirects"],
                 guild["delete_spawns"],
                 guild["pin_spawns"],
                 guild["disabled_spawn_channels"],
                 guild["small_images"],
-                guild.get("mention_spawns", False)
+                guild.get("mention_spawns", False),
             )
         except Exception:
-            redirects, delspawn, pinspawn, disabled_channels, small_images, mention_spawn = (
-                [],
-                False,
-                False,
-                [],
-                False,
-                False
-            )
+            (
+                redirects,
+                delspawn,
+                pinspawn,
+                disabled_channels,
+                small_images,
+                mention_spawn,
+            ) = ([], False, False, [], False, False)
         if message.channel.id in disabled_channels:
             return
         if redirects:
@@ -306,7 +380,9 @@ class Spawn(commands.Cog):
             )
             threshold = 4000
             if inventory is not None:
-                threshold = round(threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100))
+                threshold = round(
+                    threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100)
+                )
             shiny = random.choice([False for i in range(threshold)] + [True])
 
             honey = await pconn.fetchval(
@@ -323,7 +399,6 @@ class Spawn(commands.Cog):
                 override_with_ice = True
             else:
                 honey = 50
-
 
             legendchance = int(random.random() * (round(4000 - 7600 * honey / 100)))
             ubchance = int(random.random() * (round(3000 - 5700 * honey / 100)))
@@ -351,7 +426,9 @@ class Spawn(commands.Cog):
         form_info = await self.bot.db[1].forms.find_one({"identifier": pokemon})
         if form_info is None:
             raise ValueError(f'Bad pokemon name "{pokemon}" passed to spawn.py')
-        pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
+        pokemon_info = await self.bot.db[1].pfile.find_one(
+            {"id": form_info["pokemon_id"]}
+        )
         if not pokemon_info and "alola" in pokemon:
             pokemon_info = await self.bot.db[1].pfile.find_one(
                 {"identifier": pokemon.lower().split("-")[0]}
@@ -369,9 +446,13 @@ class Spawn(commands.Cog):
         embed.add_field(name="-", value=f"This Pokémons name starts with {pokemon[0]}")
         try:
             if small_images:
-                embed.set_thumbnail(url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl)
+                embed.set_thumbnail(
+                    url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl
+                )
             else:
-                embed.set_image(url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl)
+                embed.set_image(
+                    url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl
+                )
         except Exception:
             return
 
@@ -386,21 +467,24 @@ class Spawn(commands.Cog):
                 legendchance=legendchance,
                 ubchance=ubchance,
                 shiny=shiny,
-                poke_guess = poke_guess,
+                poke_guess=poke_guess,
             )
-            cmsg = await spawn_channel.send(
-                embeds=[embed],
-                view=view
-            )
+            cmsg = await spawn_channel.send(embeds=[embed], view=view)
 
             view.set_message(cmsg)
         except:
             self.bot.logger.error(traceback.format_exc())
-            
+
         def check(m):
             return (
                 m.channel.id == spawn_channel.id
-                and poke_spawn_check(m.content.lower().replace(f"<@{self.bot.user.id}>", "").replace(" ", "", 1).replace(" ", "-"), pokemon)
+                and poke_spawn_check(
+                    m.content.lower()
+                    .replace(f"<@{self.bot.user.id}>", "")
+                    .replace(" ", "", 1)
+                    .replace(" ", "-"),
+                    pokemon,
+                )
                 and not self.bot.botbanned(m.author.id)
                 and not poke_guess.guess_check()
             )
@@ -416,12 +500,14 @@ class Spawn(commands.Cog):
                     msg.author.id,
                 )
                 if inventory is None:
-                    await spawn_channel.send("You have not started!\nStart with `/start` first!")
+                    await spawn_channel.send(
+                        "You have not started!\nStart with `/start` first!"
+                    )
                 else:
                     break
-        
+
         poke_guess.guessed = True
-        
+
         res = await add_spawn(
             bot=self.bot,
             user_id=msg.author.id,
@@ -436,16 +522,20 @@ class Spawn(commands.Cog):
             if delspawn:
                 await cmsg.delete()
             else:
-                await cmsg.edit(embed=despawn_embed(cmsg.embeds[0], "caught"), view=None)
-                if pinspawn and spawn_channel.permissions_for(message.guild.me).manage_messages:
+                await cmsg.edit(
+                    embed=despawn_embed(cmsg.embeds[0], "caught"), view=None
+                )
+                if (
+                    pinspawn
+                    and spawn_channel.permissions_for(message.guild.me).manage_messages
+                ):
                     if any([legendchance < 2, ubchance < 2]):
                         await cmsg.pin()
         except discord.HTTPException:
             pass
-        #Dispatches an event that a poke was spawned.
-        #on_poke_spawn(self, channel, user)
+        # Dispatches an event that a poke was spawned.
+        # on_poke_spawn(self, channel, user)
         self.bot.dispatch("poke_spawn", spawn_channel, msg.author)
-
 
 
 async def setup(bot):

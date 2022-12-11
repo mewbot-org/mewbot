@@ -26,7 +26,7 @@ immune_ids = (
     280835732728184843,  # YUNO
     473541068378341376,
     334155028170407949,
-    563808552288780322, # Rootspring
+    563808552288780322,  # Rootspring
 )
 
 
@@ -47,7 +47,9 @@ class Cooldown(commands.Cog):
             if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
                 return False
             if not ctx.channel.permissions_for(ctx.guild.me).embed_links:
-                await ctx.send("I require `embed_links` permission in order to function properly. Please give me that permission and try again.")
+                await ctx.send(
+                    "I require `embed_links` permission in order to function properly. Please give me that permission and try again."
+                )
                 return False
         if ctx.author.id in wait_cache and not ctx.command.parent:
             wait = wait_cache.get(ctx.author.id)

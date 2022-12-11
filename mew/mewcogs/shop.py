@@ -12,8 +12,24 @@ class Shop(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command()
-    @discord.app_commands.describe(section="What section of the shop do you want to look at?")
-    async def shop(self, ctx, section:Literal["forms", "mega stones", "items", "trade items", "battle items", "evolution stones", "arceus plates", "vitamins", "rods"]):
+    @discord.app_commands.describe(
+        section="What section of the shop do you want to look at?"
+    )
+    async def shop(
+        self,
+        ctx,
+        section: Literal[
+            "forms",
+            "mega stones",
+            "items",
+            "trade items",
+            "battle items",
+            "evolution stones",
+            "arceus plates",
+            "vitamins",
+            "rods",
+        ],
+    ):
         """View iems you can buy in the Shop or a specific Section"""
         if not section:
             e = discord.Embed(
@@ -22,11 +38,9 @@ class Shop(commands.Cog):
                 color=3553600,
             )
             e.add_field(name="Forms", value=f"`/shop forms`", inline=False)
-            e.add_field(name="Mega Pokemon",
-                        value=f"`/shop mega`", inline=False)
+            e.add_field(name="Mega Pokemon", value=f"`/shop mega`", inline=False)
             e.add_field(name="Items", value=f"`/shop items`", inline=False)
-            e.add_field(name="Trade items",
-                        value=f"`/shop trade items`", inline=False)
+            e.add_field(name="Trade items", value=f"`/shop trade items`", inline=False)
             e.add_field(
                 name="Battle Items",
                 value=f"`/shop battle items`",
@@ -37,11 +51,11 @@ class Shop(commands.Cog):
                 value=f"`/shop stones` Evolution stones",
                 inline=False,
             )
-            e.add_field(name="Vitamins",
-                        value=f"`/shop vitamins`", inline=False)
+            e.add_field(name="Vitamins", value=f"`/shop vitamins`", inline=False)
             e.add_field(name="Rods", value=f"`/shop rods`", inline=False)
             e.set_footer(
-                text="Items can also be gotten through Item Drops from spawned Pokemon!")
+                text="Items can also be gotten through Item Drops from spawned Pokemon!"
+            )
             await ctx.send(embed=e)
             return
         elif section == "rods":
@@ -58,11 +72,13 @@ class Shop(commands.Cog):
                     value=f"Costs {prices[idx]} {ctx.bot.misc.emotes['CREDITS']}",
                 )
             e.set_footer(
-                text="Items can also be gotten through Item Drops from spawned Pokemon!")
+                text="Items can also be gotten through Item Drops from spawned Pokemon!"
+            )
             await ctx.send(embed=e)
         elif section == "items":
             e = discord.Embed(
-                title="Items to evolve or Boost stats, e.t.c", color=3553600)
+                title="Items to evolve or Boost stats, e.t.c", color=3553600
+            )
 
             e.add_field(
                 name="Rare Candies",
@@ -130,12 +146,13 @@ class Shop(commands.Cog):
             e.description += "\nLeaf stone"
             e.description += "\nMoon stone"
             e.description += "\nShiny stone"
-            #e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
+            # e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
             await ctx.send(embed=e)
 
         elif section == "forms":
             e = discord.Embed(
-                title="Buy Items to change your pokemon Forms!!", color=3553600)
+                title="Buy Items to change your pokemon Forms!!", color=3553600
+            )
             e.add_field(
                 name="Blue orb",
                 value="Buy the Blue Orb to make your Kyogre Primal! | 10,000ℳ",
@@ -230,8 +247,9 @@ class Shop(commands.Cog):
                 description=f"Say `/buy <mega_stone>` to buy it",
                 color=3553600,
             )
-            e.add_field(name="Buy Mega Stones",
-                        value="To evolve your Pokemon to It's Mega Form")
+            e.add_field(
+                name="Buy Mega Stones", value="To evolve your Pokemon to It's Mega Form"
+            )
             e.add_field(
                 name=f"Choose Between\nMega Stone - 2000{ctx.bot.misc.emotes['CREDITS']} \nMega stone X - 3500{ctx.bot.misc.emotes['CREDITS']}\nMega stone Y - 3500{ctx.bot.misc.emotes['CREDITS']}",
                 value="To Mega your selected Pokemon",
@@ -239,7 +257,9 @@ class Shop(commands.Cog):
             await ctx.send(embed=e)
         elif section == "trade items":
             e = discord.Embed(title="Trade Item Shop!", color=3553600)
-            e.description = f"All Trade Items Cost 3,000 {ctx.bot.misc.emotes['CREDITS']}"
+            e.description = (
+                f"All Trade Items Cost 3,000 {ctx.bot.misc.emotes['CREDITS']}"
+            )
             e.description += "\nDeep Sea Scale"
             e.description += "\n Sea Tooth"
             e.description += "\nDragon Scale"
@@ -299,11 +319,14 @@ class Shop(commands.Cog):
                 desc += f"**{item.capitalize().replace('-', ' ')}** - {price:,.0f}\n"
 
             embed = discord.Embed(
-                title="Items for Battles! Buy with /buy <item>", color=3553600)
+                title="Items for Battles! Buy with /buy <item>", color=3553600
+            )
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
         else:
-            await ctx.send("That is not a valid shop! To view the available shops, run `/shop`.")
+            await ctx.send(
+                "That is not a valid shop! To view the available shops, run `/shop`."
+            )
 
 
 async def setup(bot):

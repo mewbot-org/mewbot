@@ -9,7 +9,6 @@ class Party(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     @commands.hybrid_group(name="party")
     async def party_base(self, ctx: commands.Context) -> None:
         """Commands for loading, registering, and deleting partys"""
@@ -26,7 +25,9 @@ class Party(commands.Cog):
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
             for idx, _id in enumerate(party_nums):
-                t_name = await pconn.fetchval(f"SELECT pokname FROM pokes WHERE id = $1", _id)
+                t_name = await pconn.fetchval(
+                    f"SELECT pokname FROM pokes WHERE id = $1", _id
+                )
                 if t_name is None:
                     t_name, counter = "None", ""
                 else:
@@ -35,8 +36,10 @@ class Party(commands.Cog):
                         _id,
                         ctx.author.id,
                     )
-                    if t_name == 'Egg':
-                        counter = await pconn.fetchval(f"SELECT counter FROM pokes WHERE id = $1", _id)
+                    if t_name == "Egg":
+                        counter = await pconn.fetchval(
+                            f"SELECT counter FROM pokes WHERE id = $1", _id
+                        )
                         t_name = f"{t_name} `{counter} steps` [{num}]"
                     else:
                         t_name = f"{t_name} [{num}]"
@@ -49,13 +52,17 @@ class Party(commands.Cog):
         await ctx.send(embed=embed)
 
     @party_base.command(name="add")
-    async def party_add(self, ctx, slot: Literal[1, 2, 3, 4, 5, 6], poke: int=None) -> None:
+    async def party_add(
+        self, ctx, slot: Literal[1, 2, 3, 4, 5, 6], poke: int = None
+    ) -> None:
         """Add a pokemon to a slot in your party"""
         if 1 > slot or slot > 6:
             await ctx.send("You only add a Pokemon to a slot between 1 and 6!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            ids = await pconn.fetchval("SELECT party FROM users WHERE u_id = $1", ctx.author.id)
+            ids = await pconn.fetchval(
+                "SELECT party FROM users WHERE u_id = $1", ctx.author.id
+            )
             if ids is None:
                 await ctx.send(f"You have not started!\nStart with `/start` first!")
                 return
@@ -70,7 +77,9 @@ class Party(commands.Cog):
             if ids.count(_id) >= 1:
                 await ctx.send("That Pokemon already occupies a Team Slot!")
                 return
-            pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
             if pokename is None:
                 await ctx.send("You do not have that Pokemon!")
                 return
@@ -88,14 +97,20 @@ class Party(commands.Cog):
             await ctx.send("Slot must be between 1 and 6!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            ids = await pconn.fetchval("SELECT party FROM users WHERE u_id = $1", ctx.author.id)
+            ids = await pconn.fetchval(
+                "SELECT party FROM users WHERE u_id = $1", ctx.author.id
+            )
             if ids is None:
                 await ctx.send(f"You have not started!\nStart with `/start` first!")
                 return
             _id = ids[slot - 1]
             ids[slot - 1] = 0
-            await pconn.execute("UPDATE users SET party = $2 WHERE u_id = $1", ctx.author.id, ids)
-            pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            await pconn.execute(
+                "UPDATE users SET party = $2 WHERE u_id = $1", ctx.author.id, ids
+            )
+            pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
         if not pokename:
             await ctx.send("You do not have that Pokemon!")
             return
@@ -112,14 +127,14 @@ class Party(commands.Cog):
             await ctx.send("That party name is too long. Please choose a shorter one.")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            #Pull names of current parties
+            # Pull names of current parties
             party_names = await pconn.fetch(
                 "SELECT name FROM partys WHERE u_id = $1", ctx.author.id
             )
 
-            party_names = [record['name'] for record in party_names]
+            party_names = [record["name"] for record in party_names]
 
-            #Pull their currently used party
+            # Pull their currently used party
             current_party = await pconn.fetchval(
                 "SELECT party FROM users WHERE u_id = $1", ctx.author.id
             )
@@ -127,19 +142,21 @@ class Party(commands.Cog):
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
 
-            #This is for updating an existing save
+            # This is for updating an existing save
             if party_name in party_names:
                 await pconn.execute(
                     "UPDATE partys SET slot1=$1, slot2=$2, slot3=$3, slot4=$4, slot5=$5, slot6=$6 WHERE name = $7 AND u_id = $8",
-                    *(current_party), party_name, ctx.author.id
+                    *(current_party),
+                    party_name,
+                    ctx.author.id,
                 )
 
                 await ctx.send(f"Successfully updated party save {party_name.title()}")
                 return
 
-            #Then we insert this into the party table                    
-            query = '''INSERT INTO partys (u_id, name, slot1, slot2, slot3, slot4, slot5, slot6)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)'''
+            # Then we insert this into the party table
+            query = """INSERT INTO partys (u_id, name, slot1, slot2, slot3, slot4, slot5, slot6)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"""
 
             args = (
                 ctx.author.id,
@@ -160,23 +177,29 @@ class Party(commands.Cog):
         """Deregister a Party from your saved partys"""
         party_name = party_name.lower()
         async with ctx.bot.db[0].acquire() as pconn:
-            #Pull names of current parties
+            # Pull names of current parties
             party_names = await pconn.fetch(
                 "SELECT name FROM partys WHERE u_id = $1", ctx.author.id
             )
 
-            party_names = [record['name'] for record in party_names]
+            party_names = [record["name"] for record in party_names]
 
-            #No party exists with that name
+            # No party exists with that name
             if party_name not in party_names:
                 await ctx.send(f"You do not have a party with the name `{party_name}`.")
                 return
 
-            if not await ConfirmView(ctx, f"Are you sure you want to deregister party `{party_name}`?").wait():
+            if not await ConfirmView(
+                ctx, f"Are you sure you want to deregister party `{party_name}`?"
+            ).wait():
                 await ctx.send("Party deletion canceled.")
                 return
 
-            await pconn.execute("DELETE FROM partys WHERE u_id = $1 AND name = $2", ctx.author.id, party_name)
+            await pconn.execute(
+                "DELETE FROM partys WHERE u_id = $1 AND name = $2",
+                ctx.author.id,
+                party_name,
+            )
         await ctx.send(f"Successfully deregistered party `{party_name}`.")
 
     @party_base.command(name="load")
@@ -184,21 +207,23 @@ class Party(commands.Cog):
         """Load a registered party save by name"""
         party_name = party_name.lower()
         async with ctx.bot.db[0].acquire() as pconn:
-            #Pull the party that was saved in database.
+            # Pull the party that was saved in database.
             party_data = await pconn.fetchrow(
-                "SELECT slot1, slot2, slot3, slot4, slot5, slot6 FROM partys WHERE name = $1 AND u_id = $2", party_name, ctx.author.id
+                "SELECT slot1, slot2, slot3, slot4, slot5, slot6 FROM partys WHERE name = $1 AND u_id = $2",
+                party_name,
+                ctx.author.id,
             )
 
             if party_data is None:
                 await ctx.send("You don't have a party registered with that name.")
                 return
 
-            #Pulls current party
+            # Pulls current party
             ids = await pconn.fetchval(
                 "SELECT party FROM users WHERE u_id = $1", ctx.author.id
             )
 
-            #Override current party with the new IDs.
+            # Override current party with the new IDs.
             for i in range(6):
                 new_id = party_data[i]
                 ids[i] = new_id
@@ -217,16 +242,21 @@ class Party(commands.Cog):
                 "SELECT name FROM partys WHERE u_id = $1", ctx.author.id
             )
         if data is None:
-            await ctx.send(f"You do not have any saved parties. Register one with `/party register` first.")
+            await ctx.send(
+                f"You do not have any saved parties. Register one with `/party register` first."
+            )
             return
 
         raw = ""
         for p in data:
             raw += f'{p["name"]}\n'
 
-        pages = pagify(raw, base_embed=discord.Embed(title=f"Your Saved Parties", color=0xDD00DD))
-        
+        pages = pagify(
+            raw, base_embed=discord.Embed(title=f"Your Saved Parties", color=0xDD00DD)
+        )
+
         await MenuView(ctx, pages).start()
+
 
 async def setup(bot):
     await bot.add_cog(Party(bot))

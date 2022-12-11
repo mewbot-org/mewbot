@@ -14,7 +14,7 @@ from mewutils.misc import *
 class Orders(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_group()
     async def order(self, ctx):
         ...

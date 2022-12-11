@@ -15,7 +15,8 @@ import secrets
 import random
 import json
 import os
-#import stripe
+
+# import stripe
 import time
 import traceback
 from dotenv import load_dotenv, find_dotenv
@@ -36,14 +37,14 @@ load_dotenv("../../env/discord.env")
 
 TOKEN = os.environ["MTOKEN"]
 DATABASE = os.environ["DATABASE_URL"]
-MONGO_URL= os.environ["MONGO_URL"]
+MONGO_URL = os.environ["MONGO_URL"]
 DONATOR_ROLE = int(os.environ["DONATOR_ROLE"])
 
-#stripe.api_key = 'sk_test_51H74m0ITgsMlv29LgTV87yS7qD8crcWHdKgFMDlAYLD1VaMDVbAYrv5dO0Mvqzhuoq7oOf3fd2ZviH9MOPC0gbiU0098wGhOTo'
+# stripe.api_key = 'sk_test_51H74m0ITgsMlv29LgTV87yS7qD8crcWHdKgFMDlAYLD1VaMDVbAYrv5dO0Mvqzhuoq7oOf3fd2ZviH9MOPC0gbiU0098wGhOTo'
 botlist_tokens = {
     "discordbotlist.com": os.environ["DBL"],
     "topgg": os.environ["TOPGGVERIFY"],
-    "rdl": os.environ["RDL_TOKEN"]
+    "rdl": os.environ["RDL_TOKEN"],
 }
 STREAKS = {
     10: {
@@ -124,7 +125,9 @@ class AppUtils:
         self.bot_token = TOKEN
         self.app = app
         self.session = aiohttp.ClientSession()
-        self.base_channel_url = "https://discordapp.com/api/v6/channels/{channel_id}/messages"
+        self.base_channel_url = (
+            "https://discordapp.com/api/v6/channels/{channel_id}/messages"
+        )
         self.request_header = {
             "Authorization": f"Bot {self.bot_token}",
             "User-Agent": "DiscordBot (https://github.com/Rapptz/discord.py 2.0.0a) Python/3.8 aiohttp/3.7.4.post0",
@@ -164,7 +167,7 @@ class AppUtils:
         }
         response = await self.post_request(base_url, data)
         response = await response.json()
-        return response['id']
+        return response["id"]
 
     async def send_message(self, channel_id, amount, credits):
         data = {
@@ -178,8 +181,10 @@ class AppUtils:
                 "color": 0xFFB6C1,
             }
         }
-        await self.post_request(self.base_channel_url.format(channel_id=channel_id), data)
-    
+        await self.post_request(
+            self.base_channel_url.format(channel_id=channel_id), data
+        )
+
     async def send_vote_message(self, channel_id, votes, reward):
         data = {
             "embed": {
@@ -192,10 +197,12 @@ class AppUtils:
             }
         }
         try:
-            await self.post_request(self.base_channel_url.format(channel_id=channel_id), data)
+            await self.post_request(
+                self.base_channel_url.format(channel_id=channel_id), data
+            )
         except Exception:
             pass
-    
+
     async def send_skin_message(self, u_id):
         data = {
             "embed": {
@@ -207,7 +214,9 @@ class AppUtils:
             }
         }
         try:
-            await self.post_request(self.base_channel_url.format(channel_id=998563289082626049), data)
+            await self.post_request(
+                self.base_channel_url.format(channel_id=998563289082626049), data
+            )
         except Exception:
             pass
 
@@ -220,17 +229,19 @@ class AppUtils:
             data = {
                 "content": f"<@473541068378341376> <@790722073248661525> An unknown user attempted to fake a PayPal transaction.  Transaction ID: {data['txn_id']}"
             }
-        await self.post_request(self.base_channel_url.format(channel_id=998563289082626049), data)
-    
+        await self.post_request(
+            self.base_channel_url.format(channel_id=998563289082626049), data
+        )
+
     async def send_topgg_log_message(self, user_id: int):
         if user_id:
-            data = {
-                "content": f"{user_id}"
-            }
+            data = {"content": f"{user_id}"}
         try:
-            await self.post_request(self.base_channel_url.format(channel_id=998563289082626049), data)
+            await self.post_request(
+                self.base_channel_url.format(channel_id=998563289082626049), data
+            )
         except Exception as e:
-            tb = ''.join(traceback.TracebackException.from_exception(e).format())
+            tb = "".join(traceback.TracebackException.from_exception(e).format())
             print(tb)
 
     async def give_donator_role(self, user_id, role):
@@ -282,7 +293,13 @@ class AppUtils:
 
 class AuthUtils:
     _PROTECTED_TYPES = (
-        type(None), int, float, Decimal, datetime.datetime, datetime.date, datetime.time,
+        type(None),
+        int,
+        float,
+        Decimal,
+        datetime.datetime,
+        datetime.date,
+        datetime.time,
     )
 
     @staticmethod
@@ -299,17 +316,17 @@ class AuthUtils:
     def force_bytes(s, encoding="utf-8", strings_only=False, errors="strict"):
         """
         From Django:
-            
+
             Similar to smart_bytes, except that lazy instances are resolved to
             strings, rather than kept as lazy objects.
             If strings_only is True, don't convert (some) non-string-like objects.
         """
         # Handle the common case first for performance reasons.
         if isinstance(s, bytes):
-            if encoding == 'utf-8':
+            if encoding == "utf-8":
                 return s
-            else: 
-                return s.decode('utf-8', errors).encode(encoding, errors)
+            else:
+                return s.decode("utf-8", errors).encode(encoding, errors)
         if strings_only and AuthUtils.is_protected_type(s):
             return s
         if isinstance(s, memoryview):
@@ -320,19 +337,21 @@ class AuthUtils:
     def secure_strcmp(val1, val2):
         """
         From Django:
-        
+
         Return True if the two strings are equal, False otherwise securely.
         """
-        return secrets.compare_digest(AuthUtils.force_bytes(val1), AuthUtils.force_bytes(val2))
+        return secrets.compare_digest(
+            AuthUtils.force_bytes(val1), AuthUtils.force_bytes(val2)
+        )
 
 
 # For now they use the same format, but we'll use multiple basemodels
 class FatesVote(BaseModel):
     id: str
 
+
 class DBLVote(BaseModel):
     id: str
-
 
 
 def is_donation(data):
@@ -345,7 +364,9 @@ def is_donation(data):
 
 def is_test_donation(data):
     return (
-        "payment_status" in data and data["payment_status"] == "Completed" and "test_ipn" in data
+        "payment_status" in data
+        and data["payment_status"] == "Completed"
+        and "test_ipn" in data
     )
 
 
@@ -372,7 +393,7 @@ async def verify_ipn(data):
 
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mewbot IPN Verifier"
+        "User-Agent": "Mewbot IPN Verifier",
     }
 
     async with app.utils.session.get(url, params=params, headers=headers) as resp:
@@ -397,7 +418,9 @@ async def startup():
 
     app.pool = await asyncpg.create_pool(DATABASE, init=init)
     app.mongo = AsyncIOMotorClient(MONGO_URL).pokemon
-    app.redis = await aioredis.create_pool("redis://178.28.0.13", minsize=10, maxsize=20)
+    app.redis = await aioredis.create_pool(
+        "redis://178.28.0.13", minsize=10, maxsize=20
+    )
     app.utils = AppUtils()
     print("Pool has been Created Successfully!")
 
@@ -406,14 +429,14 @@ async def startup():
 async def shutdown():
     await app.pool.close()
     await app.utils.session.close()
-    
+
     app.redis.close()
     await app.redis.wait_closed()
 
 
 # Stripe is no longer used
-#@app.post("/create_stripe_checkout")
-#async def create_stripe_checkout(request: Request):
+# @app.post("/create_stripe_checkout")
+# async def create_stripe_checkout(request: Request):
 #    data = await request.form()
 #    data = {k: v for k, v in data.items()}
 #    print(data)
@@ -435,6 +458,7 @@ async def shutdown():
 #    print(session.url)
 #    return PlainTextResponse(session.url)
 
+
 @app.post("/paypal/")
 @app.post("/paypal")
 async def paypalhook(request: Request):
@@ -453,7 +477,7 @@ async def paypalhook(request: Request):
             if result in [True, False]:
                 break
             await asyncio.sleep(5)
-        
+
         if not (result is True):
             if result is False:
                 return PlainTextResponse("")
@@ -518,7 +542,11 @@ async def paystack_verify(ref: int, request: Request):
     }
 
     base_url = f"https://api.paystack.co/transaction/verify/{ref}"
-    async with aiohttp.request("GET", base_url, headers=headers,) as r:
+    async with aiohttp.request(
+        "GET",
+        base_url,
+        headers=headers,
+    ) as r:
         r.raise_for_status()
         data = (await r.json())["data"]
 
@@ -529,6 +557,7 @@ async def paystack_verify(ref: int, request: Request):
 
     return RedirectResponse(url="https://mewbot.xyz/donate/thankyou.html")
 
+
 # top.gg
 @app.post("/hooks/topgg")
 async def votes_topgg(request: Request):
@@ -538,9 +567,10 @@ async def votes_topgg(request: Request):
         user_id = int(data["user"])
         return await vote_handler(data, auth, user_id, "topgg")
     except Exception as e:
-        tb = ''.join(traceback.TracebackException.from_exception(e).format())
+        tb = "".join(traceback.TracebackException.from_exception(e).format())
         print(tb)
         return PlainTextResponse("")
+
 
 # discordbotlist
 @app.post("/hooks/discordbotlist")
@@ -551,9 +581,10 @@ async def votes_dbl(request: Request):
         user_id = int(data["id"])
         return await vote_handler(data, auth, user_id, "discordbotlist.com")
     except Exception as e:
-        tb = ''.join(traceback.TracebackException.from_exception(e).format())
+        tb = "".join(traceback.TracebackException.from_exception(e).format())
         print(tb)
         return PlainTextResponse("")
+
 
 # rdl
 @app.post("/hooks/rdl")
@@ -564,16 +595,17 @@ async def votes_dbl(request: Request):
         user_id = int(data["id"])
         return await vote_handler(data, auth, user_id, "rdl")
     except Exception as e:
-        tb = ''.join(traceback.TracebackException.from_exception(e).format())
+        tb = "".join(traceback.TracebackException.from_exception(e).format())
         print(tb)
         return PlainTextResponse("")
+
 
 async def vote_handler(data, auth, user_id, list_name):
     """Function to handle all votes from all current and new lists."""
 
     # Handle auth first
     if not AuthUtils.secure_strcmp(auth, str(botlist_tokens.get(list_name))):
-        return PlainTextResponse("", status_code=401) # Invalid auth
+        return PlainTextResponse("", status_code=401)  # Invalid auth
 
     print(f"Processing vote from {list_name} for {user_id}...")
 
@@ -581,7 +613,7 @@ async def vote_handler(data, auth, user_id, list_name):
     if list_name == "topgg":
         await app.utils.send_topgg_log_message(user_id)
 
-    #if user_id == 473541068378341376:
+    # if user_id == 473541068378341376:
     #    votes = await app.redis.get(f"voting-{user_id}")
     #    if votes is None:
     #        votes = 0
@@ -596,7 +628,9 @@ async def vote_handler(data, auth, user_id, list_name):
     berry_chance = random.randint(1, 30)
     berry = None
     cheaps = [t["item"] for t in app.utils.SHOP if t["price"] <= 8000]
-    expensives = [t["item"] for t in app.utils.SHOP if t["price"] >= 5000 and t["price"] <= 8000]
+    expensives = [
+        t["item"] for t in app.utils.SHOP if t["price"] >= 5000 and t["price"] <= 8000
+    ]
     if berry_chance <= 1:
         berry = random.choice(expensives)
     elif berry_chance <= 4:
@@ -611,7 +645,9 @@ async def vote_handler(data, auth, user_id, list_name):
             if items is not None:
                 items[berry] = items.get(berry, 0) + 1
                 await pconn.execute(
-                    "UPDATE users SET items = $1::json WHERE u_id = $2", items, user_id,
+                    "UPDATE users SET items = $1::json WHERE u_id = $2",
+                    items,
+                    user_id,
                 )
     async with app.pool.acquire() as pconn:
         await pconn.execute(
@@ -619,7 +655,10 @@ async def vote_handler(data, auth, user_id, list_name):
             user_id,
         )
         if list_name == "topgg":
-            data = await pconn.fetchrow("SELECT last_vote, vote_streak, inventory::json, skins::json FROM users WHERE u_id = $1", user_id)
+            data = await pconn.fetchrow(
+                "SELECT last_vote, vote_streak, inventory::json, skins::json FROM users WHERE u_id = $1",
+                user_id,
+            )
             if data is None:
                 return PlainTextResponse("")
             if data["last_vote"] < time.time() - (36 * 60 * 60):
@@ -628,24 +667,32 @@ async def vote_handler(data, auth, user_id, list_name):
                 vote_streak = data["vote_streak"] + 1
             await pconn.execute(
                 "UPDATE users SET last_vote = $1, vote_streak = $2 WHERE u_id = $3",
-                int(time.time()), vote_streak, user_id
+                int(time.time()),
+                vote_streak,
+                user_id,
             )
             inventory = data["inventory"]
             skins = data["skins"]
-            #different than vote_streak for it to wrap around while displaying as the correct #
+            # different than vote_streak for it to wrap around while displaying as the correct #
             reward_value = ((vote_streak - 1) % 100) + 1
             if reward_value in STREAKS:
                 reward = STREAKS[reward_value]
                 msg = ""
                 if reward["gems"]:
-                    inventory["radiant gem"] = inventory.get("radiant gem", 0) + reward["gems"]
+                    inventory["radiant gem"] = (
+                        inventory.get("radiant gem", 0) + reward["gems"]
+                    )
                     msg += f"-**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
-                    inventory[f"{reward['chest']} chest"] = inventory.get(f"{reward['chest']} chest", 0) + 1
+                    inventory[f"{reward['chest']} chest"] = (
+                        inventory.get(f"{reward['chest']} chest", 0) + 1
+                    )
                     msg += f"-A **{reward['chest']} chest**\n"
                 if reward["skin"]:
-                    #await app.utils.send_skin_message(user_id)
-                    skin = random.choice([("mewtwo", "vote"), ("mewtwo", "vote2"), ("mewtwo", "vote3")])
+                    # await app.utils.send_skin_message(user_id)
+                    skin = random.choice(
+                        [("mewtwo", "vote"), ("mewtwo", "vote2"), ("mewtwo", "vote3")]
+                    )
                     msg += f"-An **exclusive {skin[0].title()} skin** for voting! See `/skin` for more information.\n"
                     # TODO: replace with default dict?
                     if skin[0] not in skins:
@@ -656,21 +703,27 @@ async def vote_handler(data, auth, user_id, list_name):
                         skins[skin[0]][skin[1]] += 1
                 await pconn.execute(
                     "UPDATE users SET inventory = $1::json, skins = $2::json WHERE u_id = $3",
-                    inventory, skins, user_id
+                    inventory,
+                    skins,
+                    user_id,
                 )
                 dm_id = await app.utils.get_dm_id(user_id)
                 await app.utils.send_vote_message(dm_id, vote_streak, msg)
     user = await app.utils.mongo_find(
-        "users", {"user": user_id}, default={"user": user_id, "progress": {}},
+        "users",
+        {"user": user_id},
+        default={"user": user_id, "progress": {}},
     )
     progress = user["progress"]
     progress["upvote"] = progress.get("upvote", 0) + 1
     await app.utils.mongo_update("users", {"user": user_id}, {"progress": progress})
     return PlainTextResponse("")
 
+
 @app.get("/")
 async def index():
     return {"hello": "world"}
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=15211)

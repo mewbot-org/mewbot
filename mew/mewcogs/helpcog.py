@@ -6,7 +6,7 @@ import textwrap
 
 
 class HelpCog(commands.Cog):
-    #@commands.group(name="help", case_insensitive=True)
+    # @commands.group(name="help", case_insensitive=True)
     async def help(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(
@@ -14,26 +14,46 @@ class HelpCog(commands.Cog):
                 description="For more detailed help and information, Visit the official Mewbot wiki page [here](https://mewbot.wiki)",
                 color=3553600,
             )
-            embed.add_field(name="MewBot Tutorial :flashlight:", value=f"`{ctx.prefix}tutorial`")
-            embed.add_field(name="Pokemon commands", value=f"`{ctx.prefix}help pokemon`")
-            embed.add_field(name="Breeding commands", value=f"`{ctx.prefix}help breeding`")
-            embed.add_field(name="Activities", value=f"`{ctx.prefix}help activities`", inline=True)
-            embed.add_field(name="Missions", value=f"`{ctx.prefix}help missions`", inline=True)
-            embed.add_field(name="Forms commands", value=f"`{ctx.prefix}help forms`", inline=True)
-            embed.add_field(name="Party commands", value=f"`{ctx.prefix}help party`", inline=True)
-            embed.add_field(name="Admin commands", value=f"`{ctx.prefix}help admin`", inline=True)
             embed.add_field(
-                name="Trading commands", value=f"`{ctx.prefix}help trading`", inline=True
+                name="MewBot Tutorial :flashlight:", value=f"`{ctx.prefix}tutorial`"
             )
-            embed.add_field(name="Extra commands", value=f"`{ctx.prefix}help extras`", inline=True)
-            #embed.add_field(name="More Information About Mewbot", value="Visit the official Mewbot wiki page [here](https://mewbot.wiki)")
+            embed.add_field(
+                name="Pokemon commands", value=f"`{ctx.prefix}help pokemon`"
+            )
+            embed.add_field(
+                name="Breeding commands", value=f"`{ctx.prefix}help breeding`"
+            )
+            embed.add_field(
+                name="Activities", value=f"`{ctx.prefix}help activities`", inline=True
+            )
+            embed.add_field(
+                name="Missions", value=f"`{ctx.prefix}help missions`", inline=True
+            )
+            embed.add_field(
+                name="Forms commands", value=f"`{ctx.prefix}help forms`", inline=True
+            )
+            embed.add_field(
+                name="Party commands", value=f"`{ctx.prefix}help party`", inline=True
+            )
+            embed.add_field(
+                name="Admin commands", value=f"`{ctx.prefix}help admin`", inline=True
+            )
+            embed.add_field(
+                name="Trading commands",
+                value=f"`{ctx.prefix}help trading`",
+                inline=True,
+            )
+            embed.add_field(
+                name="Extra commands", value=f"`{ctx.prefix}help extras`", inline=True
+            )
+            # embed.add_field(name="More Information About Mewbot", value="Visit the official Mewbot wiki page [here](https://mewbot.wiki)")
             # embed.add_field(name="Donate", value="Donate to the bot! 1 USD = 2 Redeems + 5,000 credits", inline=True)
             embed.set_thumbnail(
                 url="http://pm1.narvii.com/5848/b18cd35647528a7bdffc8e4b8e4d6a1465fc5253_00.jpg"
             )
             await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def general(self, ctx):
         embed = discord.Embed(title="General Commands", color=3553600)
         embed.add_field(
@@ -66,7 +86,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command(aliases=["favs"])
+    # @help.command(aliases=["favs"])
     async def fav(self, ctx):
         e = discord.Embed(title="Fav commands", color=3553600)
         e.description = (
@@ -76,15 +96,18 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def activities(self, ctx):
         e = discord.Embed(title="Activities currently in MewBot", color=3553600)
         e.add_field(name="Fishing Activity", value=f"`{ctx.prefix}help fishing`")
-        e.add_field(name="Game corner (temporarily disabled)", value=f"`{ctx.prefix}help game corner`")
+        e.add_field(
+            name="Game corner (temporarily disabled)",
+            value=f"`{ctx.prefix}help game corner`",
+        )
         e.add_field(name="NPC interaction", value=f"`{ctx.prefix}duel npc`")
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def missions(self, ctx):
         e = discord.Embed(title="Daily missions/rewards", color=3553600)
         e.add_field(name="Daily missions", value=f"`{ctx.prefix}missions`")
@@ -95,11 +118,11 @@ class HelpCog(commands.Cog):
         e.set_footer(text="Missions reset daily, complete them while you can!")
         await ctx.send(embed=e)
 
-    #@help.group()
+    # @help.group()
     async def game(self, ctx):
         ...
 
-    #@game.command()
+    # @game.command()
     async def corner(self, ctx):
         e = discord.Embed(title="Game corner tutorial", color=3553600)
         e.add_field(
@@ -125,7 +148,7 @@ class HelpCog(commands.Cog):
         e.set_footer(text="Also totally worth the grind!")
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def fishing(self, ctx):
         e = discord.Embed(title="Fishing tutorial", color=3553600)
         e.add_field(
@@ -147,7 +170,7 @@ class HelpCog(commands.Cog):
         e.set_footer(text="It's totally worth the grind!")
         await ctx.send(embed=e)
 
-    #@help.command(aliases=["ev", "evs"])
+    # @help.command(aliases=["ev", "evs"])
     async def evpoints(self, ctx):
         e = discord.Embed(title="EV points Tutorial", color=3553600)
         e.add_field(
@@ -159,7 +182,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #@help.command(aliases=["trade", "trades"])
+    # @help.command(aliases=["trade", "trades"])
     async def trading(self, ctx):
         e = discord.Embed(title="Trading tutorial", color=3553600)
         e.add_field(
@@ -180,7 +203,7 @@ class HelpCog(commands.Cog):
         )"""
         await ctx.send(embed=e)
 
-    #@help.command(aliases=["form", "mega"])
+    # @help.command(aliases=["form", "mega"])
     async def forms(self, ctx):
         e = discord.Embed(title="Form tutorial", color=3553600)
         e.add_field(
@@ -203,7 +226,9 @@ class HelpCog(commands.Cog):
             name=f"`{ctx.prefix}fuse white <reshiram_number>`",
             value="Fuse your Reshiram with Kyurem to Get Kyurem-white!",
         )
-        e.add_field(name=f"`{ctx.prefix}mega evolve`", value="Mega You Selected Pokemon")
+        e.add_field(
+            name=f"`{ctx.prefix}mega evolve`", value="Mega You Selected Pokemon"
+        )
         e.add_field(
             name=f"`{ctx.prefix}mega evolve (x/y)`",
             value="Mega evolve selected Pokemon to X or Y form",
@@ -214,7 +239,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def trainer(self, ctx):
         e = discord.Embed(title="Trainer card help", color=3553600)
         e.add_field(
@@ -223,7 +248,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #@help.command(aliases=["move"])
+    # @help.command(aliases=["move"])
     async def moves(self, ctx):
         embed = discord.Embed(title="Pokemon commands", color=3553600)
         embed.add_field(name="Moves", value="See your current moves")
@@ -236,7 +261,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def shop(self, ctx):
         e = discord.Embed(
             title="Items you can buy in the Shop!",
@@ -267,7 +292,9 @@ class HelpCog(commands.Cog):
             name="Key items",
             value=f"`{ctx.prefix}shop key items` Currently only Shiny Charm",
         )
-        e.add_field(name="Stones", value=f"Say `{ctx.prefix}shop stones` for evolution stones")
+        e.add_field(
+            name="Stones", value=f"Say `{ctx.prefix}shop stones` for evolution stones"
+        )
         e.add_field(
             name="Vitamins",
             value=f"Say `{ctx.prefix}shop vitamins` for vitamins to boost stats!",
@@ -276,7 +303,7 @@ class HelpCog(commands.Cog):
         e.set_footer(text="Buy items!")
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def pokemon(self, ctx):
         embed = discord.Embed(title="Pokemon commands", color=3553600)
         embed.add_field(
@@ -334,10 +361,12 @@ class HelpCog(commands.Cog):
             value=f"`{ctx.prefix}help fav`",
             inline=False,
         )
-        embed.add_field(name="Bag Commands", value=f"`{ctx.prefix}help bag`", inline=False)
+        embed.add_field(
+            name="Bag Commands", value=f"`{ctx.prefix}help bag`", inline=False
+        )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def bag(self, ctx):
         e = discord.Embed(title="Bag commands", color=3553600)
         e.add_field(name="View Bag", value=f"`{ctx.prefix}bag`")
@@ -345,7 +374,7 @@ class HelpCog(commands.Cog):
         e.add_field(name="Unequip items from a Pokemon", value=f"`{ctx.prefix}unequip`")
         await ctx.send(embed=await _(e))
 
-    #@help.command(aliases=["item"])
+    # @help.command(aliases=["item"])
     async def items(self, ctx):
         embed = discord.Embed(title="Item tutorial", color=3553600)
         prefix = ctx.prefix
@@ -360,14 +389,16 @@ class HelpCog(commands.Cog):
             name="Change Nature",
             value=f"Change the Nature of your Selected Pokemon with `{prefix}change nature <nature_name>`. You must have a Nature Capsule to change natures!",
         )
-        embed.add_field(name="Inventory", value=f"See your inventory with `{prefix}inventory`!")
+        embed.add_field(
+            name="Inventory", value=f"See your inventory with `{prefix}inventory`!"
+        )
         embed.add_field(
             name="Transfer Items!",
             value=f"Use `{ctx.prefix}transfer item <pokemon_number>` to transfer items from your Selected Pokemon to another Pokemon!",
         )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def order(self, ctx):
         doc = (
             "You can Order by `ivs, evs, name, or level` or by default.\n"
@@ -378,7 +409,7 @@ class HelpCog(commands.Cog):
         e.add_field(name="Default Orders", value=doc)
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def filter(self, ctx):
         e = discord.Embed(title="Filtering help!", color=3553600)
         e.add_field(
@@ -413,52 +444,50 @@ class HelpCog(commands.Cog):
 
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def party(self, ctx):
-        embed = discord.Embed(
-            title="Party commands", 
-            color=3553600
-            )
+        embed = discord.Embed(title="Party commands", color=3553600)
         embed.add_field(
-            name="Party", 
-            value=f"Displays your current party.\n`{ctx.prefix}party`"
+            name="Party", value=f"Displays your current party.\n`{ctx.prefix}party`"
         )
         embed.add_field(
             name="Add to Party",
             value=f"Adds a pokemon to your party\n`{ctx.prefix}party add [slot_number] [pokemon_number]`",
         )
         embed.add_field(
-            name="Remove from Party", 
-            value=f"Removes a pokemon from your party\n`{ctx.prefix}party remove [slot_number]`"
+            name="Remove from Party",
+            value=f"Removes a pokemon from your party\n`{ctx.prefix}party remove [slot_number]`",
         )
         embed.add_field(
             name="Register/Update a new Party",
-            value=f"If the entered name already exist, it'll update that party. If not, it'll make a new party.\n`{ctx.prefix}party register [name]`"
+            value=f"If the entered name already exist, it'll update that party. If not, it'll make a new party.\n`{ctx.prefix}party register [name]`",
         )
         embed.add_field(
             name="List of Parties",
-            value=f"This command displays saved parties.\n`{ctx.prefix}party list`"
+            value=f"This command displays saved parties.\n`{ctx.prefix}party list`",
         )
         embed.add_field(
             name="Load a Party",
-            value=f"Replace current party with previously saved party.\n`{ctx.prefix}party load [name]`"
+            value=f"Replace current party with previously saved party.\n`{ctx.prefix}party load [name]`",
         )
         await ctx.send(embed=embed)
 
-    #@help.command(aliases=["voting", "upvotes", "daily", "claim"])
+    # @help.command(aliases=["voting", "upvotes", "daily", "claim"])
     async def upvote(self, ctx):
         embed = discord.Embed(color=3553600)
         embed.add_field(name="Claim upvote points", value=f"`{ctx.prefix}claim`")
         await ctx.send(embed=embed)
 
-    #@help.command(aliases=["settings"])
+    # @help.command(aliases=["settings"])
     async def admin(self, ctx):
         embed = discord.Embed(title="Admin commands", color=3553600)
         # `{ctx.prefix}settings language <language>` - Change server language
         embed.set_thumbnail(
             url="https://images.discordapp.net/avatars/519850436899897346/038a1e4fcce1f27161040a5f9013338c.png?size=512"
         )
-        embed.add_field(name="Change Prefix", value=f"`{ctx.prefix}prefix <prefix>`", inline=True)
+        embed.add_field(
+            name="Change Prefix", value=f"`{ctx.prefix}prefix <prefix>`", inline=True
+        )
         embed.add_field(
             name="Toggle Bot Commands",
             value=f"`{ctx.prefix}channel disable/enable <channel>`",
@@ -491,7 +520,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command(aliases=["extra"])
+    # @help.command(aliases=["extra"])
     async def extras(self, ctx):
         embed = discord.Embed(title="Extra commands", color=3553600)
         embed.add_field(name="Updates", value=f"`{ctx.prefix}updates`")
@@ -518,7 +547,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def market(self, ctx):
         embed = discord.Embed(
             title="Market commands",
@@ -543,7 +572,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command(aliases=["duel"])
+    # @help.command(aliases=["duel"])
     async def duels(self, ctx):
         embed = discord.Embed(title="How to Battle Your Friends!", color=3553600)
         embed.add_field(
@@ -563,7 +592,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def vitamin(self, ctx):
         e = discord.Embed(
             title="Buy vitamins!!",
@@ -596,7 +625,7 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #@help.command()
+    # @help.command()
     async def breeding(self, ctx):
         e = discord.Embed(
             title="How to breed Pokemon",
@@ -682,12 +711,15 @@ class HelpCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@help.command()
+    # @help.command()
     async def newticket(self, ctx):
         embed = discord.Embed(
             title="New Ticket Creation",
             colour=discord.Colour(0x65BAF),
-            description=("**Command:** `;newticket`\n**Usage:** `;newticket <description of issue>`\n**Purpose:** Provide an orderly way for Support Team members to report issues that people post within #questions or any of the bug report channels.\n**__Example__:** *if issue is in regards to one person, please provide ID or username somewhere in the description of issue.*\n```md\n;newticket There is an issue causing everyone to lose all of their pokemon, omg were losing everything, aaaaaaaahhhhh\n--```"))
+            description=(
+                "**Command:** `;newticket`\n**Usage:** `;newticket <description of issue>`\n**Purpose:** Provide an orderly way for Support Team members to report issues that people post within #questions or any of the bug report channels.\n**__Example__:** *if issue is in regards to one person, please provide ID or username somewhere in the description of issue.*\n```md\n;newticket There is an issue causing everyone to lose all of their pokemon, omg were losing everything, aaaaaaaahhhhh\n--```"
+            ),
+        )
         await ctx.send(embed=embed)
 
 

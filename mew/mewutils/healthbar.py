@@ -16,7 +16,9 @@ class HealthBar:
         corner = self.round_corner(radius, fill)
         base_bar.paste(corner, (0, 0))
         base_bar.paste(corner.rotate(90), (0, base_bar.height - radius))
-        base_bar.paste(corner.rotate(180), (base_bar.width - radius, base_bar.height - radius))
+        base_bar.paste(
+            corner.rotate(180), (base_bar.width - radius, base_bar.height - radius)
+        )
         base_bar.paste(corner.rotate(270), (base_bar.width - radius, 0))
         return base_bar
 
@@ -40,6 +42,10 @@ class HealthBar:
         health_bar = self.make_health_bar(diff)
         base_bar.paste(health_bar, (5, 4), mask=health_bar)
         draw = ImageDraw.Draw(base_bar)
-        font = ImageFont.truetype("/usr/share/fonts/truetype/JMH-ava/JMH Ava bold.otf", 48)
-        draw.text((140, 19), f"{current_health}/{max_health}", fill=(0, 0, 0, 255), font=font)
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/JMH-ava/JMH Ava bold.otf", 48
+        )
+        draw.text(
+            (140, 19), f"{current_health}/{max_health}", fill=(0, 0, 0, 255), font=font
+        )
         return base_bar

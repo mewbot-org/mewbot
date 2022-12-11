@@ -27,6 +27,7 @@ ELEMENTS = {
     "fairy": 0xF6C9E3,
 }
 
+
 class AbilityView(discord.ui.View):
     def __init__(self, ctx, base_embed, poke_embed):
         super().__init__(timeout=60)
@@ -39,10 +40,13 @@ class AbilityView(discord.ui.View):
             await self.message.edit(view=None)
         except discord.NotFound:
             pass
-    
+
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
         return True
 
@@ -52,7 +56,7 @@ class AbilityView(discord.ui.View):
     async def start(self):
         self.message = await self.ctx.send(embed=self.base_embed, view=self)
         return self.message
-    
+
     @discord.ui.button(label="View Pokemon")
     async def view_pokes(self, interaction, button):
         await interaction.response.edit_message(embed=self.poke_embed, view=None)
@@ -61,7 +65,7 @@ class AbilityView(discord.ui.View):
 class Lookup(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_group()
     async def lookup(self, ctx):
         ...
@@ -77,10 +81,12 @@ class Lookup(commands.Cog):
         if exists is None:
             await ctx.send("That move does not exist!")
             return
-        
+
         # Call the API to fetch the data for the move
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://pokeapi.co/api/v2/move/{move}") as response:
+            async with session.get(
+                f"https://pokeapi.co/api/v2/move/{move}"
+            ) as response:
                 if response.status != 200:
                     await ctx.send("That move does not exist!")
                     return
@@ -102,7 +108,6 @@ class Lookup(commands.Cog):
         desc += f"| **PP:** `{pp}` "
         if prio:
             desc += f"\n**Priority:** `{prio}`"
-        
 
         embed = discord.Embed(
             title=move.title().replace("-", " "),
@@ -131,15 +136,17 @@ class Lookup(commands.Cog):
         if exists is None:
             await ctx.send("That ability does not exist!")
             return
-        
+
         # Call the API to fetch the data for the ability
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://pokeapi.co/api/v2/ability/{ability}") as response:
+            async with session.get(
+                f"https://pokeapi.co/api/v2/ability/{ability}"
+            ) as response:
                 if response.status != 200:
                     await ctx.send("That ability does not exist!")
                     return
                 data = await response.json()
-        
+
         # Build the base embed
         desc = ""
         embed = discord.Embed(
@@ -167,12 +174,15 @@ class Lookup(commands.Cog):
             color=0xF699CD,
             description=desc,
         )
-        
+
         await AbilityView(ctx, embed, poke_embed).start()
 
     @lookup.command()
-    @discord.app_commands.describe(type1="The name of the type to lookup.", type2="The name of the type to pair.", )
-    async def type(self, ctx, type1: str, type2: str=None):
+    @discord.app_commands.describe(
+        type1="The name of the type to lookup.",
+        type2="The name of the type to pair.",
+    )
+    async def type(self, ctx, type1: str, type2: str = None):
         """Lookup information on the type effectiveness of one type, or a pair of types."""
         type_ids = {
             1: "Normal",
@@ -197,12 +207,14 @@ class Lookup(commands.Cog):
         type_effectiveness = {}
         for te in await ctx.bot.db[1].type_effectiveness.find({}).to_list(None):
             if te["damage_type_id"] in type_ids and te["target_type_id"] in type_ids:
-                type_effectiveness[(type_ids[te["damage_type_id"]], type_ids[te["target_type_id"]])] = te["damage_factor"] / 100
+                type_effectiveness[
+                    (type_ids[te["damage_type_id"]], type_ids[te["target_type_id"]])
+                ] = (te["damage_factor"] / 100)
         type1 = type1.title()
         types = [type1]
         if type2:
             types.append(type2.title())
-        
+
         for t in types:
             if t not in type_ids.values():
                 await ctx.send(f"{t} is not a valid type.")
@@ -223,7 +235,7 @@ class Lookup(commands.Cog):
             def_effs[eff].append(a)
 
         desc = ""
-        
+
         if 4 in def_effs:
             formatted = ", ".join(def_effs[4])
             desc += f"**x4 damage from:** `{formatted}`\n"
@@ -233,11 +245,11 @@ class Lookup(commands.Cog):
         if 1 in def_effs:
             formatted = ", ".join(def_effs[1])
             desc += f"**x1 damage from:** `{formatted}`\n"
-        if 1/2 in def_effs:
-            formatted = ", ".join(def_effs[1/2])
+        if 1 / 2 in def_effs:
+            formatted = ", ".join(def_effs[1 / 2])
             desc += f"**x1/2 damage from:** `{formatted}`\n"
-        if 1/4 in def_effs:
-            formatted = ", ".join(def_effs[1/4])
+        if 1 / 4 in def_effs:
+            formatted = ", ".join(def_effs[1 / 4])
             desc += f"**x1/4 damage from:** `{formatted}`\n"
         if 0 in def_effs:
             formatted = ", ".join(def_effs[0])
@@ -251,19 +263,20 @@ class Lookup(commands.Cog):
         if 1 in atk_effs:
             formatted = ", ".join(atk_effs[1])
             desc += f"**x1 damage to:** `{formatted}`\n"
-        if 1/2 in atk_effs:
-            formatted = ", ".join(atk_effs[1/2])
+        if 1 / 2 in atk_effs:
+            formatted = ", ".join(atk_effs[1 / 2])
             desc += f"**x1/2 damage to:** `{formatted}`\n"
         if 0 in atk_effs:
             formatted = ", ".join(atk_effs[0])
             desc += f"**Does nothing to:** `{formatted}`\n"
-        
+
         embed = discord.Embed(
             title=", ".join(types),
             color=0xF699CD,
             description=desc,
         )
         await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Lookup(bot))

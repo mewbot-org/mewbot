@@ -55,7 +55,7 @@ class Forms(commands.Cog):
             "gallade",
             "audino",
             "diancie",
-            "lucariosouta"
+            "lucariosouta",
         )
 
     @commands.hybrid_group()
@@ -71,16 +71,22 @@ class Forms(commands.Cog):
         Lunarizes the selected Necrozma into Necrozma-dawn form
         """
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
             if _id is None:
                 await ctx.send("You need to select a Necrozma first!")
                 return
-            selected_pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            selected_pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
             selected_pokename = selected_pokename.lower()
             if selected_pokename != "necrozma":
                 await ctx.send(f"You can not Lunarize a {selected_pokename}")
                 return
-            helditem = await pconn.fetchval("SELECT hitem FROM pokes WHERE id = $1", _id)
+            helditem = await pconn.fetchval(
+                "SELECT hitem FROM pokes WHERE id = $1", _id
+            )
             if helditem != "n-lunarizer":
                 await ctx.send(
                     "Your Necrozma is not holding a N-lunarizer.\nYou need to buy it from the Shop."
@@ -89,7 +95,9 @@ class Forms(commands.Cog):
             num = await pconn.fetchval(
                 "SELECT pokes[$1] FROM users WHERE u_id = $2", val, ctx.author.id
             )
-            lunala = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", num)
+            lunala = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", num
+            )
             if lunala is None:
                 await ctx.send("You do not have that many pokes!")
                 return
@@ -110,25 +118,35 @@ class Forms(commands.Cog):
         Solarizes your Necrozma into Necrozma-Dusk form.
         """
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
             num = await pconn.fetchval(
                 "SELECT pokes[$1] FROM users WHERE u_id = $2", val, ctx.author.id
             )
-            details = await pconn.fetchrow("SELECT pokname, hitem FROM pokes WHERE id = $1", _id)
+            details = await pconn.fetchrow(
+                "SELECT pokname, hitem FROM pokes WHERE id = $1", _id
+            )
             if details is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename, helditem = details
             pokename = pokename.lower()
             if pokename != "necrozma":
                 await ctx.send(f"You can not Solarize a {pokename}")
                 return
-            details = await pconn.fetchrow("SELECT pokname, pokelevel FROM pokes WHERE id = $1", num)
+            details = await pconn.fetchrow(
+                "SELECT pokname, pokelevel FROM pokes WHERE id = $1", num
+            )
             if details is None:
                 await ctx.send("You do not have that many pokes!")
                 return
             if pokename is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             lunala, lunalev = details
             lunala = lunala.lower()
@@ -147,7 +165,9 @@ class Forms(commands.Cog):
 
                 return
             msg = await ctx.send("Fusing")
-            await ctx.send(f"You have Fused your Necrozma with your Solgaleo Level {lunalev}")
+            await ctx.send(
+                f"You have Fused your Necrozma with your Solgaleo Level {lunalev}"
+            )
             await pconn.execute(
                 "UPDATE pokes SET pokname = $1 WHERE id = $2", "Necrozma-dusk", _id
             )
@@ -158,19 +178,27 @@ class Forms(commands.Cog):
         """Fuses two pokemon together"""
         async with ctx.bot.db[0].acquire() as pconn:
             data = await pconn.fetchrow(
-                "SELECT selected, pokes[$2] FROM users WHERE u_id = $1", ctx.author.id, val
+                "SELECT selected, pokes[$2] FROM users WHERE u_id = $1",
+                ctx.author.id,
+                val,
             )
             if data is None:
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
             _id, num = data
-            data = await pconn.fetchrow("SELECT pokname, hitem FROM pokes WHERE id = $1", _id)
+            data = await pconn.fetchrow(
+                "SELECT pokname, hitem FROM pokes WHERE id = $1", _id
+            )
             if data is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename, helditem = data
             pokename = pokename.lower()
-            data = await pconn.fetchrow("SELECT pokname, pokelevel FROM pokes WHERE id = $1", num)
+            data = await pconn.fetchrow(
+                "SELECT pokname, pokelevel FROM pokes WHERE id = $1", num
+            )
             if data is None:
                 await ctx.send("That is not a valid lunala!")
                 return
@@ -191,7 +219,9 @@ class Forms(commands.Cog):
                     )
                     return
                 msg = await ctx.send("Fusing")
-                await ctx.send(f"You have Fused your Kyurem with your Reshiram Level {otherlevel}")
+                await ctx.send(
+                    f"You have Fused your Kyurem with your Reshiram Level {otherlevel}"
+                )
                 await pconn.execute(
                     "UPDATE pokes SET pokname = $1 WHERE id = $2", "Kyurem-white", _id
                 )
@@ -212,7 +242,9 @@ class Forms(commands.Cog):
                     )
                     return
                 msg = await ctx.send("Fusing")
-                await ctx.send(f"You have Fused your Kyurem with your Zekrom Level {otherlevel}")
+                await ctx.send(
+                    f"You have Fused your Kyurem with your Zekrom Level {otherlevel}"
+                )
                 await pconn.execute(
                     "UPDATE pokes SET pokname = $1 WHERE id = $2", "Kyurem-black", _id
                 )
@@ -232,9 +264,13 @@ class Forms(commands.Cog):
                     )
                     return
                 msg = await ctx.send("Fusing")
-                await ctx.send(f"You have Fused your Calyrex with your Glastrier Level {otherlevel}")
+                await ctx.send(
+                    f"You have Fused your Calyrex with your Glastrier Level {otherlevel}"
+                )
                 await pconn.execute(
-                    "UPDATE pokes SET pokname = $1 WHERE id = $2", "Calyrex-ice-rider", _id
+                    "UPDATE pokes SET pokname = $1 WHERE id = $2",
+                    "Calyrex-ice-rider",
+                    _id,
                 )
                 await msg.edit(content="Fusion Complete")
             elif form == "shadow":
@@ -252,9 +288,13 @@ class Forms(commands.Cog):
                     )
                     return
                 msg = await ctx.send("Fusing")
-                await ctx.send(f"You have Fused your Calyrex with your Spectrier Level {lunalev}")
+                await ctx.send(
+                    f"You have Fused your Calyrex with your Spectrier Level {lunalev}"
+                )
                 await pconn.execute(
-                    "UPDATE pokes SET pokname = $1 WHERE id = $2", "Calyrex-shadow-rider", _id
+                    "UPDATE pokes SET pokname = $1 WHERE id = $2",
+                    "Calyrex-shadow-rider",
+                    _id,
                 )
                 await msg.edit(content="Fusion Complete")
             else:
@@ -264,8 +304,12 @@ class Forms(commands.Cog):
     async def deform(self, ctx):
         """Returns a pokemon to an unformed state"""
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
-            pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
+            pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
             if pokename is None:
                 await ctx.send("You have no Pokemon Selected")
                 return
@@ -276,14 +320,19 @@ class Forms(commands.Cog):
             newname = pokename[0].capitalize()
             if pokename[-1] == "galar":
                 newname += "-galar"
-            await pconn.execute("UPDATE pokes SET pokname = $1 WHERE id = $2", newname, _id)
+            await pconn.execute(
+                "UPDATE pokes SET pokname = $1 WHERE id = $2", newname, _id
+            )
             await ctx.send("Your Pokemon has successfully reset forms")
 
     @forms.command()
     async def form(self, ctx, val: str):
         """Creates a form of a pokemon"""
         val = val.lower()
-        if any(val.lower().endswith(x) for x in ("alola", "galar", "hisui", "misfit", "skylarr")):
+        if any(
+            val.lower().endswith(x)
+            for x in ("alola", "galar", "hisui", "paldea", "misfit", "skylarr")
+        ):
             await ctx.send("You cannot form your pokemon to a regional form!")
             return
         if val.lower().endswith("lord"):
@@ -293,11 +342,21 @@ class Forms(commands.Cog):
             await ctx.send(f"Use `/mega` for mega evolutions.")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
-            pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
-            happiness = await pconn.fetchval("SELECT happiness FROM pokes WHERE id = $1", _id)
-            level = await pconn.fetchval("SELECT pokelevel FROM pokes WHERE id = $1", _id)
-            helditem = await pconn.fetchval("SELECT hitem FROM pokes WHERE id = $1", _id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
+            pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
+            happiness = await pconn.fetchval(
+                "SELECT happiness FROM pokes WHERE id = $1", _id
+            )
+            level = await pconn.fetchval(
+                "SELECT pokelevel FROM pokes WHERE id = $1", _id
+            )
+            helditem = await pconn.fetchval(
+                "SELECT hitem FROM pokes WHERE id = $1", _id
+            )
             moves = await pconn.fetchval("SELECT moves FROM pokes WHERE id = $1", _id)
             if pokename is None:
                 await ctx.send("No Pokemon Selected")
@@ -386,7 +445,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "necrozma":
                 if helditem != "ultranecronium-z":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -413,7 +474,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "lugia":
                 if helditem != "shadow-stone":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -441,7 +504,9 @@ class Forms(commands.Cog):
 
             elif pokename == "shaymin":
                 if helditem != "gracidea-flower":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -468,7 +533,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "kyogre":
                 if helditem != "blue-orb":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -495,7 +562,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "groudon":
                 if helditem != "red-orb":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -522,7 +591,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "hoopa":
                 if helditem != "prison-bottle":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -549,7 +620,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "giratina":
                 if helditem != "griseous-orb":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -630,7 +703,9 @@ class Forms(commands.Cog):
                     await ctx.send("Your Meloetta does not know Relic Song Move")
             elif pokename == "deoxys":
                 if helditem != "meteorite":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -657,7 +732,9 @@ class Forms(commands.Cog):
                     return
             elif pokename in weathevo:
                 if helditem != "reveal-glass":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -684,7 +761,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "zygarde":
                 if helditem != "zygarde-cell":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -711,7 +790,9 @@ class Forms(commands.Cog):
                     return
             elif pokename == "arceus":
                 if helditem != required_item:
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -739,7 +820,9 @@ class Forms(commands.Cog):
             elif pokename == "dialga":
                 if val.lower() == "origin":
                     if helditem != "adamant-orb":
-                        await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                        await ctx.send(
+                            f"Your {pokename} is not holding the {required_item}"
+                        )
                         return
                 elif val.lower() == "primal":
                     if helditem != "primal-orb":
@@ -798,7 +881,9 @@ class Forms(commands.Cog):
                     )
             elif pokename == "palkia":
                 if helditem != "lustrous-orb":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -824,7 +909,9 @@ class Forms(commands.Cog):
                     )
             elif pokename == "zacian":
                 if helditem != "rusty-sword":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -850,7 +937,9 @@ class Forms(commands.Cog):
                     )
             elif pokename == "zamazenta":
                 if helditem != "rusty-shield":
-                    await ctx.send(f"Your {pokename} is not holding the {required_item}")
+                    await ctx.send(
+                        f"Your {pokename} is not holding the {required_item}"
+                    )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
@@ -918,7 +1007,9 @@ class Forms(commands.Cog):
             )
             details = await pconn.fetchrow("SELECT * FROM pokes WHERE id = $1", _id)
             if details is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename = details["pokname"]
             helditem = details["hitem"]
@@ -940,12 +1031,14 @@ class Forms(commands.Cog):
                 await ctx.send("No Pokemon Selected")
 
                 return
-            pokemon_info = await ctx.bot.db[1].forms.find_one({'identifier': pokename.lower()})
+            pokemon_info = await ctx.bot.db[1].forms.find_one(
+                {"identifier": pokename.lower()}
+            )
             if pokemon_info is None:
                 await ctx.send("This Pokemon cannot Mega Evolve!")
                 return
             order = pokemon_info["order"] + 1
-            evolution = await ctx.bot.db[1].forms.find_one({'order': order})
+            evolution = await ctx.bot.db[1].forms.find_one({"order": order})
             if evolution is None:
                 await ctx.send("This Pokemon cannot Mega Evolve!")
                 return
@@ -968,9 +1061,13 @@ class Forms(commands.Cog):
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
             )
-            pokename = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            pokename = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", _id
+            )
             if pokename is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename = pokename.lower()
             if "mega" not in pokename:
@@ -986,7 +1083,7 @@ class Forms(commands.Cog):
             megaable = [t["is_mega"] for t in FORMS if t["identifier"] == pokemon[0]]
             mega = pokemon[0]
             megaable = megaable[0]
-            if megaable is 1:
+            if megaable == 1:
                 await ctx.send("This Pokemon cannot Mega Devolve!")
                 return
             await pconn.execute(
@@ -1007,9 +1104,13 @@ class Forms(commands.Cog):
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
             )
-            details = await pconn.fetchrow("SELECT pokname, hitem FROM pokes WHERE id = $1", _id)
+            details = await pconn.fetchrow(
+                "SELECT pokname, hitem FROM pokes WHERE id = $1", _id
+            )
             if details is None:
-                await ctx.send("You do not have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You do not have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename, helditem = details
             if pokename.lower() not in self.XYS:
@@ -1024,15 +1125,17 @@ class Forms(commands.Cog):
                 await ctx.send("No Pokemon Selected")
                 return
 
-            pokemon_info = await ctx.bot.db[1].forms.find_one({'identifier': pokename.lower()})
+            pokemon_info = await ctx.bot.db[1].forms.find_one(
+                {"identifier": pokename.lower()}
+            )
             order_number = pokemon_info["order"] + 1
-            evolution = await ctx.bot.db[1].forms.find_one({'order': order_number})
-            mega = evolution['identifier']
-            
-            if pokemon_info['is_mega']:
+            evolution = await ctx.bot.db[1].forms.find_one({"order": order_number})
+            mega = evolution["identifier"]
+
+            if pokemon_info["is_mega"]:
                 await ctx.send("This Pokemon cannot Mega Evolve!")
                 return
-                
+
             if mega.startswith(pokename.lower()):
                 await pconn.execute(
                     "UPDATE pokes SET pokname = $1 WHERE id = $2",
@@ -1053,9 +1156,13 @@ class Forms(commands.Cog):
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
             )
-            details = await pconn.fetchrow("SELECT pokname, hitem FROM pokes WHERE id = $1", _id)
+            details = await pconn.fetchrow(
+                "SELECT pokname, hitem FROM pokes WHERE id = $1", _id
+            )
             if details is None:
-                await ctx.send("You don't have a pokemon selected!\nSelect one with `/select` first.")
+                await ctx.send(
+                    "You don't have a pokemon selected!\nSelect one with `/select` first."
+                )
                 return
             pokename, helditem = details
             if pokename.lower() not in self.XYS:
@@ -1077,15 +1184,17 @@ class Forms(commands.Cog):
                 await ctx.send("No Pokemon Selected")
                 return
 
-            pokemon_info = await ctx.bot.db[1].forms.find_one({'identifier': pokename.lower()})
+            pokemon_info = await ctx.bot.db[1].forms.find_one(
+                {"identifier": pokename.lower()}
+            )
             order_number = pokemon_info["order"] + 2
-            evolution = await ctx.bot.db[1].forms.find_one({'order': order_number})
-            mega = evolution['identifier']
-            
-            if pokemon_info['is_mega']:
+            evolution = await ctx.bot.db[1].forms.find_one({"order": order_number})
+            mega = evolution["identifier"]
+
+            if pokemon_info["is_mega"]:
                 await ctx.send("This Pokemon cannot Mega Evolve!")
                 return
-                
+
             if mega.startswith(pokename.lower()):
                 await pconn.execute(
                     "UPDATE pokes SET pokname = $1 WHERE id = $2",
@@ -1099,6 +1208,7 @@ class Forms(commands.Cog):
                         description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {mega.capitalize()}!",
                     )
                 )
+
 
 async def setup(bot):
     await bot.add_cog(Forms(bot))

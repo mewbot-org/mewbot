@@ -48,7 +48,7 @@ class Sell(commands.Cog):
 
     # Only using shop items to start
     @sell.command(name="item")
-    async def sell_item(self, ctx, item_name: str, amount_sold: int=1):
+    async def sell_item(self, ctx, item_name: str, amount_sold: int = 1):
         """Sells an item"""
         if amount_sold < 1:
             await ctx.send("You cannot sell less than 1 of an item!")
@@ -68,8 +68,7 @@ class Sell(commands.Cog):
         # Pull their current bag and process sell
         async with ctx.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchval(
-                "SELECT items::json FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT items::json FROM users WHERE u_id = $1", ctx.author.id
             )
             if inventory is None:
                 await ctx.send("You have not started!\nStart with `/start` first!")
@@ -79,17 +78,19 @@ class Sell(commands.Cog):
             if inventory.get(item_name, 0) < amount_sold:
                 await ctx.send(f"You don't have enough `{item_name}`s!")
                 return
-            
+
             inventory[item_name] -= amount_sold
-            credits_gained = round((shop_price * .65) * amount_sold)
+            credits_gained = round((shop_price * 0.65) * amount_sold)
 
             await pconn.execute(
                 "UPDATE users SET items = $1::json, mewcoins = mewcoins + $2 WHERE u_id = $3",
                 inventory,
                 credits_gained,
-                ctx.author.id
+                ctx.author.id,
             )
-        await ctx.send(f"You have successfully sold `{amount_sold}x {item_name}` for {credits_gained:,} credits!")
+        await ctx.send(
+            f"You have successfully sold `{amount_sold}x {item_name}` for {credits_gained:,} credits!"
+        )
 
     @sell.command(name="egg")
     @tradelock
@@ -114,7 +115,7 @@ class Sell(commands.Cog):
                 egg_id = await pconn.fetchval(
                     "SELECT pokes[$1] FROM users WHERE u_id = $2",
                     egg_num,
-                    ctx.author.id
+                    ctx.author.id,
                 )
             if egg_id is None:
                 await ctx.send("You do not have that many pokemon.")
@@ -123,7 +124,7 @@ class Sell(commands.Cog):
             # Add check for eggs under 100 step count
             data = await pconn.fetchrow(
                 "SELECT counter, pokname, name, fav, COALESCE(hpiv, 0) + COALESCE(atkiv, 0) + COALESCE(spatkiv, 0) + COALESCE(defiv, 0) + COALESCE(spdefiv, 0) + COALESCE(speediv, 0) as ivs FROM pokes WHERE id = $1",
-                egg_id
+                egg_id,
             )
             if data is None:
                 await ctx.send("That pokemon doesn't exist.")
@@ -134,12 +135,14 @@ class Sell(commands.Cog):
             iv_total = data["ivs"]
             fav = data["fav"]
             becomes = data["name"]
-            
+
             if name != "Egg":
                 await ctx.send(f"That's a {name}, not an egg!")
                 return
             if step_count <= 100:
-                await ctx.send("That egg is too close to hatching, go hatch it instead!")
+                await ctx.send(
+                    "That egg is too close to hatching, go hatch it instead!"
+                )
                 return
             if fav:
                 await ctx.send("That egg is favorited! Unfavorite it first.")
@@ -156,22 +159,25 @@ class Sell(commands.Cog):
             elif iv_total <= 176:
                 credits_gained = 3000
             else:
-                credits_gained = 10000 
+                credits_gained = 10000
 
             # Display amount to user
-            if not await ConfirmView(ctx, f"Are you sure you want to sell your egg for {credits_gained:,} credits?").wait():
+            if not await ConfirmView(
+                ctx,
+                f"Are you sure you want to sell your egg for {credits_gained:,} credits?",
+            ).wait():
                 await ctx.send("Sale canceled")
                 return
-            
+
             # Remove Pokemon and give credits to user
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins + $2 WHERE u_id = $1", 
+                "UPDATE users SET mewcoins = mewcoins + $2 WHERE u_id = $1",
                 ctx.author.id,
-                credits_gained
+                credits_gained,
             )
         await ctx.bot.commondb.remove_poke(ctx.author.id, egg_id)
         await ctx.send(f"Successfully sold your egg for {credits_gained:,} credits.")
-                
-                
+
+
 async def setup(bot):
     await bot.add_cog(Sell(bot))

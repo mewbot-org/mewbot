@@ -48,7 +48,7 @@ class Favs(commands.Cog):
             async with pconn.transaction():
                 cur = await pconn.cursor(query, pokes)
                 records = await cur.fetch(15 * 250)
-        
+
         desc = ""
         async for record in AsyncIter(records):
             nr = record["pokname"]
@@ -65,14 +65,14 @@ class Favs(commands.Cog):
                 skin=record["skin"],
             )
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
-            desc += f'{emoji}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}\n'
+            desc += f"{emoji}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}\n"
 
         embed = discord.Embed(title="Your Pokemon", color=0xFFB6C1)
         pages = pagify(desc, base_embed=embed)
         await MenuView(ctx, pages).start()
 
     @commands.hybrid_command()
-    async def fav_add(self, ctx, poke: int=None):
+    async def fav_add(self, ctx, poke: int = None):
         async with ctx.bot.db[0].acquire() as pconn:
             if poke is None:
                 _id = await pconn.fetchval(
@@ -97,7 +97,7 @@ class Favs(commands.Cog):
             )
 
     @commands.hybrid_command()
-    async def fav_remove(self, ctx, poke: int=None):
+    async def fav_remove(self, ctx, poke: int = None):
         async with ctx.bot.db[0].acquire() as pconn:
             if poke is None:
                 _id = await pconn.fetchval(
@@ -120,6 +120,7 @@ class Favs(commands.Cog):
             await ctx.send(
                 f"You have successfully removed your {name} from your favourite pokemon list!"
             )
+
 
 async def setup(bot):
     await bot.add_cog(Favs(bot))

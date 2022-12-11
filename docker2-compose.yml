@@ -1,0 +1,81 @@
+version: "3.9"
+services:
+  mewbot-duelapi:
+    build: ./duelapi
+    container_name: mewbot-duelapi
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.11
+    volumes:
+      - type: bind
+        source: ./shared/duel
+        target: /app/res
+  mewbot-gateway-queue:
+    image: twilightrs/gateway-queue:latest
+    container_name: mewbot-gateway-queue
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.12
+    environment:
+      - PORT=5000
+  mewbot-callbacks:
+    build: ./callbacks
+    container_name: mewbot-callbacks
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.17
+    env_file:
+      - ./env/bot.env
+      - ./env/donations.env
+      - ./env/mongo.env
+      - ./env/postgres.env
+      - ./env/voting.env
+    environment:
+      - "MONGO_URL=mongodb://localhost:27017"
+    ports:
+      - "15211:15211"
+  mewbot-redis:
+    image: redis
+    container_name: mewbot-redis
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.13
+  mewbot-database:
+    image: postgres
+    container_name: mewbot-database
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.14
+    env_file: ./env/postgres.env
+    volumes:
+      - /home/ubuntu/postgres-data:/var/lib/postgresql/data
+    ports:
+      - "58558:5432"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+  mewbot-mongo:
+    image: mongo
+    container_name: mewbot-mongo
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.15
+    env_file: ./env/mongo.env
+    volumes:
+      - /home/ubuntu/mongo-data:/data/db
+    ports:
+      - "61392:27017"
+
+networks:
+  mewbot_network:
+    name: mewbot-network
+    ipam:
+      config:
+        - subnet: 178.28.0.0/24

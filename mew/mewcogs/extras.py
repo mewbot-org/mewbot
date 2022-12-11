@@ -33,7 +33,9 @@ def do_health(maxHealth, health, healthDashes=10):
     dashConvert = int(
         maxHealth / healthDashes
     )  # Get the number to divide by to convert health to dashes (being 10)
-    currentDashes = int(health / dashConvert)  # Convert health to dash count: 80/10 => 8 dashes
+    currentDashes = int(
+        health / dashConvert
+    )  # Convert health to dash count: 80/10 => 8 dashes
     remainingHealth = (
         healthDashes - currentDashes
     )  # Get the health remaining to fill as space => 12 spaces
@@ -45,18 +47,23 @@ def do_health(maxHealth, health, healthDashes=10):
     remainingDisplay = "".join(
         ["▱" for i in range(remainingHealth)]
     )  # Convert 12 to 12 spaces as a string: "            "
-    percent = floor((health / maxHealth) * 100)  # Get the percent as a whole number:   40%
+    percent = floor(
+        (health / maxHealth) * 100
+    )  # Get the percent as a whole number:   40%
     if percent < 1:
         percent = 0
     return f"{healthDisplay}{remainingDisplay}\n           {cur}"  # Print out textbased healthbar
 
+
 def calculate_breeding_multiplier(level):
     difference = 0.02
-    return f'{round((1 + (level) * difference), 2)}x'
+    return f"{round((1 + (level) * difference), 2)}x"
+
 
 def calculate_iv_multiplier(level):
-    difference = .5
-    return f'{round((level * difference), 1)}%'
+    difference = 0.5
+    return f"{round((level * difference), 1)}%"
+
 
 class Extras(commands.Cog):
     def __init__(self, bot):
@@ -68,7 +75,7 @@ class Extras(commands.Cog):
         await self.bot.redis_manager.redis.execute(
             "HMSET", "resetcooldown", "examplekey", "examplevalue"
         )
-    
+
     @commands.hybrid_group()
     async def spread(self, ctx):
         ...
@@ -88,7 +95,9 @@ class Extras(commands.Cog):
                 ctx.channel.id,
             )
             if honey is not None:
-                await ctx.send("There is already honey in this channel! You can't add more yet.")
+                await ctx.send(
+                    "There is already honey in this channel! You can't add more yet."
+                )
                 return
             if "honey" in inv and inv["honey"] >= 1:
                 inv["honey"] -= 1
@@ -113,17 +122,19 @@ class Extras(commands.Cog):
             )
 
     @commands.hybrid_command()
-    async def leaderboard(self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing"]):
+    async def leaderboard(
+        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing"]
+    ):
         """Displays a Leaderboard Based on Votes, Servers, Pokémon or Fishing."""
         LEADERBOARD_IMMUNE_USERS = [
-            195938951188578304, # gomp
-            3746, # not a real user, just used to store pokes and such
+            195938951188578304,  # gomp
+            3746,  # not a real user, just used to store pokes and such
         ]
         if board.lower() == "vote":
             async with ctx.bot.db[0].acquire() as pconn:
                 leaders = await pconn.fetch(
                     "SELECT tnick, vote_streak, u_id, staff FROM users WHERE last_vote >= $1 ORDER BY vote_streak DESC",
-                    time.time() - (36 * 60 * 60)
+                    time.time() - (36 * 60 * 60),
                 )
             names = [record["tnick"] for record in leaders]
             votes = [record["vote_streak"] for record in leaders]
@@ -147,20 +158,28 @@ class Extras(commands.Cog):
             total = []
             launcher_res = await self.bot.handler("statuses", 1, scope="launcher")
             if not launcher_res:
-                await ctx.send("I can't process that request right now, try again later.")
+                await ctx.send(
+                    "I can't process that request right now, try again later."
+                )
                 return
             processes = len(launcher_res[0])
             body = "return {x.name: x.member_count for x in bot.guilds if x.member_count is not None}"
             eval_res = await self.bot.handler(
-                "_eval", processes, args={"body": body, "cluster_id": "-1"}, scope="bot", _timeout=5
+                "_eval",
+                processes,
+                args={"body": body, "cluster_id": "-1"},
+                scope="bot",
+                _timeout=5,
             )
             if not eval_res:
-                await ctx.send("I can't process that request right now, try again later.")
+                await ctx.send(
+                    "I can't process that request right now, try again later."
+                )
                 return
             for response in eval_res:
                 if response["message"]:
                     total.extend(ast.literal_eval(response["message"]).items())
-            total.sort(key=lambda a: a[1], reverse=True)  
+            total.sort(key=lambda a: a[1], reverse=True)
             embed = discord.Embed(title="Top Servers with Mewbot!", color=0xFFB6C1)
             desc = ""
             true_idx = 1
@@ -256,11 +275,11 @@ class Extras(commands.Cog):
             desc += f"{honey_type} Stats for <#{channel}>\n\t**__-__Expires in {minutes}**\n"
         pages = pagify(desc, base_embed=embed)
         await MenuView(ctx, pages).start()
-    
+
     @commands.hybrid_group()
     async def change(self, ctx):
         ...
-    
+
     @change.command()
     @discord.app_commands.describe(nature="The nature to change to.")
     async def nature(self, ctx, nature: Literal[tuple(natlist)]):
@@ -279,19 +298,27 @@ class Extras(commands.Cog):
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
         if dets["nature-capsules"] <= 0 or nature == None:
-            await ctx.send("You have no nature capsules! Buy some with `/redeem nature capsules`.")
+            await ctx.send(
+                "You have no nature capsules! Buy some with `/redeem nature capsules`."
+            )
             return
         dets["nature-capsules"] = dets["nature-capsules"] - 1
         async with ctx.bot.db[0].acquire() as pconn:
-            _id = await pconn.fetchval("SELECT selected FROM users WHERE u_id = $1", ctx.author.id)
+            _id = await pconn.fetchval(
+                "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
+            )
             name = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
             await pconn.execute(
                 "UPDATE users SET inventory = $1::json WHERE u_id = $2",
                 dets,
                 ctx.author.id,
             )
-            await pconn.execute("UPDATE pokes SET nature = $1 WHERE id = $2", nature, _id)
-        await ctx.send(f"You have successfully changed your selected Pokemon's nature to {nature}")
+            await pconn.execute(
+                "UPDATE pokes SET nature = $1 WHERE id = $2", nature, _id
+            )
+        await ctx.send(
+            f"You have successfully changed your selected Pokemon's nature to {nature}"
+        )
 
     @commands.hybrid_command()
     async def bag(self, ctx):
@@ -322,7 +349,9 @@ class Extras(commands.Cog):
     async def visible(self, ctx):
         """Sets the visiblility of your Trainer card to other users."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET visible = NOT visible WHERE u_id = $1", ctx.author.id)
+            await pconn.execute(
+                "UPDATE users SET visible = NOT visible WHERE u_id = $1", ctx.author.id
+            )
         await ctx.send("Toggled trainer card visibility!")
 
     @commands.hybrid_command()
@@ -338,7 +367,9 @@ class Extras(commands.Cog):
         desc = ""
         for idx, date in enumerate(dates):
             month = date.strftime("%B")
-            desc += f"**{month} {date.day}, {date.year} - {devs[idx]}**\n{updates[idx]}\n\n"
+            desc += (
+                f"**{month} {date.day}, {date.year} - {devs[idx]}**\n{updates[idx]}\n\n"
+            )
         embed = discord.Embed(title="Recent Updates", colour=0xFFB6C1)
         pages = pagify(desc, sep="\n\n", per_page=5, base_embed=embed)
         await MenuView(ctx, pages).start()
@@ -356,7 +387,12 @@ class Extras(commands.Cog):
         if result:
             clusternum = result[0]["clusters"]
             shardnum = result[0]["shards"]
-            process_res = await ctx.bot.handler("_eval", clusternum, args={"body": "return len(bot.guilds)", "cluster_id": "-1"}, scope="bot")
+            process_res = await ctx.bot.handler(
+                "_eval",
+                clusternum,
+                args={"body": "return len(bot.guilds)", "cluster_id": "-1"},
+                scope="bot",
+            )
             servernum = 0
             for cluster in process_res:
                 servernum += int(cluster["message"])
@@ -371,7 +407,7 @@ class Extras(commands.Cog):
                 f"`Owner:` **{ctx.bot.owner.name}.**\n"
                 "`Developers:` **Neuro Assassin, Foreboding**\n"
                 "`Web Developer:` \n"
-                "`Dev. Helpers:`**Mabel**\n" 
+                "`Dev. Helpers:`**Mabel**\n"
                 f"`Server count:` **{servernum:,}**\n"
                 f"`Shard count:` **{shardnum}**\n"
                 f"`Cluster count:` **{clusternum}**\n"
@@ -396,20 +432,33 @@ class Extras(commands.Cog):
             value="[Wiki Tutorial](https://mewbot.wiki)",
         )
         view = discord.ui.View(timeout=60)
+
         async def check(interaction):
             if interaction.user.id != ctx.author.id:
-                await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+                await interaction.response.send_message(
+                    content="You are not allowed to interact with this button.",
+                    ephemeral=True,
+                )
                 return False
             return True
+
         view.interaction_check = check
-        creditpage = discord.ui.Button(style=discord.ButtonStyle.gray, label="View Credits")
+        creditpage = discord.ui.Button(
+            style=discord.ButtonStyle.gray, label="View Credits"
+        )
+
         async def creditcallback(interaction):
             await self.credit_page(ctx)
+
         creditpage.callback = creditcallback
         view.add_item(creditpage)
-        copyright = discord.ui.Button(style=discord.ButtonStyle.gray, label="View Copyright Info")
+        copyright = discord.ui.Button(
+            style=discord.ButtonStyle.gray, label="View Copyright Info"
+        )
+
         async def copyrightcallback(interaction):
             await self.copyright_page(ctx)
+
         copyright.callback = copyrightcallback
         view.add_item(copyright)
         await ctx.send(embed=embed, view=view)
@@ -479,7 +528,10 @@ class Extras(commands.Cog):
     async def vote(self, ctx):
         """Vote for the Bot & get voting rewards."""
         async with self.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchrow("SELECT vote_streak, last_vote FROM users WHERE u_id = $1", ctx.author.id)
+            data = await pconn.fetchrow(
+                "SELECT vote_streak, last_vote FROM users WHERE u_id = $1",
+                ctx.author.id,
+            )
             if data is None:
                 vote_streak = 0
             elif data["last_vote"] < time.time() - (36 * 60 * 60):
@@ -494,11 +546,13 @@ class Extras(commands.Cog):
             "[#3 DiscordBotList](https://discordbotlist.com/bots/mewbot/upvote)\n"
             f"**Vote Streak:** `{vote_streak}` (only for top.gg)"
             "\n------------------\n"
-            #"[#2 fateslist.xyz](https://fateslist.xyz/mewbot/vote)\n"
+            # "[#2 fateslist.xyz](https://fateslist.xyz/mewbot/vote)\n"
             "Join the Official Server [here](https://discord.gg/mewbot) for support and join our huge community of Mewbot users!"
         )
-        embed.set_footer(text="You will receive 1 Upvote Point, 1,500 Credits and 5 Energy Bars automatically after upvoting!")
-        
+        embed.set_footer(
+            text="You will receive 1 Upvote Point, 1,500 Credits and 5 Energy Bars automatically after upvoting!"
+        )
+
         await ctx.send(embed=embed)
         emoji = random.choice(emotes)
         await ctx.send(emoji)
@@ -514,9 +568,13 @@ class Extras(commands.Cog):
             ):
                 await ctx.send("You have not started!\nStart with `/start` first!")
                 return
-            last = await pconn.fetchval("SELECT lastdate FROM patreonstore WHERE u_id = $1", ctx.author.id)
+            last = await pconn.fetchval(
+                "SELECT lastdate FROM patreonstore WHERE u_id = $1", ctx.author.id
+            )
         if last == date:
-            await ctx.send("You have already received your patreon redeems for this month... Come back later!")
+            await ctx.send(
+                "You have already received your patreon redeems for this month... Come back later!"
+            )
             return
         patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
         if patreon_status is None:
@@ -547,29 +605,53 @@ class Extras(commands.Cog):
         elif patreon_status == "Red Tier":
             amount = 3
         else:
-            await ctx.send("Uh oh, you have an invalid patreon tier! The tiers may have been modified without updating this command... Please report this bug!")
+            await ctx.send(
+                "Uh oh, you have an invalid patreon tier! The tiers may have been modified without updating this command... Please report this bug!"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
             if last is None:
                 await pconn.execute(
-                    "INSERT INTO patreonstore (u_id, lastdate) VALUES ($1, $2) ON CONFLICT DO NOTHING", ctx.author.id, date
+                    "INSERT INTO patreonstore (u_id, lastdate) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                    date,
                 )
             else:
                 await pconn.execute(
-                    "UPDATE patreonstore SET lastdate = $2 WHERE u_id = $1", ctx.author.id, date
+                    "UPDATE patreonstore SET lastdate = $2 WHERE u_id = $1",
+                    ctx.author.id,
+                    date,
                 )
             await pconn.execute(
-                "UPDATE users SET redeems = redeems + $2 WHERE u_id = $1", ctx.author.id, amount
+                "UPDATE users SET redeems = redeems + $2 WHERE u_id = $1",
+                ctx.author.id,
+                amount,
             )
-        await ctx.send(f"You have received **{amount}** redeems. Thank you for supporting Mewbot!")
+        await ctx.send(
+            f"You have received **{amount}** redeems. Thank you for supporting Mewbot!"
+        )
 
     @commands.hybrid_command()
-    async def nick(self, ctx, nick: str="None"):
+    async def nick(self, ctx, nick: str = "None"):
         """Set or reset your selected pokemon's nickname."""
         if len(nick) > 150:
             await ctx.send("Nickname is too long!")
             return
-        if any(word in nick for word in ("@here", "@everyone", "http", "nigger", "nigga", "gay", "fag", "kike", "jew", "faggot")):
+        if any(
+            word in nick
+            for word in (
+                "@here",
+                "@everyone",
+                "http",
+                "nigger",
+                "nigga",
+                "gay",
+                "fag",
+                "kike",
+                "jew",
+                "faggot",
+            )
+        ):
             await ctx.send("Nope.")
             return
         async with ctx.bot.db[0].acquire() as pconn:
@@ -587,7 +669,9 @@ class Extras(commands.Cog):
     async def stats(self, ctx):
         """Show some statistics about yourself."""
         async with ctx.bot.db[0].acquire() as tconn:
-            details = await tconn.fetchrow("SELECT * FROM users WHERE u_id = $1", ctx.author.id)
+            details = await tconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", ctx.author.id
+            )
             inv = await tconn.fetchval(
                 "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
             )
@@ -612,7 +696,7 @@ class Extras(commands.Cog):
         )
         embed.set_footer(text="If You have some Energy go fishing!")
         await ctx.send(embed=embed)
-    
+
     @commands.hybrid_command()
     @discord.app_commands.describe(pokemon="The Pokémon to Shadow Hunt.")
     async def hunt(self, ctx, pokemon: str):
@@ -622,7 +706,9 @@ class Extras(commands.Cog):
             await ctx.send("You have chosen an invalid Pokemon.")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchrow("SELECT hunt, chain FROM users WHERE u_id = $1", ctx.author.id)
+            data = await pconn.fetchrow(
+                "SELECT hunt, chain FROM users WHERE u_id = $1", ctx.author.id
+            )
         if data is None:
             await ctx.send("You have not started!\nStart with `/start` first.")
             return
@@ -630,10 +716,20 @@ class Extras(commands.Cog):
         if hunt == pokemon:
             await ctx.send("You are already hunting that pokemon!")
             return
-        if chain > 0 and not await ConfirmView(ctx, f"Are you sure you want to abandon your hunt for **{hunt}**?\nYou will lose your streak of **{chain}**.").wait():
+        if (
+            chain > 0
+            and not await ConfirmView(
+                ctx,
+                f"Are you sure you want to abandon your hunt for **{hunt}**?\nYou will lose your streak of **{chain}**.",
+            ).wait()
+        ):
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET hunt = $1, chain = 0 WHERE u_id = $2", pokemon, ctx.author.id)
+            await pconn.execute(
+                "UPDATE users SET hunt = $1, chain = 0 WHERE u_id = $2",
+                pokemon,
+                ctx.author.id,
+            )
         e = discord.Embed(
             title="Shadow Hunt",
             description=f"Successfully changed shadow hunt selection to **{pokemon}**.",
@@ -641,16 +737,20 @@ class Extras(commands.Cog):
         )
         e.set_image(url=await get_pokemon_image(pokemon, ctx.bot, skin="shadow"))
         await ctx.send(embed=e)
-        await ctx.bot.get_partial_messageable(958144112903729172).send(f"`{ctx.author.id} - {hunt} @ {chain}x -> {pokemon}`")
-        
+        await ctx.bot.get_partial_messageable(958144112903729172).send(
+            f"`{ctx.author.id} - {hunt} @ {chain}x -> {pokemon}`"
+        )
+
     @commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view trainer information.")
-    async def trainer(self, ctx, user: discord.User=None):
+    async def trainer(self, ctx, user: discord.User = None):
         """View your trainer card or the trainer card of another user."""
         if user is None:
             user = ctx.author
         async with ctx.bot.db[0].acquire() as tconn:
-            details = await tconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user.id)
+            details = await tconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user.id
+            )
             if details is None:
                 await ctx.send(f"{user.name} has not started!")
                 return
@@ -659,7 +759,9 @@ class Extras(commands.Cog):
                 and user.id != ctx.author.id
                 and ctx.author.id != ctx.bot.owner_id
             ):
-                await ctx.send(f"You are not permitted to see the Trainer card of {user.name}")
+                await ctx.send(
+                    f"You are not permitted to see the Trainer card of {user.name}"
+                )
                 return
             pokes = details["pokes"]
             daycared = await tconn.fetchval(
@@ -667,7 +769,8 @@ class Extras(commands.Cog):
                 pokes,
             )
             usedmarket = await tconn.fetchval(
-                "SELECT count(id) FROM market WHERE owner = $1 AND buyer IS NULL", user.id
+                "SELECT count(id) FROM market WHERE owner = $1 AND buyer IS NULL",
+                user.id,
             )
 
         visible = details["visible"]
@@ -703,7 +806,9 @@ class Extras(commands.Cog):
         )
         embed.add_field(name="Pokemon Count", value=f"{count:,}", inline=True)
         embed.add_field(name="EV Points", value=f"{evpoints:,}", inline=True)
-        embed.add_field(name="Daycare spaces", value=f"{daycared}/{dlimit}", inline=True)
+        embed.add_field(
+            name="Daycare spaces", value=f"{daycared}/{dlimit}", inline=True
+        )
         dets = ujson.loads(dets)
         dets.pop("coin-case", None) if "coin-case" in dets else None
         for item in dets:
@@ -754,7 +859,9 @@ class Extras(commands.Cog):
             await ctx.send("`|` cannot be used in your trainer nick.")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            nick = await pconn.fetchval("SELECT tnick FROM users WHERE u_id = $1", ctx.author.id)
+            nick = await pconn.fetchval(
+                "SELECT tnick FROM users WHERE u_id = $1", ctx.author.id
+            )
             if nick is not None:
                 await ctx.send("You have already set your trainer nick.")
                 return
@@ -762,7 +869,9 @@ class Extras(commands.Cog):
             if user is not None:
                 await ctx.send("That nick is already taken. Try another one.")
                 return
-            await pconn.execute("UPDATE users SET tnick = $1 WHERE u_id = $2", val, ctx.author.id)
+            await pconn.execute(
+                "UPDATE users SET tnick = $1 WHERE u_id = $2", val, ctx.author.id
+            )
         await ctx.send("Successfully Changed Trainer Nick")
 
     @commands.hybrid_command()
@@ -802,15 +911,21 @@ class Extras(commands.Cog):
                 await ctx.send("Canceling reset.")
                 return
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("DELETE FROM redeemstore WHERE u_id = $1", ctx.author.id)
+            await pconn.execute(
+                "DELETE FROM redeemstore WHERE u_id = $1", ctx.author.id
+            )
             await pconn.execute("DELETE FROM cheststore WHERE u_id = $1", ctx.author.id)
             await pconn.execute("DELETE FROM users WHERE u_id = $1", ctx.author.id)
-        await ctx.send("Your account has been reset. Start the bot again with `/start`.")
+        await ctx.send(
+            "Your account has been reset. Start the bot again with `/start`."
+        )
         await ctx.bot.get_partial_messageable(999442907465523220).send(ctx.author.id)
 
     @commands.hybrid_command()
     async def invite(self, ctx):
-        embed = Embed(title="Invite Me", description="The invite link for MewBot", color=0xFFB6C1)
+        embed = Embed(
+            title="Invite Me", description="The invite link for MewBot", color=0xFFB6C1
+        )
 
         # invite l
         embed.add_field(
@@ -824,23 +939,34 @@ class Extras(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command()
-    async def region(self, ctx, reg: Literal["original", "alola", "galar", "hisui"]):
+    async def region(
+        self, ctx, reg: Literal["original", "alola", "galar", "hisui", "paldea"]
+    ):
         """Change your region to allow your Pokémon evolve into regional forms."""
         if reg not in ("original", "alola", "galar", "hisui"):
-            await ctx.send("That isn't a valid region! Select one of `original`, `alola`, `galar`, `hisui`.")
+            if reg == "paldea":
+                await ctx.send("Coming... Join the Official Server for more info!")
+                return
+            await ctx.send(
+                "That isn't a valid region! Select one of `original`, `alola`, `galar`, `hisui`, `paldea`."
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE users SET region = $1 WHERE u_id = $2", reg, ctx.author.id)
+            await pconn.execute(
+                "UPDATE users SET region = $1 WHERE u_id = $2", reg, ctx.author.id
+            )
         await ctx.send(f"Your region has been set to **{reg.title()}**.")
 
     @commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view their balance details.")
-    async def bal(self, ctx, user: discord.User=None):
+    async def bal(self, ctx, user: discord.User = None):
         """Shows your Balance & Lists credits, redeems, EV points, upvote points, and selected fishing rod."""
         if user is None:
             user = ctx.author
         async with ctx.bot.db[0].acquire() as tconn:
-            details = await tconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user.id)
+            details = await tconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user.id
+            )
             if details is None:
                 await ctx.send(f"{user.name} has not started!")
                 return
@@ -849,7 +975,9 @@ class Extras(commands.Cog):
                 and user.id != ctx.author.id
                 and ctx.author.id != ctx.bot.owner_id
             ):
-                await ctx.send(f"You are not permitted to see the Trainer card of {user.name}")
+                await ctx.send(
+                    f"You are not permitted to see the Trainer card of {user.name}"
+                )
                 return
             if details["last_vote"] < time.time() - (36 * 60 * 60):
                 vote_streak = 0
@@ -866,14 +994,18 @@ class Extras(commands.Cog):
             count = len(pokes)
             is_staff = details["staff"]
             region = details["region"]
-            staffrank = await tconn.fetchval("SELECT staff FROM users WHERE u_id = $1", user.id)
+            staffrank = await tconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1", user.id
+            )
             hitem = details["held_item"]
             desc = f"{tnick if tnick is not None else user.name}'s\n__**Balances**__"
             desc += f"\n<:mewcoin:1010959258638094386>**Credits**: `{mewcoins:,}`"
             desc += f"\n<:redeem:1037942226132668417>**Redeems**: `{redeems:,}`"
             desc += f"\n<:evs:1029331432792915988>**EV Points**: `{evpoints:,}`"
             desc += f"\n<:upvote:1037942314691199089>**Upvote Points**: `{uppoints}`"
-            desc += f"\n<:upvotestreak:1037942367929503766>**Vote Streak**: `{vote_streak}`"
+            desc += (
+                f"\n<:upvotestreak:1037942367929503766>**Vote Streak**: `{vote_streak}`"
+            )
             desc += f"\n**Holding**: `{hitem.capitalize().replace('-',' ')}`"
             desc += f"\n**Region**: `{region.capitalize()}`"
             embed = Embed(color=0xFFB6C1, description=desc)
@@ -887,34 +1019,45 @@ class Extras(commands.Cog):
                     value=f"{staffrank}",
                 )
             else:
-                embed.set_author(
-                    name=f"Trainer Information"
-                )
+                embed.set_author(name=f"Trainer Information")
             view = discord.ui.View(timeout=60)
+
             async def check(interaction):
                 if interaction.user.id != ctx.author.id:
-                    await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+                    await interaction.response.send_message(
+                        content="You are not allowed to interact with this button.",
+                        ephemeral=True,
+                    )
                     return False
                 return True
+
             view.interaction_check = check
-            chest = discord.ui.Button(style=discord.ButtonStyle.gray, label="View chests")
+            chest = discord.ui.Button(
+                style=discord.ButtonStyle.gray, label="View chests"
+            )
+
             async def chestcallback(interaction):
                 await self.balance_chests(ctx, user)
+
             chest.callback = chestcallback
             view.add_item(chest)
             misc = discord.ui.Button(style=discord.ButtonStyle.gray, label="View misc")
+
             async def misccallback(interaction):
                 await self.balance_misc(ctx, user)
+
             misc.callback = misccallback
             view.add_item(misc)
             await ctx.send(embed=embed, view=view)
 
-    async def balance_chests(self, ctx, user: discord.User=None):
+    async def balance_chests(self, ctx, user: discord.User = None):
         """Lists the current chests you have to open."""
         if user is None:
             user = ctx.author
         async with ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user.id)
+            details = await pconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user.id
+            )
             if details is None:
                 await ctx.send(f"{user.name} has not started!")
                 return
@@ -923,9 +1066,13 @@ class Extras(commands.Cog):
                 and user.id != ctx.author.id
                 and ctx.author.id != ctx.bot.owner_id
             ):
-                await ctx.send(f"You are not permitted to see how many chests {user.name} has")
+                await ctx.send(
+                    f"You are not permitted to see how many chests {user.name} has"
+                )
                 return
-            inv = await pconn.fetchval("SELECT inventory::json FROM users WHERE u_id = $1", user.id)
+            inv = await pconn.fetchval(
+                "SELECT inventory::json FROM users WHERE u_id = $1", user.id
+            )
         common = inv.get("common chest", 0)
         rare = inv.get("rare chest", 0)
         mythic = inv.get("mythic chest", 0)
@@ -934,17 +1081,31 @@ class Extras(commands.Cog):
         hitem = details["held_item"]
         tnick = details["tnick"]
         desc = f"*current totals*"
-        desc += f"\n<:lchest1:1010889611318411385><:lchest2:1010889654800756797> `legend`"
-        desc += f"\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080>: {legend}"
+        desc += (
+            f"\n<:lchest1:1010889611318411385><:lchest2:1010889654800756797> `legend`"
+        )
+        desc += (
+            f"\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080>: {legend}"
+        )
 
-        desc += f"\n<:mchest1:1010889412558717039><:mchest2:1010889464119300096> `mythic`"
-        desc += f"\n<:mchest3:1010889506838302821><:mchest4:1010889554418487347>: {mythic}"
+        desc += (
+            f"\n<:mchest1:1010889412558717039><:mchest2:1010889464119300096> `mythic`"
+        )
+        desc += (
+            f"\n<:mchest3:1010889506838302821><:mchest4:1010889554418487347>: {mythic}"
+        )
 
         desc += f"\n<:rchest1:1010889168802562078><:rchest2:1010889239988277269> `rare`"
-        desc += f"\n<:rchest3:1010889292672942101><:rchest4:1010889342639677560>: {rare}"
+        desc += (
+            f"\n<:rchest3:1010889292672942101><:rchest4:1010889342639677560>: {rare}"
+        )
 
-        desc += f"\n<:cchest1:1010888643369500742><:cchest2:1010888709031350333> `common`"
-        desc += f"\n<:cchest2:1010888756540215297><:cchest4:1010888875536822353>: {common}"
+        desc += (
+            f"\n<:cchest1:1010888643369500742><:cchest2:1010888709031350333> `common`"
+        )
+        desc += (
+            f"\n<:cchest2:1010888756540215297><:cchest4:1010888875536822353>: {common}"
+        )
         embed = Embed(color=0xFFB6C1, description=desc)
         if is_staff.lower() != "user":
             embed.set_author(
@@ -957,18 +1118,20 @@ class Extras(commands.Cog):
             )
         await ctx.send(embed=embed)
 
-    async def balance_misc(self, ctx, user: discord.User=None):
+    async def balance_misc(self, ctx, user: discord.User = None):
         """
         Lists other miscellaneous data.
 
-        Includes held item, pokemon owned, market slots, egg slots, 
-        bicycle, honey, gleam gems, IV mult, nature capsules, 
+        Includes held item, pokemon owned, market slots, egg slots,
+        bicycle, honey, gleam gems, IV mult, nature capsules,
         shiny multi, battle multi, and breeding multi.
         """
         if user is None:
             user = ctx.author
         async with ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user.id)
+            details = await pconn.fetchrow(
+                "SELECT * FROM users WHERE u_id = $1", user.id
+            )
             if details is None:
                 await ctx.send(f"{user.name} has not started!")
                 return
@@ -977,7 +1140,9 @@ class Extras(commands.Cog):
                 and user.id != ctx.author.id
                 and ctx.author.id != ctx.bot.owner_id
             ):
-                await ctx.send(f"You are not permitted to see how many chests {user.name} has")
+                await ctx.send(
+                    f"You are not permitted to see how many chests {user.name} has"
+                )
                 return
             pokes = details["pokes"]
             daycared = await pconn.fetchval(
@@ -985,7 +1150,8 @@ class Extras(commands.Cog):
                 pokes,
             )
             usedmarket = await pconn.fetchval(
-                "SELECT count(id) FROM market WHERE owner = $1 AND buyer IS NULL", user.id
+                "SELECT count(id) FROM market WHERE owner = $1 AND buyer IS NULL",
+                user.id,
             )
         bike = details["bike"]
         visible = details["visible"]
@@ -1026,11 +1192,11 @@ class Extras(commands.Cog):
         dets = ujson.loads(dets)
         dets.pop("coin-case", None) if "coin-case" in dets else None
         for item in dets:
-            if item in ('common chest', 'rare chest', 'mythic chest', 'legend chest'):
+            if item in ("common chest", "rare chest", "mythic chest", "legend chest"):
                 continue
-            if 'breeding' in item:
+            if "breeding" in item:
                 desc += f"{item.replace('-', ' ').capitalize()} `{dets[item]}` `({calculate_breeding_multiplier(dets[item])})`\n"
-            elif 'iv' in item:
+            elif "iv" in item:
                 desc += f"{item.replace('-', ' ').capitalize()} `{dets[item]}` `({calculate_iv_multiplier(dets[item])})`\n"
             else:
                 desc += f"{item.replace('-', ' ').capitalize()} `{dets[item]}`x\n"
@@ -1045,6 +1211,7 @@ class Extras(commands.Cog):
                 name=f"{tnick if tnick is not None else user.name}'s Miscellaneous Balances"
             )
         await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Extras(bot))

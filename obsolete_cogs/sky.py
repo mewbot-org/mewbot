@@ -18,13 +18,25 @@ import pathlib
 import ast
 from collections import defaultdict
 from mewutils.misc import get_pokemon_image, pagify, MenuView, ConfirmView
-from mewutils.checks import Rank, check_admin, check_mod, check_helper, check_investigator, check_support, check_gymauth
+from mewutils.checks import (
+    Rank,
+    check_admin,
+    check_mod,
+    check_helper,
+    check_investigator,
+    check_support,
+    check_gymauth,
+)
 from mewcore import commondb
 import datetime
 from copy import copy
 from discord.ext import commands, tasks
 from discord.ext.commands.view import StringView
-from discord.ext.commands.converter import MemberConverter, TextChannelConverter, _convert_to_bool
+from discord.ext.commands.converter import (
+    MemberConverter,
+    TextChannelConverter,
+    _convert_to_bool,
+)
 from pokemon_utils.classes import *
 from pokemon_utils.utils import get_pokemon_info
 from mewcogs.pokemon_list import *
@@ -33,8 +45,6 @@ from mewcogs.json_files import *
 from contextlib import redirect_stdout
 from mewcogs.pokemon_list import LegendList
 from email.message import EmailMessage
-
-
 
 
 IMG_SERVER_BASE_SKIN = "https://dyleee.github.io/mewbot-images/sprites/skins/"
@@ -150,7 +160,11 @@ class Sky(commands.Cog):
         processes = len(launcher_res[0])
         body = "await bot.load_bans()"
         await self.bot.handler(
-            "_eval", processes, args={"body": body, "cluster_id": "-1"}, scope="bot", _timeout=10
+            "_eval",
+            processes,
+            args={"body": body, "cluster_id": "-1"},
+            scope="bot",
+            _timeout=10,
         )
 
     @check_mod()
@@ -159,14 +173,18 @@ class Sky(commands.Cog):
         """MOD: Returns a users special pokemon counts, such as shiny and radiant"""
         async with ctx.bot.db[0].acquire() as pconn:
             shiny = await pconn.fetchval(
-                "select count(*) from pokes where shiny = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)", userid.id
+                "select count(*) from pokes where shiny = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)",
+                userid.id,
             )
             radiant = await pconn.fetchval(
-                "select count(*) from pokes where radiant = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)", userid.id
+                "select count(*) from pokes where radiant = true AND id in (select unnest(u.pokes) from users u where u.u_id = $1)",
+                userid.id,
             )
         embed = discord.Embed()
         embed.add_field(name="Number of Shiny pokemon", value=f"{shiny}", inline=True)
-        embed.add_field(name="Number of Radiant pokemon", value=f"{radiant}", inline=False)
+        embed.add_field(
+            name="Number of Radiant pokemon", value=f"{radiant}", inline=False
+        )
         embed.set_footer(text="Special Pokemon Counts")
         await ctx.send(embed=embed)
 
@@ -200,7 +218,9 @@ class Sky(commands.Cog):
         """MOD: Shows who owns a specific pokemon by its global ID"""
         async with ctx.typing():
             async with ctx.bot.db[0].acquire() as pconn:
-                user = await pconn.fetch("SELECT u_id FROM users WHERE $1 = ANY(pokes)", poke)
+                user = await pconn.fetch(
+                    "SELECT u_id FROM users WHERE $1 = ANY(pokes)", poke
+                )
                 market = await pconn.fetch(
                     "SELECT id FROM market WHERE poke = $1 AND buyer IS NULL", poke
                 )
@@ -302,9 +322,9 @@ class Sky(commands.Cog):
     @check_mod()
     @commands.hybrid_command()
     async def mock(self, ctx, user_id: discord.Member, *, raw):
-        """MOD: 
+        """MOD:
         Mock another user invoking a command.
-        
+
         The prefix must not be entered.
         """
         if not await self._mock_check(ctx.author.id, user_id.id):
@@ -319,8 +339,10 @@ class Sky(commands.Cog):
                 await ctx.send("User not found.")
                 return
         ctx.author = user
-        class FakeInteraction():
+
+        class FakeInteraction:
             pass
+
         ctx._interaction = FakeInteraction()
         ctx._interaction.id = ctx.message.id
 
@@ -340,7 +362,10 @@ class Sky(commands.Cog):
             await ctx.send("I can't find a command that matches that input.")
             return
         # Just... trust me, this gets a list of type objects for the command's args
-        signature = [x.annotation for x in inspect.signature(command.callback).parameters.values()][2:]
+        signature = [
+            x.annotation
+            for x in inspect.signature(command.callback).parameters.values()
+        ][2:]
         view = StringView(args.strip())
         args = []
         for arg_type in signature:
@@ -394,7 +419,10 @@ class Sky(commands.Cog):
                 await ctx.send("User not found.")
                 return
 
-        if ctx.channel.id in self.sessions and ctx.author.id in self.sessions[ctx.channel.id]:
+        if (
+            ctx.channel.id in self.sessions
+            and ctx.author.id in self.sessions[ctx.channel.id]
+        ):
             await ctx.send("You are already running a mock session in this channel.")
             return
         elif ctx.channel.id in self.sessions:
@@ -403,7 +431,10 @@ class Sky(commands.Cog):
             self.sessions[ctx.channel.id] = {}
             self.sessions[ctx.channel.id][ctx.author.id] = {}
 
-        self.sessions[ctx.channel.id][ctx.author.id] = {"mocking": user, "last": time.time()}
+        self.sessions[ctx.channel.id][ctx.author.id] = {
+            "mocking": user,
+            "last": time.time(),
+        }
 
         await ctx.send(
             "Mock session started.\nUse `:your_command_here` to run a command\nUse `m:Your message here` to fake a message\nUse `;mocksessionend` to stop."
@@ -430,11 +461,15 @@ class Sky(commands.Cog):
     async def _mock_check(self, mocker: int, mocked: int):
         """Check if "mocker" has permission to mock "mocked"."""
         async with self.bot.db[0].acquire() as pconn:
-            mocked_rank = await pconn.fetchval("SELECT staff FROM users WHERE u_id = $1", mocked)
+            mocked_rank = await pconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1", mocked
+            )
             if mocked_rank is None:
                 return True
             mocked_rank = Rank[mocked_rank.upper()]
-            mocker_rank = await pconn.fetchval("SELECT staff FROM users WHERE u_id = $1", mocker)
+            mocker_rank = await pconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1", mocker
+            )
             # Should not happen, but just in case
             if mocker_rank is None:
                 return False
@@ -470,7 +505,8 @@ class Sky(commands.Cog):
                 return
             await pconn.execute("UPDATE market SET buyer = 0 WHERE id = $1", market_id)
             await pconn.execute(
-                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = 1227", poke
+                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = 1227",
+                poke,
             )
         await ctx.send(f"User `1227` now owns poke `{poke}`.")
 
@@ -486,7 +522,7 @@ class Sky(commands.Cog):
         if not _ids:
             await ctx.send("No valid ids provided.")
             return
-        
+
         ids = _ids
 
         c = ctx.bot.get_cog("Market")
@@ -540,14 +576,14 @@ class Sky(commands.Cog):
             msg += f"The poke was already bought for the following listings: `{data}`\n"
         if types.count("InvalidPoke"):
             data = ", ".join([str(x[1]) for x in results if x[0] == "InvalidPoke"])
-            msg += (
-                f"The pokemon from the listing was deleted for the following listings: `{data}`\n"
-            )
+            msg += f"The pokemon from the listing was deleted for the following listings: `{data}`\n"
         if types.count("LowBal"):
             data = ", ".join([str(x[1]) for x in results if x[0] == "LowBal"])
             msg += f"You could not afford the following listings: `{data}`\n"
         if types.count("Error"):
-            data = ", ".join([str(x[1]) for x in results if isinstance(x[0], Exception)])
+            data = ", ".join(
+                [str(x[1]) for x in results if isinstance(x[0], Exception)]
+            )
             msg += f"An unknown error occurred in the following listings: `{data}`\n"
             data = [x[0] for x in results if isinstance(x[0], Exception)]
             msg += f"These are the exceptions: `{data}`\n"
@@ -561,11 +597,14 @@ class Sky(commands.Cog):
         """Helper function to buy a poke from the market."""
         if listing_id in locked:
             return ("Locked", listing_id)
-        await ctx.bot.redis_manager.redis.execute("LPUSH", "marketlock", str(listing_id))
+        await ctx.bot.redis_manager.redis.execute(
+            "LPUSH", "marketlock", str(listing_id)
+        )
         try:
             async with ctx.bot.db[0].acquire() as pconn:
                 details = await pconn.fetchrow(
-                    "SELECT poke, owner, price, buyer FROM market WHERE id = $1", listing_id
+                    "SELECT poke, owner, price, buyer FROM market WHERE id = $1",
+                    listing_id,
                 )
                 if not details:
                     return ("InvalidID", listing_id)
@@ -587,7 +626,9 @@ class Sky(commands.Cog):
                 if price > credits:
                     return ("LowBal", listing_id)
                 await pconn.execute(
-                    "UPDATE market SET buyer = $1 WHERE id = $2", ctx.author.id, listing_id
+                    "UPDATE market SET buyer = $1 WHERE id = $2",
+                    ctx.author.id,
+                    listing_id,
                 )
                 await pconn.execute(
                     "UPDATE users SET pokes = array_append(pokes, $1), mewcoins = mewcoins - $2 WHERE u_id = $3",
@@ -626,15 +667,18 @@ class Sky(commands.Cog):
         """MOD: Promote a user to Support Team"""
         com = ctx.bot.get_command("promote staff")
         if com is None:
-            await ctx.send("The `promote staff` command needs to be loaded to use this!")
+            await ctx.send(
+                "The `promote staff` command needs to be loaded to use this!"
+            )
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            rank = await pconn.fetchval("SELECT staff FROM users WHERE u_id = $1", member.id)
+            rank = await pconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1", member.id
+            )
         if rank != "User":
             await ctx.send("You cannot grant support to that user.")
             return
         await com.callback(com.cog, ctx, "support", member)
-
 
     @check_gymauth()
     @commands.hybrid_command()
@@ -646,26 +690,31 @@ class Sky(commands.Cog):
                 mewcoins,
                 user,
             )
-        #if ctx.author.id not in (790722073248661525,473541068378341376,709695571379617863,728736503366156361):
+        # if ctx.author.id not in (790722073248661525,473541068378341376,709695571379617863,728736503366156361):
         #   await ctx.send("...no.")
         #    return
         username = ctx.message.author.name
-        #message = EmailMessage()
-        #message["From"] = "admin@skys.fun"
-        #message["To"] = "skylarr12227@gmail.com"
-        #message["Subject"] = f"{username} gave {user}, {mewcoins} mewcoins in gym server"
-        #message.set_content(f"{username} gave {user}, {mewcoins} mewcoins in gym server")
-        #await aiosmtplib.send(message, hostname="a2plcpnl0218.prod.iad2.secureserver.net", port=465, username="admin@skys.fun", password="liger666", use_tls=True)
-        api_url = 'https://hooks.zapier.com/hooks/catch/6433731/bykhq8m/'
-        json_data = {'gym_reward': mewcoins, 'u_id': str(user), 'username': str(username)}
+        # message = EmailMessage()
+        # message["From"] = "admin@skys.fun"
+        # message["To"] = "skylarr12227@gmail.com"
+        # message["Subject"] = f"{username} gave {user}, {mewcoins} mewcoins in gym server"
+        # message.set_content(f"{username} gave {user}, {mewcoins} mewcoins in gym server")
+        # await aiosmtplib.send(message, hostname="a2plcpnl0218.prod.iad2.secureserver.net", port=465, username="admin@skys.fun", password="liger666", use_tls=True)
+        api_url = "https://hooks.zapier.com/hooks/catch/6433731/bykhq8m/"
+        json_data = {
+            "gym_reward": mewcoins,
+            "u_id": str(user),
+            "username": str(username),
+        }
         async with aiohttp.ClientSession() as session:
             async with session.post(api_url, json=json_data) as r:
                 pass
-        await ctx.bot.http.send_message(882419606134874192, f"{ctx.author}: <@{user}> has been awarded {mewcoins} for a gym challenge.")
+        await ctx.bot.http.send_message(
+            882419606134874192,
+            f"{ctx.author}: <@{user}> has been awarded {mewcoins} for a gym challenge.",
+        )
         await ctx.send(f"<@{user}> has been awarded {mewcoins} for a gym challenge.\n")
 
-    
-    
     @check_investigator()
     @commands.hybrid_command(aliases=["serverban"])
     async def banserver(self, ctx, id: int):
@@ -676,7 +725,9 @@ class Sky(commands.Cog):
             return
         sbans.add(id)
         await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
-        await ctx.send(f"```Elm\n-Successfully Banned {await ctx.bot.fetch_guild(id)}```")
+        await ctx.send(
+            f"```Elm\n-Successfully Banned {await ctx.bot.fetch_guild(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_investigator()
@@ -689,7 +740,9 @@ class Sky(commands.Cog):
             return
         sbans.remove(id)
         await ctx.bot.mongo_update("blacklist", {}, {"guilds": list(sbans)})
-        await ctx.send(f"```Elm\n- Successfully Unbanned {await ctx.bot.fetch_guild(id)}```")
+        await ctx.send(
+            f"```Elm\n- Successfully Unbanned {await ctx.bot.fetch_guild(id)}```"
+        )
         await self.load_bans_cross_cluster()
 
     @check_gymauth()
@@ -697,15 +750,21 @@ class Sky(commands.Cog):
     async def duelblock(self, ctx, id: int):
         """GYM-AUTH: Ban a user from duels"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE botbans SET duelban = array_append(duelban, $1)", id)
-            await ctx.send(f"```Elm\n- Successflly Duelbanned {await ctx.bot.fetch_user(id)}```")
+            await pconn.execute(
+                "UPDATE botbans SET duelban = array_append(duelban, $1)", id
+            )
+            await ctx.send(
+                f"```Elm\n- Successflly Duelbanned {await ctx.bot.fetch_user(id)}```"
+            )
 
     @check_gymauth()
     @commands.hybrid_command(aliases=["duelunban", "unduelban"])
     async def unduelblock(self, ctx, id: int):
         """GYM-AUTH: UNBan a user from duels"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE botbans SET duelban = array_remove(duelban, $1)", id)
+            await pconn.execute(
+                "UPDATE botbans SET duelban = array_remove(duelban, $1)", id
+            )
             await ctx.send(
                 f"```Elm\n- Successfully unduelbanned {await ctx.bot.fetch_user(id)}```"
             )
@@ -731,7 +790,10 @@ class Sky(commands.Cog):
     @commands.hybrid_command()
     async def combine(self, ctx, u_id1: int, u_id2: int):
         """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
-        await ctx.send(f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?")
+        await ctx.send(
+            f"Are you sure you want to move all pokemon from {u_id2} to {u_id1}?"
+        )
+
         def check(m):
             return m.author.id == ctx.author.id and m.content.lower() in (
                 "yes",
@@ -739,6 +801,7 @@ class Sky(commands.Cog):
                 "y",
                 "n",
             )
+
         try:
             m = await ctx.bot.wait_for("message", check=check, timeout=30)
         except asyncio.TimeoutError:
@@ -762,42 +825,46 @@ class Sky(commands.Cog):
             await pconn.execute(
                 "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id2, user2
             )
-        await ctx.send(f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```")
+        await ctx.send(
+            f"```elm\nSuccessfully added pokemon from {u_id2} to {u_id1}.```"
+        )
 
-#    
-#    @check_mod()
-#    @commands.hybrid_command()
-#    async def rchest(self, ctx, uid: int, chest, num: int):
-#        """CHEESE-ONLY: Add a chest"""
-#        if ctx.author.id not in (790722073248661525,478605505145864193):
-#            await ctx.send("...no.")
-#            return
-#        elif chest == "legend":
-#            actualchest = "legend chest"
-#        elif chest == "mythic":
-#            actualchest = "mythic chest"
-#        elif chest == "rare":
-#            actualchest = "rare chest"
-#        elif chest == "common":
-#            actualchest = "common chest"
-#        async with ctx.bot.db[0].acquire() as pconn:
-#            inventory = await pconn.fetchval(
-#                "SELECT inventory::json FROM users WHERE u_id = $1", uid 
-#            )
-#            inventory[actualchest ] = inventory.get(actualchest , 0) + num
-#            await pconn.execute(
-#                "UPDATE users SET inventory = $1::json where u_id = $2",
-#                inventory,
-#                uid ,
-#            )
-#            await ctx.send(f"<@{uid}> gained `{num}` `{actualchest}'s`")
+    #
+    #    @check_mod()
+    #    @commands.hybrid_command()
+    #    async def rchest(self, ctx, uid: int, chest, num: int):
+    #        """CHEESE-ONLY: Add a chest"""
+    #        if ctx.author.id not in (790722073248661525,478605505145864193):
+    #            await ctx.send("...no.")
+    #            return
+    #        elif chest == "legend":
+    #            actualchest = "legend chest"
+    #        elif chest == "mythic":
+    #            actualchest = "mythic chest"
+    #        elif chest == "rare":
+    #            actualchest = "rare chest"
+    #        elif chest == "common":
+    #            actualchest = "common chest"
+    #        async with ctx.bot.db[0].acquire() as pconn:
+    #            inventory = await pconn.fetchval(
+    #                "SELECT inventory::json FROM users WHERE u_id = $1", uid
+    #            )
+    #            inventory[actualchest ] = inventory.get(actualchest , 0) + num
+    #            await pconn.execute(
+    #                "UPDATE users SET inventory = $1::json where u_id = $2",
+    #                inventory,
+    #                uid ,
+    #            )
+    #            await ctx.send(f"<@{uid}> gained `{num}` `{actualchest}'s`")
 
     @check_mod()
     @commands.hybrid_command(aliases=["ot"])
     async def findot(self, ctx, poke: int):
         """HELPER: Find the OT userid of a pokemon"""
         async with ctx.bot.db[0].acquire() as pconn:
-            caught_by = await pconn.fetchval("SELECT caught_by FROM pokes WHERE id = $1", poke)
+            caught_by = await pconn.fetchval(
+                "SELECT caught_by FROM pokes WHERE id = $1", poke
+            )
         if caught_by is None:
             await ctx.send("That pokemon does not exist.")
             return
@@ -824,7 +891,9 @@ class Sky(commands.Cog):
                 return
             ids = []
             async with ctx.bot.db[0].acquire() as pconn:
-                stmt = await pconn.prepare("SELECT pokes[$1] FROM users WHERE u_id = $2")
+                stmt = await pconn.prepare(
+                    "SELECT pokes[$1] FROM users WHERE u_id = $2"
+                )
                 for poke in pokes:
                     id = await stmt.fetchval(poke, user.id)
                     if id == None:
@@ -890,19 +959,19 @@ class Sky(commands.Cog):
     async def setot(self, ctx, id: int, userid: discord.Member):
         """ADMIN: Set pokes OT"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("UPDATE pokes SET caught_by = $1 where id = $2", userid.id, id)
-            await ctx.send(f"```Elm\n- Successflly set OT of `{id}` to {await ctx.bot.fetch_user(userid.id)}```")
-
-    
+            await pconn.execute(
+                "UPDATE pokes SET caught_by = $1 where id = $2", userid.id, id
+            )
+            await ctx.send(
+                f"```Elm\n- Successflly set OT of `{id}` to {await ctx.bot.fetch_user(userid.id)}```"
+            )
 
     @check_mod()
     @commands.hybrid_command()
     async def getuser(self, ctx, user: int):
         """MOD: Get user info by ID"""
         async with ctx.bot.db[0].acquire() as pconn:
-            info = await pconn.fetchrow(
-                "SELECT * FROM users WHERE u_id = $1", user
-            )
+            info = await pconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user)
         if info is None:
             await ctx.send("User has not started.")
             return
@@ -938,7 +1007,7 @@ class Sky(commands.Cog):
             )
             if id_.decode("utf-8").isdigit()
         ]
-        desc =  f"**__Information on {user}__**"
+        desc = f"**__Information on {user}__**"
         desc += f"\n**Trainer Nickname**: `{tnick}`"
         desc += f"\n**MewbotID**: `{uid}`"
         desc += f"\n**Patreon Tier**: `{patreon_tier}`"
@@ -973,17 +1042,17 @@ class Sky(commands.Cog):
     async def getpoke(self, ctx, pokem: int):
         """MOD: Get pokemon info by ID"""
         async with ctx.bot.db[0].acquire() as pconn:
-            info = await pconn.fetchrow(
-                "SELECT * FROM pokes WHERE id = $1", pokem
-            )
+            info = await pconn.fetchrow("SELECT * FROM pokes WHERE id = $1", pokem)
             info2 = await pconn.fetchval(
                 "SELECT age(time_stamp) FROM pokes WHERE id = $1", pokem
             )
             tradeinfo = await pconn.fetch(
-                "SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) OR $1 = any(receiver_pokes) order by t_id DESC limit 4", pokem
+                "SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) OR $1 = any(receiver_pokes) order by t_id DESC limit 4",
+                pokem,
             )
             tradeage = await pconn.fetch(
-                "SELECT age(time) FROM trade_logs WHERE $1 = any(sender_pokes) OR $1 = any(receiver_pokes) order by t_id DESC limit 4", pokem
+                "SELECT age(time) FROM trade_logs WHERE $1 = any(sender_pokes) OR $1 = any(receiver_pokes) order by t_id DESC limit 4",
+                pokem,
             )
         if info is None:
             await ctx.send("Global ID not valid.")
@@ -1016,14 +1085,14 @@ class Sky(commands.Cog):
         caught_at = info2.days
         caught_by = info["caught_by"]
         radiant = info["radiant"]
-        
+
         def age_get(age):
             trade_age = math.ceil(abs(age.total_seconds()))
             trade_age_min, trade_age_sec = divmod(trade_age, 60)
             trade_age_hr, trade_age_min = divmod(trade_age_min, 60)
             return trade_age_hr, trade_age_min, trade_age_sec
 
-        desc =  f"**__Information on pokemon:`{pokem}`__**"
+        desc = f"**__Information on pokemon:`{pokem}`__**"
         desc += f"\n**Name**: `{pokname}` "
         desc += f"| **Nickname**: `{poknick}`"
         desc += f"| **Level**: `{pokelevel}`"
@@ -1031,7 +1100,7 @@ class Sky(commands.Cog):
         desc += f"| **EV's**: `{hpev}|{atkev}|{defev}|{spatkev}|{spdefev}|{speedev}`"
         desc += f"\n**Held Item**: `{hitem}` "
         desc += f"\n| **Happiness**: `{happiness}` "
-        #desc += f"|**Ability ID**: `{ability_index}`"
+        # desc += f"|**Ability ID**: `{ability_index}`"
         desc += f"| **Gender**: `{gender}`"
         desc += f"\n**Is Shiny**: `{shiny}` "
         desc += f"| **Is Radiant**: `{radiant}`"
@@ -1042,18 +1111,28 @@ class Sky(commands.Cog):
         embed = discord.Embed(color=0xFFB6C1, description=desc)
         embed.add_field(name=f"Moves", value=", ".join(moves), inline=False)
         if not tradeinfo:
-            embed.add_field(name=f"Trade History", value=f"```No trade info found```", inline=False)
+            embed.add_field(
+                name=f"Trade History", value=f"```No trade info found```", inline=False
+            )
         else:
-            embed.add_field(name=f".", value=f"<:image_part_0011:871809643054243891><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_003:871809643020693504>", inline=False)
+            embed.add_field(
+                name=f".",
+                value=f"<:image_part_0011:871809643054243891><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_0021:871809642928406618><:image_part_003:871809643020693504>",
+                inline=False,
+            )
             i = 1
             for trade in tradeinfo:
                 try:
-                    hr, minu, sec = age_get(tradeage[i-1]["age"])
+                    hr, minu, sec = age_get(tradeage[i - 1]["age"])
                 except Exception as exc:
                     hr, minu, sec = "Unknown", "Unknown", str(exc)
-                embed.add_field(name=f"Trade #{i}", value=f"**Sender**: `{trade['sender']}`\n**Receiver**: `{trade['receiver']}`\n**Trade Command:** `{trade['command']}`\n**Traded:** `{hr} hours, {minu} minutes and {sec} seconds`", inline=False)
-                i+=1
-                
+                embed.add_field(
+                    name=f"Trade #{i}",
+                    value=f"**Sender**: `{trade['sender']}`\n**Receiver**: `{trade['receiver']}`\n**Trade Command:** `{trade['command']}`\n**Traded:** `{hr} hours, {minu} minutes and {sec} seconds`",
+                    inline=False,
+                )
+                i += 1
+
         embed.set_footer(text="Information live from Database")
         await ctx.send(embed=embed)
 
@@ -1068,7 +1147,7 @@ class Sky(commands.Cog):
                 pokeid,
             )
         await ctx.send("Successfully added skin to pokemon")
-    
+
     @check_admin()
     @commands.hybrid_command()
     async def give_skin(self, ctx, userid: discord.Member, pokname: str, skinname: str):
@@ -1076,97 +1155,151 @@ class Sky(commands.Cog):
         pokname = pokname.lower()
         skinname = skinname.lower()
         async with ctx.bot.db[0].acquire() as pconn:
-            skins = await pconn.fetchval("SELECT skins::json FROM users WHERE u_id = $1", userid.id)
+            skins = await pconn.fetchval(
+                "SELECT skins::json FROM users WHERE u_id = $1", userid.id
+            )
             if pokname not in skins:
                 skins[pokname] = {}
             if skinname not in skins[pokname]:
                 skins[pokname][skinname] = 1
             else:
                 skins[pokname][skinname] += 1
-            await pconn.execute("UPDATE users SET skins = $1::json WHERE u_id = $2", skins, userid.id)
-        await ctx.send(f"Gave `{userid.name}({userid.id})` a `{skinname}` skin for `{pokname}`.")
+            await pconn.execute(
+                "UPDATE users SET skins = $1::json WHERE u_id = $2", skins, userid.id
+            )
+        await ctx.send(
+            f"Gave `{userid.name}({userid.id})` a `{skinname}` skin for `{pokname}`."
+        )
 
     @check_admin()
     @commands.hybrid_command()
     async def make_first(self, ctx, user: int, poke_id: int):
         """ADMIN: Change a users poke to their #1 spot"""
-        async with ctx.bot.db[0].acquire() as pconn: 
-            poke_id = await pconn.fetchval('SELECT pokes[$1] FROM users WHERE u_id = $2', poke_id, user)
+        async with ctx.bot.db[0].acquire() as pconn:
+            poke_id = await pconn.fetchval(
+                "SELECT pokes[$1] FROM users WHERE u_id = $2", poke_id, user
+            )
             if poke_id is None:
-                await ctx.send("That user does not have that many pokes, or does not exist!")
+                await ctx.send(
+                    "That user does not have that many pokes, or does not exist!"
+                )
                 return
-            await pconn.execute('UPDATE users SET pokes = array_remove(pokes, $1) WHERE u_id = $2', poke_id, user)
-            await pconn.execute('UPDATE users SET pokes = array_prepend($1, pokes) WHERE u_id = $2', poke_id, user)
+            await pconn.execute(
+                "UPDATE users SET pokes = array_remove(pokes, $1) WHERE u_id = $2",
+                poke_id,
+                user,
+            )
+            await pconn.execute(
+                "UPDATE users SET pokes = array_prepend($1, pokes) WHERE u_id = $2",
+                poke_id,
+                user,
+            )
         await ctx.send("Successfully changed poke to users #1")
-    
+
     @check_investigator()
     @commands.group(aliases=["tradelogs", "tl"])
     async def tradelog(self, ctx):
         """INVESTIGATOR: Tradelog command"""
         pass
-    
+
     @tradelog.command(name="user")
     async def tradelog_user(self, ctx, u_id: int):
         async with ctx.bot.db[0].acquire() as pconn:
-            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = sender ORDER BY t_id ASC", u_id)
-            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = receiver ORDER BY t_id ASC", u_id)
+            trade_sender = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = sender ORDER BY t_id ASC", u_id
+            )
+            trade_receiver = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = receiver ORDER BY t_id ASC", u_id
+            )
         # List[Tuple] -> (T_ID, Optional[DateTime], Traded With, Sent Creds, Sent Redeems, # Sent Pokes, Rec Creds, Rec Redeems, # Rec Pokes)
         trade = []
         t_s = trade_sender.pop(0) if trade_sender else None
         t_r = trade_receiver.pop(0) if trade_receiver else None
         while t_s or t_r:
             if t_s is None:
-                trade.append((
-                    t_r["t_id"], t_r["time"], t_r["sender"],
-                    t_r["receiver_credits"], t_r["receiver_redeems"], len(t_r["receiver_pokes"]),
-                    t_r["sender_credits"], t_r["sender_redeems"], len(t_r["sender_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_r["t_id"],
+                        t_r["time"],
+                        t_r["sender"],
+                        t_r["receiver_credits"],
+                        t_r["receiver_redeems"],
+                        len(t_r["receiver_pokes"]),
+                        t_r["sender_credits"],
+                        t_r["sender_redeems"],
+                        len(t_r["sender_pokes"]),
+                    )
+                )
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             elif t_r is None:
-                trade.append((
-                    t_s["t_id"], t_s["time"], t_s["receiver"],
-                    t_s["sender_credits"], t_s["sender_redeems"], len(t_s["sender_pokes"]),
-                    t_s["receiver_credits"], t_s["receiver_redeems"], len(t_s["receiver_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_s["t_id"],
+                        t_s["time"],
+                        t_s["receiver"],
+                        t_s["sender_credits"],
+                        t_s["sender_redeems"],
+                        len(t_s["sender_pokes"]),
+                        t_s["receiver_credits"],
+                        t_s["receiver_redeems"],
+                        len(t_s["receiver_pokes"]),
+                    )
+                )
                 t_s = trade_sender.pop(0) if trade_sender else None
             elif t_s["t_id"] > t_r["t_id"]:
-                trade.append((
-                    t_r["t_id"], t_r["time"], t_r["sender"],
-                    t_r["receiver_credits"], t_r["receiver_redeems"], len(t_r["receiver_pokes"]),
-                    t_r["sender_credits"], t_r["sender_redeems"], len(t_r["sender_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_r["t_id"],
+                        t_r["time"],
+                        t_r["sender"],
+                        t_r["receiver_credits"],
+                        t_r["receiver_redeems"],
+                        len(t_r["receiver_pokes"]),
+                        t_r["sender_credits"],
+                        t_r["sender_redeems"],
+                        len(t_r["sender_pokes"]),
+                    )
+                )
                 t_r = trade_receiver.pop(0) if trade_receiver else None
             else:
-                trade.append((
-                    t_s["t_id"], t_s["time"], t_s["receiver"],
-                    t_s["sender_credits"], t_s["sender_redeems"], len(t_s["sender_pokes"]),
-                    t_s["receiver_credits"], t_s["receiver_redeems"], len(t_s["receiver_pokes"])
-                ))
+                trade.append(
+                    (
+                        t_s["t_id"],
+                        t_s["time"],
+                        t_s["receiver"],
+                        t_s["sender_credits"],
+                        t_s["sender_redeems"],
+                        len(t_s["sender_pokes"]),
+                        t_s["receiver_credits"],
+                        t_s["receiver_redeems"],
+                        len(t_s["receiver_pokes"]),
+                    )
+                )
                 t_s = trade_sender.pop(0) if trade_sender else None
-        
+
         if not trade:
             await ctx.send("That user has not traded!")
             return
-        
+
         raw = ""
         now = datetime.datetime.now(datetime.timezone.utc)
         name_map = {}
         for t in trade:
             if t[1] is None:
-                time = '?'
+                time = "?"
             else:
                 d = t[1]
                 d = now - d
                 if d.days:
-                    time = str(d.days) + 'd'
+                    time = str(d.days) + "d"
                 elif d.seconds // 3600:
-                    time = str(d.seconds // 3600) + 'h'
+                    time = str(d.seconds // 3600) + "h"
                 elif d.seconds // 60:
-                    time = str(d.seconds // 60) + 'm'
+                    time = str(d.seconds // 60) + "m"
                 elif d.seconds:
-                    time = str(d.seconds) + 's'
+                    time = str(d.seconds) + "s"
                 else:
-                    time = '?'
+                    time = "?"
             if t[2] in name_map:
                 un = name_map[t[2]]
             else:
@@ -1178,7 +1311,7 @@ class Sky(commands.Cog):
             raw += f"__**{t[0]}** - {un}__ ({time} ago)\n"
             raw += f"Gave: {t[3]} creds + {t[4]} redeems + {t[5]} pokes\n"
             raw += f"Got: {t[6]} creds + {t[7]} redeems + {t[8]} pokes\n\n"
-        
+
         PER_PAGE = 15
         page = ""
         pages = []
@@ -1187,7 +1320,11 @@ class Sky(commands.Cog):
         for idx, part in enumerate(raw):
             page += part + "\n\n"
             if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
-                embed = discord.Embed(title=f"Trade history of user {u_id}", description=page, color=0xDD00DD)
+                embed = discord.Embed(
+                    title=f"Trade history of user {u_id}",
+                    description=page,
+                    color=0xDD00DD,
+                )
                 embed.set_footer(text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
                 pages.append(embed)
                 page = ""
@@ -1197,8 +1334,14 @@ class Sky(commands.Cog):
     @tradelog.command(name="poke")
     async def tradelog_poke(self, ctx, p_id: int):
         async with ctx.bot.db[0].acquire() as pconn:
-            trade_sender = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) ORDER BY t_id ASC", p_id)
-            trade_receiver = await pconn.fetch("SELECT * FROM trade_logs WHERE $1 = any(receiver_pokes) ORDER BY t_id ASC", p_id)
+            trade_sender = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = any(sender_pokes) ORDER BY t_id ASC",
+                p_id,
+            )
+            trade_receiver = await pconn.fetch(
+                "SELECT * FROM trade_logs WHERE $1 = any(receiver_pokes) ORDER BY t_id ASC",
+                p_id,
+            )
         # List[Tuple] -> (T_ID, Optional[DateTime], Sender, Receiver)
         trade = []
         t_s = trade_sender.pop(0) if trade_sender else None
@@ -1216,29 +1359,29 @@ class Sky(commands.Cog):
             else:
                 trade.append((t_s["t_id"], t_s["time"], t_s["sender"], t_s["receiver"]))
                 t_s = trade_sender.pop(0) if trade_sender else None
-        
+
         if not trade:
             await ctx.send("That pokemon has not been traded!")
             return
-        
+
         raw = ""
         now = datetime.datetime.now(datetime.timezone.utc)
         for t in trade:
             if t[1] is None:
-                time = '?'
+                time = "?"
             else:
                 d = t[1]
                 d = now - d
                 if d.days:
-                    time = str(d.days) + 'd'
+                    time = str(d.days) + "d"
                 elif d.seconds // 3600:
-                    time = str(d.seconds // 3600) + 'h'
+                    time = str(d.seconds // 3600) + "h"
                 elif d.seconds // 60:
-                    time = str(d.seconds // 60) + 'm'
+                    time = str(d.seconds // 60) + "m"
                 elif d.seconds:
-                    time = str(d.seconds) + 's'
+                    time = str(d.seconds) + "s"
                 else:
-                    time = '?'
+                    time = "?"
             raw += f"**{t[0]}**: {t[2]} -> {t[3]} ({time} ago)\n"
 
         PER_PAGE = 15
@@ -1249,7 +1392,11 @@ class Sky(commands.Cog):
         for idx, part in enumerate(raw):
             page += part + "\n"
             if idx % PER_PAGE == PER_PAGE - 1 or idx == len(raw) - 1:
-                embed = discord.Embed(title=f"Trade history of poke {p_id}", description=page, color=0xDD00DD)
+                embed = discord.Embed(
+                    title=f"Trade history of poke {p_id}",
+                    description=page,
+                    color=0xDD00DD,
+                )
                 embed.set_footer(text=f"Page {(idx // PER_PAGE) + 1}/{total_pages}")
                 pages.append(embed)
                 page = ""
@@ -1260,7 +1407,9 @@ class Sky(commands.Cog):
     async def tradelog_info(self, ctx, t_id: int):
         """Get information on a specific trade by transaction id."""
         async with ctx.bot.db[0].acquire() as pconn:
-            trade = await pconn.fetchrow("SELECT * FROM trade_logs WHERE t_id = $1", t_id)
+            trade = await pconn.fetchrow(
+                "SELECT * FROM trade_logs WHERE t_id = $1", t_id
+            )
         if trade is None:
             await ctx.send("That transaction id does not exist!")
             return
@@ -1274,7 +1423,11 @@ class Sky(commands.Cog):
             if trade["sender_pokes"]:
                 desc += f"__Pokes:__ {trade['sender_pokes']}\n"
             desc += "\n"
-        if trade["receiver_credits"] or trade["receiver_pokes"] or trade["receiver_redeems"]:
+        if (
+            trade["receiver_credits"]
+            or trade["receiver_pokes"]
+            or trade["receiver_redeems"]
+        ):
             desc += f"**{trade['sender']} received:**\n"
             if trade["receiver_credits"]:
                 desc += f"__Credits:__ {trade['receiver_credits']}\n"
@@ -1282,7 +1435,9 @@ class Sky(commands.Cog):
                 desc += f"__Redeems:__ {trade['receiver_redeems']}\n"
             if trade["receiver_pokes"]:
                 desc += f"__Pokes:__ {trade['receiver_pokes']}\n"
-        embed = discord.Embed(title=f"Trade ID {t_id}", description=desc, color=0xDD00DD)
+        embed = discord.Embed(
+            title=f"Trade ID {t_id}", description=desc, color=0xDD00DD
+        )
         if trade["time"] is not None:
             embed.set_footer(text=trade["time"].isoformat(" "))
         await ctx.send(embed=embed)
@@ -1290,24 +1445,30 @@ class Sky(commands.Cog):
     @check_admin()
     @commands.hybrid_command(aliases=["skydb"])
     async def unsafeedb(self, ctx, type, *, execution: str):
-        """DEV: No timeout EDB """
+        """DEV: No timeout EDB"""
         await ctx.send("...no.")
         return
-        
+
         # Sanity checks
         low_exe = execution.lower()
         if low_exe != self.safe_edb:
             self.safe_edb = low_exe
             if "update" in low_exe and "where" not in low_exe:
-                await ctx.send("**WARNING**: You attempted to run an `UPDATE` without a `WHERE` clause. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run an `UPDATE` without a `WHERE` clause. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
             if "drop" in low_exe:
-                await ctx.send("**WARNING**: You attempted to run a `DROP`. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run a `DROP`. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
             if "delete from" in low_exe:
-                await ctx.send("**WARNING**: You attempted to run a `DELETE FROM`. If you are **absolutely sure** this action is safe, run this command again.")
+                await ctx.send(
+                    "**WARNING**: You attempted to run a `DELETE FROM`. If you are **absolutely sure** this action is safe, run this command again."
+                )
                 return
-        
+
         try:
             async with ctx.bot.db[0].acquire() as pconn:
                 if type == "row":
@@ -1356,14 +1517,18 @@ class Sky(commands.Cog):
     async def view_skins_pride(self, ctx):
         """PUBLIC: View Pride 2022 Skins"""
         pages = []
-        SERVER_BASE_PRIDE_SKIN = "https://dyleee.github.io/mewbot-images/sprites/skins/pride2022/"
+        SERVER_BASE_PRIDE_SKIN = (
+            "https://dyleee.github.io/mewbot-images/sprites/skins/pride2022/"
+        )
         PRIDE_BASE = "/home/dylee/clustered/shared/duel/sprites/skins/pride2022/"
         pages = []
         skins = list(pathlib.Path(PRIDE_BASE).glob("*-*-.png"))
         total = len(skins)
         for idx, path in enumerate(skins, 1):
             pokeid = int(path.name.split("-")[0])
-            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))["identifier"]
+            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))[
+                "identifier"
+            ]
             embed = discord.Embed(
                 title=f"{pokename} - PRIDE EVENT 2022 ",
                 color=0xDD22DD,
@@ -1382,9 +1547,11 @@ class Sky(commands.Cog):
             skins = [x for x in skins if x.name.split("_")[1][:-4] == skin_name]
         total = len(skins)
         for idx, path in enumerate(skins, 1):
-            #skin = path.name.split("_")[1][:-4]
+            # skin = path.name.split("_")[1][:-4]
             pokeid = int(path.name.split("-")[0])
-            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))["identifier"]
+            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))[
+                "identifier"
+            ]
             embed = discord.Embed(
                 title=f"{pokename} - {skin}",
                 color=0xDD22DD,
@@ -1393,7 +1560,7 @@ class Sky(commands.Cog):
             embed.set_footer(text=f"Page {idx}/{total}")
             pages.append(embed)
         await MenuView(ctx, pages).start()
-    
+
     @commands.hybrid_command(aliases=["radiants"])
     async def view_rads(self, ctx):
         """PUBLIC: View All released radiants"""
@@ -1402,7 +1569,9 @@ class Sky(commands.Cog):
         total = len(skins)
         for idx, path in enumerate(skins, 1):
             pokeid = int(path.name.split("-")[0])
-            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))["identifier"]
+            pokename = (await ctx.bot.db[1].forms.find_one({"pokemon_id": pokeid}))[
+                "identifier"
+            ]
             embed = discord.Embed(
                 title=f"{pokename}",
                 color=0xDD22DD,
@@ -1423,23 +1592,31 @@ class Sky(commands.Cog):
                 "UPDATE users SET redeems = redeems + $1 WHERE staff = 'Support'",
                 redeems,
             )
-            await ctx.send(f"Support team rewarded with {redeems} redeems. Thank you for all that you guys do!<3")
+            await ctx.send(
+                f"Support team rewarded with {redeems} redeems. Thank you for all that you guys do!<3"
+            )
 
     @check_helper()
     @commands.hybrid_command()
     async def credits_donated(self, ctx):
         async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchval("select mewcoins from users where u_id = 920827966928326686")
-            embed = discord.Embed(title="**Total Credits Donated**", description=f"```{data}```")
+            data = await pconn.fetchval(
+                "select mewcoins from users where u_id = 920827966928326686"
+            )
+            embed = discord.Embed(
+                title="**Total Credits Donated**", description=f"```{data}```"
+            )
             embed.set_footer(text="Raffle is on Christmas!")
             await ctx.send(embed=embed)
-       
-    @check_mod()  
+
+    @check_mod()
     @commands.hybrid_command()
     async def irefresh(self, ctx):
         """MOD: IMAGE REFRESH, pull new images to both servers"""
         COMMAND = "rsync -avz --delete /var/www/mewbot.xyz/html/sprites/ /home/dylee/clustered/shared/duel/sprites/"
-        proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        proc = await asyncio.create_subprocess_shell(
+            COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
         stdout, stderr = await proc.communicate()
         stdout = stdout.decode()
 
@@ -1447,7 +1624,7 @@ class Sky(commands.Cog):
             await ctx.send("Image Syncing Failed.")
             ctx.bot.logger.warning(stdout)
             return
-        
+
         await ctx.send("Images Synced Successfully.")
 
         # COMMAND = f"sshpass -p liger666 ssh -A root@images.mewbot.xyz \"cd /var/www/html/img/sprites/ && git pull\" && cd /home/dylee/clustered/shared/duel/sprites/ && git pull"
@@ -1479,7 +1656,6 @@ class Sky(commands.Cog):
         # embed.description += addendum
         # await ctx.send(embed=embed)
 
-
     @check_gymauth()
     @commands.hybrid_command()
     async def tradable(self, ctx, pokeid: int, answer: bool):
@@ -1494,12 +1670,31 @@ class Sky(commands.Cog):
 
     @check_admin()
     @commands.hybrid_command()
-    async def setstats(self, ctx, id: int, hp: int, atk: int, defe: int, spatk: int, spdef: int, speed: int):
+    async def setstats(
+        self,
+        ctx,
+        id: int,
+        hp: int,
+        atk: int,
+        defe: int,
+        spatk: int,
+        spdef: int,
+        speed: int,
+    ):
         """ADMIN: Set stats"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute("call newstats($1,$2,$3,$4,$5,$6,$7)", id, hp, atk, defe, spatk, spdef, speed)
+            await pconn.execute(
+                "call newstats($1,$2,$3,$4,$5,$6,$7)",
+                id,
+                hp,
+                atk,
+                defe,
+                spatk,
+                spdef,
+                speed,
+            )
             await ctx.send(f"```Successfully set stats```")
-    
+
     @check_investigator()
     @commands.hybrid_command()
     async def ownedservers(self, ctx, u_id: int):
@@ -1517,7 +1712,11 @@ class Sky(commands.Cog):
             "return result"
         )
         eval_res = await self.bot.handler(
-            "_eval", processes, args={"body": body, "cluster_id": "-1"}, scope="bot", _timeout=5
+            "_eval",
+            processes,
+            args={"body": body, "cluster_id": "-1"},
+            scope="bot",
+            _timeout=5,
         )
         if not eval_res:
             await ctx.send("I can't process that request right now, try again later.")
@@ -1541,6 +1740,7 @@ class Sky(commands.Cog):
     async def pokenick(self, ctx):
         """MOD: Nickname Utilities"""
         pass
-        
+
+
 async def setup(bot):
     await bot.add_cog(Sky(bot))

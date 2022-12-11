@@ -53,6 +53,8 @@ def make_embed(title, description=None):
     e = discord.Embed(
         title=title,
         description=(description if description else ""),
-        color=random.choice((16711888, 0xFFB6C1, 0xFF69B4, 0xFFC0CB, 0xC71585, 0xDB7093)),
+        color=random.choice(
+            (16711888, 0xFFB6C1, 0xFF69B4, 0xFFC0CB, 0xC71585, 0xDB7093)
+        ),
     )
     return e

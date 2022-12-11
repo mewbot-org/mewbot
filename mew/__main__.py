@@ -23,10 +23,12 @@ import signal
 import time
 import json
 
+
 class SIGINTController(object):
-    def __init__(self, bot, logger = None):
+    def __init__(self, bot, logger=None):
         self.bot = bot
         self.logger = logger
+
     def __enter__(self):
         self.old_handler = signal.signal(signal.SIGINT, self.wrapper)
         self.old_term_handler = signal.signal(signal.SIGTERM, self.sigterm_wrapper)
@@ -39,16 +41,21 @@ class SIGINTController(object):
 
     async def handler(self):
         if self.logger:
-            self.logger.debug("Received SIGINT signal.  If attempting to stop outside the cluster, please use SIGTERM")
+            self.logger.debug(
+                "Received SIGINT signal.  If attempting to stop outside the cluster, please use SIGTERM"
+            )
 
     async def sigterm_handler(self):
         if self.logger:
-            self.logger.info("Received SIGTERM signal.  Please do not use this if the cluster was created through the launcher.")
+            self.logger.info(
+                "Received SIGTERM signal.  Please do not use this if the cluster was created through the launcher."
+            )
         await self.bot.close()
 
     def __exit__(self, type, value, traceback):
         signal.signal(signal.SIGINT, self.old_handler)
         signal.signal(signal.SIGTERM, self.old_term_handler)
+
 
 def parse_cluster_info():
     # Temporary statement until the next bot restart
@@ -56,12 +63,16 @@ def parse_cluster_info():
         sys.argv.append("/home/dyroot/mewbot/")
 
     if not len(sys.argv) == 7:
-        raise RuntimeError("Invalid arguments passed.\nUsage: [shard_list...] shard_count cluster_id cluster_name logging_code app_dir")
+        raise RuntimeError(
+            "Invalid arguments passed.\nUsage: [shard_list...] shard_count cluster_id cluster_name logging_code app_dir"
+        )
 
     try:
         shards = json.loads(sys.argv[1])
     except json.JSONDecodeError:
-        raise RuntimeError("Invalid shard list: must be a list of shards that is JSON serializable")
+        raise RuntimeError(
+            "Invalid shard list: must be a list of shards that is JSON serializable"
+        )
 
     try:
         total_shards = int(sys.argv[2])
@@ -87,9 +98,10 @@ def parse_cluster_info():
         "id": id_,
         "name": name,
         "lc": logging_code,
-        "ad": Path(sys.argv[6])
+        "ad": Path(sys.argv[6]),
     }
     return info
+
 
 def initialize_logging(cluster_id, cluster_name, logging_code):
     dpy_logger = logging.getLogger("discord")
@@ -111,7 +123,8 @@ def initialize_logging(cluster_id, cluster_name, logging_code):
         raise RuntimeError("Invalid logging code")
 
     formatter = logging.Formatter(
-        f"[%(asctime)-19s] [%(levelname)-8s]: [Cluster #{cluster_id} ({cluster_name})] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        f"[%(asctime)-19s] [%(levelname)-8s]: [Cluster #{cluster_id} ({cluster_name})] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     stdout_handler = logging.StreamHandler(sys.stdout)
@@ -121,9 +134,10 @@ def initialize_logging(cluster_id, cluster_name, logging_code):
 
     return base_logger
 
+
 if __name__ == "__main__":
     info = parse_cluster_info()
-    logger = initialize_logging(info['id'], info['name'], info["lc"])
+    logger = initialize_logging(info["id"], info["name"], info["lc"])
 
     client = Mew(info)
 

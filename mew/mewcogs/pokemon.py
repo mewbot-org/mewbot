@@ -1,3 +1,4 @@
+import math
 import discord
 from discord.ext import commands
 
@@ -13,7 +14,14 @@ import time
 
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
-from mewutils.misc import get_pokemon_image, get_emoji, pagify, MenuView, ConfirmView, AsyncIter
+from mewutils.misc import (
+    get_pokemon_image,
+    get_emoji,
+    pagify,
+    MenuView,
+    ConfirmView,
+    AsyncIter,
+)
 from mewutils.checks import tradelock
 from pokemon_utils.utils import get_pokemon_info, get_pokemon_qinfo
 
@@ -33,8 +41,9 @@ custom_poke = (
     "Kubfu-rapid-strike",
     "Palkia-lord",
     "Dialga-lord",
-    "Missingno"
+    "Missingno",
 )
+
 
 class Pokemon(commands.Cog):
     def __init__(self, bot):
@@ -76,13 +85,19 @@ class Pokemon(commands.Cog):
     async def _build_pokedex(self, ctx, include_owned: bool):
         """Helper func to build & send the pokedex."""
         async with self.bot.db[0].acquire() as pconn:
-            pokes = await pconn.fetchval("SELECT pokes FROM users WHERE u_id = $1", ctx.author.id)
+            pokes = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
+            )
             if pokes is None:
                 return
             owned = await pconn.fetch(
-                "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2)", pokes, custom_poke
+                "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2)",
+                pokes,
+                custom_poke,
             )
-        allpokes = self.bot.db[1].pfile.find(projection={"identifier": True, "_id": False})
+        allpokes = self.bot.db[1].pfile.find(
+            projection={"identifier": True, "_id": False}
+        )
         allpokes = await allpokes.to_list(None)
         allpokes = [t["identifier"].capitalize() async for t in AsyncIter(allpokes)]
         total = set(allpokes) - set(custom_poke)
@@ -104,7 +119,9 @@ class Pokemon(commands.Cog):
         await MenuView(ctx, pages).start()
 
     @commands.hybrid_command()
-    @discord.app_commands.describe(pokemon="Can be <pokemon_number> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon.")
+    @discord.app_commands.describe(
+        pokemon="Can be <pokemon_number> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
+    )
     async def select(self, ctx, pokemon: str):
         """Select a Pokémon"""
         async with self.bot.db[0].acquire() as pconn:
@@ -121,15 +138,19 @@ class Pokemon(commands.Cog):
                     return
                 if pokemon > 2147483647:
                     await ctx.send("You do not have that many pokemon!")
-                    return  
+                    return
                 _id = await pconn.fetchval(
-                    "SELECT pokes[$1] FROM users WHERE u_id = $2", pokemon, ctx.author.id
+                    "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                    pokemon,
+                    ctx.author.id,
                 )
             if _id is None:
                 await ctx.send("You have not started or that Pokemon does not exist!")
                 return
             else:
-                name = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+                name = await pconn.fetchval(
+                    "SELECT pokname FROM pokes WHERE id = $1", _id
+                )
                 await pconn.execute(
                     "UPDATE users SET selected = $1 WHERE u_id = $2", _id, ctx.author.id
                 )
@@ -137,7 +158,9 @@ class Pokemon(commands.Cog):
             await ctx.send(f"You have selected your {name}\n{emoji}")
 
     @commands.hybrid_command()
-    @discord.app_commands.describe(pokemon="Can be <pokemon_number> or 'new', 'latest' for your most recently owned Pokémon.")
+    @discord.app_commands.describe(
+        pokemon="Can be <pokemon_number> or 'new', 'latest' for your most recently owned Pokémon."
+    )
     @tradelock
     async def release(self, ctx, pokemon):
         """Release a Pokémon"""
@@ -154,7 +177,9 @@ class Pokemon(commands.Cog):
                 pokes.append(poke)
         else:
             async with self.bot.db[0].acquire() as pconn:
-                stmt = await pconn.prepare("SELECT pokes[$1] FROM users WHERE u_id = $2")
+                stmt = await pconn.prepare(
+                    "SELECT pokes[$1] FROM users WHERE u_id = $2"
+                )
                 for p in pokemon.split():
                     try:
                         p = int(p)
@@ -173,7 +198,10 @@ class Pokemon(commands.Cog):
             pokenames = []
             favorites = []
             valid_pokes = []
-            for p in (await pconn.fetch("SELECT id, pokname, fav, COALESCE(atkiv,0) + COALESCE(defiv,0) + COALESCE(spatkiv,0) + COALESCE(spdefiv,0) + COALESCE(speediv,0) + COALESCE(hpiv,0) AS ivs FROM pokes WHERE id = ANY ($1)", pokes)):
+            for p in await pconn.fetch(
+                "SELECT id, pokname, fav, COALESCE(atkiv,0) + COALESCE(defiv,0) + COALESCE(spatkiv,0) + COALESCE(spdefiv,0) + COALESCE(speediv,0) + COALESCE(hpiv,0) AS ivs FROM pokes WHERE id = ANY ($1)",
+                pokes,
+            ):
                 if p["fav"]:
                     favorites.append(p["pokname"])
                 else:
@@ -186,7 +214,10 @@ class Pokemon(commands.Cog):
             )
         if not pokenames:
             return
-        if not await ConfirmView(ctx, f"Are you sure you want to release your {', '.join(pokenames).capitalize()}?").wait():
+        if not await ConfirmView(
+            ctx,
+            f"Are you sure you want to release your {', '.join(pokenames).capitalize()}?",
+        ).wait():
             await ctx.send("Release cancelled.")
             return
         for poke_id in valid_pokes:
@@ -194,7 +225,9 @@ class Pokemon(commands.Cog):
         await ctx.send(
             f"You have successfully released your {', '.join(pokenames).capitalize()}"
         )
-        await self.bot.get_partial_messageable(998563289082626049).send(f"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`")
+        await self.bot.get_partial_messageable(998563289082626049).send(
+            f"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
+        )
 
     @commands.hybrid_command()
     async def cooldowns(self, ctx):
@@ -214,7 +247,9 @@ class Pokemon(commands.Cog):
     async def p(self, ctx):
         """List all your currently owned Pokémon"""
         async with ctx.bot.db[0].acquire() as pconn:
-            pokes = await pconn.fetchval("SELECT pokes FROM users WHERE u_id = $1", ctx.author.id)
+            pokes = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
+            )
             if pokes is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
@@ -231,12 +266,12 @@ class Pokemon(commands.Cog):
         }
         order = orders.get(user_order)
         query = f"""SELECT *, COALESCE(atkiv,0) + COALESCE(defiv,0) + COALESCE(spatkiv,0) + COALESCE(spdefiv,0) + COALESCE(speediv,0) + COALESCE(hpiv,0) AS ivs, COALESCE(atkev,0) + COALESCE(defev,0) + COALESCE(spatkev,0) + COALESCE(spdefev,0) + COALESCE(speedev,0) + COALESCE(hpev,0) AS evs FROM pokes WHERE id = ANY ($1) {order}"""
-        
+
         async with self.bot.db[0].acquire() as pconn:
             async with pconn.transaction():
                 cur = await pconn.cursor(query, pokes)
                 records = await cur.fetch(15 * 250)
-        
+
         desc = ""
         async for record in AsyncIter(records):
             nr = record["pokname"]
@@ -253,18 +288,20 @@ class Pokemon(commands.Cog):
                 skin=record["skin"],
             )
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
-            desc += f'{emoji}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}\n'
+            desc += f"{emoji}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}\n"
 
         embed = discord.Embed(title="Your Pokémon", color=0xFFB6C1)
         pages = pagify(desc, base_embed=embed)
         await MenuView(ctx, pages).start()
-    
+
     @commands.hybrid_group()
     async def tags(self, ctx):
         ...
-    
+
     @tags.command()
-    @discord.app_commands.describe(pokemon="Can be <pokemon_number> or 'new', 'latest' for most recently owned Pokémon.")
+    @discord.app_commands.describe(
+        pokemon="Can be <pokemon_number> or 'new', 'latest' for most recently owned Pokémon."
+    )
     async def list(self, ctx, pokemon: str):
         """View the tags for a pokemon."""
         async with self.bot.db[0].acquire() as pconn:
@@ -280,7 +317,9 @@ class Pokemon(commands.Cog):
                     await ctx.send("You need to provide a valid pokemon number.")
                     return
                 gid = await pconn.fetchval(
-                    "SELECT pokes[$1] FROM users WHERE u_id = $2", pokemon, ctx.author.id
+                    "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                    pokemon,
+                    ctx.author.id,
                 )
             if gid is None:
                 await ctx.send("That pokemon does not exist!")
@@ -297,7 +336,10 @@ class Pokemon(commands.Cog):
         await MenuView(ctx, pages).start()
 
     @tags.command()
-    @discord.app_commands.describe(tag="A 'Tag' or 'Label' to give a Pokémon or list of Pokémon", pokes="List of Pokémon to tag.")
+    @discord.app_commands.describe(
+        tag="A 'Tag' or 'Label' to give a Pokémon or list of Pokémon",
+        pokes="List of Pokémon to tag.",
+    )
     async def add(self, ctx, tag: str, pokes: str):
         """Add a tag to a pokemon."""
         tag = tag.lower().strip()
@@ -323,7 +365,9 @@ class Pokemon(commands.Cog):
                         failed.append(str(poke))
                         continue
                     gid = await pconn.fetchval(
-                        "SELECT pokes[$1] FROM users WHERE u_id = $2", poke, ctx.author.id
+                        "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                        poke,
+                        ctx.author.id,
                     )
                 if gid is None:
                     failed.append(str(poke))
@@ -335,7 +379,9 @@ class Pokemon(commands.Cog):
                     failed.append(str(poke))
                     continue
                 tags.add(tag)
-                await pconn.execute("UPDATE pokes SET tags = $1 WHERE id = $2", list(tags), gid)
+                await pconn.execute(
+                    "UPDATE pokes SET tags = $1 WHERE id = $2", list(tags), gid
+                )
         if len(failed) == len(pokes) == 1:
             await ctx.send("That pokemon does not exist!")
         elif len(failed) == len(pokes):
@@ -348,7 +394,10 @@ class Pokemon(commands.Cog):
             await ctx.send("Tag successfully added.")
 
     @tags.command()
-    @discord.app_commands.describe(tag="A 'Tag' or 'Label' on a Pokémon or list of Pokémon", pokes="List of Pokémon to remove the tag.")
+    @discord.app_commands.describe(
+        tag="A 'Tag' or 'Label' on a Pokémon or list of Pokémon",
+        pokes="List of Pokémon to remove the tag.",
+    )
     async def remove(self, ctx, tag: str, pokes: str):
         """Remove a tag from a pokemon."""
         tag = tag.lower().strip()
@@ -373,7 +422,9 @@ class Pokemon(commands.Cog):
                         not_exist.append(str(poke))
                         continue
                     gid = await pconn.fetchval(
-                        "SELECT pokes[$1] FROM users WHERE u_id = $2", poke, ctx.author.id
+                        "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                        poke,
+                        ctx.author.id,
                     )
                 if gid is None:
                     not_exist.append(str(poke))
@@ -388,7 +439,9 @@ class Pokemon(commands.Cog):
                     dont_have_tag.append(str(poke))
                     continue
                 tags.remove(tag)
-                await pconn.execute("UPDATE pokes SET tags = $1 WHERE id = $2", list(tags), gid)
+                await pconn.execute(
+                    "UPDATE pokes SET tags = $1 WHERE id = $2", list(tags), gid
+                )
         # I don't know why I did this
         if (len(not_exist) + len(dont_have_tag) == len(pokes)) and (
             not_exist and dont_have_tag
@@ -425,29 +478,31 @@ class Pokemon(commands.Cog):
         """Gets a string formatted to be used to display evolution requirements for a particular pokemon."""
         reqs = []
         evoreq = await self.bot.db[1].evofile.find_one({"evolved_species_id": poke})
-        if evoreq['trigger_item_id']:
-            item = await self.bot.db[1].items.find_one({"id": evoreq['trigger_item_id']})
+        if evoreq["trigger_item_id"]:
+            item = await self.bot.db[1].items.find_one(
+                {"id": evoreq["trigger_item_id"]}
+            )
             reqs.append(f"apply `{item['identifier']}`")
-        if evoreq['held_item_id']:
-            item = await self.bot.db[1].items.find_one({"id": evoreq['held_item_id']})
+        if evoreq["held_item_id"]:
+            item = await self.bot.db[1].items.find_one({"id": evoreq["held_item_id"]})
             reqs.append(f"hold `{item['identifier']}`")
-        if evoreq['gender_id']:
+        if evoreq["gender_id"]:
             reqs.append(f"is `{'female' if evoreq['gender_id'] == 1 else 'male'}`")
-        if evoreq['minimum_level']:
+        if evoreq["minimum_level"]:
             reqs.append(f"lvl `{evoreq['minimum_level']}`")
-        if evoreq['known_move_id']:
-            move = await self.bot.db[1].moves.find_one({"id": evoreq['known_move_id']})
+        if evoreq["known_move_id"]:
+            move = await self.bot.db[1].moves.find_one({"id": evoreq["known_move_id"]})
             reqs.append(f"knows `{move['identifier']}`")
-        if evoreq['minimum_happiness']:
+        if evoreq["minimum_happiness"]:
             reqs.append(f"happiness `{evoreq['minimum_happiness']}`")
-        if evoreq['relative_physical_stats'] is not None:
-            if evoreq['relative_physical_stats'] == 0:
+        if evoreq["relative_physical_stats"] is not None:
+            if evoreq["relative_physical_stats"] == 0:
                 reqs.append(f"atk = def")
-            elif evoreq['relative_physical_stats'] == 1:
+            elif evoreq["relative_physical_stats"] == 1:
                 reqs.append(f"atk > def")
-            elif evoreq['relative_physical_stats'] == -1:
+            elif evoreq["relative_physical_stats"] == -1:
                 reqs.append(f"atk < def")
-        if evoreq['region']:
+        if evoreq["region"]:
             reqs.append(f"region `{evoreq['region']}`")
         reqs = ", ".join(reqs)
         return f"({reqs})"
@@ -456,16 +511,41 @@ class Pokemon(commands.Cog):
         """Recursively build an evolution tree for a particular species."""
         result = ""
         for poke in raw:
-            if poke['evolves_from_species_id'] == species_id:
+            if poke["evolves_from_species_id"] == species_id:
                 reqs = ""
-                if species_id != "":
+                if species_id:
                     reqs = await self.get_reqs(poke["id"])
-                result += f"{prefix}├─{poke['identifier']} {reqs}\n"
-                result += await self.get_kids(raw, poke['id'], f"{prefix}│ ")
+                result += f"{prefix}├─{poke['identifier'].capitalize()} {reqs}\n"
+                result += await self.get_kids(raw, poke["id"], f"{prefix}│")
         return result
 
+    # async def get_kids(self, raw, species_id, prefix):
+    #     """Recursively build an evolution tree for a particular species."""
+    #     result = ""
+    #     for index, poke in enumerate(raw):
+    #         if poke['evolves_from_species_id'] == species_id or isinstance(poke['evolves_from_species_id'], float):
+    #             self.bot.logger.info(
+    #                 "Getting kids for %s " % poke['identifier']
+    #             )
+    #             # if math.isnan(poke["evolves_from_species_id"]):
+    #             #     break
+    #             #     if isinstance(poke["evolves_from_species_id"], float):
+    #             #         self.bot.logger.warn(
+    #             #             "Found a base evo %s " % poke['identifier']
+    #             #         )
+    #             #         continue
+
+    #             reqs = ""
+    #             if isinstance(poke["evolves_from_species_id"], int):
+    #                 reqs = await self.get_reqs(poke["id"])
+    #             result += f"{prefix}├─{poke['identifier']} {reqs}\n"
+    #             result += await self.get_kids(raw, poke["id"], f"{prefix}│ ")
+    #     return result
+
     @commands.hybrid_command(name="i")
-    @discord.app_commands.describe(pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon.")
+    @discord.app_commands.describe(
+        pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
+    )
     async def info(self, ctx, *, pokemon: str = None):
         """Get information about a Pokémon."""
         if pokemon is None:
@@ -512,7 +592,9 @@ class Pokemon(commands.Cog):
                     ctx.author.id,
                 )
             if records is None:
-                await ctx.send("You do not have that many pokemon. Go catch some more first!")
+                await ctx.send(
+                    "You do not have that many pokemon. Go catch some more first!"
+                )
                 return
             await ctx.send(embed=await get_pokemon_info(ctx, records))
             return
@@ -525,10 +607,10 @@ class Pokemon(commands.Cog):
             shiny = True
             pokemon.remove("shiny")
         elif "gleam" in pokemon:
-            skin = 'gleam'
+            skin = "gleam"
             pokemon.remove("gleam")
         elif "radiant" in pokemon:
-            skin = 'radiant'
+            skin = "radiant"
             pokemon.remove("radiant")
         elif "shadow" in pokemon and pokemon.index("shadow") == 0:
             skin = "shadow"
@@ -559,6 +641,8 @@ class Pokemon(commands.Cog):
             forms.remove("Alola")
         if "Hisui" in forms:
             forms.remove("Hisui")
+        if "Paldea" in forms:
+            forms.remove("Paldea")
         if not forms:
             forms = ["None"]
         forms = "\n".join(forms)
@@ -582,7 +666,9 @@ class Pokemon(commands.Cog):
         ]
         try:
             egg_groups_ids = (
-                await ctx.bot.db[1].egg_groups.find_one({"species_id": form_info["pokemon_id"]})
+                await ctx.bot.db[1].egg_groups.find_one(
+                    {"species_id": form_info["pokemon_id"]}
+                )
             )["egg_groups"]
         except:
             egg_groups_ids = [15]
@@ -590,9 +676,11 @@ class Pokemon(commands.Cog):
         egg_groups = [
             str(
                 ctx.bot.misc.get_egg_emote(
-                    (await ctx.bot.db[1].egg_groups_info.find_one({"id": egg_group_id}))[
-                        "identifier"
-                    ]
+                    (
+                        await ctx.bot.db[1].egg_groups_info.find_one(
+                            {"id": egg_group_id}
+                        )
+                    )["identifier"]
                 )
             )
             for egg_group_id in egg_groups_ids
@@ -638,13 +726,17 @@ class Pokemon(commands.Cog):
         evo_line = ""
         catch_rate = ""
         form_suffix = form_info["form_identifier"]
-        if form_suffix in ("alola", "galar", "hisui"):
+        if form_suffix in ("alola", "galar", "hisui", "paldea"):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
         if pfile is not None:
-            raw_evos = await ctx.bot.db[1].pfile.find({"evolution_chain_id": pfile["evolution_chain_id"]}).to_list(None)
-            evo_line = await self.get_kids(raw_evos, '', '')
+            raw_evos = (
+                await ctx.bot.db[1]
+                .pfile.find({"evolution_chain_id": pfile["evolution_chain_id"]})
+                .to_list(None)
+            )
+            evo_line = await self.get_kids(raw_evos, None, "➥")
             evo_line = f"**Evolution Line**:\n{evo_line}"
             catch_rate = f"**Catch rate**: {pfile['capture_rate']}\n"
 
@@ -674,7 +766,7 @@ class Pokemon(commands.Cog):
                 f"**Stats**\n{stats_str}\n"
                 f"**Available Forms**:\n{forms}\n"
                 f"{evo_line}"
-            )
+            ),
         )
         embed.set_footer(
             text=f"Evolve to any of the forms by using /form (form name) - Upvote MewBot"
@@ -683,7 +775,9 @@ class Pokemon(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="qi")
-    @discord.app_commands.describe(pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon.")
+    @discord.app_commands.describe(
+        pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
+    )
     async def qinfo(self, ctx, pokemon: str = None):
         """Miniature version of the `info` command"""
         if pokemon is None:
@@ -724,7 +818,9 @@ class Pokemon(commands.Cog):
                     ctx.author.id,
                 )
             if records is None:
-                await ctx.send("You do not have that many pokemon. Go catch some more first!")
+                await ctx.send(
+                    "You do not have that many pokemon. Go catch some more first!"
+                )
                 return
             await ctx.send(embed=await get_pokemon_qinfo(ctx, records))
             return
@@ -764,7 +860,8 @@ class Pokemon(commands.Cog):
             return
         type_ids = ptypes["types"]
         types = [
-            (await ctx.bot.db[1].types.find_one({"id": _type}))["identifier"] for _type in type_ids
+            (await ctx.bot.db[1].types.find_one({"id": _type}))["identifier"]
+            for _type in type_ids
         ]
 
         pokemon_stats = await ctx.bot.db[1].pokemon_stats.find_one(
