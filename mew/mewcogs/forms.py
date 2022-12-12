@@ -326,7 +326,10 @@ class Forms(commands.Cog):
             await ctx.send("Your Pokemon has successfully reset forms")
 
     @forms.command()
-    async def form(self, ctx, val: str):
+    @discord.app_commands.describe(
+        form_name="The name of the Pokémon form to evolve into.",
+    )
+    async def form(self, ctx, form_name: str):
         """Creates a form of a pokemon"""
         val = val.lower()
         if any(
