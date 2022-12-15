@@ -996,7 +996,7 @@ class KittyCat(commands.Cog):
             "mythic chest",
             "rare chest",
             "common chest",
-            "horrific chest",
+            "art chest",
         ],
         amount: int,
     ):

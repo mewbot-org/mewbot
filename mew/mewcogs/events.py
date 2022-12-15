@@ -777,7 +777,7 @@ class Events(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin="halloween"
                 )
-                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Halloween {pokemon}!**\n"
+                msg = f"<a:quagwalk:998519974400380948> **Congratulations! You received a Halloween {pokemon}!**\n"
             elif reward == "redeem":
                 amount = random.randint(1, 10)
                 async with ctx.bot.db[0].acquire() as pconn:
@@ -846,7 +846,7 @@ class Events(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin="halloween"
                 )
-                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Halloween {pokemon}!**\n"
+                msg = f"<a:quagwalk:998519974400380948> **Congratulations! You received a Halloween {pokemon}!**\n"
 
             elif reward == "mythicchest":
 
@@ -930,7 +930,7 @@ class Events(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin="halloween", boosted=True
                 )
-                msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted Halloween {pokemon}!**\n"
+                msg = f"<a:quagwalk:998519974400380948> **Congratulations! You received a boosted Halloween {pokemon}!**\n"
             elif reward == "legendchest":
                 inventory = await pconn.fetchval(
                     "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id

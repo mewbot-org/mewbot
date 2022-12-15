@@ -331,7 +331,7 @@ class Forms(commands.Cog):
     )
     async def form(self, ctx, form_name: str):
         """Creates a form of a pokemon"""
-        val = val.lower()
+        val = form_name.lower()
         if any(
             val.lower().endswith(x)
             for x in ("alola", "galar", "hisui", "paldea", "misfit", "skylarr")
