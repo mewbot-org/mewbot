@@ -737,7 +737,7 @@ class Extras(commands.Cog):
         )
         e.set_image(url=await get_pokemon_image(pokemon, ctx.bot, skin="shadow"))
         await ctx.send(embed=e)
-        await ctx.bot.get_partial_messageable(958144112903729172).send(
+        await ctx.bot.get_partial_messageable(999442907465523220).send(
             f"`{ctx.author.id} - {hunt} @ {chain}x -> {pokemon}`"
         )
 

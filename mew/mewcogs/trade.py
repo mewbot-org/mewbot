@@ -54,21 +54,22 @@ class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
         self.out_interaction = None
         super().__init__()
 
-    poke_id = discord.ui.TextInput(
-        label="Pokemon ID", placeholder="ID of the pokemon you want to add"
+    poke_ids = discord.ui.TextInput(
+        label="Pokemon IDs", placeholder="IDs of the pokemon you want to add (separated by space)"
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        id = str(self.poke_id).replace(" ", "")
-        if not id.isdigit():
+        # ids = str(self.poke_id).replace(" ", "")
+        ids = str(self.poke_ids).split(" ")
+        if any((not x.isdigit() for x in ids)):
             self.output = None
             await interaction.response.send_message(
-                f"Please enter a valid pokemon ID: {id}", ephemeral=True
+                f"Please enter only valid pokemon IDs: {id}", ephemeral=True
             )
             self.event.set()
             return
 
-        self.output = int(id)
+        self.output = [int(x) for x in ids]
 
         self.out_interaction = interaction
         self.event.set()
@@ -351,58 +352,64 @@ class TradeMainView(discord.ui.View):
         if not modal.output:
             return
 
-        if modal.output == 1:
+        if 1 in modal.output:
             await modal.out_interaction.response.send_message(
                 "You can not give off your Number 1 Pokemon", ephemeral=True
             )
             return
 
-        if modal.output in self.pokes:
+        # filter out any duplicates that already exist.
+        # await self.ctx.send(modal.output)
+        # modal.output = [x for x in self.pokes if x not in modal.output]
+
+        if any(x in self.pokes for x in modal.output):
             await modal.out_interaction.response.send_message(
-                "You already have this pokemon in your trade", ephemeral=True
+                "You already have some of these pokemon in your trade", ephemeral=True
             )
             return
 
         async with self.ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow(
-                "SELECT id, pokname, pokelevel, shiny, radiant, tradable FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
-                modal.output,
-                interaction.user.id,
-            )
-
-            if not details:
-                await modal.out_interaction.response.send_message(
-                    "You do not have that Pokemon or that Pokemon is currently in the market!",
-                    ephemeral=True,
+            for id in modal.output:
+                details = await pconn.fetchrow(
+                    "SELECT id, pokname, pokelevel, shiny, radiant, tradable FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
+                    id,
+                    interaction.user.id,
                 )
-                return
 
-        if details["id"] in self.pokes:
-            await modal.out_interaction.response.send_message(
-                "You already have this pokemon in your trade", ephemeral=True
-            )
-            return
+                if not details:
+                    await modal.out_interaction.response.send_message(
+                        "You do not have that Pokemon or that Pokemon is currently in the market!",
+                        ephemeral=True,
+                    )
+                    return
 
-        if details["pokname"] == "Egg":
-            await modal.out_interaction.response.send_message(
-                "You cannot trade eggs!", ephemeral=True
-            )
-            return
+                if details["id"] in self.pokes:
+                    await modal.out_interaction.response.send_message(
+                        "You already have this pokemon in your trade", ephemeral=True
+                    )
+                    return
 
-        if not details["tradable"]:
-            await modal.out_interaction.response.send_message(
-                "This pokemon is not tradable", ephemeral=True
-            )
-            return
+                if details["pokname"] == "Egg":
+                    await modal.out_interaction.response.send_message(
+                        "You cannot trade eggs!", ephemeral=True
+                    )
+                    return
 
-        self.pokes.append(Poke(interaction.user.id, details["id"]))
+                if not details["tradable"]:
+                    await modal.out_interaction.response.send_message(
+                        "This pokemon is not tradable", ephemeral=True
+                    )
+                    return
 
-        await modal.out_interaction.response.send_message(
-            f"Added {modal.output} to your trade list (message will update in a second or two!)",
-            ephemeral=True,
-        )
+                self.pokes.append(Poke(interaction.user.id, details["id"]))
+
+                # await modal.out_interaction.response.send_message(
+                #     f"Added {id} to your trade list (message will update in a second or two!)",
+                #     ephemeral=True,
+                # )
 
         await self.update_msg()
+        return
 
     @discord.ui.button(label="Remove Pokemon", style=discord.ButtonStyle.danger, row=1)
     async def remove_poke(self, interaction, button):
