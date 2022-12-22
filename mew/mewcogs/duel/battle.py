@@ -14,8 +14,28 @@ class Battle:
     This object holds all necessary information for a battle & runs the battle.
     """
 
-    def __init__(self, ctx, trainer1, trainer2, *, inverse_battle=False):
-        self.ctx = ctx
+    BATTLE_TOWER = "BATTLE TOWER"
+    DUEL = "DUEL"
+    PARTY_DUEL = "PARTY DUEL"
+    NPC = "NPC"
+
+    async def send(
+        self, content=None, *, embed=None, file: discord.File = None, view=None
+    ):
+        if self.type == self.BATTLE_TOWER:
+            for ctx in self.ctxs:
+                await ctx.send(content=content, embed=embed, file=file, view=view)
+        else:
+            await self.ctx.send(content=content, embed=embed, file=file, view=view)
+
+    def __init__(self, ctxs, type, trainer1, trainer2, *, inverse_battle=False):
+        self.ctxs = ctxs
+        self.ctx = ctxs[0] if isinstance(ctxs, list) else ctxs
+
+        if type not in (self.BATTLE_TOWER, self.DUEL, self.PARTY_DUEL, self.NPC):
+            raise ValueError("Invalid battle type")
+
+        self.type = type
         self.trainer1 = trainer1
         for poke in trainer1.party:
             poke.held_item.battle = self
@@ -318,7 +338,7 @@ class Battle:
                 self.trainer1.selected_action is None
                 and self.trainer2.selected_action is None
             ):
-                await self.ctx.send("Both players forfeited...")
+                await self.send("Both players forfeited...")
                 return  # TODO: ???
             if self.trainer1.selected_action is None:
                 self.msg += (
@@ -643,7 +663,7 @@ class Battle:
             embed.description = page
             pages.append(embed)
         for page in pages:
-            await self.ctx.send(embed=page)
+            await self.send(embed=page)
         self.msg = ""
 
     async def run_swap(self, swapper, othertrainer, *, mid_turn=False):
@@ -659,7 +679,7 @@ class Battle:
         swapper.event.clear()
         if swapper.is_human():
             swap_view = SwapPromptView(swapper, othertrainer, self, mid_turn=mid_turn)
-            await self.ctx.send(
+            await self.send(
                 f"{swapper.name}, pick a pokemon to swap to!", view=swap_view
             )
         else:

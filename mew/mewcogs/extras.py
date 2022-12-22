@@ -632,6 +632,7 @@ class Extras(commands.Cog):
         )
 
     @commands.hybrid_command()
+    @discord.app_commands.describe(nick="The new nickname for your Pokemon")
     async def nick(self, ctx, nick: str = "None"):
         """Set or reset your selected pokemon's nickname."""
         if len(nick) > 150:

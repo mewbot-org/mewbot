@@ -1,6 +1,9 @@
 import discord
 import asyncio
 import random
+import numpy as np
+
+from sklearn.feature_extraction import DictVectorizer
 from .enums import Ability, DamageClass, ElementType
 from .misc import ExpiringEffect, ExpiringWish, ExpiringItem
 from .move import Move
@@ -250,8 +253,51 @@ class NPCTrainer(Trainer):
     Represents a pokemon trainer that is a NPC.
     """
 
-    def __init__(self, party):
+    def __init__(self, bot, party):
+        self.bot = bot
         super().__init__("Trainer John", party)
+
+    def _predict_best_move(self, defender):
+        X = []
+
+        # moves = [
+        #     {k: v for k, v in vars(move).items() if type(v) in (str, int)}
+        #     for move in self.current_pokemon.moves
+        # ]
+        # opponent_name = defender.name
+        for move in self.current_pokemon.moves:
+            features = {
+                **{k: v for k, v in vars(move).items() if type(v) in (str, int)},
+                **{k: v for k, v in vars(defender).items() if type(v) in (str, int)},
+                **{
+                    k: v
+                    for k, v in vars(
+                        self.current_pokemon,
+                    ).items()
+                    if type(v) in (str, int)
+                },
+            }
+            # features = {**move, "opponent_name": opponent_name}
+            # {
+            #     # "effectiveness": d["effectiveness"],
+            #     **move,
+            #     **defender,
+            #     **self.current_pokemon,
+            # }
+            X.append(features)
+
+        # Convert the list of dictionaries into a numerical format using DictVectorizer
+        vec = DictVectorizer()
+        X = vec.fit_transform(X)
+
+        # Use the trained machine learning model to make predictions on the list of moves
+        predictions = self.bot.npc_model.predict(X)
+
+        # Find the index of the move with the highest predicted effectiveness
+        best_move_index = np.argmax(predictions)
+
+        # Return the move with the highest predicted effectiveness
+        return best_move_index
 
     def move(self, defender, battle):
         status_code, movedata = self.valid_moves(defender)
@@ -261,6 +307,9 @@ class NPCTrainer(Trainer):
             self.selected_action = Move.struggle()
         else:
             self.selected_action = self.current_pokemon.moves[random.choice(movedata)]
+            # self.selected_action = self.current_pokemon.moves[
+            #     self._predict_best_move(defender)
+            # ]
         self.event.set()
         # TODO: npc ai?
 

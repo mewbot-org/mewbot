@@ -905,7 +905,7 @@ class Breeding(commands.Cog):
             return
         await cog.f.get_command("p").callback(cog, ctx, args=args)
 
-    @commands.hybrid_command()
+    # @commands.hybrid_command()
     async def daycare(self, ctx):
         await ctx.send(
             "This command is deprecated, you should use `/f p args:name egg` instead. "

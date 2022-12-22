@@ -1,7 +1,11 @@
+import json
+from pprint import pprint
 import random
+from pymemcache.client import base
+from pymemcache import serde
+import orjson
 from .enums import Ability, DamageClass, ElementType, MoveTarget
 from .misc import LockedMove, StatChange, BatonPass, ExpiringEffect, ExpiringItem
-
 
 class Move:
     """Represents an instance of a move."""
@@ -9,6 +13,7 @@ class Move:
     def __init__(self, **kwargs):
         """Accepts a dict from the mongo moves table."""
         self.id = kwargs["id"]
+        self.kwargs = kwargs
         self.name = kwargs["identifier"]
         self.pretty_name = self.name.capitalize().replace("-", " ")
         self.power = kwargs["power"]
@@ -25,6 +30,7 @@ class Move:
         self.min_hits = kwargs["min_hits"]
         self.max_hits = kwargs["max_hits"]
         self.used = False
+        self.mc = base.Client(('178.28.0.20', 11211), serde=serde.PickleSerde(pickle_version=2))
 
     def setup(self, attacker, defender, battle):
         """
@@ -2865,7 +2871,19 @@ class Move:
                 source="its weakness policy",
             )
             defender.held_item.use()
+        
+        # data = self.mc.gets('npc_data', default=[])[0]
+        # data.append(
+        #     {
+        #             "move":  { k: v for k, v in vars(self).items() if type(v) in (str, int) },
+        #             "user": { k: v for k, v in vars(attacker).items() if type(v) in (str, int) },
+        #             "opponent": { k: v for k, v in vars(defender).items() if type(v) in (str, int) },
+        #             "effectiveness": effectiveness,
+        #     }
+        # )
+        # self.mc.set('npc_data', data)
 
+                
         return (msg, hits)
 
     def get_power(self, attacker, defender, battle):

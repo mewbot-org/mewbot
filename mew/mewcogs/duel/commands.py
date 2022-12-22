@@ -6,11 +6,19 @@ import aiohttp
 import random
 import time
 import traceback
+import collections
+import pandas as pd
+
+from pymemcache.client import base
+from pymemcache import serde
 from datetime import datetime, timedelta
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction import DictVectorizer
 from .pokemon import DuelPokemon
 from .trainer import MemberTrainer, NPCTrainer
 from .battle import Battle
-from .buttons import DuelAcceptView
+from .buttons import DuelAcceptView, BattleTowerAcceptView
 from .data import generate_team_preview
 
 import os
@@ -36,6 +44,9 @@ class Duel(commands.Cog):
         # TODO: swap this to db
         self.ranks = {}
 
+        self.bt_queue = collections.deque()
+        self.mc = base.Client(('178.28.0.20', 11211), serde=serde.PickleSerde(pickle_version=2))
+
     async def initialize(self):
         """Preps the redis cache."""
         # This is to make sure the duelcooldowns dict exists before we access in the cog check
@@ -59,6 +70,27 @@ class Duel(commands.Cog):
                 self.duel_reset_time.decode("utf-8"), DATE_FORMAT
             )
 
+    @commands.hybrid_command()
+    async def battle_tower_diag(self, ctx):
+        """Diagnose Battle Tower"""
+        await ctx.send(f"Current Queue: {self.bt_queue}\n\n\nRanks: {self.ranks}")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+
+        """Starts the matchmaking loop when the bot is ready"""
+        
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            # Check if there are enough users in the queue to start a match
+            if len(self.bt_queue) >= 2:
+                # Matchmake the first two users in the queue
+                ctx1 = self.bt_queue.popleft()[1]
+                ctx2 = self.bt_queue.popleft()[1]
+                await self._initiate_battle_tower(ctx1, ctx2)
+            # Wait for 10 seconds before checking the queue again
+            await asyncio.sleep(10)
+
     @staticmethod
     async def _get_opponent(ctx, opponent: discord.Member, battle_type: str):
         """Confirms acceptence of the duel with the requested member."""
@@ -66,6 +98,15 @@ class Duel(commands.Cog):
             await ctx.send("You cannot duel yourself!")
             return False
         return await DuelAcceptView(ctx, opponent, battle_type).wait()
+
+    @staticmethod
+    async def _get_battle_tower_opponent(ctx1, ctx2, battle_type: str):
+        """Confirms acceptence of battle tower duel with the matched user."""
+        if ctx1.author.id == ctx2.author.id:
+            await ctx1.send("You cannot duel yourself!")
+            await ctx2.send("You cannot duel yuzzef!")
+            return False
+        return await BattleTowerAcceptView(ctx1, ctx2, battle_type).wait()
 
     async def _check_cooldowns(self, ctx, opponent: discord.Member):
         """Checks daily cooldowns to see if the author can duel."""
@@ -163,17 +204,18 @@ class Duel(commands.Cog):
         try:
             winner = await battle.run()
         except (aiohttp.client_exceptions.ClientOSError, asyncio.TimeoutError) as e:
-            await battle.ctx.send(
+            raise e
+            await battle.send(
                 "The bot encountered an unexpected network issue, "
                 "and the duel could not continue. "
                 "Please try again in a few moments.\n"
                 "Note: Do not report this as a bug."
             )
         except Exception as e:
-            await battle.ctx.send(
+            await battle.send(
                 "`The duel encountered an error.\n`"
-                f"Your error code is **`{battle.ctx._interaction.id}`**.\n"
-                "Please post this code in <#888861248907780136> with "
+                f"Your error code is **`{battle.ctx.interaction.id}`**.\n"
+                "Please post this code in <#1009276416656941196> with "
                 "details about what was happening when this error occurred."
             )
 
@@ -226,10 +268,192 @@ class Duel(commands.Cog):
 
         return winner
 
+    @commands.hybrid_command()
+    async def train(self, ctx):
+        data = self.mc.get("npc_data")
+        df = pd.DataFrame(data)
+
+        X = []
+        Y = []
+        for d in data:
+            features = {
+                # "effectiveness": d["effectiveness"],
+                **d["move"],
+                **d["opponent"],
+                **d["user"],
+            }
+            # Convert the effectiveness value into a discrete label
+            if d["effectiveness"] > 0.5:
+                label = "effective"
+            else:
+                label = "ineffective"
+
+            X.append(features)
+            Y.append(label)
+
+        vec = DictVectorizer()
+        X = vec.fit_transform(X)
+
+        # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+
+        # # Split the data into training and test sets
+        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+        # # Normalize the data
+        # scaler = StandardScaler()
+        # X_train = scaler.fit_transform(X_train)
+        # X_test = scaler.transform(X_test)
+
+        # Train a machine learning model
+        self.bot.npc_model = RandomForestClassifier()
+        self.bot.npc_model.fit(X, Y)
+        await ctx.send("Model training complete!")
+
     @commands.hybrid_group()
     async def duel(self, ctx):
         """Initiate a 1v1 duel, 6v6 battle, NPC duel or an Inverse duel."""
         ...
+
+    @duel.command()
+    async def tower(self, ctx):
+        """A battle tower duel."""
+        await ctx.send("Coming soon...")
+        return
+        e = discord.Embed(
+            title="Adding you to the matchmaking queue...",
+            description="Please wait",
+            color=0xFFB6C1,
+        )
+        msg = await ctx.send(embed=e)
+
+        if any([x[0] == ctx.author.id for x in self.bt_queue]):
+            e.title = "You are already in the queue, please wait..."
+            e.description = ""
+            await msg.edit(embed=e)
+            return
+
+        self.bt_queue.append([ctx.author.id, ctx])
+
+        e.title = "Added to the queue, waiting for a match!..."
+        e.description = ""
+        await asyncio.sleep(3)
+        await msg.edit(embed=e)
+
+        # Now we have added a user to the queue,
+
+    async def _initiate_battle_tower(self, ctx1, ctx2):
+        if not await self._get_battle_tower_opponent(ctx1, ctx2, "battle tower duel"):
+            return
+
+        e = discord.Embed(
+            title="Pokemon Battle accepted! Loading...",
+            description="Please wait",
+            color=0xFFB6C1,
+        )
+        e.set_image(url=random.choice(PREGAME_GIFS))
+        [await ctx.send(embed=e) for ctx in [ctx1, ctx2]]
+        # await ctx.send(embed=e)
+
+        if not await self._check_cooldowns(ctx1, ctx2.author):
+            return
+
+        async with ctx1.bot.db[0].acquire() as pconn:
+            challenger1 = await pconn.fetchrow(
+                "SELECT * FROM pokes WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
+                ctx1.author.id,
+            )
+            challenger2 = await pconn.fetchrow(
+                "SELECT * FROM pokes WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
+                ctx2.author.id,
+            )
+        if challenger1 is None:
+            [
+                await ctx.send(
+                    f"{ctx1.author.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!"
+                )
+                for ctx in [ctx1, ctx2]
+            ]
+            # await ctx.send(f"{ctx.author.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!")
+            return
+        if challenger2 is None:
+            [
+                await ctx.send(
+                    f"{ctx2.author.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!"
+                )
+                for ctx in [ctx1, ctx2]
+            ]
+            # await ctx.send(f"{opponent.name} has not selected a Pokemon!\nSelect one with `/select <id>` first!")
+            return
+        if challenger1["pokname"].lower() == "egg":
+            [
+                await ctx.send(
+                    f"{ctx1.author.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!"
+                )
+                for ctx in [ctx1, ctx2]
+            ]
+            # await ctx.send(f"{ctx.author.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!")
+            return
+        if challenger2["pokname"].lower() == "egg":
+            [
+                await ctx.send(
+                    f"{ctx2.author.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!"
+                )
+                for ctx in [ctx1, ctx2]
+            ]
+            # await ctx.send(f"{opponent.name} has an egg selected!\nSelect a different pokemon with `/select <id>` first!")
+            return
+
+        # Gets a Pokemon object based on the specifics of each poke
+        p1_current = await DuelPokemon.create(ctx1, challenger1)
+        p2_current = await DuelPokemon.create(ctx2, challenger2)
+        owner1 = MemberTrainer(ctx1.author, [p1_current])
+        owner2 = MemberTrainer(ctx2.author, [p2_current])
+        battle = Battle([ctx1, ctx2], Battle.BATTLE_TOWER, owner1, owner2)
+        winner = await self.wrapped_run(battle)
+
+        if winner is None:
+            return
+
+        # Update missions progress
+        user = await ctx1.bot.mongo_find(
+            "users",
+            {"user": winner.id},
+            default={"user": winner.id, "progress": {}},
+        )
+        progress = user["progress"]
+        progress["duel-win"] = progress.get("duel-win", 0) + 1
+        await ctx1.bot.mongo_update(
+            "users", {"user": winner.id}, {"progress": progress}
+        )
+
+        # Grant xp
+        desc = ""
+        async with ctx1.bot.db[0].acquire() as pconn:
+            for poke in winner.party:
+                # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
+                data = await pconn.fetchrow(
+                    "SELECT hitem, exp FROM pokes WHERE id = $1", poke.id
+                )
+                held_item = data["hitem"].lower()
+                current_exp = data["exp"]
+                exp = 0
+                if held_item != "xp-block":
+                    exp = (150 * poke.level) / 7
+                    if held_item == "lucky-egg":
+                        exp *= 2.5
+                    # Max int for the exp col
+                    exp = min(int(exp), 2147483647 - current_exp)
+                    desc += f"{poke._starting_name} got {exp} exp from winning.\n"
+                await pconn.execute(
+                    "UPDATE pokes SET happiness = happiness + 1, exp = exp + $1 WHERE id = $2",
+                    exp,
+                    poke.id,
+                )
+        if desc:
+            [
+                await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
+                for ctx in [ctx1, ctx2]
+            ]
 
     @duel.command()
     async def single(self, ctx, opponent: discord.Member):
@@ -284,7 +508,7 @@ class Duel(commands.Cog):
         owner1 = MemberTrainer(ctx.author, [p1_current])
         owner2 = MemberTrainer(opponent, [p2_current])
 
-        battle = Battle(ctx, owner1, owner2)
+        battle = Battle(ctx, Battle.DUEL, owner1, owner2)
         winner = await self.wrapped_run(battle)
 
         if winner is None:
@@ -406,7 +630,7 @@ class Duel(commands.Cog):
         owner1 = MemberTrainer(ctx.author, pokes1)
         owner2 = MemberTrainer(opponent, pokes2)
 
-        battle = Battle(ctx, owner1, owner2, inverse_battle=inverse_battle)
+        battle = Battle(ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=inverse_battle)
 
         battle.trainer1.event.clear()
         battle.trainer2.event.clear()
@@ -517,9 +741,9 @@ class Duel(commands.Cog):
         p1_current = await DuelPokemon.create(ctx, challenger1)
         p2_current = await DuelPokemon.create(ctx, challenger2)
         owner1 = MemberTrainer(ctx.author, [p1_current])
-        owner2 = NPCTrainer([p2_current])
+        owner2 = NPCTrainer(ctx.bot, [p2_current])
 
-        battle = Battle(ctx, owner1, owner2)
+        battle = Battle(ctx, Battle.NPC, owner1, owner2)
         winner = await self.wrapped_run(battle)
 
         if winner is not owner1:

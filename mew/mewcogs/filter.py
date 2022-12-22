@@ -843,6 +843,25 @@ class Filter(commands.Cog):
             )
             price_text = f" | **Price** {price:,.0f}" if filter_type == "m" else ""
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
+
+            extra_text = ""
+            if filter_type == "m":
+                price = f"{price:,.0f}".rjust(max_price, " ")
+                extra_text = f"{ctx.bot.misc.CREDITS_EMOJI}`{price})`"
+            elif gid in mothers:
+                end = mothers[gid] + timedelta(hours=6)
+                now = datetime.now()
+                expires_in = end - now
+                if now > end:
+                    time = "0s"
+                elif expires_in.seconds // 3600:
+                    time = str(expires_in.seconds // 3600) + "h"
+                elif expires_in.seconds // 60:
+                    time = str(expires_in.seconds // 60) + "m"
+                else:
+                    time = str(expires_in.seconds) + "s"
+                extra_text = f"\N{STOPWATCH}`{time}`"
+
             iv = f"{iv/186:02.0%}".rjust(4, " ")
 
             desc += (
@@ -851,7 +870,7 @@ class Filter(commands.Cog):
                 f"__`{formatted_name}`__"
                 f"{level}"
                 f"<:ivs:1029331472789819442>`{iv}`"
-                f"{price_text}\n"
+                f"{extra_text}\n"
             )
 
             # desc += f'{emoji}{"" if not is_egg else ":egg:`" + str(counter) + "`"}{gender}**{nr.capitalize()}** | **__No.__** - {pn} | **Level** {level} | **IV%** {iv/186:.2%}{price_text}\n'

@@ -44,6 +44,13 @@ services:
     networks:
       mewbot_network:
         ipv4_address: 178.28.0.13
+  mewbot-memcached:
+    image: memcached
+    container_name: mewbot-memcached
+    restart: always
+    networks:
+      mewbot_network:
+        ipv4_address: 178.28.0.20
   mewbot-database:
     image: postgres
     container_name: mewbot-database

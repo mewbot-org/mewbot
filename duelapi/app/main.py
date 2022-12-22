@@ -1,16 +1,23 @@
+import numpy as np
 from starlette.responses import StreamingResponse
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-import requests
-import uvicorn
+from pymemcache.client import base
+from pymemcache import serde
+from typing import List, Dict
+from sklearn.ensemble import RandomForestClassifier
+
+import pandas as pd
 import orjson
 import math
 import io
 
 from helpers import HealthBar, sresize
 
+
 app = FastAPI()
+app.mc = base.Client(("178.28.0.20", 11211), serde=serde.PickleSerde(pickle_version=2))
 DIR = Path(__file__).parent / "res"
 PRELOADED = {
     "trick_room": Image.open(str(DIR / "trick_room.png")).convert("RGBA"),
@@ -89,6 +96,109 @@ def draw_player_teams(background, p1pokes, p2pokes):
         base_card = draw_pixel_pokemon_card(pokemon, level)
         background.paste(base_card, (804, left - 45), mask=base_card)
         left += 80
+
+
+data = app.mc.get("npc_data")
+df = pd.DataFrame(data)
+
+X = []
+Y = []
+for d in data:
+    features = {
+        # "effectiveness": d["effectiveness"],
+        **d["move"],
+        **d["opponent"],
+        **d["user"],
+    }
+    # Convert the effectiveness value into a discrete label
+    if d["effectiveness"] > 0.5:
+        label = "effective"
+    else:
+        label = "ineffective"
+
+    X.append(features)
+    Y.append(label)
+
+from sklearn.feature_extraction import DictVectorizer
+
+vec = DictVectorizer()
+X = vec.fit_transform(X)
+
+# X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+
+# # Split the data into training and test sets
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# # Normalize the data
+# scaler = StandardScaler()
+# X_train = scaler.fit_transform(X_train)
+# X_test = scaler.transform(X_test)
+
+# Train a machine learning model
+model = RandomForestClassifier()
+model.fit(X, Y)
+
+# Test the model on the test set
+# # accuracy = model.score(X_test, Y_test)
+# print(f"Test set accuracy: {accuracy:.2f}")
+
+
+def predict_best_move(moves, opponent_name):
+    # Extract the relevant features for each move
+    X = []
+    for move in moves:
+        features = {**move, "opponent_name": opponent_name}
+        X.append(features)
+
+    # Convert the list of dictionaries into a numerical format using DictVectorizer
+    vec = DictVectorizer()
+    X = vec.fit_transform(X)
+
+    # Use the trained machine learning model to make predictions on the list of moves
+    predictions = model.predict(X)
+
+    # Find the index of the move with the highest predicted effectiveness
+    best_move_index = np.argmax(predictions)
+    return moves[best_move_index]
+
+
+@app.post("/predict_best_move")
+def predict_best_move(moves: List[Dict], opponent_name: str):
+    # Extract the relevant features for each move
+    X = []
+    for move in moves:
+        features = {**move, "opponent_name": opponent_name}
+        X.append(features)
+
+    # Convert the list of dictionaries into a numerical format using DictVectorizer
+    vec = DictVectorizer()
+    X = vec.fit_transform(X)
+
+    # Use the trained machine learning model to make predictions on the list of moves
+    predictions = model.predict(X)
+
+    # Find the index of the move with the highest predicted effectiveness
+    best_move_index = np.argmax(predictions)
+
+    # Return the move with the highest predicted effectiveness
+    return moves[best_move_index]
+
+
+# # Define the "choose_move" endpoint
+# @app.post("/choose_move")
+# def choose_move(pokemon: str, move_names: str):
+#     # Predict the effectiveness of each move
+#     pokemon = orjson.loads(pokemon)
+#     move_names = orjson.loads(move_names)
+#     move_predictions = {}
+#     for move_name in move_names:
+#         move = {"move": move_name}
+#         move_prediction = predict_effective_move(pokemon, move)
+#         move_predictions[move_name] = move_prediction
+
+#     # Return the move with the highest predicted effectiveness
+#     best_move = max(move_predictions, key=move_predictions.get)
+#     return best_move
 
 
 @app.post("/build_team_preview")

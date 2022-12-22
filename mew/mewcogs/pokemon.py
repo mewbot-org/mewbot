@@ -229,7 +229,7 @@ class Pokemon(commands.Cog):
             f"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
         )
 
-    @commands.hybrid_command()
+    # @commands.hybrid_command()
     async def cooldowns(self, ctx):
         await ctx.send(
             "This command is deprecated, you should use `/f p args:cooldown` instead. "

@@ -11,7 +11,7 @@ class Favs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    # @commands.hybrid_command()
     async def fav_list(self, ctx):
         await ctx.send(
             "This command is deprecated, you should use `/f p args:fav` instead. "

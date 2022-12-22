@@ -93,90 +93,106 @@ class Sell(commands.Cog):
         )
 
     @sell.command(name="egg")
+    @discord.app_commands.describe(
+        egg_ids="A valid pokemon number or list of pokemon numbers (separated by space)."
+    )
     @tradelock
-    async def sell_egg(self, ctx, egg_num: str):
+    async def sell_egg(self, ctx, egg_ids: str):
         """Sells an egg"""
+        total_credits_gained = 0
+        egg_id = None
         async with ctx.bot.db[0].acquire() as pconn:
-            if egg_num in ("newest", "new", "latest"):
+            if egg_ids in ("newest", "new", "latest"):
                 egg_id = await pconn.fetchval(
                     "SELECT pokes[array_upper(pokes, 1)] FROM users WHERE u_id = $1",
                     ctx.author.id,
                 )
+                egg_nums = [egg_id]
             else:
                 try:
-                    egg_num = int(egg_num)
+                    egg_nums = [int(egg_ids)]
                 except ValueError:
-                    await ctx.send("That isn't a valid pokemon number.")
-                    return
+                    try:
+                        egg_nums = [int(x) for x in egg_ids.split(' ')]
+                        if len(egg_nums) > 5:
+                            await ctx.send("You can only sell a max of 5 eggs at once.")
+                            return
+                    except:
+                        await ctx.send("That isn't a valid pokemon number or list of pokemon numbers (separated by space).")
+                        return
+                
+            for egg_num in egg_nums:
                 if egg_num <= 1:
                     await ctx.send("That isn't a valid pokemon number.")
                     return
                 # Check for num entered
-                egg_id = await pconn.fetchval(
-                    "SELECT pokes[$1] FROM users WHERE u_id = $2",
-                    egg_num,
+                if not egg_id:
+                    egg_id = await pconn.fetchval(
+                        "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                        egg_num,
+                        ctx.author.id,
+                    )
+                if egg_id is None:
+                    await ctx.send("You do not have that many pokemon.")
+                    return
+
+                # Add check for eggs under 100 step count
+                data = await pconn.fetchrow(
+                    "SELECT counter, pokname, name, fav, COALESCE(hpiv, 0) + COALESCE(atkiv, 0) + COALESCE(spatkiv, 0) + COALESCE(defiv, 0) + COALESCE(spdefiv, 0) + COALESCE(speediv, 0) as ivs FROM pokes WHERE id = $1",
+                    egg_id,
+                )
+                if data is None:
+                    await ctx.send("That pokemon doesn't exist.")
+                    return
+
+                step_count = data["counter"]
+                name = data["pokname"]
+                iv_total = data["ivs"]
+                fav = data["fav"]
+                becomes = data["name"]
+
+                if name != "Egg":
+                    await ctx.send(f"That's a {name}, not an egg!")
+                    return
+                if step_count < 70:
+                    await ctx.send(
+                        "That egg is too close to hatching, go hatch it instead!"
+                    )
+                    return
+                if fav:
+                    await ctx.send("That egg is favorited! Unfavorite it first.")
+                    return
+                if becomes == "Magikarp":
+                    await ctx.send("You cannot sell an egg that will hatch into Magikarp!")
+                    return
+
+                # Passed checks so total IV and calc credits gained
+                if iv_total <= 111:
+                    credits_gained = 1000
+                elif iv_total <= 149:
+                    credits_gained = 2000
+                elif iv_total <= 176:
+                    credits_gained = 3000
+                else:
+                    credits_gained = 10000
+
+                # Display amount to user
+                if not await ConfirmView(
+                    ctx,
+                    f"Are you sure you want to sell your egg for {credits_gained:,} credits?",
+                ).wait():
+                    await ctx.send("Sale canceled")
+                    return
+
+                # Remove Pokemon and give credits to user
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins + $2 WHERE u_id = $1",
                     ctx.author.id,
+                    credits_gained,
                 )
-            if egg_id is None:
-                await ctx.send("You do not have that many pokemon.")
-                return
-
-            # Add check for eggs under 100 step count
-            data = await pconn.fetchrow(
-                "SELECT counter, pokname, name, fav, COALESCE(hpiv, 0) + COALESCE(atkiv, 0) + COALESCE(spatkiv, 0) + COALESCE(defiv, 0) + COALESCE(spdefiv, 0) + COALESCE(speediv, 0) as ivs FROM pokes WHERE id = $1",
-                egg_id,
-            )
-            if data is None:
-                await ctx.send("That pokemon doesn't exist.")
-                return
-
-            step_count = data["counter"]
-            name = data["pokname"]
-            iv_total = data["ivs"]
-            fav = data["fav"]
-            becomes = data["name"]
-
-            if name != "Egg":
-                await ctx.send(f"That's a {name}, not an egg!")
-                return
-            if step_count <= 100:
-                await ctx.send(
-                    "That egg is too close to hatching, go hatch it instead!"
-                )
-                return
-            if fav:
-                await ctx.send("That egg is favorited! Unfavorite it first.")
-                return
-            if becomes == "Magikarp":
-                await ctx.send("You cannot sell an egg that will hatch into Magikarp!")
-                return
-
-            # Passed checks so total IV and calc credits gained
-            if iv_total <= 111:
-                credits_gained = 1000
-            elif iv_total <= 149:
-                credits_gained = 2000
-            elif iv_total <= 176:
-                credits_gained = 3000
-            else:
-                credits_gained = 10000
-
-            # Display amount to user
-            if not await ConfirmView(
-                ctx,
-                f"Are you sure you want to sell your egg for {credits_gained:,} credits?",
-            ).wait():
-                await ctx.send("Sale canceled")
-                return
-
-            # Remove Pokemon and give credits to user
-            await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins + $2 WHERE u_id = $1",
-                ctx.author.id,
-                credits_gained,
-            )
-        await ctx.bot.commondb.remove_poke(ctx.author.id, egg_id)
-        await ctx.send(f"Successfully sold your egg for {credits_gained:,} credits.")
+                total_credits_gained += credits_gained
+                await ctx.bot.commondb.remove_poke(ctx.author.id, egg_id)
+            await ctx.send(f"Successfully sold your eggs for a total of {total_credits_gained:,}{ctx.bot.misc.CREDITS_EMOJI}.")
 
 
 async def setup(bot):

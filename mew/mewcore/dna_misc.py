@@ -5,6 +5,9 @@ from mewcogs.pokemon_list import natlist
 
 
 class MewMisc:
+    CREDITS_EMOJI = "<:mewcoin:1010959258638094386>"
+    REDEEMS_EMOJI = "<:redeem:1037942226132668417>"
+    
     def __init__(self, bot):
         self.bot = bot
         self.emotes = {

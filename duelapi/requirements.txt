@@ -1,5 +1,8 @@
 fastapi==0.63.0
 Pillow==8.1.0
 uvicorn==0.13.4
-orjson==3.5.0
+orjson
 requests==2.20.1
+scikit-learn
+pymemcache
+pandas
