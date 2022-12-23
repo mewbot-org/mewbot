@@ -1,9 +1,12 @@
 import json
+import os
 from pprint import pprint
 import random
+import motor.motor_asyncio
 from pymemcache.client import base
 from pymemcache import serde
 import orjson
+import pymongo
 from .enums import Ability, DamageClass, ElementType, MoveTarget
 from .misc import LockedMove, StatChange, BatonPass, ExpiringEffect, ExpiringItem
 
@@ -30,7 +33,9 @@ class Move:
         self.min_hits = kwargs["min_hits"]
         self.max_hits = kwargs["max_hits"]
         self.used = False
-        self.mc = base.Client(('178.28.0.20', 11211), serde=serde.PickleSerde(pickle_version=2))
+        pymongo_client = pymongo.MongoClient(os.environ["MONGO_URL"])
+        pymongo_pokemon_db = pymongo_client['pokemon']
+        self._pymongo = pymongo_pokemon_db # for the funzies
 
     def setup(self, attacker, defender, battle):
         """
@@ -2873,17 +2878,16 @@ class Move:
             defender.held_item.use()
         
         # data = self.mc.gets('npc_data', default=[])[0]
-        # data.append(
-        #     {
-        #             "move":  { k: v for k, v in vars(self).items() if type(v) in (str, int) },
-        #             "user": { k: v for k, v in vars(attacker).items() if type(v) in (str, int) },
-        #             "opponent": { k: v for k, v in vars(defender).items() if type(v) in (str, int) },
-        #             "effectiveness": effectiveness,
-        #     }
-        # )
-        # self.mc.set('npc_data', data)
+        document = {
+                    "move":  { k: v for k, v in vars(self).items() if type(v) in (str, int) },
+                    "user": { k: v for k, v in vars(attacker).items() if type(v) in (str, int) },
+                    "opponent": { k: v for k, v in vars(defender).items() if type(v) in (str, int) },
+                    "effectiveness": effectiveness,
+            }
 
-                
+        # self._pymongo['npc_data'].update_one(
+        #     {}, {"$push": {"npc_data": document}}
+        # )
         return (msg, hits)
 
     def get_power(self, attacker, defender, battle):

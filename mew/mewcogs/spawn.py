@@ -159,6 +159,7 @@ class SpawnView(discord.ui.View):
         )
         super().__init__(timeout=360)
         self.msg = None
+        self.pokemon = pokemon
 
     def set_message(self, msg: discord.Message):
         self.msg = msg
@@ -166,7 +167,7 @@ class SpawnView(discord.ui.View):
     async def on_timeout(self):
         if self.msg:
             embed = self.msg.embeds[0]
-            embed.title = "Timed out! Better luck next time!"
+            embed.title = f"Timed out! Better luck next time!\nThis Pokemon's name is: {self.pokemon}"
             await self.msg.edit(embed=embed, view=None)
 
     @discord.ui.button(label="Catch This Pokemon!", style=discord.ButtonStyle.blurple)

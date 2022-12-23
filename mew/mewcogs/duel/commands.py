@@ -12,7 +12,7 @@ import pandas as pd
 from pymemcache.client import base
 from pymemcache import serde
 from datetime import datetime, timedelta
-
+import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction import DictVectorizer
 from .pokemon import DuelPokemon
@@ -45,7 +45,6 @@ class Duel(commands.Cog):
         self.ranks = {}
 
         self.bt_queue = collections.deque()
-        self.mc = base.Client(('178.28.0.20', 11211), serde=serde.PickleSerde(pickle_version=2))
 
     async def initialize(self):
         """Preps the redis cache."""
@@ -270,7 +269,7 @@ class Duel(commands.Cog):
 
     @commands.hybrid_command()
     async def train(self, ctx):
-        data = self.mc.get("npc_data")
+        data = (await ctx.bot.db[1].npc_data.find_one())["npc_data"]
         df = pd.DataFrame(data)
 
         X = []
@@ -307,6 +306,7 @@ class Duel(commands.Cog):
         # Train a machine learning model
         self.bot.npc_model = RandomForestClassifier()
         self.bot.npc_model.fit(X, Y)
+        joblib.dump(self.bot.npc_model, 'npc_model.pkl')
         await ctx.send("Model training complete!")
 
     @commands.hybrid_group()

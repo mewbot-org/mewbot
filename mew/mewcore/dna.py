@@ -4,6 +4,8 @@ from datetime import timedelta
 import warnings
 import asyncio
 import logging
+
+import pymongo
 import uvloop
 import random
 import time
@@ -99,6 +101,11 @@ class Mew(commands.AutoShardedBot):
         self.mongo_client = AsyncIOMotorClient(os.environ["MONGO_URL"])
         self.mongo_pokemon_db = self.mongo_client.pokemon
         self.db[1] = self.mongo_pokemon_db
+
+        self.pymongo_client = pymongo.MongoClient(os.environ["MONGO_URL"])
+        self.pymongo_pokemon_db = self.pymongo_client['pokemon']
+        self.db[2] = self.pymongo_pokemon_db # for the funzies
+        
         self.redis_manager = RedisHandler(self)
         self.handler = self.redis_manager.handler
 

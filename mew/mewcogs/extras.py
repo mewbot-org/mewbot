@@ -1074,49 +1074,56 @@ class Extras(commands.Cog):
             inv = await pconn.fetchval(
                 "SELECT inventory::json FROM users WHERE u_id = $1", user.id
             )
+            info = await pconn.fetchrow(
+                "SELECT rare, mythic, legend FROM cheststore WHERE u_id = $1",
+                ctx.author.id
+            )
+
+        #running chest totals
         common = inv.get("common chest", 0)
         rare = inv.get("rare chest", 0)
+        rare_count = info["rare"]
         mythic = inv.get("mythic chest", 0)
+        mythic_count = info['mythic']
         legend = inv.get("legend chest", 0)
-        is_staff = details["staff"]
+        legend_count = info['legend']
+        exalted = inv.get("exalted chest", 0)        
         hitem = details["held_item"]
         tnick = details["tnick"]
-        desc = f"*current totals*"
-        desc += (
-            f"\n<:lchest1:1010889611318411385><:lchest2:1010889654800756797> `legend`"
+        embed = Embed(
+            title=f"{tnick if tnick is not None else user.name}'s Chests",
+            color=0xFFB6C1
         )
-        desc += (
-            f"\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080>: {legend}"
+        embed.add_field(
+            name="Common",
+            value=f"<:lchest1:1010889611318411385><:lchest2:1010889654800756797>\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080> {common}",
+            inline=True
         )
-
-        desc += (
-            f"\n<:mchest1:1010889412558717039><:mchest2:1010889464119300096> `mythic`"
+        embed.add_field(
+            name="Rare",
+            value=f"<:rchest1:1010889168802562078><:rchest2:1010889239988277269>\n<:rchest3:1010889292672942101><:rchest4:1010889342639677560> {rare}",
+            inline=True
         )
-        desc += (
-            f"\n<:mchest3:1010889506838302821><:mchest4:1010889554418487347>: {mythic}"
+        embed.add_field(
+            name="Mythic",
+            value=f"<:mchest1:1010889412558717039><:mchest2:1010889464119300096>\n<:mchest3:1010889506838302821><:mchest4:1010889554418487347> {mythic}",
+            inline=True
         )
-
-        desc += f"\n<:rchest1:1010889168802562078><:rchest2:1010889239988277269> `rare`"
-        desc += (
-            f"\n<:rchest3:1010889292672942101><:rchest4:1010889342639677560>: {rare}"
+        embed.add_field(
+            name="Legend",
+            value=f"<:lchest1:1010889611318411385><:lchest2:1010889654800756797>\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080> {legend}",
+            inline=True
         )
-
-        desc += (
-            f"\n<:cchest1:1010888643369500742><:cchest2:1010888709031350333> `common`"
+        embed.add_field(
+            name="Exalted",
+            value=f"Count: {exalted}",
+            inline=True
         )
-        desc += (
-            f"\n<:cchest2:1010888756540215297><:cchest4:1010888875536822353>: {common}"
+        embed.add_field(
+            name="Purchased Chests",
+            value=f"Rare: {rare_count}/5\nMythic: {mythic_count}/5\nLegend: {legend_count}/5",
+            inline=True
         )
-        embed = Embed(color=0xFFB6C1, description=desc)
-        if is_staff.lower() != "user":
-            embed.set_author(
-                name=f"{tnick if tnick is not None else user.name}'s Chests",
-                icon_url="https://cdn.discordapp.com/attachments/707730610650873916/773574461474996234/logo_mew.png",
-            )
-        else:
-            embed.set_author(
-                name=f"{tnick if tnick is not None else user.name}'s Chests"
-            )
         await ctx.send(embed=embed)
 
     async def balance_misc(self, ctx, user: discord.User = None):
