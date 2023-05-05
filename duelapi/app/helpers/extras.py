@@ -1,7 +1,12 @@
+from typing import List
 from PIL import Image
 
 
-def sresize(img):
+def sresize(img, dimensions: List[int] = None):
+    if dimensions:
+        img = img.resize(dimensions, Image.ANTIALIAS)
+        return img
+
     if img.height > img.width:
         baseheight = 380
         wpercent = baseheight / float(img.size[1])

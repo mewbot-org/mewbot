@@ -314,6 +314,7 @@ class KittyCat(commands.Cog):
         for page in paginate(ctx.bot.traceback):
             await destination.send("```py\n" + page + "```")
 
+    @check_admin()
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def bb(self, ctx):
@@ -936,21 +937,17 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def gems(self, ctx, user: discord.Member, gems: int):
         """Give Gems to a user."""
-        async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", user.id
-            )
-            inventory["radiant gem"] = inventory.get("radiant gem", 0) + gems
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                user.id,
-            )
-            embed = discord.Embed(
-                title="Success!", description=f"{user} gained {gems} radiant gem(s)"
-            )
-            embed.set_footer(text="Definitely hax... lots of hax")
-            await ctx.send(embed=embed)
+        await ctx.bot.commondb.add_bag_item(
+            user.id,
+            "radiant_gem",
+            gems,
+            True
+        )
+        embed = discord.Embed(
+            title="Success!", description=f"{user} gained {gems} radiant gem(s)"
+        )
+        embed.set_footer(text="Definitely hax... lots of hax")
+        await ctx.send(embed=embed)
 
     @check_investigator()
     @commands.hybrid_command(aliases=["serverban"])
@@ -1002,17 +999,13 @@ class KittyCat(commands.Cog):
     ):
         """Add a chest"""
         user_id = int(user_id)
-        async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", user_id
-            )
-            inventory[chest] = inventory.get(chest, 0) + amount
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                user_id,
-            )
-            await ctx.send(f"<@{user_id}> gained `{amount}` `{chest}'s`")
+        await ctx.bot.commondb.add_bag_item(
+            user_id,
+            chest.replace(" ", "_"),
+            amount,
+            True
+        )
+        await ctx.send(f"<@{user_id}> gained `{amount}` `{chest}'s`")
 
     @check_mod()
     @commands.hybrid_command()
@@ -1895,6 +1888,7 @@ class KittyCat(commands.Cog):
 
         raise ValueError()
 
+    @check_admin()
     @commands.hybrid_command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def chdo(self, ctx, date: str = None):

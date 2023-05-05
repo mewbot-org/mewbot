@@ -9,6 +9,7 @@ import asyncio
 import sys
 from io import BytesIO
 from datetime import datetime, timedelta
+from typing import Literal
 import time
 
 
@@ -297,6 +298,49 @@ class Pokemon(commands.Cog):
     @commands.hybrid_group()
     async def tags(self, ctx):
         ...
+
+    @tags.command()
+    @discord.app_commands.describe(
+        numbers="Set to True if you would like tags shown by Pokemon ID",
+    )
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def all(self, ctx, numbers: Literal["True", "False"]):
+        """See a complete list of tags assigned to your Pokemon"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            poke_ids = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
+            )
+            tag_data = await pconn.fetch(
+                "SELECT id, tags FROM pokes WHERE id = ANY($1) ORDER BY id ASC", poke_ids
+            )
+        ids = [record['id'] for record in tag_data]
+        tag_data = [record['tags'] for record in tag_data]
+        embed = discord.Embed(
+            title="Your Pokemon Tags",
+            description="Hope there's nothing bad!!",
+            color=0x000084
+        )
+        desc = ""
+        tag_array = []
+
+        if numbers == "True":
+            for idx, id in enumerate(ids):
+                tag = tag_data[idx]
+                if len(tag) != 0:
+                    pn = poke_ids.index(id) + 1
+                    tag = ','.join(tag)
+                    desc += f"`ID`: {pn} - `Tags`: {tag}\n"
+        else:
+            for idx, id in enumerate(ids):
+                tags = tag_data[idx]
+                if len(tags) != 0:
+                    for tag in tags:
+                        if tag not in tag_array:
+                            tag_array.append(tag)
+                            desc += f"{tag}\n"   
+
+        pages = pagify(desc, base_embed=embed)
+        await MenuView(ctx, pages).start()
 
     @tags.command()
     @discord.app_commands.describe(

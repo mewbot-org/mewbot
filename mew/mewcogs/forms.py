@@ -87,9 +87,9 @@ class Forms(commands.Cog):
             helditem = await pconn.fetchval(
                 "SELECT hitem FROM pokes WHERE id = $1", _id
             )
-            if helditem != "n-lunarizer":
+            if helditem != "n_lunarizer":
                 await ctx.send(
-                    "Your Necrozma is not holding a N-lunarizer.\nYou need to buy it from the Shop."
+                    "Your Necrozma is not holding a N-Lunarizer.\nYou need to buy it from the Shop."
                 )
                 return
             num = await pconn.fetchval(
@@ -158,9 +158,9 @@ class Forms(commands.Cog):
                 )
 
                 return
-            if helditem != "n-solarizer":
+            if helditem != "n_solarizer":
                 await ctx.send(
-                    "Your Necrozma is not holding a N-solarizer\nYou need to buy it from the Shop"
+                    "Your Necrozma is not holding a N-Solarizer\nYou need to buy it from the Shop"
                 )
 
                 return
@@ -213,7 +213,7 @@ class Forms(commands.Cog):
                         f"That is not a Reshiram, please use `/fuse white <reshiram_number>` to Fuse Kyurem with Reshiram"
                     )
                     return
-                if helditem != "light-stone":
+                if helditem != "light_stone":
                     await ctx.send(
                         "Your Kyurem is not holding a Light stone\nYou need to buy it from the Shop"
                     )
@@ -236,7 +236,7 @@ class Forms(commands.Cog):
                         f"That is not a Zekrom, please use `/fuse black <zekrom_number>` to Fuse Kyurem with Zekrom"
                     )
                     return
-                if helditem != "dark-stone":
+                if helditem != "dark_stone":
                     await ctx.send(
                         "Your Kyurem is not holding a Dark stone\nYou need to buy it from the Shop"
                     )
@@ -258,7 +258,7 @@ class Forms(commands.Cog):
                         f"That is not a Glastrier, please use `/fuse ice <glastrier_number>` to Fuse Calyrex with Glastrier"
                     )
                     return
-                if helditem != "reins-of-unity":
+                if helditem != "reins_of_unity":
                     await ctx.send(
                         "Your Calyrex is not holding the Reins of Unity\nYou need to buy it from the Shop"
                     )
@@ -282,14 +282,14 @@ class Forms(commands.Cog):
                         f"That is not a Spectrier, please use `/fuse ice <spectrier_number>` to Fuse Calyrex with Spectrier"
                     )
                     return
-                if helditem != "reins-of-unity":
+                if helditem != "reins_of_unity":
                     await ctx.send(
                         "Your Calyrex is not holding the Reins of Unity\nYou need to buy it from the Shop"
                     )
                     return
                 msg = await ctx.send("Fusing")
                 await ctx.send(
-                    f"You have Fused your Calyrex with your Spectrier Level {lunalev}"
+                    f"You have Fused your Calyrex with your Spectrier Level {otherlevel}"
                 )
                 await pconn.execute(
                     "UPDATE pokes SET pokname = $1 WHERE id = $2",
@@ -395,7 +395,7 @@ class Forms(commands.Cog):
                 if not required_item:
                     await ctx.send("Invalid form for that Pokemon!")
                     return
-                required_item += "-plate"
+                required_item += "_plate"
             else:
                 required_item = {
                     "necrozma": "ultranecronium-z",
@@ -447,7 +447,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "necrozma":
-                if helditem != "ultranecronium-z":
+                if helditem != "ultranecronium_z":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -476,7 +476,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "lugia":
-                if helditem != "shadow-stone":
+                if helditem != "shadow_stone":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -506,7 +506,7 @@ class Forms(commands.Cog):
                     return
 
             elif pokename == "shaymin":
-                if helditem != "gracidea-flower":
+                if helditem != "gracidea_flower":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -535,7 +535,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "kyogre":
-                if helditem != "blue-orb":
+                if helditem != "blue_orb":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -564,7 +564,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "groudon":
-                if helditem != "red-orb":
+                if helditem != "red_orb":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -593,7 +593,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "hoopa":
-                if helditem != "prison-bottle":
+                if helditem != "prison_bottle":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -622,7 +622,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "giratina":
-                if helditem != "griseous-orb":
+                if helditem != "griseous_orb":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -734,7 +734,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename in weathevo:
-                if helditem != "reveal-glass":
+                if helditem != "reveal_glass":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -763,7 +763,7 @@ class Forms(commands.Cog):
                     )
                     return
             elif pokename == "zygarde":
-                if helditem != "zygarde-cell":
+                if helditem != "zygarde_cell":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -822,13 +822,13 @@ class Forms(commands.Cog):
                     return
             elif pokename == "dialga":
                 if val.lower() == "origin":
-                    if helditem != "adamant-orb":
+                    if helditem != "adamant_orb":
                         await ctx.send(
                             f"Your {pokename} is not holding the {required_item}"
                         )
                         return
                 elif val.lower() == "primal":
-                    if helditem != "primal-orb":
+                    if helditem != "primal_orb":
                         await ctx.send(f"Your {pokename} is not holding the primal orb")
                         return
                 else:
@@ -857,7 +857,7 @@ class Forms(commands.Cog):
                         )
                     )
             elif pokename == "nihilego":
-                if helditem != "ultra-toxin":
+                if helditem != "ultra_toxin":
                     await ctx.send(f"Your {pokename} is not holding the Ultra toxin")
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
@@ -883,7 +883,7 @@ class Forms(commands.Cog):
                         )
                     )
             elif pokename == "palkia":
-                if helditem != "lustrous-orb":
+                if helditem != "lustrous_orb":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -911,7 +911,7 @@ class Forms(commands.Cog):
                         )
                     )
             elif pokename == "zacian":
-                if helditem != "rusty-sword":
+                if helditem != "rusty_sword":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -939,7 +939,7 @@ class Forms(commands.Cog):
                         )
                     )
             elif pokename == "zamazenta":
-                if helditem != "rusty-shield":
+                if helditem != "rusty_shield":
                     await ctx.send(
                         f"Your {pokename} is not holding the {required_item}"
                     )
@@ -1024,8 +1024,8 @@ class Forms(commands.Cog):
                 if "dragon-ascent" not in moves:
                     await ctx.send("Your Rayquaza Needs to know Dragon Ascent!")
                     return
-            if "-" in helditem:
-                helditem = helditem.replace("-", " ")
+            if "_" in helditem:
+                helditem = helditem.replace("_", " ")
             if helditem != "mega stone":
                 await ctx.send("This Pokemon Is not holding a Mega Stone!")
 
@@ -1119,8 +1119,8 @@ class Forms(commands.Cog):
             if pokename.lower() not in self.XYS:
                 await ctx.send("That pokemon cannot be mega evolved into an x form!")
                 return
-            if "-" in helditem:
-                helditem = helditem.replace("-", " ")
+            if "_" in helditem:
+                helditem = helditem.replace("_", " ")
             if helditem != "mega stone x":
                 await ctx.send("This Pokemon Is not holding a Mega Stone X!")
                 return
@@ -1175,8 +1175,8 @@ class Forms(commands.Cog):
                 await ctx.send("Your Pokemon is not holding any Item!")
                 return
 
-            if "-" in helditem:
-                helditem = helditem.replace("-", " ")
+            if "_" in helditem:
+                helditem = helditem.replace("_", " ")
 
             if helditem != "mega stone y":
                 await ctx.send("This Pokemon Is not holding a Mega Stone Y!")

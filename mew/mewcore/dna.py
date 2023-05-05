@@ -103,9 +103,9 @@ class Mew(commands.AutoShardedBot):
         self.db[1] = self.mongo_pokemon_db
 
         self.pymongo_client = pymongo.MongoClient(os.environ["MONGO_URL"])
-        self.pymongo_pokemon_db = self.pymongo_client['pokemon']
-        self.db[2] = self.pymongo_pokemon_db # for the funzies
-        
+        self.pymongo_pokemon_db = self.pymongo_client["pokemon"]
+        self.db[2] = self.pymongo_pokemon_db  # for the funzies
+
         self.redis_manager = RedisHandler(self)
         self.handler = self.redis_manager.handler
 
@@ -361,6 +361,8 @@ class Mew(commands.AutoShardedBot):
         - "Crystal Tier"
         - "Sapphire Tier"
         """
+        if user_id == 499740738138013696: ## VK
+            return "Silver Tier"
         expired = await self.redis_manager.redis.execute("GET", "patreonreset")
         if expired is None or time.time() > float(expired):
             await self.redis_manager.redis.execute(
@@ -565,7 +567,7 @@ class Mew(commands.AutoShardedBot):
             "cooldown",
             "duel",
             "dylee",
-            "events",
+            # "events",
             "evs",
             "extras",
             "favs",
@@ -595,6 +597,9 @@ class Mew(commands.AutoShardedBot):
             "tasks",
             "trade",
             "tutorial",
+            "profile",
+            "bag",
+            "farm",
         ]
         for cog in cogs:
             if "_" in cog:
@@ -680,7 +685,7 @@ class Mew(commands.AutoShardedBot):
                         "cooldown",
                         "market",
                         "shop",
-                        "events",
+                        # "events",
                     ]
 
                 for cog in safe_to_load:

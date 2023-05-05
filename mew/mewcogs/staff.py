@@ -48,10 +48,12 @@ class MewBotAdmin(commands.Cog):
         return msg
 
     @commands.hybrid_group()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def admin(self, ctx):
         ...
 
     @admin.command(name="help")
+    @discord.app_commands.guilds(STAFFSERVER)
     async def _help_message(self, ctx):
         """Staff Help Maybe"""
         embed = discord.Embed()
@@ -73,6 +75,7 @@ class MewBotAdmin(commands.Cog):
     @check_admin()
     @discord.app_commands.describe(extension_name="The name of the extension to load.")
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def load(self, ctx, extension_name: str):
         """Loads an extension."""
         if "mew.cogs" in extension_name:
@@ -132,6 +135,7 @@ class MewBotAdmin(commands.Cog):
         extension_name="The name of the extension to reload."
     )
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def reload(self, ctx, extension_name: str):
         """Reloads an extension."""
         if "mew.cogs" in extension_name:
@@ -195,6 +199,7 @@ class MewBotAdmin(commands.Cog):
     @check_admin()
     @discord.app_commands.describe(extension_name="The name of the extension to unoad.")
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def unload(self, ctx, extension_name: str):
         """Unloads an extension."""
         if "mew.cogs" in extension_name:
@@ -264,6 +269,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def cogs(self, ctx):
         """View the currently loaded cogs."""
         cogs = sorted([x.replace("mewcogs.", "") for x in ctx.bot.extensions.keys()])
@@ -275,6 +281,7 @@ class MewBotAdmin(commands.Cog):
     @check_mod()
     @discord.app_commands.describe(user="The user ID to reset tradelock.")
     @admin.command(aliases=["resettradelock", "deltradelock"])
+    @discord.app_commands.guilds(STAFFSERVER)
     async def detradelock(self, ctx, user_id):
         """Reset the redis market tradelock for a user"""
         result = await ctx.bot.redis_manager.redis.execute(
@@ -290,6 +297,7 @@ class MewBotAdmin(commands.Cog):
     @check_investigator()
     @discord.app_commands.describe(id="The user ID to trade ban.")
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def tradeban(self, ctx, id):  # Looks like tradelock is temporary?
         """Permanently trade-ban a user"""
         id = int(id)
@@ -311,6 +319,7 @@ class MewBotAdmin(commands.Cog):
     @check_mod()
     @discord.app_commands.describe(id="The user ID to reset tradeban.")
     @admin.command(aliases=["untradeban", "deltradeban"])
+    @discord.app_commands.guilds(STAFFSERVER)
     async def detradeban(self, ctx, id):
         """Resets a Users' tradeban"""
         id = int(id)
@@ -331,6 +340,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def createpoke(
         self,
         ctx,
@@ -356,6 +366,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     @discord.app_commands.describe(skin="Leave Blank for no skin")
     async def set_skin(self, ctx, globalid: int, skin: str = None):
         """ADMIN: Add a skin to pokemon via its globalid"""
@@ -375,6 +386,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def add_skin(self, ctx, user: discord.Member, pokname: str, skinname: str):
         """ADMIN: Add a skin to a users' skin inventory"""
         pokname = pokname.lower()
@@ -396,6 +408,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def set_ot(self, ctx, pokeid: int, user: discord.Member):
         """ADMIN: Set pokes OT"""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -406,6 +419,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_admin()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def editiv(
         self,
         ctx,
@@ -427,6 +441,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_gymauth()
     @gym.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def reward(self, ctx, mewcoins: int, user: str):
         """GYM-AUTH: Gym mewcoins Reward"""
         user = int(user)
@@ -443,6 +458,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_gymauth()
     @commands.hybrid_command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def tradable(self, ctx, pokeid: int, answer: bool):
         """MOD: Set pokemon trade-able or not"""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -453,13 +469,14 @@ class MewBotAdmin(commands.Cog):
             )
         await ctx.send(f"Successfully set trade-able to {answer}")
 
-    @check_investigator()
     @commands.hybrid_group(aliases=["tradelogs", "tl"])
     async def tradelog(self, ctx):
         """INVESTIGATOR: Tradelog command"""
         pass
 
+    @check_investigator()
     @tradelog.command(name="user")
+    @discord.app_commands.guilds(STAFFSERVER)
     async def tradelog_user(self, ctx, u_id: str):
         u_id = int(u_id)
         async with ctx.bot.db[0].acquire() as pconn:
@@ -589,7 +606,9 @@ class MewBotAdmin(commands.Cog):
 
         await MenuView(ctx, pages).start()
 
+    @check_investigator()
     @tradelog.command(name="poke")
+    @discord.app_commands.guilds(STAFFSERVER)
     async def tradelog_poke(self, ctx, p_id: int):
         async with ctx.bot.db[0].acquire() as pconn:
             trade_sender = await pconn.fetch(
@@ -661,7 +680,9 @@ class MewBotAdmin(commands.Cog):
 
         await MenuView(ctx, pages).start()
 
+    @check_investigator()
     @tradelog.command(name="info")
+    @discord.app_commands.guilds(STAFFSERVER)
     async def tradelog_info(self, ctx, t_id: int):
         """Get information on a specific trade by transaction id."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -781,6 +802,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_mod()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def combine(self, ctx, user1: str, user2: str):
         """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
         u_id1, u_id2 = int(user1), int(user2)
@@ -840,6 +862,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_mod()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def getuser(self, ctx, user):
         """MOD: Get user info by ID"""
         user = int(user)
@@ -912,6 +935,7 @@ class MewBotAdmin(commands.Cog):
 
     @check_mod()
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     @discord.app_commands.describe(
         command="The command to mock, prefix must not be entered."
     )
@@ -997,6 +1021,7 @@ class MewBotAdmin(commands.Cog):
     @check_helper()
     @discord.app_commands.describe(shards_of_cluster="The user ID to reset tradelock.")
     @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
     async def shards(self, ctx, shards_of_cluster: int = None):
         """View information of all shards across the bot."""
         if shards_of_cluster is None:

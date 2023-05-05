@@ -14,6 +14,7 @@ from mewcogs.json_files import *
 KEYS = {
     "name": "name",  # FILTER AND ORDER
     "names": "name",
+    "eggname": "eggname",
     "evo": "evo",
     "starter": "starter",
     "legend": "legend",
@@ -239,6 +240,27 @@ class Filter(commands.Cog):
                         names = await self._expand_forms(ctx, names)
                         sql_data.append(list(names))
                         postfix.append(f"pokname = ANY(${len(sql_data)})")
+                if key == "eggname":
+                    if not data:
+                        order_col = "pokname"
+                        order_dir = "ASC"
+                        postfix.append("false")
+                    elif data[0] in ("d", "desc", "descending"):
+                        order_col = "pokname"
+                        order_dir = "DESC"
+                        postfix.append("false")
+                    elif data[0] in ("a", "asc", "ascending"):
+                        order_col = "pokname"
+                        order_dir = "ASC"
+                        postfix.append("false")
+                    else:
+                        names = set()
+                        for name in data:
+                            name = name.replace(".", "").capitalize()
+                            names.add(name)
+                        names = await self._expand_forms(ctx, names)
+                        sql_data.append(list(names))
+                        postfix.append(f"name = ANY(${len(sql_data)}) AND pokname = 'Egg'")
                 elif key == "evo":
                     names = set()
                     for evo in data:

@@ -1,3 +1,4 @@
+import pprint
 from fastapi.responses import RedirectResponse, PlainTextResponse, ORJSONResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI, Request, Header
@@ -22,7 +23,7 @@ import traceback
 from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
 
-REDEEMS_PER_DOLLAR = 3
+REDEEMS_PER_DOLLAR = 1
 CREDITS_PER_DOLLAR = 2000
 
 app = FastAPI()
@@ -64,7 +65,7 @@ STREAKS = {
     },
     25: {
         "gems": 3,
-        "chest": "rare",
+        "chest": "rare_chest",
         "skin": False,
     },
     30: {
@@ -74,17 +75,17 @@ STREAKS = {
     },
     35: {
         "gems": 3,
-        "chest": "mythic",
+        "chest": "mythic_chest",
         "skin": False,
     },
     40: {
         "gems": 5,
-        "chest": "mythic",
+        "chest": "mythic_chest",
         "skin": False,
     },
     45: {
         "gems": 0,
-        "chest": "legend",
+        "chest": "legend_chest",
         "skin": False,
     },
     50: {
@@ -99,7 +100,7 @@ STREAKS = {
     },
     70: {
         "gems": 5,
-        "chest": "legend",
+        "chest": "legend_chest",
         "skin": False,
     },
     80: {
@@ -109,7 +110,7 @@ STREAKS = {
     },
     90: {
         "gems": 10,
-        "chest": "legend",
+        "chest": "legend_chest",
         "skin": False,
     },
     100: {
@@ -141,13 +142,12 @@ class AppUtils:
             with open("shop.json", "r") as f:
                 self.SHOP = json.load(f)
         self.berryList = {
-            "aguav-berry",
-            "figy-berry",
-            "iapapa-berry",
-            "mago-berry",
-            "wiki-berry",
-            "sitrus-berry",
-            "berry",
+            "aguav_seed",
+            "figy_seed",
+            "iapapa_seed",
+            "mago_seed",
+            "wiki_seed",
+            "sitrus_seed",
         }
 
     async def post_request(self, base_url, data):
@@ -467,7 +467,7 @@ async def paypalhook(request: Request):
     if is_donation(data):
         data = {k: v for k, v in data.items()}
 
-        print(data)
+        pprint.pprint(data)
 
         # Check to make sure the paypal transaction was valid
         # Paypal is shit: https://www.paypal-community.com/t5/Sandbox-Environment/IPN-listener-getting-status-other-than-VERIFIED-or-INVALID/td-p/1850590
@@ -588,11 +588,12 @@ async def votes_dbl(request: Request):
 
 # rdl
 @app.post("/hooks/rdl")
-async def votes_dbl(request: Request):
+async def votes_rdl(request: Request):
+    return PlainTextResponse("")
     try:
         data = await request.json()
         auth = request.headers.get("Authorization")
-        user_id = int(data["id"])
+        user_id = int(data["user"]["id"])
         return await vote_handler(data, auth, user_id, "rdl")
     except Exception as e:
         tb = "".join(traceback.TracebackException.from_exception(e).format())
@@ -639,16 +640,21 @@ async def vote_handler(data, auth, user_id, list_name):
         berry = random.choice(list(app.utils.berryList))
     if berry:
         async with app.pool.acquire() as pconn:
-            items = await pconn.fetchval(
-                "SELECT items::json FROM users WHERE u_id = $1", user_id
-            )
-            if items is not None:
-                items[berry] = items.get(berry, 0) + 1
-                await pconn.execute(
-                    "UPDATE users SET items = $1::json WHERE u_id = $2",
-                    items,
-                    user_id,
-                )
+            #Old bag system w/JSON array
+            #items = await pconn.fetchval(
+                #"SELECT items::json FROM users WHERE u_id = $1", user_id
+            #)
+            #if items is not None:
+                #items[berry] = items.get(berry, 0) + 1
+                #await pconn.execute(
+                    #"UPDATE users SET items = $1::json WHERE u_id = $2",
+                    #items,
+                    #user_id,
+                #)
+            query = f"UPDATE bag SET {berry} = {berry} + 1 WHERE u_id = $1"
+            args = (user_id)
+            await pconn.execute(query, args)
+
     async with app.pool.acquire() as pconn:
         await pconn.execute(
             f"UPDATE users SET mewcoins = mewcoins + 1500, upvotepoints = upvotepoints + 1, energy = LEAST(energy + 5, 15) WHERE u_id = $1",
@@ -656,7 +662,7 @@ async def vote_handler(data, auth, user_id, list_name):
         )
         if list_name == "topgg":
             data = await pconn.fetchrow(
-                "SELECT last_vote, vote_streak, inventory::json, skins::json FROM users WHERE u_id = $1",
+                "SELECT last_vote, vote_streak, skins::json FROM users WHERE u_id = $1",
                 user_id,
             )
             if data is None:
@@ -671,7 +677,7 @@ async def vote_handler(data, auth, user_id, list_name):
                 vote_streak,
                 user_id,
             )
-            inventory = data["inventory"]
+            #inventory = data["inventory"]
             skins = data["skins"]
             # different than vote_streak for it to wrap around while displaying as the correct #
             reward_value = ((vote_streak - 1) % 100) + 1
@@ -679,13 +685,17 @@ async def vote_handler(data, auth, user_id, list_name):
                 reward = STREAKS[reward_value]
                 msg = ""
                 if reward["gems"]:
-                    inventory["radiant gem"] = (
-                        inventory.get("radiant gem", 0) + reward["gems"]
+                    await pconn.execute(
+                        "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
+                        reward["gems"],
+                        user_id
                     )
                     msg += f"-**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
-                    inventory[f"{reward['chest']} chest"] = (
-                        inventory.get(f"{reward['chest']} chest", 0) + 1
+                    chest_name = reward["chest"]
+                    await pconn.execute(
+                        f"UPDATE account_bound SET chest_name = chest_name + 1 WHERE u_id = $1",
+                        user_id
                     )
                     msg += f"-A **{reward['chest']} chest**\n"
                 if reward["skin"]:
@@ -702,8 +712,7 @@ async def vote_handler(data, auth, user_id, list_name):
                     else:
                         skins[skin[0]][skin[1]] += 1
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, skins = $2::json WHERE u_id = $3",
-                    inventory,
+                    "UPDATE users SET skins = $1::json WHERE u_id = $2",
                     skins,
                     user_id,
                 )

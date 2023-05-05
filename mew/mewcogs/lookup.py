@@ -50,7 +50,7 @@ class AbilityView(discord.ui.View):
             return False
         return True
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     async def start(self):
@@ -69,6 +69,44 @@ class Lookup(commands.Cog):
     @commands.hybrid_group()
     async def lookup(self, ctx):
         ...
+
+    @lookup.command()
+    async def item(self, ctx, item: str):
+        """Lookup information on an item"""
+        item = "-".join(item.split()).lower()
+        # Validate the move exists, to make the API happy and to prevent injections
+        exists = await ctx.bot.db[1].new_shop.find_one({"item": item})
+        if exists is None:
+            await ctx.send("That item does not exist in Mewbot.")
+            return
+        
+        # Call the API to fetch the data for the move
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://pokeapi.co/api/v2/item/{item}") as response:
+                if response.status != 200:
+                    await ctx.send("That item does not exist.")
+                    return
+                data = await response.json()
+
+        #Build base embed
+        desc = ""
+        embed = discord.Embed(
+            title=f"{item.title()}",
+            color=0xF699CD,
+            description=desc,
+        )
+        effects = ""
+        for effect in data['effect_entries']:
+            if effect["language"]["name"] == "en":
+                effects += "- " + effect["short_effect"] + "\n"
+        if not effects:
+            for effect in data["flavor_text_entries"]:
+                if effect["language"]["name"] == "en":
+                    effects += effect["flavor_text"] + "\n"
+        if effects:
+            embed.add_field(name="Effect", value=effects, inline=False)
+        
+        await ctx.send(embed=embed)
 
     @lookup.command()
     @discord.app_commands.describe(move="The name of the move to lookup.")

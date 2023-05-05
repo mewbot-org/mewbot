@@ -1,3 +1,4 @@
+
 import random
 from .enums import Ability, ElementType
 
@@ -259,6 +260,7 @@ class Terrain(ExpiringItem):
     def __init__(self, battle):
         super().__init__()
         self.battle = battle
+        self.element = None
 
     def next_turn(self):
         """Progresses the effect a turn."""
@@ -318,6 +320,7 @@ class Terrain(ExpiringItem):
                     StatChange(stage_delta=1), attacker=poke, source="its grassy seed"
                 )
                 poke.held_item.use()
+        self.element = item.capitalize()
         return msg
 
     def end(self):
@@ -448,19 +451,19 @@ class NonVolatileEffect:
         source: str = "",
     ):
         """
-        Apply a volatile status to a pokemon.
+        Apply a non volatile status to a pokemon.
 
         Returns a formatted message.
         """
-        # TODO: replace some of the empty strings with fail reasons
         msg = ""
         if source:
             source = f" from {source}"
-        # NON VOLATILE
         if self.current and not force:
             return f"{self.pokemon.name} already has a status, it can't get {status} too!\n"
         if self.pokemon.ability(attacker=attacker, move=move) == Ability.COMATOSE:
             return f"{self.pokemon.name} already has a status, it can't get {status} too!\n"
+        if self.pokemon.ability(attacker=attacker, move=move) == Ability.PURIFYING_SALT:
+            return f"{self.pokemon.name}'s purifying salt protects it from being inflicted with {status}!\n"
         if self.pokemon.ability(
             attacker=attacker, move=move
         ) == Ability.LEAF_GUARD and battle.weather.get() in ("sun", "h-sun"):
@@ -487,7 +490,7 @@ class NonVolatileEffect:
             return "Minior's hard shell protects it from status effects!\n"
         if status == "burn":
             if ElementType.FIRE in self.pokemon.type_ids:
-                return ""
+                return f"{self.pokemon.name} is a fire type and can't be burned!\n"
             if self.pokemon.ability(attacker=attacker, move=move) in (
                 Ability.WATER_VEIL,
                 Ability.WATER_BUBBLE,
@@ -508,17 +511,17 @@ class NonVolatileEffect:
                 self.pokemon.grounded(battle, attacker=attacker, move=move)
                 and battle.terrain.item == "electric"
             ):
-                return ""
+                return f"The terrain is too electric for {self.pokemon.name} to fall asleep!\n"
             if (
                 battle.trainer1.current_pokemon
                 and battle.trainer1.current_pokemon.uproar.active()
             ):
-                return ""
+                return f"An uproar keeps {self.pokemon.name} from falling asleep!\n"
             if (
                 battle.trainer2.current_pokemon
                 and battle.trainer2.current_pokemon.uproar.active()
             ):
-                return ""
+                return f"An uproar keeps {self.pokemon.name} from falling asleep!\n"
             if turns is None:
                 turns = random.randint(2, 4)
             if self.pokemon.ability(attacker=attacker, move=move) == Ability.EARLY_BIRD:
@@ -532,7 +535,10 @@ class NonVolatileEffect:
                 or ElementType.POISON in self.pokemon.type_ids
             ):
                 if attacker is None or attacker.ability() != Ability.CORROSION:
-                    return ""
+                    if ElementType.STEEL in self.pokemon.type_ids:
+                        return f"{self.pokemon.name} is a steel type and can't be poisoned!\n"
+                    if ElementType.POISON in self.pokemon.type_ids:
+                        return f"{self.pokemon.name} is a poison type and can't be poisoned!\n"
             if self.pokemon.ability(attacker=attacker, move=move) in (
                 Ability.IMMUNITY,
                 Ability.PASTEL_VEIL,
@@ -544,21 +550,25 @@ class NonVolatileEffect:
             msg += f"{self.pokemon.name} was{bad} poisoned{source}!\n"
         if status == "paralysis":
             if ElementType.ELECTRIC in self.pokemon.type_ids:
-                return ""
+                return (
+                    f"{self.pokemon.name} is an electric type and can't be paralyzed!\n"
+                )
             if self.pokemon.ability(attacker=attacker, move=move) == Ability.LIMBER:
                 return f"{self.pokemon.name}'s limber keeps it from being paralyzed!\n"
             self.current = status
             msg += f"{self.pokemon.name} was paralyzed{source}!\n"
         if status == "freeze":
             if ElementType.ICE in self.pokemon.type_ids:
-                return ""
+                return f"{self.pokemon.name} is an ice type and can't be frozen!\n"
             if (
                 self.pokemon.ability(attacker=attacker, move=move)
                 == Ability.MAGMA_ARMOR
             ):
-                return ""
+                return (
+                    f"{self.pokemon.name}'s magma armor keeps it from being frozen!\n"
+                )
             if battle.weather.get() in ("sun", "h-sun"):
-                return ""
+                return f"It's too sunny to freeze {self.pokemon.name}!\n"
             self.current = status
             msg += f"{self.pokemon.name} was frozen solid{source}!\n"
 
@@ -575,10 +585,13 @@ class NonVolatileEffect:
 
         if self.pokemon.held_item.should_eat_berry_status(attacker):
             msg += self.pokemon.held_item.eat_berry(attacker=attacker, move=move)
-
+            
+        #Apply status to the pokemon class
+        self.pokemon.active_status = self.current
         return msg
 
     def reset(self):
+        """Remove a non volatile status from a pokemon."""
         self.current = ""
         self.badly_poisoned_turn = 0
         self.sleep_timer.set_turns(0)
@@ -937,24 +950,48 @@ class HeldItem:
                 move=move,
                 source="eating its berry",
             )
-        elif self == "aspear-berry" and consumer.nv.freeze():
-            consumer.nv.reset()
-            msg += f"{consumer.name} is no longer frozen after eating its berry!\n"
-        elif self == "cheri-berry" and consumer.nv.paralysis():
-            consumer.nv.reset()
-            msg += f"{consumer.name} is no longer paralyzed after eating its berry!\n"
-        elif self == "chesto-berry" and consumer.nv.sleep():
-            consumer.nv.reset()
-            msg += f"{consumer.name} woke up after eating its berry!\n"
-        elif self == "pecha-berry" and consumer.nv.poison():
-            consumer.nv.reset()
-            msg += f"{consumer.name} is no longer poisoned after eating its berry!\n"
-        elif self == "rawst-berry" and consumer.nv.burn():
-            consumer.nv.reset()
-            msg += f"{consumer.name} is no longer burned after eating its berry!\n"
-        elif self == "persim-berry" and consumer.confusion.active():
-            consumer.confusion.set_turns(0)
-            msg += f"{consumer.name} is no longer confused after eating its berry!\n"
+        elif self == "aspear-berry":
+            if consumer.nv.freeze():
+                consumer.nv.reset()
+                msg += f"{consumer.name} is no longer frozen after eating its berry!\n"
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
+        elif self == "cheri-berry":
+            if consumer.nv.paralysis():
+                consumer.nv.reset()
+                msg += (
+                    f"{consumer.name} is no longer paralyzed after eating its berry!\n"
+                )
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
+        elif self == "chesto-berry":
+            if consumer.nv.sleep():
+                consumer.nv.reset()
+                msg += f"{consumer.name} woke up after eating its berry!\n"
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
+        elif self == "pecha-berry":
+            if consumer.nv.poison():
+                consumer.nv.reset()
+                msg += (
+                    f"{consumer.name} is no longer poisoned after eating its berry!\n"
+                )
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
+        elif self == "rawst-berry":
+            if consumer.nv.burn():
+                consumer.nv.reset()
+                msg += f"{consumer.name} is no longer burned after eating its berry!\n"
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
+        elif self == "persim-berry":
+            if consumer.confusion.active():
+                consumer.confusion.set_turns(0)
+                msg += (
+                    f"{consumer.name} is no longer confused after eating its berry!\n"
+                )
+            else:
+                msg += f"{consumer.name}'s berry had no effect!\n"
         elif self == "lum-berry":
             consumer.nv.reset()
             consumer.confusion.set_turns(0)
@@ -969,6 +1006,10 @@ class HeldItem:
 
         consumer.last_berry = self.item
         consumer.ate_berry = True
+        # TODO: right now HeldItem does not support `recover`ing/setting from anything other than another HeldItem object.
+        #       this should probably be modified to be an `ExpiringItem` w/ that item for cases where `last_item` gets reset.
+        if consumer.ability(attacker=attacker, move=move) == Ability.CUD_CHEW:
+            consumer.cud_chew.set_turns(2)
         if consumer is self.owner:
             self.use()
         else:

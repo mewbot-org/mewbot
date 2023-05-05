@@ -1,7 +1,9 @@
 import random
 import discord
+
 from mewcogs.pokemon_list import natlist
 from mewutils.misc import get_emoji
+from mewcore.items import *
 
 
 class UserNotStartedError(Exception):
@@ -9,18 +11,23 @@ class UserNotStartedError(Exception):
     Generic exception that is raised when a DB
     util is used on a user who has not started.
     """
-
     pass
 
 
 class Pokemon:
     """Dataclass to hold information about a created pokemon."""
-
     def __init__(self, id, gender, iv_sum, emoji):
         self.id = id
         self.gender = gender
         self.iv_sum = iv_sum
         self.emoji = emoji
+
+
+class Item():
+    """Dataclass to hold info about an added item"""
+    def __init__(self, item_name, quantity):
+        self.item_name = item_name
+        self.quantity = quantity
 
 
 class CommonDB:
@@ -52,7 +59,10 @@ class CommonDB:
                 party,
             )
             if delete:
-                await pconn.execute("DELETE FROM pokes WHERE id = $1", poke_id)
+                await pconn.execute(
+                    "DELETE FROM pokes WHERE id = $1", 
+                    poke_id
+                )
             else:
                 await pconn.execute(
                     "UPDATE pokes SET fav = false WHERE id = $1", poke_id
@@ -97,6 +107,7 @@ class CommonDB:
         skin: str = None,
         gender: str = None,
         level: int = 1,
+        tradable: bool = True,
     ):
         """
         Creates a poke and gives it to user.
@@ -135,7 +146,7 @@ class CommonDB:
                 gender = pokemon[-2:]
             elif pokemon.lower() == "illumise":
                 gender = "-f"
-            elif pokemon.lower() == "volbeat":
+            elif pokemon.lower() in ("volbeat", "tauros-paldea"):
                 gender = "-m"
             # -1 = genderless pokemon
             elif gender_rate == -1:
@@ -167,9 +178,9 @@ class CommonDB:
             skin=skin,
         )
         query2 = """
-                INSERT INTO pokes (pokname, hpiv, atkiv, defiv, spatkiv, spdefiv, speediv, hpev, atkev, defev, spatkev, spdefev, speedev, pokelevel, moves, hitem, exp, nature, expcap, poknick, shiny, price, market_enlist, fav, ability_index, gender, caught_by, radiant, skin)
+                INSERT INTO pokes (pokname, hpiv, atkiv, defiv, spatkiv, spdefiv, speediv, hpev, atkev, defev, spatkev, spdefev, speedev, pokelevel, moves, hitem, exp, nature, expcap, poknick, shiny, price, market_enlist, fav, ability_index, gender, caught_by, radiant, skin, tradable)
 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) RETURNING id
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30) RETURNING id
                 """
         args = (
             pokemon.capitalize(),
@@ -201,6 +212,7 @@ class CommonDB:
             user_id,
             radiant,
             skin,
+            tradable,
         )
         async with bot.db[0].acquire() as pconn:
             pokeid = await pconn.fetchval(query2, *args)
@@ -213,6 +225,81 @@ class CommonDB:
             pokeid, gender, sum((hpiv, atkiv, defiv, spaiv, spdiv, speiv)), emoji
         )
 
+
+    async def add_bag_item(
+            self, 
+            user: int, 
+            item_name: str, 
+            quantity: int,
+            bound=False,
+    ):
+        """
+        Creates new bag for user and inserts item
+        If user already has bag just insert item
+        """
+        async with self.bot.db[0].acquire() as pconn:        
+            #This can be removed after sometime
+            #Create user's bag if doesn't exist
+            await pconn.execute(
+                "INSERT INTO bag (u_id) VALUES ($1) ON CONFLICT DO NOTHING", 
+                user
+            )
+            
+            #Create user's account bound table if doesn't exist
+            await pconn.execute(
+                "INSERT INTO account_bound VALUES ($1) ON CONFLICT DO NOTHING",
+                user
+            )
+
+            if bound:
+                #Pull item's query from account bound dict above and execute query
+                try:
+                    query = ADD_BOUND_ITEM.get(item_name)
+                except:
+                    #Must have been bound
+                    query = ADD_BAG_ITEM.get(item_name)
+            else:
+                #Pull item's query from bag dict above and execute query
+                try:
+                    query = ADD_BAG_ITEM.get(item_name)
+                except:
+                    query = ADD_BOUND_ITEM.get(item_name)
+
+            args = (
+                quantity,
+                user
+            )
+            await pconn.execute(query, *args)
+            return Item(item_name, quantity)
+    
+    
+    async def remove_bag_item(
+            self, 
+            user: int, 
+            item_name: str, 
+            quantity: int,
+            bound=False,
+    ):
+        """
+        Creates new bag for user and inserts item
+        If user already has bag just insert item
+        """
+        async with self.bot.db[0].acquire() as pconn:                    
+            if bound:
+                #Pull item's query from account bound dict above and execute query
+                query = REMOVE_BOUND_ITEM.get(item_name)
+            else:
+                #Pull item's query from bag dict above and execute query
+                query = REMOVE_BAG_ITEM.get(item_name)
+
+            args = (
+                quantity,
+                user
+            )
+            await pconn.execute(query, *args)
+            return Item(item_name, quantity)
+    
+    
     class TradeLock:
         """
         A context manager for tradelocking users.

@@ -52,35 +52,28 @@ class ChoicesView(discord.ui.View):
             {}, {"$push": {"boosters": ctx.author.id}}
         )
         async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1",
+            inventory = await pconn.fetchrow(
+                "SELECT * FROM account_bound WHERE u_id = $1",
                 ctx.author.id,
             )
+            inventory = dict(inventory)
             if choice == 1:
-                inventory["rare chest"] = inventory.get("rare chest", 0) + 1
+                ctx.bot.commondb.add_bag_item(
+                    ctx.author.id,
+                    "rare_chest",
+                    1,
+                    True
+                )
             elif choice == 2:
-                inventory["battle-multiplier"] = min(
-                    50, inventory.get("battle-multiplier", 0) + 5
-                )
-                inventory["shiny-multiplier"] = min(
-                    50, inventory.get("shiny-multiplier", 0) + 5
-                )
-                inventory["iv-multiplier"] = min(
-                    50, inventory.get("iv-multiplier", 0) + 3
-                )
-                inventory["breeding-multiplier"] = min(
-                    50, inventory.get("breeding-multiplier", 0) + 3
-                )
+                battle_multi = min(50, inventory["battle_multiplier"], 0) + 5
+                shiny_multi = min(50, inventory["shiny_multiplier"], 0) + 5
+                iv_multi = min(50, inventory["iv_multiplier"], 0) + 3
+                breeding_multi = min(50, inventory["breeding_multiplier"], 0) + 3
             elif choice == 3:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems + 3, mewcoins = mewcoins + 150000 WHERE u_id = $1",
                     ctx.author.id,
                 )
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json WHERE u_id = $2",
-                inventory,
-                ctx.author.id,
-            )
         await self.msg.edit(
             embed=make_embed(
                 title=f"You have received\n{CHOICES[choice-1]}\n**Can be claimed monthly!**"

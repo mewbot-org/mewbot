@@ -47,7 +47,7 @@ class HelpCog(commands.Cog):
                 name="Extra commands", value=f"`{ctx.prefix}help extras`", inline=True
             )
             # embed.add_field(name="More Information About Mewbot", value="Visit the official Mewbot wiki page [here](https://mewbot.wiki)")
-            # embed.add_field(name="Donate", value="Donate to the bot! 1 USD = 2 Redeems + 5,000 credits", inline=True)
+            # embed.add_field(name="Donate", value="Donate to the bot! 1 USD = 1 Redeem + 2,000 credits", inline=True)
             embed.set_thumbnail(
                 url="http://pm1.narvii.com/5848/b18cd35647528a7bdffc8e4b8e4d6a1465fc5253_00.jpg"
             )

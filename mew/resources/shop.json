@@ -1,62 +1,62 @@
 [
    {
-    "item": "shadow-stone",
+    "item": "shadow_stone",
     "price": 100000000
   },
   {
-    "item": "ultranecronium-z",
+    "item": "ultranecronium_z",
     "price": 100000000
   },
   {
-    "item": "adamant-orb",
+    "item": "adamant_orb",
     "price": 100000000
   },
   {
-    "item": "evo-stone",
+    "item": "evo_stone",
     "price": 10000
   },
   {
-    "item": "coin-case",
+    "item": "coin_case",
     "price": 1000
   },
   {
-    "item": "old-rod",
+    "item": "old_rod",
     "price": 5000
   },
   {
-    "item": "new-rod",
+    "item": "new_rod",
     "price": 10000
   },
   {
-    "item": "good-rod",
+    "item": "good_rod",
     "price": 15000
   },
   {
-    "item": "super-rod",
+    "item": "super_rod",
     "price": 20000
   },
   {
-    "item": "ultra-rod",
+    "item": "ultra_rod",
     "price": 40000
   },
   {
-    "item": "ev-reset",
+    "item": "ev_reset",
     "price": 10000
   },
   {
-    "item": "daycare-space",
+    "item": "daycare_space",
     "price": 10000
   },
   {
-    "item": "ultra-destiny-knot",
+    "item": "ultra_destiny_knot",
     "price": 30000
   },
   {
-    "item": "destiny-knot",
+    "item": "destiny_knot",
     "price": 15000
   },
   {
-    "item": "weakness-policy",
+    "item": "weakness_policy",
     "price": 3000
   },
   {
@@ -64,39 +64,39 @@
     "price": 5000
   },
   {
-    "item": "white-herb",
+    "item": "white_herb",
     "price": 2500
   },
   {
-    "item": "ability-capsule",
+    "item": "ability_capsule",
     "price": 10000
   },
   {
-    "item": "soothe-bell",
+    "item": "soothe_bell",
     "price": 5000
   },
   {
-    "item": "lucky-egg",
+    "item": "lucky_egg",
     "price": 5000
   },
   {
-    "item": "xp-block",
+    "item": "xp_block",
     "price": 3000
   },
   {
-    "item": "choice-scarf",
+    "item": "choice_scarf",
     "price": 10000
   },
   {
-    "item": "expert-belt",
+    "item": "expert_belt",
     "price": 9500
   },
   {
-    "item": "choice-band",
+    "item": "choice_band",
     "price": 10000
   },
   {
-    "item": "soul-dew",
+    "item": "soul_dew",
     "price": 20000
   },
   {
@@ -104,15 +104,15 @@
     "price": 10000
   },
   {
-    "item": "silk-scarf",
+    "item": "silk_scarf",
     "price": 10000
   },
   {
-    "item": "focus-sash",
+    "item": "focus_sash",
     "price": 10000
   },
   {
-    "item": "hp-up",
+    "item": "hp_up",
     "price": 1000
   },
   {
@@ -136,55 +136,55 @@
     "price": 1000
   },
   {
-    "item": "fire-stone",
+    "item": "fire_stone",
     "price": 1000
   },
   {
-    "item": "sun-stone",
+    "item": "sun_stone",
     "price": 1000
   },
   {
-    "item": "shiny-stone",
+    "item": "shiny_stone",
     "price": 1000
   },
   {
-    "item": "dusk-stone",
+    "item": "dusk_stone",
     "price": 1000
   },
   {
-    "item": "dawn-stone",
+    "item": "dawn_stone",
     "price": 1000
   },
   {
-    "item": "thunder-stone",
+    "item": "thunder_stone",
     "price": 1000
   },
   {
-    "item": "ice-stone",
+    "item": "ice_stone",
     "price": 1000
   },
   {
-    "item": "water-stone",
+    "item": "water_stone",
     "price": 1000
   },
   {
-    "item": "moon-stone",
+    "item": "moon_stone",
     "price": 1000
   },
   {
-    "item": "leaf-stone",
+    "item": "leaf_stone",
     "price": 1000
   },
   {
-    "item": "deep-sea-tooth",
+    "item": "deep_sea_tooth",
     "price": 3000
   },
   {
-    "item": "dragon-scale",
+    "item": "dragon_scale",
     "price": 3000
   },
   {
-    "item": "dubious-disc",
+    "item": "dubious_disc",
     "price": 3000
   },
   {
@@ -192,7 +192,7 @@
     "price": 3000
   },
   {
-    "item": "kings-rock",
+    "item": "kings_rock",
     "price": 3000
   },
   {
@@ -200,11 +200,11 @@
     "price": 3000
   },
   {
-    "item": "metal-coat",
+    "item": "metal_coat",
     "price": 3000
   },
   {
-    "item": "prism-scale",
+    "item": "prism_scale",
     "price": 3000
   },
   {
@@ -212,7 +212,7 @@
     "price": 3000
   },
   {
-    "item": "reaper-cloth",
+    "item": "reaper_cloth",
     "price": 3000
   },
   {
@@ -220,23 +220,23 @@
     "price": 3000
   },
   {
-    "item": "up-grade",
+    "item": "up_grade",
     "price": 3000
   },
   {
-    "item": "whipped-dream",
+    "item": "whipped_dream",
     "price": 3000
   },
   {
-    "item": "oval-stone",
+    "item": "oval_stone",
     "price": 3000
   },
   {
-    "item": "razor-claw",
+    "item": "razor_claw",
     "price": 3000
   },
   {
-    "item": "razor-fang",
+    "item": "razor_fang",
     "price": 3000
   },
   {
@@ -248,39 +248,39 @@
     "price": 3000
   },
   {
-    "item": "choice-specs",
+    "item": "choice_specs",
     "price": 10000
   },
   {
-    "item": "deep-sea-scale",
+    "item": "deep_sea_scale",
     "price": 3000
   },
   {
-    "item": "griseous-orb",
+    "item": "griseous_orb",
     "price": 10000
   },
   {
-    "item": "gracidea-flower",
+    "item": "gracidea_flower",
     "price": 7500
   },
   {
-    "item": "mega-stone-x",
+    "item": "mega_stone_x",
     "price": 3500
   },
   {
-    "item": "mega-stone-y",
+    "item": "mega_stone_y",
     "price": 3500
   },
   {
-    "item": "mega-stone",
+    "item": "mega_stone",
     "price": 2000
   },
   {
-    "item": "meltan-candy",
+    "item": "meltan_candy",
     "price": 15000
   },
   {
-    "item": "blue-orb",
+    "item": "blue_orb",
     "price": 10000
   },
   {
@@ -288,39 +288,39 @@
     "price": 10500
   },
   {
-    "item": "red-orb",
+    "item": "red_orb",
     "price": 10000
   },
   {
-    "item": "n-lunarizer",
+    "item": "n_lunarizer",
     "price": 9500
   },
   {
-    "item": "n-solarizer",
+    "item": "n_solarizer",
     "price": 9500
   },
   {
-    "item": "big-root",
+    "item": "big_root",
     "price": 10000
   },
   {
-    "item": "black-belt",
+    "item": "black_belt",
     "price": 10000
   },
   {
-    "item": "black-glasses",
+    "item": "black_glasses",
     "price": 10000
   },
   {
-    "item": "dragon-fang",
+    "item": "dragon_fang",
     "price": 10000
   },
   {
-    "item": "hard-stone",
+    "item": "hard_stone",
     "price": 10000
   },
   {
-    "item": "light-ball",
+    "item": "light_ball",
     "price": 10000
   },
   {
@@ -328,43 +328,43 @@
     "price": 10000
   },
   {
-    "item": "muscle-band",
+    "item": "muscle_band",
     "price": 10000
   },
   {
-    "item": "mystic-water",
+    "item": "mystic_water",
     "price": 10000
   },
   {
-    "item": "never-melt-ice",
+    "item": "never_melt_ice",
     "price": 10000
   },
   {
-    "item": "poison-barb",
+    "item": "poison_barb",
     "price": 10000
   },
   {
-    "item": "rocky-helmet",
+    "item": "rocky_helmet",
     "price": 10000
   },
   {
-    "item": "scope-lens",
+    "item": "scope_lens",
     "price": 10000
   },
   {
-    "item": "shell-bell",
+    "item": "shell_bell",
     "price": 10000
   },
   {
-    "item": "wise-glasses",
+    "item": "wise_glasses",
     "price": 10000
   },
   {
-    "item": "assault-vest",
+    "item": "assault_vest",
     "price": 10000
   },
   {
-    "item": "air-balloon",
+    "item": "air_balloon",
     "price": 10000
   },
   {
@@ -372,95 +372,95 @@
     "price": 10000
   },
   {
-    "item": "life-orb",
+    "item": "life_orb",
     "price": 10000
   },
   {
-    "item": "prison-bottle",
+    "item": "prison_bottle",
     "price": 9500
   },
   {
-    "item": "light-stone",
+    "item": "light_stone",
     "price": 9500
   },
   {
-    "item": "dark-stone",
+    "item": "dark_stone",
     "price": 9500
   },
   {
-    "item": "reveal-glass",
+    "item": "reveal_glass",
     "price": 10500
   },
   {
-    "item": "zygarde-cell",
+    "item": "zygarde_cell",
     "price": 15000
   },
   {
-    "item": "draco-plate",
+    "item": "draco_plate",
     "price": 10000
   },
   {
-    "item": "dread-plate",
+    "item": "dread_plate",
     "price": 10000
   },
   {
-    "item": "earth-plate",
+    "item": "earth_plate",
     "price": 10000
   },
   {
-    "item": "fist-plate",
+    "item": "fist_plate",
     "price": 10000
   },
   {
-    "item": "flame-plate",
+    "item": "flame_plate",
     "price": 10000
   },
   {
-    "item": "icicle-plate",
+    "item": "icicle_plate",
     "price": 10000
   },
   {
-    "item": "insect-plate",
+    "item": "insect_plate",
     "price": 10000
   },
   {
-    "item": "iron-plate",
+    "item": "iron_plate",
     "price": 10000
   },
   {
-    "item": "meadow-plate",
+    "item": "meadow_plate",
     "price": 10000
   },
   {
-    "item": "mind-plate",
+    "item": "mind_plate",
     "price": 10000
   },
   {
-    "item": "pixie-plate",
+    "item": "pixie_plate",
     "price": 10000
   },
   {
-    "item": "sky-plate",
+    "item": "sky_plate",
     "price": 10000
   },
   {
-    "item": "splash-plate",
+    "item": "splash_plate",
     "price": 10000
   },
   {
-    "item": "spooky-plate",
+    "item": "spooky_plate",
     "price": 10000
   },
   {
-    "item": "stone-plate",
+    "item": "stone_plate",
     "price": 10000
   },
   {
-    "item": "toxic-plate",
+    "item": "toxic_plate",
     "price": 10000
   },
   {
-    "item": "zap-plate",
+    "item": "zap_plate",
     "price": 10000
   }
 ]

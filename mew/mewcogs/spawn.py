@@ -28,6 +28,19 @@ def despawn_embed(e, status):
     # e.set_image(url=e.image.url)
     return e
 
+#To assist with names when images aren't working
+#Displays first 2 letters and any dashes for regions
+def scatter(iterable):
+    new_name = []
+    count = 0
+    for i in iterable:
+        if count in [0, 1]:
+            new_name.append(i)
+        else:
+            new_name.append("_")
+        count += 1
+        name = " ".join(new_name)
+    return name, count
 
 class SpawnResult:
     def __init__(self, text: str):
@@ -48,7 +61,11 @@ async def add_spawn(
     """Spawn handler"""
     pokemon = pokemon.capitalize()
 
-    ivmulti = inventory.get("iv-multiplier", 0)
+    if inventory is None:
+        ivmulti = 1
+    else:
+        ivmulti = inventory
+
     # 0%-10% chance from 0-50 iv multis
     boosted = random.randrange(500) < ivmulti
     plevel = random.randint(1, 60)
@@ -103,15 +120,11 @@ async def add_spawn(
         #
         chest_chance = not random.randint(0, 200)
         if chest_chance:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", user_id
-            )
-            chest = "common chest"
-            inventory[chest] = inventory.get(chest, 0) + 1
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
+            await bot.commondb.add_bag_item(
                 user_id,
+                "common_chest",
+                1,
+                True
             )
         if bot.premium_server(guild_id):
             credits = random.randint(100, 250)
@@ -123,11 +136,11 @@ async def add_spawn(
     author = f"<@{user_id}>"
     teext = f"Congratulations {author}, you have caught a {pokedata.emoji}{pokemon} ({ivpercent}% iv)!\n"
     if boosted:
-        teext += "It was boosted by your IV multiplier!\n"
+        teext += "It was boosted by your IV Multiplier!\n"
     if berry_chance:
         teext += f"It also dropped a {berry}!\n"
     if chest_chance:
-        teext += f"It also dropped a {chest}!\n"
+        teext += f"It also dropped a Common Chest!\n"
     if credits:
         teext += f"You also found {credits} credits!\n"
 
@@ -229,14 +242,19 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
 
         # Someone caught the poke, create it
         async with interaction.client.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json from users WHERE u_id = $1",
+            check = await pconn.fetchval(
+                "SELECT mewcoins from users WHERE u_id = $1",
                 interaction.user.id,
             )
-            if inventory is None:
+            if check is None:
                 return await interaction.followup.send(
                     "You have not started!\nStart with `/start` first!", ephemeral=True
                 )
+            #Grab iv multiplier for below
+            iv_multiplier = await pconn.fetchval(
+                "SELECT iv_multiplier FROM account_bound WHERE u_id = $1",
+                interaction.user.id
+            )
 
         self.guessed = True
         self.poke_guess.guessed = True
@@ -247,7 +265,7 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             guild_id=interaction.guild.id,
             pokemon=pokemon,
             shiny=self.shiny,
-            inventory=inventory,
+            inventory=iv_multiplier,
         )
 
         await interaction.followup.send(
@@ -374,15 +392,16 @@ class Spawn(commands.Cog):
         # Check the "environment" to determine spawn rates
         override_with_ghost = False
         override_with_ice = False
+        iv_multiplier = 0
         async with self.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1",
+            shiny_multiplier = await pconn.fetchval(
+                "SELECT shiny_multiplier FROM account_bound WHERE u_id = $1",
                 message.author.id,
             )
             threshold = 4000
-            if inventory is not None:
+            if shiny_multiplier is not None:
                 threshold = round(
-                    threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100)
+                    threshold - threshold * (shiny_multiplier / 100)
                 )
             shiny = random.choice([False for i in range(threshold)] + [True])
 
@@ -439,12 +458,21 @@ class Spawn(commands.Cog):
         except Exception:
             return
 
+        # This is the toggle for extended hints - 2 lettes with underscores
+        # updated_hint, letter_count = scatter(pokemon)
+        # updated_hint = updated_hint.capitalize()
+        # Uncomment this for normal spawn name - 1 letter
+        updated_hint = pokemon[0].capitalize()
+
         # Create & send the pokemon spawn embed
         embed = discord.Embed(
-            title=f"A wild Pokémon has Spawned, Say its name to catch it!",
-            color=random.choice(self.bot.colors),
+            title=f"A Wild Pokémon Has Spawned!",
+            color=0x0084FD,
         )
-        embed.add_field(name="-", value=f"This Pokémons name starts with {pokemon[0]}")
+        embed.add_field(
+            name="Say it's name to catch it!", 
+            value=f"This Pokémons name begins with\n`{updated_hint}`"
+            )
         try:
             if small_images:
                 embed.set_thumbnail(
@@ -492,20 +520,24 @@ class Spawn(commands.Cog):
 
         while True:
             try:
-                msg = await self.bot.wait_for("message", check=check, timeout=600)
+                msg = await self.bot.wait_for("message", check=check, timeout=370)
             except asyncio.TimeoutError:
                 return
             async with self.bot.db[0].acquire() as pconn:
-                inventory = await pconn.fetchval(
-                    "SELECT inventory::json from users WHERE u_id = $1",
+                creds_check = await pconn.fetchval(
+                    "SELECT mewcoins from users WHERE u_id = $1",
                     msg.author.id,
                 )
-                if inventory is None:
+                if creds_check is None:
                     await spawn_channel.send(
                         "You have not started!\nStart with `/start` first!"
                     )
                 else:
                     break
+                iv_multiplier = await pconn.fetchval(
+                    "SELECT iv_multiplier FROM account_bound WHERE u_id = $1",
+                    msg.author.id
+                )
 
         poke_guess.guessed = True
 
@@ -515,7 +547,7 @@ class Spawn(commands.Cog):
             guild_id=msg.guild.id,
             pokemon=pokemon,
             shiny=shiny,
-            inventory=inventory,
+            inventory=iv_multiplier,
         )
 
         await spawn_channel.send(embed=(make_embed(title="", description=res.text)))

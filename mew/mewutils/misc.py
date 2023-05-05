@@ -582,6 +582,7 @@ async def get_battle_image(poke1, poke2, bot):
 
 def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
     """Gets the prefix emoji for a particular pokemon."""
+    #Currently covers Shiny, Radiant, Gleam, and Skins
     emoji = blank
     if skin is not None:
         skin = skin.lower()
@@ -619,12 +620,328 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
     return emoji
 
 
+def get_farm_thumbnail(*, interval: int=None, name: str):
+    #Aguav
+    if name == "Aguav_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/d/d6/Dream_Aguav_Berry_Sprite.png"
+    elif name == "Figy_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/5/55/Dream_Figy_Berry_Sprite.png"
+    elif name == "Starf_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/c/c9/Dream_Starf_Berry_Sprite.png"
+    elif name == "Chesto_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/7/7e/Dream_Chesto_Berry_Sprite.png"
+    elif name == "Salac_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/d/d6/Dream_Salac_Berry_Sprite.png"
+    elif name == "Lum_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/d/d3/Dream_Lum_Berry_Sprite.png"
+    elif name == "Aspear_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/a/af/Dream_Aspear_Berry_Sprite.png"
+    elif name == "Iapapa_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/d/d2/Dream_Iapapa_Berry_Sprite.png"
+    elif name == "Pecha_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/6/62/Dream_Pecha_Berry_Sprite.png"
+    elif name == "Lansat_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/5/56/Dream_Lansat_Berry_Sprite.png"
+    elif name == "Mago_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/a/ad/Dream_Mago_Berry_Sprite.png"
+    elif name == "Apicot_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/7/70/Dream_Apicot_Berry_Sprite.png"
+    elif name == "Petaya_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/b/b1/Dream_Petaya_Berry_Sprite.png"
+    elif name == "Micle_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/0/03/Dream_Micle_Berry_Sprite.png"
+    elif name == "Sitrus_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/a/aa/Dream_Sitrus_Berry_Sprite.png"
+    elif name == "Liechi_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/7/71/Dream_Liechi_Berry_Sprite.png"
+    elif name == "Wiki_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/b/bc/Dream_Wiki_Berry_Sprite.png"
+    elif name == "Rawst_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/5/59/Dream_Rawst_Berry_Sprite.png"
+    elif name == "Persim_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/3/38/Dream_Persim_Berry_Sprite.png"
+    elif name == "Ganlon_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/9/94/Dream_Ganlon_Berry_Sprite.png"
+    elif name == "Cheri_Berry":
+        berry_url = "https://archives.bulbagarden.net/media/upload/a/a6/Dream_Cheri_Berry_Sprite.png"
+    else:
+        berry_url = "https://archives.bulbagarden.net/media/upload/thumb/b/be/48ERROR.png/159px-48ERROR.png" #Means emoji is missing
+    return berry_url
+
+def get_berry_emoji(*, name:str):
+    if name == "Aguav_Berry":
+        berry_emoji = "<:aguav_berry:1085430968455811112>"
+    elif name == "Figy_Berry":
+        berry_emoji = "<:figy_berry:1085430966899720223>"
+    elif name == "Starf_Berry":
+        berry_emoji = "<:starf_berry:1085430909492273182>"
+    elif name == "Chesto_Berry":
+        berry_emoji = "<:chesto_berry:1085430874268500079>"
+    elif name == "Salac_Berry":
+        berry_emoji = "<:salac_berry:1085430910842843217>"
+    elif name == "Lum_Berry":
+        berry_emoji = "<:lum_berry:1085430873266069526>"
+    elif name == "Aspear_Berry":
+        berry_emoji = "<:aspear_berry:1085430915540471929>"
+    elif name == "Iapapa_Berry":
+        berry_emoji = "<:iapapa_berry:1085430969684742215>"
+    elif name == "Pecha_Berry":
+        berry_emoji = "<:pecha_berry:1085430872523681872>"
+    elif name == "Lansat_Berry":
+        berry_emoji = "<:lansat_berry:1085430944338550825>"
+    elif name == "Mago_Berry":
+        berry_emoji = "<:mago_berry:1085430943852015677>"
+    elif name == "Apicot_Berry":
+        berry_emoji = "<:apicot_berry:1085430940798566410>"
+    elif name == "Petaya_Berry":
+        berry_emoji = "<:petaya_berry:1085430911945940992>"
+    elif name == "Micle_Berry":
+        berry_emoji = "<:micle_berry:1085430912977739826>"
+    elif name == "Sitrus_Berry":
+        berry_emoji = "<:sitrus_berry:1085430942065242112>"
+    elif name == "Liechi_Berry":
+        berry_emoji = "<:liechi_berry:1085430914038894602>"
+    elif name == "Wiki_Berry":
+        berry_emoji = "<:wiki_berry:1085430943071883304>"
+    elif name == "Rawst_Berry":
+        berry_emoji = "<:rawst_berry:1085430876407611464>"
+    elif name == "Persim_Berry":
+        berry_emoji = "<:persim_berry:1085430878135660574>"
+    elif name == "Ganlon_Berry":
+        berry_emoji = "<:ganlon_berry:1085430940001640509>"
+    elif name == "Cheri_Berry":
+        berry_emoji = "<:cheri_berry:1085430875300302909>"
+    else:
+        berry_emoji = "‼️" #Means emoji is missing
+    return berry_emoji
+
+def get_battle_emoji(*, item_name:str):
+    if item_name == 'assault_vest':
+        emoji = "<:assault_vest:1092675798093275176>"
+    elif item_name == 'air_balloon':
+        emoji = "<:air_balloon:1092675918985703476>"
+    elif item_name == 'charcoal':
+        emoji = "<:charcoal:1092675938162065488>"
+    elif item_name == 'weakness_policy':
+        emoji = "<:weakness_policy:1092675951814525028>"
+    elif item_name == 'eviolite':
+        emoji = "<:eviolite:1092675966540718131>"
+    elif item_name == 'white_herb':
+        emoji = "<:white_herb:1092675979102650388>"
+    elif item_name == 'life_orb':
+        emoji = "<:life_orb:1092675989932347392>"
+    elif item_name == 'choice_scarf':
+        emoji = "<:choice_scarf:1092675794490372128>"
+    elif item_name == 'expert_belt':
+        emoji = "<:expert_belt:1092676028972945419>"
+    elif item_name == 'choice_band':
+        emoji = "<:choice_band:1092676047402709034>"
+    elif item_name == 'choice_specs':
+        emoji = "<:choice_specs:1092676062971957288>"
+    elif item_name == 'soul_dew':
+        emoji = "<:soul_dew:1092676109998501978>"
+    elif item_name == 'leftovers':
+        emoji = "<:leftovers:1092675790820347925>"
+    elif item_name == 'silk_scarf':
+        emoji = "<:silk_scarf:1092676135663439902>"
+    elif item_name == 'focus_sash':
+        emoji = "<:focus_sash:1092676207348297738>"
+    elif item_name == "big_root":
+        emoji = "<:big_root:1092676206526206012>"
+    elif item_name == "black_belt":
+        emoji = "<:black_belt:1092675788215681024>"
+    elif item_name == "black_glasses":
+        emoji = "<:black_glasses:1092676242278461440>"
+    elif item_name == "dragon_fang":
+        emoji = "<:dragon_fang:1092676302131175424>"
+    elif item_name == "hard_stone":
+        emoji = "<:hard_stone:1092676299560063016>"
+    elif item_name == "light_ball":
+        emoji = "<:light_ball:1092676355776327751>"
+    elif item_name == "magnet":
+        emoji = "<:magnet:1092675784117862502>"
+    elif item_name == "muscle_band":
+        emoji = "<:muscle_band:1092676420150493225>"
+    elif item_name == "mystic_water":
+        emoji = "<:mystic_water:1092675782830202890>"
+    elif item_name == "never_melt_ice":
+        emoji = "<:never_melt_ice:1092675781722906654>"
+    elif item_name == "poison_barb":
+        emoji = "<:poison_barb:1092675780900823081>"
+    elif item_name == "rocky_helmet":
+        emoji = "<:rocky_helmet:1092675779755790347>"
+    elif item_name == "scope_lens":
+        emoji = "<:scope_lens:1092675778912714762>"
+    elif item_name == "shell_bell":
+        emoji = "<:shell_bell:1092675777667014706>"
+    elif item_name == "wise_glasses":
+        emoji = "<:wise_glasses:1092675776756858991>"
+    elif item_name == "flame_orb":
+        emoji = "<:flame_orb:1093323794556387350>"
+    elif item_name == "protective_pads":
+        emoji = "<:protective_pads:1093340836399419544>"
+    elif item_name == "bright_powder":
+        emoji = "<:bright_powder:1096163200677986424>"
+    elif item_name == "focus_band":
+        emoji = "<:focus_band:1096163199189004410>"
+    elif item_name == "iron_ball":
+        emoji = "<:iron_ball:1096163201881735238>"
+    elif item_name == "burn_drive":
+        emoji = "<:burn_drive:1097354445542658048>"
+    elif item_name == "chill_drive":
+        emoji = "<:chill_drive:1097354443130941523>"
+    elif item_name == "douse_drive":
+        emoji = "<:douse_drive:1097354428253749248>"
+    elif item_name == "shock_drive":
+        emoji = "<:shock_drive:1097354444246622238>"
+    elif item_name == "electric_seed":
+        emoji = "<:electric_seed:1097354144844619897>"
+    elif item_name == "heavy_duty_boots":
+        emoji = "<:heavy_duty_boots:1097354143317905468>"
+    elif item_name == "terrain_extender":
+        emoji = "<:terrain_extender:1097354142328049694>"
+    elif item_name == "black_sludge":
+        emoji = "<:black_sludge:1097354415700181052>"
+    elif item_name == "quick_claw":
+        emoji = "<:quick_claw:1103014838680178771>"
+    elif item_name == "psychic_seed":
+        emoji = "<:psychic_seed:1103014837107302400>"
+    elif item_name == "wide_lens":
+        emoji = "<:wide_lens:1103014839959441519>"
+    elif item_name == "heat_rock":
+        emoji = "<:heat_rock:1103331091600912425>"
+    elif item_name == "smooth_rock":
+        emoji = "<:smooth_rock:1103331093580624022>"
+    else:
+        emoji = "‼️" #Means emoji is missing
+    return emoji
+
+def get_trade_emoji(*, item_name:str):
+    if item_name == "deep_sea_scale":
+        emoji = "<:seascale:671571987814154240>"
+    elif item_name == "deep_sea_tooth":
+        emoji = "<:seatooth:671571987428147241>"
+    elif item_name == "dragon_scale":
+        emoji = "<:dragonscale:671571987822280704>"
+    elif item_name == "electirizer":
+        emoji = "<:electirizer:671571987667091506>"
+    elif item_name == "kings_rock":
+        emoji = "<:kingsrock:671571987214368812>"
+    elif item_name == "magmarizer":
+        emoji = "<:magmarizer:671571987612827658>"
+    elif item_name == "metal_coat":
+        emoji = "<:metalcoat:671571987583205379>"
+    elif item_name == "prism_scale":
+        emoji = "<:prismscale:671571987574816769>"
+    elif item_name == "dubious_disc":
+        emoji = "<:dubiousdisc:671571987608502272>"
+    elif item_name == "up_grade":
+        emoji = "<:upgrade:671571987230883881>"
+    elif item_name == "protector":
+        emoji = "<:protector:671571987646119946>"
+    elif item_name == "reaper_cloth":
+        emoji = "<:reapercloth:671571987579142154>"
+    elif item_name == "sachet":
+        emoji = "<:sachet:671571987507970061>"
+    elif item_name == "whipped_dream":
+        emoji = "<:whippeddream:671571987155648513>"
+    elif item_name == "dream_razor":
+        emoji = "<:dreamrazor:671571987470221322>"
+    elif item_name == "razor_fang":
+        emoji = "<:razorfang:671571987466027018>"
+    elif item_name == "razor_claw":
+        emoji = "<:dreamrazor:671571987470221322>"
+    elif item_name == "oval_stone":
+        emoji = "<:ovalstone:671571987461570570>"
+    elif item_name == 'air_balloon':
+        emoji = "<:air_balloon:1092675918985703476>"
+    else:
+        emoji = "‼️" #Means emoji is missing
+    return emoji
+
+def get_stone_emoji(*, item_name:str):
+    if item_name == "sun_stone":
+        emoji = "<:sunstone:669922327085187083>"
+    elif item_name == "dusk_stone":
+        emoji = "<:duskstone:669922327227793448>"
+    elif item_name == "thunder_stone":
+        emoji = "<:thunderstone:669922327248633856>"
+    elif item_name == "fire_stone":
+        emoji = "<:firestone:669922326971940875>"
+    elif item_name == "ice_stone":
+        emoji = "<:icestone:669922326686728226>"
+    elif item_name == "water_stone":
+        emoji = "<:waterstone:669922327332388875>"
+    elif item_name == "dawn_stone":
+        emoji = "<:dawnstone:669922327173267462>"
+    elif item_name == "leaf_stone":
+        emoji = "<:leafstone:669922327189913601>"
+    elif item_name == "moon_stone":
+        emoji = "<:moonstone:669922327168942101>"
+    elif item_name == "shiny_stone":
+        emoji = "<:shinystone:669922327261347870>"
+    elif item_name == "oval_stone":
+        emoji = "<:ovalstone:713196958935810059>"
+    elif item_name == "mega_stone":
+        emoji = "<:mega_stone:1085424851277324379>"
+    elif item_name == "mega_stone_x":
+        emoji = "<:mega_stone_x:1085424853785518151>"
+    elif item_name == "mega_stone_y":
+        emoji = "<:mega_stone_y:1085424852141346878>"
+    else:
+        emoji = "‼️" #Means emoji is missing
+    return emoji
+
+def get_form_emoji(*, item_name:str):
+    if item_name == 'rusty_shield':
+        emoji = "<:rusty_shield:1093339674833064046>"
+    elif item_name == 'rusty_sword':
+        emoji = "<:rusty_sword:1093339676762456094>"
+    elif item_name == 'griseous_orb':
+        emoji = "<:griseous_orb:1085406074590478366>"
+    elif item_name == 'gracidea_flower':
+        emoji = "<:gracidea_flower:1085406076301737984>"
+    elif item_name == 'zygarde_cell':
+        emoji = "<:zygarde_cell:1085407575106924645>"
+    elif item_name == 'reveal_glass':
+        emoji = "<:reveal_glass:1085406077186736248>"
+    elif item_name == 'dark_stone':
+        emoji = "<:dark_stone:1101567529241034752>"
+    elif item_name == 'light_stone':
+        emoji = "<:light_stone:1101567530570620959>"
+    elif item_name == 'ultranecronium_z':
+        emoji = "<:ultranecrozmium_z:1089022956388237352>"
+    elif item_name == 'n_lunarizer':
+        emoji = "<:nlunarizer:1101567532109930649>"
+    elif item_name == 'n_solarizer':
+        emoji = "<:n_solarizer:1101567533645037648>"
+    elif item_name == 'meteorite':
+        emoji = "<:meteorite:1101567535838662778>"
+    elif item_name == 'red_orb':
+        emoji = "<:red_orb:1101567536849498143>"
+    elif item_name == 'blue_orb':
+        emoji = "<:blue_orb:1101567538313310429>"
+    elif item_name == 'meltan_candy':
+        emoji = "<:meltan_candy:1093365238998511647>"
+    elif item_name == 'black_augurite':
+        emoji = "<:black_augurite:1093365542624182282>"
+    elif item_name == "peat_block":
+        emoji = "<:peat_block:1093365914579247154>"
+    elif item_name == "shadow_stone":
+        emoji = "<:shadow_stone:1103808613111300138>"
+    elif item_name == "primal_orb":
+        emoji = "<:primal_orb:1103809299362353272>"
+    else:
+        emoji = "‼️" #Means emoji is missing
+    return emoji
+
+
 async def run_in_tpe(func, *args, **kwargs):
     loop = asyncio.get_event_loop()
     partial = functools.partial(func, *args, **kwargs)
     return await loop.run_in_executor(None, partial)
 
-
+#TODO: Add footer field for shop embeds that use SlashMenuView - REQUIRES RESTART
 def pagify(text: str, *, per_page: int = 15, sep: str = "\n", base_embed=None):
     """
     Splits the provided `text` into pages.
@@ -763,7 +1080,7 @@ class MenuView(discord.ui.View):
         except discord.NotFound:
             pass
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     async def handle_page(self, edit_func):
@@ -779,6 +1096,53 @@ class MenuView(discord.ui.View):
             self.message = await self.ctx.send(embed=self.pages[0], view=self)
         else:
             self.message = await self.ctx.send(self.pages[0], view=self)
+        return self.message
+
+
+#Interaction [Slash] MenuView
+class SlashMenuView(discord.ui.View):
+    """View that creates a menu using the List[str] or List[embed] provided."""
+    def __init__(self, interaction, pages: "List[Union[str, discord.Embed]]"):
+        super().__init__(timeout=60)
+        self.interaction = interaction
+        self.pages = pages
+        self.page = 0
+        if len(self.pages) > 1:
+            self.add_item(FirstPageButton())
+            self.add_item(LeftPageButton())
+        self.add_item(CloseMenuButton())
+        if len(self.pages) > 1:
+            self.add_item(RightPageButton())
+            self.add_item(LastPageButton())
+
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.interaction.user.id:
+            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            return False
+        return True
+    
+    async def on_timeout(self):
+        try:
+            await self.message.edit(view=None)
+        except discord.NotFound:
+            pass
+    
+    async def on_error(self, error, item, interaction):
+        await self.interaction.client.misc.log_error(self.interaction, error)
+
+    async def handle_page(self, edit_func):
+        if isinstance(self.pages[0], discord.Embed):
+            await edit_func(embed=self.pages[self.page])
+        else:
+            await edit_func(content=self.pages[self.page])
+    
+    async def start(self):
+        if len(self.pages) < 1:
+            raise RuntimeError("Must provide at least 1 page.")
+        if isinstance(self.pages[0], discord.Embed):
+            self.message = await self.interaction.response.send_message(embed=self.pages[0], view=self)
+        else:
+            self.message = await self.interaction.response.send_message(self.pages[0], view=self)
         return self.message
 
 
@@ -881,7 +1245,7 @@ class ConfirmView(discord.ui.View):
 
         self.event.set()
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     async def wait(self):
@@ -950,7 +1314,7 @@ class ListSelectView(discord.ui.View):
             pass
         self.event.set()
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     async def wait(self):
@@ -976,7 +1340,7 @@ class EnableCommandsView(discord.ui.View):
             return False
         return True
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     @discord.ui.button(label="Re-enable commands", style=discord.ButtonStyle.secondary)

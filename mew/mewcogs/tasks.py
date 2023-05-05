@@ -17,6 +17,7 @@ class Mother(commands.Cog):
         if self.bot.cluster["id"] == 1:
             self.mother.start()
             self.energy.start()
+            self.berries.start()
 
     @tasks.loop(seconds=1440)
     async def energy(self):
@@ -24,6 +25,15 @@ class Mother(commands.Cog):
             await pconn.execute(
                 "UPDATE users SET energy = energy + 1 WHERE energy < 10"
             )
+            await pconn.execute(
+                "UPDATE users SET npc_energy = npc_energy + 1 WHERE npc_energy < 10"
+            )
+
+    @tasks.loop(seconds=300)
+    async def berries(self):
+        async with self.bot.db[0].acquire() as pconn:
+            await pconn.execute("UPDATE berries SET ready = True")
+            
 
     @tasks.loop(seconds=60 * 10)
     async def mother(self):
@@ -70,6 +80,7 @@ class Mother(commands.Cog):
     def cog_unload(self):
         self.energy.cancel()
         self.mother.cancel()
+        self.berries.cancel()
 
 
 async def setup(bot):

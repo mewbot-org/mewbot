@@ -1,0 +1,117 @@
+import asyncio
+from discord.ext import commands
+from mewutils.checks import check_owner
+from mewcogs.json_files import make_embed
+from mewcogs.pokemon_list import (
+    LegendList,
+    pseudoList,
+    ubList,
+    starterList,
+)
+
+class Essence(commands.Cog):
+    def __init__(self, bot) -> None:
+        self.bot = bot
+        super().__init__()
+
+    @commands.hybrid_group()
+    async def essence(self, ctx):
+        ...
+
+    @essence.command(name="craft")
+    @check_owner()
+    async def essence_craft(self, ctx: commands.Context, poke_num: int):
+        """Trade-in shiny starter/pseudo/ub/legends for essence."""
+        e = make_embed(
+                        title="Crafting...",
+                        description=f"Attempting to trade-in Pokémon for essence!",
+                    )
+        e.set_thumbnail(url='https://www.themarysue.com/wp-content/uploads/2022/08/Terastal-Pokemon.jpeg')
+        msg = await ctx.send(
+                    embed=e
+                )
+        
+        await asyncio.sleep(2)
+
+        async with ctx.bot.db[0].acquire() as pconn:
+            records = await pconn.fetchrow(
+                "SELECT * FROM pokes WHERE id = (SELECT pokes[$1] FROM users WHERE u_id = $2)",
+                poke_num,
+                ctx.author.id,
+            )
+            
+
+        if not records:
+            await msg.edit(
+                embed=make_embed(
+                    title="Invalid Pokémon",
+                    description=f"You don't have that Pokémon!",
+                )
+            )
+            return
+        name = records['pokname']
+        # Embed fun
+        e.title = "Still Crafting..."
+        e.description = f"Found a {name} !"
+        await msg.add_reaction('<a:mewspin:998520051432968273>')
+        await asyncio.sleep(1)
+        await msg.edit(embed=e)
+        await asyncio.sleep(3)
+
+        form_info = await ctx.bot.db[1].forms.find_one({"identifier": name.lower()})
+        ptypes = await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
+
+        if not records['shiny'] or records['fav'] or (15 in ptypes['types']):
+            await msg.edit(
+                embed=make_embed(
+                    title="Invalid Pokémon",
+                    description=f"You Pokémon must be a shiny :star2:, not be an Ice-type and not favourited for crafting!",
+                )
+            )
+            return
+        
+        async with ctx.bot.db[0].acquire() as pconn:
+            if name in starterList:
+                maxed = await pconn.fetchval("SELECT (essence).x >= 25 FROM users WHERE u_id = $1", ctx.author.id)
+                if maxed:
+                    await msg.edit(
+                        embed=make_embed(
+                            title="Maxed X-Essence",
+                            description=f"You have the maximum amount of X-Essence needed for crystallization!",
+                                )
+                    )
+                    return
+                await pconn.execute("UPDATE users SET essence.x = (essence).x + 1 WHERE u_id = $1", ctx.author.id)
+                e.title = f"Crafted 1 X-Essence from your Shiny {name}"
+                e.description = "You are one step closer to Crystallization!"
+                await msg.edit(embed=e)
+                await ctx.bot.commondb.remove_poke(ctx.author.id, poke_num, delete=True)
+
+            elif name in LegendList or name in pseudoList or name in ubList:
+                maxed = await pconn.fetchval("SELECT (essence).y >= 100 FROM users WHERE u_id = $1", ctx.author.id)
+                if maxed:
+                    await msg.edit(
+                        embed=make_embed(
+                            title="Maxed Y-Essence",
+                            description=f"You have the maximum amount of Y-Essence needed for crystallization!",
+                                )
+                    )
+                    return
+                await pconn.execute("UPDATE users SET essence.y = (essence).y + 1 WHERE u_id = $1", ctx.author.id)
+                e.title = f"Crafted 1 Y-Essence from your Shiny {name}"
+                e.description = "You are one step closer to Crystallization!"
+                await msg.edit(embed=e)
+                await msg.add_reaction('<a:mewspin:998520051432968273>')
+                await ctx.bot.commondb.remove_poke(ctx.author.id, poke_num, delete=True)
+                
+            else:
+                await msg.edit(
+                    embed=make_embed(
+                        title="Invalid Pokemon.",
+                        description=f"This Pokémon can not be traded-in for essence!",
+                    )
+                )
+                return
+            
+async def setup(bot):
+    await bot.add_cog(Essence(bot))

@@ -305,6 +305,7 @@ async def get_pokemon_info(ctx, records, info_type=None):
     happiness = records["happiness"]
     ab_index = records["ability_index"]
     skin = records["skin"]
+    tradable = records["tradable"]
     move1, move2, move3, move4 = (
         move.capitalize().replace("-", " ") for move in records["moves"]
     )
@@ -498,7 +499,7 @@ async def get_pokemon_info(ctx, records, info_type=None):
     embed = discord.Embed(
         title=f"Market ID# {mid}{emoji}{gender} {pn} - Price {price:,.0f}"
         if info_type and info_type == "market"
-        else f"<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} {pnick}",
+        else f"<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} {pnick} {(':x:' if not tradable else '')}",
         color=random.choice(ctx.bot.colors),
     )
 

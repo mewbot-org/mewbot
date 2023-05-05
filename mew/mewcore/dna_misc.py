@@ -7,7 +7,7 @@ from mewcogs.pokemon_list import natlist
 class MewMisc:
     CREDITS_EMOJI = "<:mewcoin:1010959258638094386>"
     REDEEMS_EMOJI = "<:redeem:1037942226132668417>"
-    
+
     def __init__(self, bot):
         self.bot = bot
         self.emotes = {
@@ -141,7 +141,7 @@ class MewMisc:
         cmd = None
         if ctx.command:
             cmd = ctx.command.qualified_name
-        ctx.bot.logger.exception(f"Error in command {cmd}")
+        ctx.bot.logger.exception(f"\n\nError in command {cmd}\n\n")
         # "404 unknown interaction" from the interaction timing out and becoming invalid before responded to.
         # I don't know how to possibly fix this other than to get a better host, stop spamming logs.
         if isinstance(error, discord.NotFound) and error.code == 10062:
@@ -170,8 +170,8 @@ class MewMisc:
                     f"Args       {ctx.args}\n\n"
                 ) + page
             try:
-                await ctx.bot.http.send_message(
-                    998290948863836160, f"```py\n{page}\n```"
+                await ctx.bot.get_partial_messageable(998290948863836160).send(
+                   f"```py\n{page}\n```"
                 )
             except:
                 ctx.bot.logger.exception("Could not send log to channel")

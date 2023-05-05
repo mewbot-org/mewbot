@@ -69,16 +69,16 @@ class Duel(commands.Cog):
                 self.duel_reset_time.decode("utf-8"), DATE_FORMAT
             )
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     async def battle_tower_diag(self, ctx):
         """Diagnose Battle Tower"""
         await ctx.send(f"Current Queue: {self.bt_queue}\n\n\nRanks: {self.ranks}")
 
-    @commands.Cog.listener()
+    #@commands.Cog.listener()
     async def on_ready(self):
 
         """Starts the matchmaking loop when the bot is ready"""
-        
+
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             # Check if there are enough users in the queue to start a match
@@ -267,7 +267,7 @@ class Duel(commands.Cog):
 
         return winner
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     async def train(self, ctx):
         data = (await ctx.bot.db[1].npc_data.find_one())["npc_data"]
         df = pd.DataFrame(data)
@@ -306,7 +306,7 @@ class Duel(commands.Cog):
         # Train a machine learning model
         self.bot.npc_model = RandomForestClassifier()
         self.bot.npc_model.fit(X, Y)
-        joblib.dump(self.bot.npc_model, 'npc_model.pkl')
+        joblib.dump(self.bot.npc_model, "npc_model.pkl")
         await ctx.send("Model training complete!")
 
     @commands.hybrid_group()
@@ -314,7 +314,7 @@ class Duel(commands.Cog):
         """Initiate a 1v1 duel, 6v6 battle, NPC duel or an Inverse duel."""
         ...
 
-    @duel.command()
+    #@duel.command()
     async def tower(self, ctx):
         """A battle tower duel."""
         await ctx.send("Coming soon...")
@@ -630,7 +630,9 @@ class Duel(commands.Cog):
         owner1 = MemberTrainer(ctx.author, pokes1)
         owner2 = MemberTrainer(opponent, pokes2)
 
-        battle = Battle(ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=inverse_battle)
+        battle = Battle(
+            ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=inverse_battle
+        )
 
         battle.trainer1.event.clear()
         battle.trainer2.event.clear()
@@ -690,11 +692,11 @@ class Duel(commands.Cog):
 
         async with ctx.bot.db[0].acquire() as pconn:
             # Reduce energy
-            data = await pconn.fetchrow(
-                "SELECT energy, inventory::json FROM users WHERE u_id = $1",
+            energy = await pconn.fetchval(
+                "SELECT npc_energy FROM users WHERE u_id = $1", 
                 ctx.author.id,
             )
-            if data is None:
+            if energy is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
 
@@ -713,7 +715,7 @@ class Duel(commands.Cog):
                 )
                 return
 
-            if data["energy"] <= 0:
+            if energy <= 0:
                 await ctx.send("You don't have energy left!")
                 cog = ctx.bot.get_cog("Extras")
                 await cog.vote.callback(cog, ctx)
@@ -722,7 +724,7 @@ class Duel(commands.Cog):
                 ENERGY_IMMUNE = True
             else:
                 await pconn.execute(
-                    "UPDATE users SET energy = energy - 1 WHERE u_id = $1",
+                    "UPDATE users SET npc_energy = npc_energy - 1 WHERE u_id = $1",
                     ctx.author.id,
                 )
 
@@ -751,8 +753,14 @@ class Duel(commands.Cog):
         if ENERGY_IMMUNE:
             return
 
-        battle_multi = data["inventory"].get("battle-multiplier", 1)
-
+        async with ctx.bot.db[0].acquire() as pconn:
+            battle_multi = await pconn.fetchval(
+                "SELECT battle_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id
+            )
+            if battle_multi is None:
+                battle_multi = 1
+                
         # Update mission progress
         user = await ctx.bot.mongo_find(
             "users",

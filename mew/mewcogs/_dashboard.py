@@ -4,6 +4,7 @@ import discord
 import json
 import zmq
 
+
 class Dashboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -22,22 +23,25 @@ class Dashboard(commands.Cog):
             473541068378341376,
         )  # dylee, sky, doom, neuro
 
-    async def process_request(request):
+    async def process_request(self, request):
         if request["target"] != "bot":
             return
         if request["action"]["type"] == "get":
             if request["action"]["message"] == "ping":
-                response = {"id": request["id"], "action": {"type": "give", "message": "pong"}}
+                response = {
+                    "id": request["id"],
+                    "action": {"type": "give", "message": "pong"},
+                }
                 await self.pub.send_json(f"mewbot-dashboard {json.dumps(response)}")
 
     @tasks.loop()
-    async def main_handler()
+    async def main_handler(self):
         if not self.initialized:
             self.pub.bind("tcp://127.0.0.1:6823")
             self.sub.connect("tcp://127.0.0.1:6823")
 
             self.sub.setsockopt(zmq.SUBSCRIBE, "mewbot-dashboard")
             self.initialized = True
-        
+
         while request := await self.sub.recv_json():
             asyncio.get_event_loop().create_task(self.process_task(request))

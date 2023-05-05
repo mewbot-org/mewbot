@@ -107,16 +107,16 @@ async def get_child(ctx, father, mother, shiny=False):
             ab_id = ab_ids[0]
 
     knotted = True
-    if mother.held_item == "ultra-destiny-knot":
+    if mother.held_item == "ultra_destiny_knot":
         parent = mother
         num = 3 if random.randint(0, 9) else 4
-    elif father.held_item == "ultra-destiny-knot":
+    elif father.held_item == "ultra_destiny_knot":
         parent = father
         num = 3 if random.randint(0, 9) else 4
-    elif mother.held_item == "destiny-knot":
+    elif mother.held_item == "destiny_knot":
         parent = mother
         num = 1 if random.randint(0, 2) else 2
-    elif father.held_item == "destiny-knot":
+    elif father.held_item == "destiny_knot":
         parent = father
         num = 1 if random.randint(0, 2) else 2
     else:
@@ -144,7 +144,7 @@ async def get_child(ctx, father, mother, shiny=False):
         gender = name[-2:]
     elif name.lower() == "illumise":
         gender = "-f"
-    elif name.lower() == "volbeat":
+    elif name.lower() in ("volbeat", "tauros-paldea"):
         gender = "-m"
     # -1 = genderless pokemon
     elif gender_rate == -1:
@@ -447,7 +447,7 @@ class RedoBreedView(discord.ui.View):
         except discord.NotFound:
             pass
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
 
@@ -475,7 +475,7 @@ class CancelRedoView(discord.ui.View):
             return False
         return True
 
-    async def on_error(self, error, item, interaction):
+    async def on_error(self, interaction, error, item):
         await self.ctx.bot.misc.log_error(self.ctx, error)
 
     async def on_timeout(self):
@@ -569,18 +569,34 @@ class Breeding(commands.Cog):
             father, mother = male, female
             async with ctx.bot.db[0].acquire() as pconn:
                 pokes = await pconn.fetchrow(
-                    "SELECT pokes, daycarelimit, inventory::json FROM users WHERE u_id = $1",
+                    "SELECT pokes, daycarelimit, chain FROM users WHERE u_id = $1",
                     ctx.author.id,
                 )
+                multipliers = await pconn.fetchrow(
+                    "SELECT shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1",
+                    ctx.author.id
+                )
+                if multipliers is None:
+                    shiny_multiplier = 0
+                    breedmulti = 0
+                else:
+                    shiny_multiplier = multipliers['shiny_multiplier']
+                    breedmulti = multipliers['breeding_multiplier']
+
+                #Check if not existing
+                if shiny_multiplier is None:
+                    shiny_multiplier = 0
+                if breedmulti is None:
+                    breedmulti = 0
 
                 if pokes is None:
                     await ctx.send("You have not started!\nStart with `/start` first.")
                     return
-                dets = pokes["inventory"]
-                s_threshold = round(8000 - 8000 * (dets["shiny-multiplier"] / 100))
+                s_threshold = round(8000 - 8000 * (shiny_multiplier / 100))
                 is_shiny = random.choice([False for i in range(s_threshold)] + [True])
 
                 dlimit = pokes["daycarelimit"]
+                chain = pokes['chain']
                 pokes = pokes["pokes"]
                 daycared = await pconn.fetchval(
                     "SELECT count(*) FROM pokes WHERE id = ANY ($1) AND pokname = 'Egg'",
@@ -722,16 +738,17 @@ class Breeding(commands.Cog):
             chance = (min(100, father.capture_rate) + min(100, mother.capture_rate)) / (
                 (father_total_iv + mother_total_iv) * 3
             )
-            breedmulti = dets.get("breeding-multiplier", 0)
             inc = (breedmulti / 50.0) + 1.0  # * 1.0 - 2.0
             chance *= inc
             if ctx.bot.premium_server(ctx.guild.id):
                 chance *= 1.05
             success = random.choices([True, False], weights=(chance, 1 - chance))[0]
             chance_message = f"Chance of success: {chance * 100:.2f}% | {ctx.author}"
+
+            #Failed attempt
             if not success:
                 embed = discord.Embed(
-                    title="Breeding Attempt Failed!",
+                    title=f"Breeding Attempt Failed!",
                     description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: <t:{int(time.time()) + 36}:R>",
                 ).set_footer(text=chance_message)
                 if auto:
@@ -754,6 +771,7 @@ class Breeding(commands.Cog):
                         self, ctx, male, females=str(female) + "auto"
                     )
 
+            #Got an egg
             else:
 
                 self.auto_redo[ctx.author.id] = None
@@ -776,7 +794,7 @@ class Breeding(commands.Cog):
                     )
                 if is_shadow:
                     await ctx.bot.get_partial_messageable(998341289164689459).send(
-                        f"`{ctx.author.id} - {child.name}`"
+                        f"`Shadow through Breeding: {ctx.author.id} - {child.name}`"
                     )
                 emoji = get_emoji(
                     shiny=child.shiny,
@@ -805,45 +823,72 @@ class Breeding(commands.Cog):
                     + child.speed
                     + child.hp
                 )
+                #TODO: achievement code
+
                 ivpercent = round((ivsum / 186) * 100, 2)
                 e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
                 e.description = f"It will hatch after {counter} messages!"
-                e.add_field(
-                    name=f"Your {mother_details['pokname']} will be on breeding cooldown for",
-                    value="6 Hours!",
-                    inline=False,
+                embed = discord.Embed(
+                    title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
+                    description="It's been automatically added to your Pokemon list.",
+                    color=0x00FF00
                 )
-                e.add_field(
-                    name="You can breed again",
-                    value=f"<t:{int(time.time()) + 36}:R>",
-                    inline=False,
+                embed.add_field(
+                    name="Egg Details",
+                    value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
+                    inline=True
                 )
-                e.set_image(
-                    url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
+                embed.add_field(
+                    name="Cooldowns",
+                    value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again in **<t:{int(time.time()) + 36}:R>**",
+                    inline=True
                 )
-                e.set_footer(text=chance_message)
+                if is_shadow:
+                    embed.add_field(
+                        name="Shadow Details",
+                        value=f"This Shadow took {chain} attempts! WOW!",
+                        inline=True
+                    )
+                embed.set_image(
+                    url="https://dyleee.github.io/mewbot-images/eastereggs.png"
+                )
+                embed.set_footer(text=chance_message)
                 if auto:
-                    message = await ctx.send(ctx.author.mention, embed=e)
+                    message = await ctx.send(ctx.author.mention, embed=embed)
                 else:
-                    message = await ctx.send(embed=e)
+                    message = await ctx.send(embed=embed)
                 # Dispatches an event that a poke was bred.
                 # on_poke_breed(self, channel, user)
                 self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
                 await asyncio.sleep(36)
-                e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
-                e.description = f"It will hatch after {counter} messages!"
-                e.add_field(
-                    name=f"Your {mother_details['pokname']} will be on breeding cooldown for",
-                    value="6 Hours!",
-                    inline=False,
+
+                embed = discord.Embed(
+                    title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
+                    description="It's been automatically added to your Pokemon list.",
+                    color=0x00FF00
                 )
-                e.add_field(name="You can breed again", value="Now!", inline=False)
-                e.set_image(
-                    url="https://dyleee.github.io/mewbot-images/sprites/breedresult.png"
+                embed.add_field(
+                    name="Egg Details",
+                    value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
+                    inline=True
                 )
-                e.set_footer(text=chance_message)
+                embed.add_field(
+                    name="Cooldowns",
+                    value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again **Now**",
+                    inline=True
+                )
+                if is_shadow:
+                    embed.add_field(
+                        name="Shadow Details",
+                        value=f"This Shadow took {chain} attempts! WOW!",
+                        inline=True
+                    )
+                embed.set_image(
+                    url="https://dyleee.github.io/mewbot-images/eastereggs.png"
+                )
+                embed.set_footer(text=chance_message)
                 try:
-                    await message.edit(embed=e)
+                    await message.edit(embed=embed)
                 except discord.NotFound:
                     pass
 

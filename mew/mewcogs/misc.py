@@ -155,18 +155,13 @@ class Misc(commands.Cog):
                     response += f"Congratulations!\nYour {egg_name} Egg has hatched!\n"
                     chest_chance = not random.randint(0, 200)
                     if chest_chance:
-                        inventory = await pconn.fetchval(
-                            "SELECT inventory::json FROM users WHERE u_id = $1",
+                        await self.bot.commondb.add_bag_item(
                             message.author.id,
+                            "common_chest",
+                            1,
+                            True
                         )
-                        item = "common chest"
-                        inventory[item] = inventory.get(item, 0) + 1
-                        await pconn.execute(
-                            "UPDATE users SET inventory = $1::json where u_id = $2",
-                            inventory,
-                            message.author.id,
-                        )
-                        response += "It was holding a common chest!\n"
+                        response += "It was holding a common chest!\n" 
             if hatched_pokemon:
                 #
                 user = await self.bot.mongo_find(
@@ -185,18 +180,13 @@ class Misc(commands.Cog):
                 )
                 chest_chance = not random.randint(0, 200)
                 if chest_chance:
-                    inventory = await pconn.fetchval(
-                        "SELECT inventory::json FROM users WHERE u_id = $1",
-                        message.author.id,
-                    )
-                    item = "common chest"
-                    inventory[item] = inventory.get(item, 0) + 1
-                    await pconn.execute(
-                        "UPDATE users SET inventory = $1::json where u_id = $2",
-                        inventory,
-                        message.author.id,
-                    )
-                    response += "It was holding a common chest!\n"
+                        await self.bot.commondb.add_bag_item(
+                            message.author.id,
+                            "common_chest",
+                            1,
+                            True
+                        )
+                        response += "It was holding a common chest!\n" 
             if level_pokemon:
                 pokemon_details = await pconn.fetchrow(
                     "SELECT users.silenced, pokes.* FROM users INNER JOIN pokes on pokes.id = (SELECT selected FROM users WHERE u_id = $1) AND users.u_id = $1",
@@ -297,7 +287,7 @@ class Misc(commands.Cog):
         if " " in name:
             name = name.replace(" ", "")
         e = discord.Embed(title="Donate to the Bot Here!", color=0xFFB6C1)
-        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=UAV3PH3BESMFN&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&no_note=1&no_shipping=1&rm=1&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted&custom={ctx.author.id}&notify_url=http://mewbot.xyz:15211/paypal/"
+        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=GM259T2ZVLM52&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&no_note=1&no_shipping=1&rm=1&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted&custom={ctx.author.id}&notify_url=http://mewbot.xyz:15211/paypal/"
 
         payload = {"user_name": ctx.author.name, "user_id": ctx.author.id}
         # donation_url = f"https://mewbot.xyz/donate?{urllib.parse.urlencode(payload)}"
@@ -310,7 +300,7 @@ class Misc(commands.Cog):
             inline=False,
         )
         e.set_footer(
-            text="You will receive 3 Redeems + 2,000 credits for every USD donated."
+            text="You will receive 1 Redeem + 2,000 credits for every USD donated."
         )
         await ctx.send(embed=e)
 

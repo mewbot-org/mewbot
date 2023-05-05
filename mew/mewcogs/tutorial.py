@@ -245,7 +245,7 @@ class Tutorial(commands.Cog):
                 - Chests are found randomly from catching Pokemon or fishing. They can also be bought for credits or redeems.
                 **6.** Donating to the bot
                 - Use `/donate` to obtain a link. You can donate via Patreon or Paypal.
-                - Donations through paypal give **2 redeems** and **1500 credits** per $1 USD donated.
+                - Donations through paypal give **1 redeem** and **2000 credits** per $1 USD donated.
                 - Patreon rewards can be claimed monthly using `/predeem`.
 
                 **Redeems**
@@ -257,12 +257,12 @@ class Tutorial(commands.Cog):
                 - Voting gives you upvote points.
                 - Use `/claim` when you have 5 upvote points to get some credits.
                 **2.** Purchasing redeems with credits using `/buy redeems`
-                - You can by 30 redeems per week this way, at 60,000 credits per redeem.
+                - You can by 30 redeems per week this way, at 60,000 credits per redeem. (Unavailable)
                 **3.** Opening chests
                 - Chests are found randomly from catching Pokemon or fishing. They can also be bought for credits or redeems.
                 **4.** Donating to the bot
                 - Use `/donate` to obtain a link. You can donate via Patreon or Paypal.
-                - Donations through paypal give **2 redeems** and **1500 credits** per $1 USD donated.
+                - Donations through paypal give *1 redeem** and **2000 credits** per $1 USD donated.
                 - Patreon rewards can be claimed monthly using `/predeem`.
                 """,
             ],

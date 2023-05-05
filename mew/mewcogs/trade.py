@@ -45,6 +45,55 @@ class TradeList:
             if poke.sender == sender:
                 yield poke
 
+class TradeUtilView(discord.ui.View):
+    def __init__(
+        self,
+        ctx: commands.Context,
+    ):
+        self.modal = TradeUtilModal(self)
+        super().__init__(timeout=30)
+        self.ctx = ctx
+
+    async def on_timeout(self):
+        if self.msg:
+            embed = self.msg.embeds[0]
+            embed.title = "Timed out!"
+            embed.description = f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+            await self.msg.edit(embed=embed, view=None)
+            return
+
+    async def interaction_check(self, interaction):
+        return interaction.user == self.ctx.author
+
+    @discord.ui.button(label="Enter Message ID!", style=discord.ButtonStyle.blurple)
+    async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
+        await interaction.response.send_modal(self.modal)
+
+class TradeUtilModal(discord.ui.Modal, title="Mewbot Trade/Breed Util"):
+    def __init__(
+        self,
+        view: discord.ui.View
+    ):
+        super().__init__()
+
+    msg_id = discord.ui.TextInput(label=f'Message ID', placeholder="Just the ID, not the whole link please...")
+
+    async def on_submit(self, interaction: discord.Interaction):
+        m = await interaction.channel.fetch_message(self.msg_id)
+        lines = m.embeds[0].description.split('\n')
+        result = []  #  <---here?
+        for line in lines:
+            form = '<:num:1029030329350111232>**`'
+            start = line.find(form)
+            sub = line[start + len(form):]
+            end = sub.find('`**')
+            final = sub[:end]
+            result.append(int(final))
+        result = " ".join([str(x) for x in result])
+        embed = discord.Embed(title = "ID's requested", description=result, color=0xEE8700)
+        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(result)
+        return
 
 class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
     def __init__(self, view: discord.ui.View):
@@ -55,7 +104,8 @@ class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
         super().__init__()
 
     poke_ids = discord.ui.TextInput(
-        label="Pokemon IDs", placeholder="IDs of the pokemon you want to add (separated by space)"
+        label="Pokemon IDs",
+        placeholder="IDs of the pokemon you want to add (separated by space)",
     )
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -836,7 +886,7 @@ class Trade(commands.Cog):
             )
             await ctx.send(f"{ctx.author.name} has given {user.name} {val} redeems.")
             await ctx.bot.get_partial_messageable(998559833873711204).send(
-                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n"
+                f"__**Gift Redeem Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n"
             )
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_redeems, command, time) VALUES ($1, $2, $3, $4, $5) ",
@@ -919,7 +969,7 @@ class Trade(commands.Cog):
             )
             await ctx.send(f"{ctx.author.name} has given {user.name} {val} credits.")
             await ctx.bot.get_partial_messageable(998559833873711204).send(
-                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n"
+                f"__**Gift Credits Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n"
             )
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_credits, command, time) VALUES ($1, $2, $3, $4, $5) ",
@@ -1009,7 +1059,7 @@ class Trade(commands.Cog):
             )
             await ctx.send(f"{ctx.author.name} has given {user.name} a {name}")
             await ctx.bot.get_partial_messageable(998559833873711204).send(
-                f"\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n"
+                f"__**Gift Pokemon Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{poke_id} {name}```\n"
             )
             await pconn.execute(
                 "INSERT INTO trade_logs (sender, receiver, sender_pokes, command, time) VALUES ($1, $2, $3, $4, $5) ",
@@ -1020,7 +1070,7 @@ class Trade(commands.Cog):
                 datetime.now(),
             )
 
-    @commands.hybrid_command()
+    @commands.hybrid_group()
     @discord.app_commands.describe(user="The User to begin the trade with.")
     async def trade(self, ctx, user: discord.Member):
         """Begin a trade with another user!"""
@@ -1134,6 +1184,19 @@ class Trade(commands.Cog):
         )
         view.set_message(msg)
 
+
+    @trade.command(name="util")
+    async def trade_util(self, ctx):
+        """Spits out Poke IDs from provided message ID"""
+        embed = discord.Embed(
+            title="Mewbot Trade/Breeding Utils",
+            description="This helps you by taking all of the Pokemon IDs listed in an embed\nand sending them in a message that is copy and pastable!",
+            color=0x0084FD
+        )
+        view = TradeUtilView(
+            ctx = ctx,
+        )
+        await ctx.send(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(Trade(bot))

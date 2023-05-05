@@ -8,50 +8,45 @@ from mewutils.checks import tradelock
 from typing import Literal
 
 
-multiplier_max = {"battle-multiplier": 50, "shiny-multiplier": 50}
+multiplier_max = {"battle_multiplier": 50, "shiny_multiplier": 50}
 
 
 def get_perks(plan):
     dets = {}
     if plan == "regular":
-        dets["nature-capsules"] = 2
-        dets["battle-multiplier"] = 0
-        dets["shiny-multiplier"] = 0
-        dets["daycare-limit"] = 3
-        dets["coin-case"] = 150000
+        dets["nature_capsules"] = 2
+        dets["battle_multiplier"] = 0
+        dets["shiny_multiplier"] = 0
+        dets["daycare_limit"] = 3
         dets["price"] = 5
     elif plan == "gold":
-        dets["nature-capsules"] = 5
+        dets["nature_capsules"] = 5
         dets["honey"] = 5
-        dets["battle-multiplier"] = 1
-        dets["shiny-multiplier"] = 2
-        dets["daycare-limit"] = 6
-        dets["coin-case"] = 300000
+        dets["battle_multiplier"] = 1
+        dets["shiny_multiplier"] = 2
+        dets["daycare_limit"] = 6
         dets["price"] = 10
     elif plan == "platinum":
-        dets["nature-capsules"] = 7
+        dets["nature_capsules"] = 7
         dets["honey"] = 10
-        dets["battle-multiplier"] = 4
-        dets["shiny-multiplier"] = 6
-        dets["daycare-limit"] = 9
-        dets["coin-case"] = 600000
+        dets["battle_multiplier"] = 4
+        dets["shiny_multiplier"] = 6
+        dets["daycare_limit"] = 9
         dets["price"] = 25
     elif plan == "diamond":
-        dets["nature-capsules"] = 15
+        dets["nature_capsules"] = 15
         dets["honey"] = 25
-        dets["battle-multiplier"] = 10
-        dets["shiny-multiplier"] = 10
-        dets["daycare-limit"] = 15
-        dets["coin-case"] = 800000
+        dets["battle_multiplier"] = 10
+        dets["shiny_multiplier"] = 10
+        dets["daycare_limit"] = 15
         dets["price"] = 50
     elif plan == "worth too much":
-        dets["nature-capsules"] = 30
+        dets["nature_capsules"] = 30
         dets["honey"] = 40
-        dets["battle-multiplier"] = 30
-        dets["shiny-multiplier"] = 10
-        dets["daycare-limit"] = 20
-        dets["coin-case"] = 2000000
-        dets["ultranecronium-z"] = 1
+        dets["battle_multiplier"] = 30
+        dets["shiny_multiplier"] = 10
+        dets["daycare_limit"] = 20
+        dets["ultranecronium_z"] = 1
         dets["bike"] = 1
         dets["price"] = 150
     return dets
@@ -207,28 +202,24 @@ class Redeem(commands.Cog):
                 price,
                 ctx.author.id,
             )
-        daycarelimit = pack["daycare-limit"]
+        daycarelimit = pack["daycare_limit"]
         pack.pop("price", None)
-        pack.pop("daycare-limit", None)
+        pack.pop("daycare_limit", None)
         async with ctx.bot.db[0].acquire() as pconn:
-            current_inv = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            current_inv = await pconn.fetchrow(
+                "SELECT shiny_multiplier, battle_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
             )
-            current_items = await pconn.fetchval(
-                "SELECT items::json FROM users WHERE u_id = $1", ctx.author.id
-            )
+            current_inv = dict(current_inv)
         # current_inv.pop('coin-case', None) if 'coin-case' in current_inv else None
         extra_creds = 0
         for item in pack:
             try:
-                if item.endswith("-z"):
-                    current_items[item] = current_items.get(item, 0) + 1
-                    async with ctx.bot.db[0].acquire() as pconn:
-                        await pconn.execute(
-                            "UPDATE users SET items = $1::json where u_id = $2",
-                            current_items,
-                            ctx.author.id,
-                        )
+                if item.endswith("_z"):
+                    await self.bot.commondb.add_bag_item(
+                        ctx.author.id,
+                        item,
+                        1
+                    )
                 elif item == "bike":
                     async with ctx.bot.db[0].acquire() as pconn:
                         await pconn.execute(
@@ -236,27 +227,27 @@ class Redeem(commands.Cog):
                             ctx.author.id,
                             True,
                         )
-                else:
-                    extra = max(
-                        0,
-                        (current_inv.get(item, 0) + pack[item])
-                        - (multiplier_max.get(item, 9999999999999999999999999)),
+                elif item in ("battle_multiplier", "shiny_multiplier"):
+                    #Provide compensation credits for battle multis above 50
+                    extra = max(0,(current_inv['battle_multiplier'] + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)),
                     )
                     extra_creds += extra * self.CREDITS_PER_MULTI
-                    current_inv[item] = min(
-                        current_inv.get(item, 0) + pack[item],
-                        multiplier_max.get(item, 9999999999999999999999999),
-                    )
+                    if extra_creds == 0:
+                        await self.bot.commondb.add_bag_item(
+                            ctx.author.id,
+                            item,
+                            pack[item],
+                            True
+                        )
             except:
                 continue
         async with ctx.bot.db[0].acquire() as pconn:
             try:
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, daycarelimit = daycarelimit + $3, mewcoins = mewcoins + $4 WHERE u_id = $2",
-                    current_inv,
-                    ctx.author.id,
+                    "UPDATE users SET daycarelimit = daycarelimit + $1, mewcoins = mewcoins + $2 WHERE u_id = $3",
                     daycarelimit,
                     extra_creds,
+                    ctx.author.id,
                 )
             except Exception as e:
                 raise e
@@ -268,7 +259,7 @@ class Redeem(commands.Cog):
         e = discord.Embed(title=f"{perk.capitalize()} Pack", color=0xFFB6C1)
         e.description = "You have Successfully purchased these: "
         for item in pack:
-            n_thing = item.replace("-", " ").capitalize()
+            n_thing = item.replace("_", " ").capitalize()
             n_thing = (
                 "Honey (Increased Legendary encounter chance)"
                 if "Honey" in n_thing
@@ -365,14 +356,15 @@ class Redeem(commands.Cog):
     async def honey(self, ctx):
         """Spend your redeems and get honey | Can be spread on a channel to attract rare & shiny Pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
-            inv = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            await self.bot.commondb.add_bag_item(
+                ctx.author.id,
+                "honey",
+                1,
+                True
             )
-            inv["honey"] = inv.get("honey", 0) + 1
             try:
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, redeems = redeems - 5 WHERE u_id = $2",
-                    inv,
+                    "UPDATE users SET redeems = redeems - 5 WHERE u_id = $2",
                     ctx.author.id,
                 )
             except:
@@ -406,14 +398,15 @@ class Redeem(commands.Cog):
     async def capsules(self, ctx):
         """Redeem 5 nature capsules"""
         async with ctx.bot.db[0].acquire() as pconn:
-            inv = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            await self.bot.commondb.add_bag_item(
+                ctx.author.id,
+                "nature_capsules",
+                5,
+                True
             )
-            inv["nature-capsules"] = inv.get("nature-capsules", 0) + 5
             try:
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems - 1, inventory = $1::json WHERE u_id = $2",
-                    inv,
+                    "UPDATE users SET redeems = redeems - 1 WHERE u_id = $1",
                     ctx.author.id,
                 )
             except:
@@ -434,12 +427,18 @@ class Redeem(commands.Cog):
             return
         threshold = 4000
         async with ctx.bot.db[0].acquire() as pconn:
-            inventory, items, redeems = await pconn.fetchrow(
-                "SELECT inventory::json, items::json, redeems FROM users WHERE u_id = $1",
-                ctx.author.id,
+            redeems = await pconn.fetchval(
+                "SELECT redeems FROM users WHERE u_id = $1",
+                ctx.author.id
             )
-
-        threshold = round(threshold - threshold * (inventory["shiny-multiplier"] / 100))
+            shiny_multiplier = await pconn.fetchval(
+                "SELECT shiny_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id
+            )
+        if not shiny_multiplier: 
+            shiny_multiplier = 0 
+            
+        threshold = round(threshold - threshold * (shiny_multiplier / 100))
         shiny = random.choice([False for i in range(threshold)] + [True])
 
         if redeems < 1:
@@ -452,11 +451,13 @@ class Redeem(commands.Cog):
                 and pokemon.lower() in REDEEM_DROPS
             ):
                 item = REDEEM_DROPS[pokemon.lower()]
-                items[item] = items.get(item, 0) + 1
+                await self.bot.commondb.add_bag_item(
+                    ctx.author.id,
+                    item,
+                    1,
+                )
             await pconn.execute(
-                "UPDATE users SET redeems = redeems - 1, items = $1::json, inventory = $2::json WHERE u_id = $3",
-                items,
-                inventory,
+                "UPDATE users SET redeems = redeems - 1 WHERE u_id = $1",
                 ctx.author.id,
             )
         pokedata = await ctx.bot.commondb.create_poke(
@@ -515,15 +516,19 @@ class Redeem(commands.Cog):
         pokemon = pokemon.capitalize().replace(" ", "-")
         threshold = 4000
         async with ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow(
-                "SELECT inventory::json, items::json, redeems FROM users WHERE u_id = $1",
+            redeems = await pconn.fetchval(
+                "SELECT redeems FROM users WHERE u_id = $1",
                 ctx.author.id,
             )
-        if details is None:
+            shiny_multiplier = await pconn.fetchval(
+                "SELECT shiny_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id
+            )
+        if redeems is None:
             await ctx.send("You have not started!\nStart with `/start` first.")
             return
-        inventory, items, redeems = details
-        threshold = round(threshold - threshold * (inventory["shiny-multiplier"] / 100))
+        
+        threshold = round(threshold - threshold * (shiny_multiplier / 100))
 
         if redeems < amount:
             await ctx.send(f"You do not have enough redeems")
@@ -538,11 +543,13 @@ class Redeem(commands.Cog):
                     item = None
                     if not random.randrange(30) and pokemon.lower() in REDEEM_DROPS:
                         item = REDEEM_DROPS[pokemon.lower()]
-                        items[item] = items.get(item, 0) + 1
+                        self.bot.commondb.add_bag_item(
+                            ctx.author.id,
+                            item,
+                            1,
+                        )
                     await pconn.execute(
-                        "UPDATE users SET redeems = redeems - 1, items = $1::json, inventory = $2::json WHERE u_id = $3",
-                        items,
-                        inventory,
+                        "UPDATE users SET redeems = redeems - 1 WHERE u_id = $1",
                         ctx.author.id,
                     )
                     shiny = not random.randrange(threshold)

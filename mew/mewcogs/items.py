@@ -13,6 +13,34 @@ from mewcogs.pokemon_list import is_formed, activeItemList, berryList
 from pokemon_utils.utils import evolve
 from mewcogs.market import MAX_MARKET_SLOTS
 from mewutils.misc import ConfirmView
+from typing import Literal
+
+
+bagItemList = (
+    "aguav_seed",
+    "figy_seed",
+    "iapapa_seed",
+    "mago_seed",
+    "wiki_seed",
+    "sitrus_seed",
+    "apicot_seed",
+    "ganlon_seed",
+    "lansat_seed",
+    "liechi_seed",
+    "micle_seed",
+    "petaya_seed",
+    "salac_seed",
+    "starf_seed",
+    "aspear_seed",
+    "cheri_seed",
+    "chesto_seed",
+    "lum_seed",
+    "pecha_seed",
+    "persim_seed",
+    "rawst_seed",
+    "water_tank",
+    "fertilizer"
+)
 
 
 class Items(commands.Cog):
@@ -28,10 +56,10 @@ class Items(commands.Cog):
 
     @staticmethod
     async def prep_item_remove(ctx):
-        """Handles ensuring a user can unequip an item. Returns None if they cannot, (held_item, pokname, items) if they can."""
+        """Handles ensuring a user can unequip an item. Returns None if they cannot, (held_item, pokname) if they can."""
         async with ctx.bot.db[0].acquire() as pconn:
             data = await pconn.fetchrow(
-                "SELECT pokes.hitem, pokes.pokname, users.items::json FROM pokes INNER JOIN users ON pokes.id = (SELECT selected FROM users WHERE u_id = $1) AND users.u_id = $1",
+                "SELECT pokes.hitem, pokes.pokname FROM pokes INNER JOIN users ON pokes.id = (SELECT selected FROM users WHERE u_id = $1) AND users.u_id = $1",
                 ctx.author.id,
             )
         if data is None:
@@ -39,12 +67,12 @@ class Items(commands.Cog):
                 "You do not have a pokemon selected!\nSelect one with `/select` first."
             )
             return None
-        held_item, name, items = data
+        held_item, name = data
         if held_item in ("None", None, "none"):
             await ctx.send("Your selected Pokemon is not holding any item!")
             return None
         if (
-            held_item in ("megastone", "mega-stone", "mega-stone-x", "mega-stone-y")
+            held_item in ("megastone", "mega_stone", "mega_stone_x", "mega_stone_y")
             and any(name.endswith(x) for x in ("-mega", "-x", "-y"))
             and name.lower() != "rayquaza-mega"
         ):
@@ -53,20 +81,20 @@ class Items(commands.Cog):
             )
             return None
         if is_formed(name) and held_item in (
-            "primal-orb",
-            "blue-orb",
-            "red-orb",
-            "griseous-orb",
-            "ultranecronium-z",
-            "rusty-sword",
-            "rusty-shield",
-            "ultra-toxin",
+            "primal_orb",
+            "blue_orb",
+            "red_orb",
+            "griseous_orb",
+            "ultranecronium_z",
+            "rusty_sword",
+            "rusty_shield",
+            "ultra_toxin",
         ):
             await ctx.send(
                 f"You must deform this Pokemon before unequipping the {held_item}!"
             )
             return None
-        return (held_item, name, items)
+        return (held_item, name)
 
     @commands.hybrid_group()
     async def items(self, ctx):
@@ -81,13 +109,12 @@ class Items(commands.Cog):
         data = await self.prep_item_remove(ctx)
         if data is None:
             return
-        held_item, name, items = data
+        held_item, name = data
         async with ctx.bot.db[0].acquire() as pconn:
-            items[held_item] = items.get(held_item, 0) + 1
-            await pconn.execute(
-                "UPDATE users SET items = $1::json WHERE u_id = $2",
-                items,
+            await self.bot.commondb.add_bag_item(
                 ctx.author.id,
+                held_item.replace("-", "_"),
+                1
             )
             await pconn.execute(
                 "UPDATE pokes SET hitem = 'None' WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
@@ -98,9 +125,19 @@ class Items(commands.Cog):
     @items.command()
     async def equip(self, ctx, item_name: str):
         """Equips an item"""
-        item_name = "-".join(item_name.split()).lower()
-        item_info = await ctx.bot.db[1].shop.find_one({"item": item_name})
-        if item_name == "nature-capsule":
+        item_name = item_name.replace("-", "_")
+        item_name = "_".join(item_name.split()).lower()
+        item_info = await ctx.bot.db[1].new_shop.find_one({"item": item_name})
+
+        for item in SHOP:
+            if item['item'] == item_name:
+                item_info = item
+
+        #Prelimary checks
+        if item_name in bagItemList:
+            await ctx.send("Sorry, that item is can not be equipped.")
+            return
+        if item_name == "nature_capsule":
             await ctx.send(
                 "Use `/change nature` to use a nature capsule to change your pokemon's nature."
             )
@@ -113,14 +150,19 @@ class Items(commands.Cog):
                 f"That item cannot be equiped! Use it on your poke with `/apply {item_name}`."
             )
             return
+        
+        #Pull player's bag
         async with ctx.bot.db[0].acquire() as conn:
-            dets = await conn.fetchval(
-                "SELECT items::json FROM users WHERE u_id = $1", ctx.author.id
+            dets = await conn.fetchrow(
+                "SELECT * FROM bag WHERE u_id = $1", 
+                ctx.author.id
             )
-        if dets.get(item_name, 0) == 0:
+            dets = dict(dets)
+        if (dets[item_name] - 1) < 0:
             await ctx.send(f"You do not have any {item_name}!")
             return
-        dets[item_name] = dets[item_name] - 1
+
+        #Process the item equip
         async with ctx.bot.db[0].acquire() as pconn:
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
@@ -142,7 +184,7 @@ class Items(commands.Cog):
             ab_index = await pconn.fetchval(
                 "SELECT ability_index FROM pokes WHERE id = $1", _id
             )
-            if item_name == "ability-capsule":
+            if item_name == "ability_capsule":
                 form_info = await ctx.bot.db[1].forms.find_one(
                     {"identifier": pokename.lower()}
                 )
@@ -166,28 +208,32 @@ class Items(commands.Cog):
                 ab_id = ab_ids[new_index]
                 new_ability = await ctx.bot.db[1].abilities.find_one({"id": ab_id})
 
-                await pconn.execute(
-                    "UPDATE users SET items = $1::json WHERE u_id = $2",
-                    dets,
+                await ctx.bot.commondb.remove_bag_item(
                     ctx.author.id,
+                    item_name,
+                    1
                 )
                 await ctx.send(
                     f"You have Successfully changed your Pokémons ability to {new_ability['identifier']}"
                 )
                 return
-            if item_name == "daycare-space":
+            if item_name == "daycare_space":
                 await pconn.execute(
-                    "UPDATE users SET items = $1::json, daycarelimit = daycarelimit + 1 WHERE u_id = $2",
-                    dets,
+                    "UPDATE users SET daycarelimit = daycarelimit + 1 WHERE u_id = $",
                     ctx.author.id,
+                )
+                await ctx.bot.commondb.remove_bag_item(
+                    ctx.author.id,
+                    item_name,
+                    1
                 )
                 await ctx.send("You have successfully equipped an Extra Daycare Space!")
                 return
-            if item_name == "ev-reset":
-                await pconn.execute(
-                    "UPDATE users SET items = $1::json WHERE u_id = $2",
-                    dets,
+            if item_name == "ev_reset":
+                await ctx.bot.commondb.remove_bag_item(
                     ctx.author.id,
+                    item_name,
+                    1
                 )
                 await pconn.execute(
                     "UPDATE pokes SET hpev = 0, atkev = 0, defev = 0, spatkev = 0, spdefev = 0, speedev = 0 WHERE id = $1",
@@ -202,13 +248,13 @@ class Items(commands.Cog):
                     "You can not equip an item for a Mega Pokemon. Use `/deform` to de-mega your Pokemon!"
                 )
                 return
-            if item_name in ("zinc", "hp-up", "protein", "calcium", "iron", "carbos"):
+            if item_name in ("zinc", "hp_up", "protein", "calcium", "iron", "carbos"):
                 try:
                     if item_name == "zinc":
                         await pconn.execute(
                             "UPDATE pokes SET spdefev = spdefev + 10 WHERE id = $1", _id
                         )
-                    elif item_name == "hp-up":
+                    elif item_name == "hp_up":
                         await pconn.execute(
                             "UPDATE pokes SET hpev = hpev + 10 WHERE id = $1", _id
                         )
@@ -228,31 +274,53 @@ class Items(commands.Cog):
                         await pconn.execute(
                             "UPDATE pokes SET speedev = speedev + 10 WHERE id = $1", _id
                         )
-                    await pconn.execute(
-                        "UPDATE users SET items = $1::json WHERE u_id = $2",
-                        dets,
+                    await ctx.bot.commondb.remove_bag_item(
                         ctx.author.id,
+                        item_name,
+                        1
                     )
                 except:
                     await ctx.send("Your Pokemon has maxed all 510 EVs")
                     return
                 await ctx.send(f"You have successfully used your {item_name}")
                 return
-            if item_name.endswith("-rod"):
+            if item_name.endswith("_rod"):
+                await ctx.bot.db.commondb.remove_bag_item(
+                    ctx.author.id,
+                    item_name,
+                    1
+                )
                 await pconn.execute(
-                    "UPDATE users SET items = $1::json, held_item = $3 WHERE u_id = $2",
-                    dets,
+                    "UPDATE users SET held_item = $2 WHERE u_id = $1",
                     ctx.author.id,
                     item_name,
                 )
                 await ctx.send(f"You have successfully equiped your {item_name}")
                 return
-            name = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
+            if item_name.endswith("_shovel"):
+                await ctx.bot.db.commondb.remove_bag_item(
+                    ctx.author.id,
+                    item_name,
+                    1
+                )
+                await pconn.execute(
+                    "UPDATE users SET shovel = $2 WHERE u_id = $1",
+                    ctx.author.id,
+                    item_name,
+                )
+                await ctx.send(f"You have successfully equiped your {item_name}")
+                return
+            name = await pconn.fetchval(
+                "SELECT pokname FROM pokes WHERE id = $1", 
+                _id
+            )
             await pconn.execute(
                 "UPDATE pokes set hitem = $2 WHERE id = $1", _id, item_name
             )
-            await pconn.execute(
-                "UPDATE users SET items = $1::json WHERE u_id = $2", dets, ctx.author.id
+            await self.bot.commondb.remove_bag_item(
+                ctx.author.id,
+                item_name,
+                1
             )
             await ctx.send(
                 f"You have successfully given your selected Pokemon a {item_name}"
@@ -271,7 +339,7 @@ class Items(commands.Cog):
         data = await self.prep_item_remove(ctx)
         if data is None:
             return
-        held_item, name, items = data
+        held_item, name = data
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE pokes SET hitem = $2 WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
@@ -286,7 +354,7 @@ class Items(commands.Cog):
         data = await self.prep_item_remove(ctx)
         if data is None:
             return
-        held_item, name, items = data
+        held_item, name = data
         async with ctx.bot.db[0].acquire() as pconn:
             poke = await pconn.fetchval(
                 "SELECT pokes[$1] FROM users WHERE u_id = $2",
@@ -315,8 +383,10 @@ class Items(commands.Cog):
     @items.command()
     async def apply(self, ctx, item_name: str):
         """Use an active item to evolve a poke."""
-        item_name = "-".join(item_name.split()).lower()
-        if item_name == "nature-capsule":
+        item_name = "_".join(item_name.split()).lower()
+        fancy_name = item_name.title()
+        #Preliminary checks
+        if item_name == "nature_capsule":
             await ctx.send(
                 "Use `/change nature` to use a nature capsule to change your pokemon's nature."
             )
@@ -326,17 +396,23 @@ class Items(commands.Cog):
                 f"That item cannot be used on a poke! Try equiping it with `/equip {item_name}`."
             )
             return
+        
+        #Pull bag and make sure they have item
         async with ctx.bot.db[0].acquire() as pconn:
-            dets = await pconn.fetchval(
-                "SELECT items::json FROM users WHERE u_id = $1", ctx.author.id
+            dets = await pconn.fetchrow(
+                "SELECT * FROM bag WHERE u_id = $1", 
+                ctx.author.id
             )
+            dets = dict(dets)
+
         if dets is None:
             await ctx.send("You have not started!\nStart with `/start first.")
             return
-        if dets.get(item_name, 0) == 0:
-            await ctx.send(f"You do not have any {item_name}!")
+        if dets[item_name] == 0:
+            await ctx.send(f"You do not have any {fancy_name}!")
             return
-        dets[item_name] = dets[item_name] - 1
+        
+        #Checks are done, proceed 
         async with ctx.bot.db[0].acquire() as pconn:
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
@@ -353,16 +429,17 @@ class Items(commands.Cog):
             dict(poke),
             ctx.author,
             channel=ctx.channel,
-            active_item=item_name,
+            active_item=item_name.replace("_", "-"),
         )
         if evo_result is False or not evo_result.used_active_item():
             await ctx.send(f"The {item_name} had no effect!")
             return
-        async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(
-                "UPDATE users SET items = $1::json WHERE u_id = $2", dets, ctx.author.id
-            )
-        await ctx.send(f"Your {item_name} was consumed!")
+        await ctx.bot.commondb.remove_bag_item(
+            ctx.author.id,
+            item_name,
+            1
+        )
+        await ctx.send(f"Your {fancy_name} was consumed!")
 
     @commands.hybrid_group()
     async def buy(self, ctx):
@@ -371,53 +448,52 @@ class Items(commands.Cog):
     @buy.command(name="item")
     async def buy_item(self, ctx, item_name: str):
         """Buy an item from the items shop."""
-        arg = item_name.replace(" ", "-").lower()
-        if arg == "evo-stone":
+        item_name = item_name.replace(" ", "_").lower()
+        fancy_name = item_name.replace("_", " ").lower()
+
+        if item_name == "evo_stone":
             await ctx.send("Purchasing that item is currently disabled.")
             return
-        if arg == "daycare-space":
+        if item_name == "daycare_space":
             await ctx.send("Use `/buy daycare`, not `/buy item daycare-space`.")
             return
-        item = await ctx.bot.db[1].shop.find_one({"item": arg})
-        if not item:
-            await ctx.send("That Item is not in the market")
+        #Check so players can't buy crystals
+        if item_name in ('sky_crystal', 'light_crystal', 'abyss_crystal', 'internal_crystal', 'energy_crystal'):
+            await ctx.send("You can't buy crystals!")
             return
-        price = item["price"]
-        item = item["item"]
+        
+        item = await ctx.bot.db[1].new_shop.find_one({"item": item_name})
+        if item is None:
+            await ctx.send("That item is not in the market")
+            return
+        
+        price = item['price']
+
         async with ctx.bot.db[0].acquire() as pconn:
             # items, current_creds = await pconn.fetchrow("SELECT  FROM users WHERE u_id = $1", ctx.author.id)
             data = await pconn.fetchrow(
-                "SELECT inventory::json, mewcoins, selected FROM users WHERE u_id = $1",
+                "SELECT mewcoins, selected FROM users WHERE u_id = $1",
                 ctx.author.id,
             )
             if data is None:
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
-            inventory, current_creds, selected_id = data
+            current_creds, selected_id = data
+
             if current_creds < price:
-                await ctx.send(f"You don't have {price}ℳ")
+                await ctx.send(f"You don't have {price:,}ℳ")
                 return
-            # These items do NOT need the selected pokemon
-            if item == "coin-case":
-                if item in inventory:
-                    await ctx.send("You already have a Coin Case!")
-                    return
-                inventory["coin-case"] = 0
-                await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, mewcoins = mewcoins - 1000 WHERE u_id = $2",
-                    inventory,
-                    ctx.author.id,
-                )
-                await ctx.send("You have successfully purchased a Coin Case!")
-                return
-            if item == "market-space":
+
+            #Market spaces
+            if item_name == "market_space":
                 if current_creds < 30000:
                     await ctx.send(
-                        f"You need 30,000 credits to buy a market space! You only have {current_creds}..."
+                        f"You need 30,000 credits to buy a market space! You only have {current_creds:,}..."
                     )
                     return
                 marketlimit = await pconn.fetchval(
-                    "SELECT marketlimit FROM users WHERE u_id = $1", ctx.author.id
+                    "SELECT marketlimit FROM users WHERE u_id = $1",
+                    ctx.author.id
                 )
                 if marketlimit >= MAX_MARKET_SLOTS:
                     await ctx.send(
@@ -430,10 +506,12 @@ class Items(commands.Cog):
                 )
                 await ctx.send("You have successfully bought an extra market space!")
                 return
-            if "-rod" in item:
+            
+            #Fishing rods
+            if "_rod" in item_name:
                 await pconn.execute(
-                    "UPDATE users set held_item = $1 WHERE u_id = $2",
-                    item,
+                    "UPDATE users SET held_item = $1 WHERE u_id = $2",
+                    item_name,
                     ctx.author.id,
                 )
                 await pconn.execute(
@@ -441,21 +519,67 @@ class Items(commands.Cog):
                     ctx.author.id,
                     price,
                 )
-                await ctx.send(f"You have successfully bought the {item}!")
+                await ctx.send(f"You have successfully bought the {fancy_name.title()} for {price:,} credits!")
                 return
-            if item in activeItemList:
-                dets = await pconn.fetchval(
-                    "SELECT items::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                dets[item] = dets.get(item, 0) + 1
+            #Shovels
+            if "_shovel" in item_name:
                 await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins - $1, items = $2::json WHERE u_id = $3",
-                    price,
-                    dets,
+                    "UPDATE users SET shovel = $1 WHERE u_id = $2",
+                    item_name,
                     ctx.author.id,
                 )
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins - $2 WHERE u_id = $1",
+                    ctx.author.id,
+                    price,
+                )
+                await ctx.send(f"You have successfully bought the {fancy_name.title()} for {price:,} credits!")
+                return
+            
+            #Active items that go in bag but need different final message
+            if item_name in activeItemList:
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                    price,
+                    ctx.author.id,
+                )
+                await ctx.bot.commondb.add_bag_item(
+                    ctx.author.id,
+                    item_name,
+                    1
+                )
                 await ctx.send(
-                    f"You have successfully bought a {item}! Use it with `/apply {item}`."
+                    f"You have successfully bought a {fancy_name.title()} for {price:,} credits!\nApply it with `/items apply [item]`."
+                )
+                return
+            
+            #Items that should go in user's bag
+            if item_name in bagItemList:
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                    price,
+                    ctx.author.id,
+                )
+                if item_name == "water_tank":
+                    await pconn.execute(
+                        "UPDATE bag SET water_tank = 10 WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    await ctx.send("Successfully filled your water tank!")
+                    return
+                if item_name == "fertilizer":
+                    await pconn.execute(
+                        "UPDATE bag SET fertilizer = fertilizer + 1 WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                else:
+                    await ctx.bot.commondb.add_bag_item(
+                        ctx.author.id,
+                        item_name,
+                        1
+                    )
+                await ctx.send(
+                    f"You have successfully bought a {fancy_name.title()} for {price:,} credits!"
                 )
                 return
 
@@ -470,7 +594,7 @@ class Items(commands.Cog):
                 )
                 return
             # These items DO need the selected pokemon
-            if item == "ability-capsule":
+            if item_name == "ability_capsule":
                 ab_ids = []
                 form_info = await ctx.bot.db[1].forms.find_one(
                     {"identifier": pokename.lower()}
@@ -496,10 +620,10 @@ class Items(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"You have Successfully changed your Pokémons ability to {ability}"
+                    f"You have successfully changed your Pokémons ability to **{ability.capitalize( )}**"
                 )
                 return
-            if item == "ev-reset":
+            if item_name == "ev_reset":
                 await pconn.execute(
                     "UPDATE pokes SET hpev = 0, atkev = 0, defev = 0, spatkev = 0, spdefev = 0, speedev = 0 WHERE id = $1",
                     _id,
@@ -529,9 +653,9 @@ class Items(commands.Cog):
                 price,
                 ctx.author.id,
             )
-            await pconn.execute("UPDATE pokes SET hitem = $1 WHERE id = $2", item, _id)
+            await pconn.execute("UPDATE pokes SET hitem = $1 WHERE id = $2", item_name, _id)
             await ctx.send(
-                f"You have successfully bought the {item} for your {pokename}"
+                f"You have successfully bought the {fancy_name.title()} for {price:,}!\nIt's been equipped to {pokename.title()}"
             )
             evolved = await evolve(
                 ctx,
@@ -544,10 +668,11 @@ class Items(commands.Cog):
     @buy.command(name="daycare")
     async def buy_daycare(self, ctx, amount: int = 1):
         """Buy daycare spaces."""
-        item = await ctx.bot.db[1].shop.find_one({"item": "daycare-space"})
+        item = await ctx.bot.db[1].new_shop.find_one({"item": "daycare_space"})                
         if not item:
             await ctx.send("That Item is not in the market")
             return
+        
         price = item["price"]
         price *= abs(amount)
         async with ctx.bot.db[0].acquire() as pconn:
@@ -571,49 +696,15 @@ class Items(commands.Cog):
         plural = "s" if amount != 1 else ""
         await ctx.send(f"You have successfully bought {amount} daycare space{plural}!")
 
-    @buy.command(name="coins")
-    async def buy_coins(self, ctx, amount: int):
-        amount = max(0, amount)
-        if amount % 2 != 0:
-            await ctx.send("You must buy Coin amounts divisible by 2!")
-            return
-        async with ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow(
-                "SELECT inventory::json, mewcoins FROM users WHERE u_id = $1",
-                ctx.author.id,
-            )
-            if details is None:
-                await ctx.send("You have not started!\nStart with `/start` first.")
-                return
-            items, creds = details
-            total = amount / 2
-            if amount / 2 > creds:
-                await ctx.send(f"You do not have {total} Credits ({amount} Coins)!")
-                return
-            if "coin-case" in items:
-                items["coin-case"] += amount
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins - $1, inventory = $2::json WHERE u_id = $3",
-                    amount / 2,
-                    items,
-                    ctx.author.id,
-                )
-                await ctx.send(
-                    f"You have Successfully purchased {amount} Coins ({total} Credits)"
-                )
-            else:
-                await ctx.send("You do not have a Coin Case!")
-
     @buy.command(name="vitamins")
-    async def buy_vitamins(self, ctx, item_name, amount: int):
+    async def buy_vitamins(self, ctx, item_name: Literal["Hp Up", "Protein", "Iron", "Calcium", "Zinc", "Carbos"], amount: int):
         amount = max(0, amount)
-        item_name = item_name.strip()
-        item_info = await ctx.bot.db[1].shop.find_one({"item": item_name})
-        try:
-            price = item_info["price"]
-        except TypeError:
-            await ctx.send("That Item is not in the market")
+        item_name = item_name.replace(" ", "_").lower()
+        item_info = await ctx.bot.db[1].new_shop.find_one({"item": item_name})
+        if item_info is None:
+            await ctx.send("That item is not in the market.")
             return
+        
         async with ctx.bot.db[0].acquire() as pconn:
             total_price = amount * 100
             _id = await pconn.fetchval(
@@ -644,7 +735,7 @@ class Items(commands.Cog):
                             amount,
                             _id,
                         )
-                    elif item_name == "hp-up":
+                    elif item_name == "hp_up":
                         await pconn.execute(
                             "UPDATE pokes SET hpev = hpev + $1 WHERE id = $2",
                             amount,
@@ -932,15 +1023,12 @@ class Items(commands.Cog):
                 )
             else:  # safe-guard, should never be hit
                 return
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            item = ct + " chest"
-            inventory[item] = inventory.get(item, 0) + 1
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
+            item = ct + "_chest"
+            await ctx.bot.commondb.add_bag_item(
                 ctx.author.id,
+                item,
+                1,
+                True
             )
         await ctx.send(
             f"You have successfully bought a {ct} chest for {price} {cor}!\n"
@@ -977,7 +1065,7 @@ class Items(commands.Cog):
                 "restock": int(info["restock"]),
             }
 
-        max_redeems = 15
+        max_redeems = 5
         restock_time = 604800
         credits_per_redeem = 60000
 
@@ -1058,39 +1146,6 @@ class Items(commands.Cog):
             await ctx.send(
                 f"You have successfully bought {amount} redeems for {price} credits!"
             )
-
-    @items.command()
-    async def cash_out(self, ctx, amount: int):
-        """Cash out your mewcoins to your bank account."""
-        amount = max(0, amount)
-        async with ctx.bot.db[0].acquire() as pconn:
-            details = await pconn.fetchrow(
-                "SELECT inventory::json, mewcoins FROM users WHERE u_id = $1",
-                ctx.author.id,
-            )
-            if details is None:
-                await ctx.send("You have not started!\nStart with `/start` first.")
-                return
-            items, creds = details
-            total = amount / 2
-            if not "coin-case" in items:
-                await ctx.send("You need a Coin Case.")
-                return
-            if amount > items["coin-case"]:
-                await ctx.send(f"You do not have {amount} Coins in your coin case!")
-                return
-            if "coin-case" in items:
-                items["coin-case"] -= amount
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins + $1, inventory = $2::json WHERE u_id = $3",
-                    amount / 2,
-                    items,
-                    ctx.author.id,
-                )
-                await ctx.send(
-                    f"You have Successfully Cashed out {amount} Coins ({total} Credits)"
-                )
-
 
 async def setup(bot):
     await bot.add_cog(Items(bot))

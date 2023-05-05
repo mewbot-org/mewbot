@@ -26,6 +26,7 @@ PRELOADED = {
     "sun": Image.open(str(DIR / "sun.png")).convert("RGBA"),
     "sandstorm": Image.open(str(DIR / "sandstorm.png")).convert("RGBA"),
     "sub": sresize(Image.open(str(DIR / "sub.png"))).convert("RGBA"),
+    "preview_sub": sresize(Image.open(str(DIR / "sub.png")), dimensions=(64, 64)).convert("RGBA"),
 }
 
 font = ImageFont.truetype(str(DIR / "futur.ttf"), 16, encoding="unic")
@@ -49,8 +50,11 @@ def draw_pixel_pokemon_card(path, level, gender="-m"):
     base_card = draw_rectangle(base_card_width, base_card_height, "#f5f5f5").convert(
         "RGBA"
     )
-    with Image.open(DIR / path).convert("RGBA") as pokemon_sprite:
-        base_card.paste(pokemon_sprite, (5, -10), mask=pokemon_sprite)
+    try:
+        with Image.open(DIR / path).convert("RGBA") as pokemon_sprite:
+            base_card.paste(pokemon_sprite, (5, -10), mask=pokemon_sprite)
+    except:
+        base_card.paste(PRELOADED["preview_sub"], (5, -10), mask=PRELOADED["preview_sub"])
 
     draw = ImageDraw.Draw(base_card)
     draw.text(
@@ -65,21 +69,26 @@ def draw_player_headers(background, names):
     rects = draw_rectangle(rect_w, rect_h, "#0000FF"), draw_rectangle(
         rect_w, rect_h, "#FF0000"
     )
-    draws = [ImageDraw.Draw(rect) for rect in rects]
-    for index, name in enumerate(names):
-        draws[index].text(
-            (
-                (rect_w / 2),
-                (rect_h / 2),
-            ),
-            name,
-            anchor="mm",
-            fill="white",
-            align="center",
-            font=font,
-        )
-        background.paste(rects[index], (top, 38))
-        top += 600
+    draw = ImageDraw.Draw(rects[0])
+    draw.text(
+        ((rect_w / 2), (rect_h / 2)),
+        names[0],
+        anchor="mm",
+        fill="white",
+        align="center",
+        font=font,
+    )
+    background.paste(rects[0], (top, 38))
+    draw = ImageDraw.Draw(rects[1])
+    draw.text(
+        ((rect_w / 2), (rect_h / 2)),
+        names[1],
+        anchor="mm",
+        fill="white",
+        align="center",
+        font=font,
+    )
+    background.paste(rects[1], (top + 600, 38))
 
 
 def draw_player_teams(background, p1pokes, p2pokes):

@@ -84,10 +84,11 @@ class Extras(commands.Cog):
     async def honey(self, ctx):
         """Spread honey in this channel to attract Pokémon."""
         async with ctx.bot.db[0].acquire() as pconn:
-            inv = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            honey = await pconn.fetchval(
+                "SELECT honey FROM account_bound WHERE u_id = $1", 
+                ctx.author.id
             )
-            if not inv:
+            if honey is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
             honey = await pconn.fetchval(
@@ -99,9 +100,13 @@ class Extras(commands.Cog):
                     "There is already honey in this channel! You can't add more yet."
                 )
                 return
-            if "honey" in inv and inv["honey"] >= 1:
-                inv["honey"] -= 1
-                pass
+            if honey >= 1:
+                await self.bot.commondb.remove_bag_item(
+                    ctx.author.id,
+                    "honey",
+                    1,
+                    True
+                )
             else:
                 await ctx.send("You do not have any units of Honey!")
                 return
@@ -123,7 +128,7 @@ class Extras(commands.Cog):
 
     @commands.hybrid_command()
     async def leaderboard(
-        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing"]
+        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing", "Mining"]
     ):
         """Displays a Leaderboard Based on Votes, Servers, Pokémon or Fishing."""
         LEADERBOARD_IMMUNE_USERS = [
@@ -216,14 +221,21 @@ class Extras(commands.Cog):
         elif board.lower() == "fishing":
             async with ctx.bot.db[0].acquire() as pconn:
                 details = await pconn.fetch(
-                    f"""SELECT u_id, fishing_exp, fishing_level as pokenum, staff, tnick FROM users ORDER BY fishing_exp DESC"""
+                    f"""SELECT u_id, fishing_points, fishing_level as pokenum, staff, tnick FROM users WHERE fishing_points != 0 ORDER BY fishing_points DESC"""
                 )
             pokes = [record["pokenum"] for record in details]
-            exps = [t["fishing_exp"] for t in details]
+            exps = [t["fishing_points"] for t in details]
             ids = [record["u_id"] for record in details]
             staffs = [record["staff"] for record in details]
             names = [record["tnick"] for record in details]
-            embed = discord.Embed(title="Fishing Leaderboard!", color=0xFFB6C1)
+            embed = discord.Embed(
+                title="Fishing Points Leaderboard",
+                description="Catch some fish!",
+                color=0xFFB6C1
+            )
+            embed.set_footer(
+                text="This only accounts for users with at least 1 Fishing Point"
+            )
             desc = ""
             true_idx = 1
             for idx, id in enumerate(ids):
@@ -235,7 +247,40 @@ class Extras(commands.Cog):
                     name = f"{names[idx]} - ({id})"
                 else:
                     name = f"Unknown user - ({id})"
-                desc += f"__{true_idx}__. `FishEXP` : **{exp}** - `{name}`\n"
+                desc += f"__{true_idx}__. `Points` : **{exp}** - `{name}`\n"
+                true_idx += 1
+            pages = pagify(desc, base_embed=embed)
+            await MenuView(ctx, pages).start()
+        elif board.lower() == "mining":
+            async with ctx.bot.db[0].acquire() as pconn:
+                details = await pconn.fetch(
+                    f"""SELECT u_id, mining_points, mining_level as pokenum, staff, tnick FROM users WHERE mining_points != 0 ORDER BY mining_points DESC"""
+                )
+            pokes = [record["pokenum"] for record in details]
+            exps = [t["mining_points"] for t in details]
+            ids = [record["u_id"] for record in details]
+            staffs = [record["staff"] for record in details]
+            names = [record["tnick"] for record in details]
+            embed = discord.Embed(
+                title="Mining Points Leaderboard",
+                description="Mine some rocks!",
+                color=0xFFB6C1
+            )
+            embed.set_footer(
+                text="This only accounts for users with at least 1 Mining Point"
+            )
+            desc = ""
+            true_idx = 1
+            for idx, id in enumerate(ids):
+                if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                    continue
+                pokenum = pokes[idx]
+                exp = exps[idx]
+                if names[idx] is not None:
+                    name = f"{names[idx]} - ({id})"
+                else:
+                    name = f"Unknown user - ({id})"
+                desc += f"__{true_idx}__. `Points` : **{exp}** - `{name}`\n"
                 true_idx += 1
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
@@ -291,27 +336,34 @@ class Extras(commands.Cog):
             return
         nature = nature.capitalize()
         async with ctx.bot.db[0].acquire() as conn:
-            dets = await conn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            nature_capsule = await conn.fetchval(
+                "SELECT nature_capsules FROM account_bound WHERE u_id = $1", 
+                ctx.author.id
             )
-        if dets is None:
+            credits = await conn.fetchval(
+                "SELECT mewcoins FROM users WHERE u_id = $1",
+                ctx.author.id
+            )
+        if credits is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
-        if dets["nature-capsules"] <= 0 or nature == None:
+        if nature_capsule is None:
+            await ctx.send(f"This command uses our new bag system!\nUse `/bag convert` if you haven't!")
+            return
+        if nature_capsule <= 0 or nature == None:
             await ctx.send(
                 "You have no nature capsules! Buy some with `/redeem nature capsules`."
             )
             return
-        dets["nature-capsules"] = dets["nature-capsules"] - 1
+        await self.bot.commondb.remove_bag_item(
+            ctx.author.id,
+            "nature_capsules",
+            1,
+            True
+        )
         async with ctx.bot.db[0].acquire() as pconn:
             _id = await pconn.fetchval(
                 "SELECT selected FROM users WHERE u_id = $1", ctx.author.id
-            )
-            name = await pconn.fetchval("SELECT pokname FROM pokes WHERE id = $1", _id)
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json WHERE u_id = $2",
-                dets,
-                ctx.author.id,
             )
             await pconn.execute(
                 "UPDATE pokes SET nature = $1 WHERE id = $2", nature, _id
@@ -320,7 +372,7 @@ class Extras(commands.Cog):
             f"You have successfully changed your selected Pokemon's nature to {nature}"
         )
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     async def bag(self, ctx):
         """
         Lists your items in your backpack.
@@ -344,15 +396,6 @@ class Extras(commands.Cog):
         embed = Embed(title="Your Current Bag", color=0xFFB6C1)
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
-
-    @commands.hybrid_command()
-    async def visible(self, ctx):
-        """Sets the visiblility of your Trainer card to other users."""
-        async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(
-                "UPDATE users SET visible = NOT visible WHERE u_id = $1", ctx.author.id
-            )
-        await ctx.send("Toggled trainer card visibility!")
 
     @commands.hybrid_command()
     async def updates(self, ctx):
@@ -404,10 +447,10 @@ class Extras(commands.Cog):
         embed.add_field(
             name="Statistics",
             value=(
-                f"`Owner:` **{ctx.bot.owner.name}.**\n"
-                "`Developers:` **Neuro Assassin, Foreboding**\n"
-                "`Web Developer:` \n"
-                "`Dev. Helpers:`**Mabel**\n"
+                f"`Owner:` **Dylee.**\n"
+                "`Developers:`**Dylee, Foreboding**\n"
+                "`Web Developer:`\n"
+                "`Dev. Helpers:`\n"
                 f"`Server count:` **{servernum:,}**\n"
                 f"`Shard count:` **{shardnum}**\n"
                 f"`Cluster count:` **{clusternum}**\n"
@@ -467,7 +510,7 @@ class Extras(commands.Cog):
         """
         Our Contributors
         """
-        desc = f"**Soure Repo Credit**: [GitHub](https://github.com/skylarr1227/dittobot-open)\n"
+        desc = f"**Soure Repo Credit**: \n[GitHub](https://github.com/skylarr1227/dittobot-open)\n[Gen 9 Preview Sprites](https://www.deviantart.com/kingofthe-x-roads)\n"
         desc += f"\n**Various Artwork/Skins:**"
         desc += f"\n\n**Gleam Artwork:**"
         desc += f"\n\n**Art Team:**"
@@ -529,8 +572,11 @@ class Extras(commands.Cog):
         """Vote for the Bot & get voting rewards."""
         async with self.bot.db[0].acquire() as pconn:
             data = await pconn.fetchrow(
-                "SELECT vote_streak, last_vote FROM users WHERE u_id = $1",
+                "SELECT vote_streak, last_vote, upvotepoints FROM users WHERE u_id = $1",
                 ctx.author.id,
+            )
+            update_data = await pconn.fetchrow(
+                "SELECT id, dev, update, update_date FROM updates ORDER BY update_date DESC LIMIT 1"
             )
             if data is None:
                 vote_streak = 0
@@ -538,19 +584,41 @@ class Extras(commands.Cog):
                 vote_streak = 0
             else:
                 vote_streak = data["vote_streak"]
-        embed = Embed(color=0xFFB6C1)
-        embed.description = (
-            "Upvote **Mewbot** on the following websites and earn rewards for each!\n"
-            "[#1 top.gg](https://top.gg/bot/519850436899897346/vote)\n"
-            "[#2 Rovel Discord List](https://dscrdly.com/b/mewbot/vote)\n"
-            "[#3 DiscordBotList](https://discordbotlist.com/bots/mewbot/upvote)\n"
-            f"**Vote Streak:** `{vote_streak}` (only for top.gg)"
-            "\n------------------\n"
-            # "[#2 fateslist.xyz](https://fateslist.xyz/mewbot/vote)\n"
-            "Join the Official Server [here](https://discord.gg/mewbot) for support and join our huge community of Mewbot users!"
+            uppoints = data['upvotepoints']
+        embed = discord.Embed(
+            title="Mewbot Voting!",
+            description="Vote for Mewbot through one of the links below!\nYou'll receive 1 Upvote Point, 1,500 credits, and 5 Energy Bars after upvoting!",
+            color=0xFFB6C1
         )
-        embed.set_footer(
-            text="You will receive 1 Upvote Point, 1,500 Credits and 5 Energy Bars automatically after upvoting!"
+        embed.add_field(
+            name="Websites",
+            value=(
+                "[#1 top.gg](https://top.gg/bot/519850436899897346/vote)\n"
+                "[#2 DiscordBotList](https://discordbotlist.com/bots/mewbot/upvote)"
+            ),
+            inline=True
+        )
+        embed.add_field(
+            name="Vote Counts",
+            value=(
+                f"<:upvote:1037942314691199089> **Upvote Points**: {uppoints}\n"
+                f"**<:upvotestreak:1037942367929503766> Vote Streak**: {vote_streak}\n"
+                f"Note: For Top.gg Only"
+            ),
+            inline=True
+        )
+        embed.add_field(
+            name="Official Server",
+            value=(
+                "Join for support and our huge community of Mewbot users!\n"
+                "[Mewbot Official](https://discord.gg/mewbot)"
+            ),
+            inline=True
+        )
+        embed.add_field(
+            name="Newest Update!",
+            value=f"{update_data['update']}\n{update_data['dev']} on {update_data['update_date']}",
+            inline=False
         )
 
         await ctx.send(embed=embed)
@@ -666,35 +734,44 @@ class Extras(commands.Cog):
             return
         await ctx.send(f"Successfully changed Pokemon nickname to {nick}.")
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     async def stats(self, ctx):
         """Show some statistics about yourself."""
         async with ctx.bot.db[0].acquire() as tconn:
             details = await tconn.fetchrow(
                 "SELECT * FROM users WHERE u_id = $1", ctx.author.id
             )
-            inv = await tconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+            fishing_players = await tconn.fetch(
+                f"SELECT u_id, fishing_points FROM users WHERE fishing_points != 0 ORDER BY fishing_points DESC"
             )
-        if inv is None:
+            ids = [record["u_id"] for record in fishing_players]
+
+        if details is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
-        embed = discord.Embed(title="Your Stats", color=0xFFB6C1)
+        embed = discord.Embed(
+            title="Your Stats", 
+            description="Different stats and levels from various activities!",
+            color=0xFFB6C1
+        )
         fishing_level = details["fishing_level"]
         fishing_exp = details["fishing_exp"]
         fishing_levelcap = details["fishing_level_cap"]
-        luck = details["luck"]
+        fishing_points = details['fishing_points']
         energy = do_health(10, details["energy"])
+
+        if ctx.author.id in ids:
+            fishing_position = ids.index(ctx.author.id)
+            position_msg = f"`Position`: {fishing_position + 1}"
+        else:
+            position_msg = "`Position`: Not Rated"
+
+        embed.add_field(
+            name="Fishing Stats 🐟",
+            value=f"`Level`: {fishing_level} - `Exp`: {fishing_exp}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}",
+        )
+
         embed.add_field(name="Energy", value=energy)
-        case = inv["coin-case"] if "coin-case" in inv else "No Coin Case"
-        embed.add_field(
-            name="Fishing Stats",
-            value=f"Fishing Level - {fishing_level}\nFishing Exp - {fishing_exp}/{fishing_levelcap}",
-        )
-        embed.add_field(
-            name="Game Corner Stats",
-            value=f"Luck - {luck}\nCoins - {case:,}",
-        )
         embed.set_footer(text="If You have some Energy go fishing!")
         await ctx.send(embed=embed)
 
@@ -742,7 +819,7 @@ class Extras(commands.Cog):
             f"`{ctx.author.id} - {hunt} @ {chain}x -> {pokemon}`"
         )
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view trainer information.")
     async def trainer(self, ctx, user: discord.User = None):
         """View your trainer card or the trainer card of another user."""
@@ -958,7 +1035,7 @@ class Extras(commands.Cog):
             )
         await ctx.send(f"Your region has been set to **{reg.title()}**.")
 
-    @commands.hybrid_command()
+    #@commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view their balance details.")
     async def bal(self, ctx, user: discord.User = None):
         """Shows your Balance & Lists credits, redeems, EV points, upvote points, and selected fishing rod."""
@@ -1076,54 +1153,56 @@ class Extras(commands.Cog):
             )
             info = await pconn.fetchrow(
                 "SELECT rare, mythic, legend FROM cheststore WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
 
-        #running chest totals
+        # running chest totals
         common = inv.get("common chest", 0)
         rare = inv.get("rare chest", 0)
-        rare_count = info["rare"]
         mythic = inv.get("mythic chest", 0)
-        mythic_count = info['mythic']
         legend = inv.get("legend chest", 0)
-        legend_count = info['legend']
-        exalted = inv.get("exalted chest", 0)        
+        exalted = inv.get("exalted chest", 0)
         hitem = details["held_item"]
         tnick = details["tnick"]
+
         embed = Embed(
             title=f"{tnick if tnick is not None else user.name}'s Chests",
-            color=0xFFB6C1
+            color=0xFFB6C1,
         )
         embed.add_field(
             name="Common",
-            value=f"<:lchest1:1010889611318411385><:lchest2:1010889654800756797>\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080> {common}",
-            inline=True
+            value=f"<:cchest1:1010888643369500742><:cchest2:1010888709031350333>\n<:cchest2:1010888756540215297><:cchest4:1010888875536822353> {common}",
+            inline=True,
         )
         embed.add_field(
             name="Rare",
             value=f"<:rchest1:1010889168802562078><:rchest2:1010889239988277269>\n<:rchest3:1010889292672942101><:rchest4:1010889342639677560> {rare}",
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Mythic",
             value=f"<:mchest1:1010889412558717039><:mchest2:1010889464119300096>\n<:mchest3:1010889506838302821><:mchest4:1010889554418487347> {mythic}",
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Legend",
             value=f"<:lchest1:1010889611318411385><:lchest2:1010889654800756797>\n<:lchest4:1010889740138061925><:lchest3:1010889697687511080> {legend}",
-            inline=True
+            inline=True,
         )
-        embed.add_field(
-            name="Exalted",
-            value=f"Count: {exalted}",
-            inline=True
-        )
-        embed.add_field(
-            name="Purchased Chests",
-            value=f"Rare: {rare_count}/5\nMythic: {mythic_count}/5\nLegend: {legend_count}/5",
-            inline=True
-        )
+
+        #This is for the purchased chest
+        #This table is only made when players buy a chest
+        #So new players won't have it causing command to fail
+        if info is not None:
+            rare_count = info.get("rare",0)
+            mythic_count = info.get("mythic",0)
+            legend_count = info.get("legend", 0)
+            embed.add_field(name="Exalted", value=f"Count: {exalted}", inline=True)
+            embed.add_field(
+                name="Purchased Chests",
+                value=f"Rare: {rare_count}/5\nMythic: {mythic_count}/5\nLegend: {legend_count}/5",
+                inline=True,
+            )
         await ctx.send(embed=embed)
 
     async def balance_misc(self, ctx, user: discord.User = None):
@@ -1173,6 +1252,7 @@ class Extras(commands.Cog):
         is_staff = details["staff"]
         hunt = details["hunt"]
         huntprogress = details["chain"]
+        essence = details["essence"]
         patreon_status = await ctx.bot.patreon_tier(user.id)
         if patreon_status in ("Crystal Tier", "Sapphire Tier"):
             marketlimitbonus = CRYSTAL_PATREON_SLOT_BONUS
@@ -1190,7 +1270,8 @@ class Extras(commands.Cog):
         desc = f"**Held Item**: `{hitem}`"
         desc += f"\n**Pokemon Owned**: `{count:,}`"
         desc += f"\n**Market Slots**: `{markettext}`"
-        desc += f"| **Daycare Slots**: `{daycared}/{dlimit}`"
+        desc += f"\n**Daycare Slots**: `{daycared}/{dlimit}`"
+        desc += f"| **Terastal Essence**: `{essence['x']},{essence['y']}/125`"
         if hunt:
             desc += f"\n**Shadow Hunt**: {hunt} ({huntprogress}x)"
         else:
