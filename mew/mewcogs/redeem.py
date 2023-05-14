@@ -229,16 +229,17 @@ class Redeem(commands.Cog):
                         )
                 elif item in ("battle_multiplier", "shiny_multiplier"):
                     #Provide compensation credits for battle multis above 50
-                    extra = max(0,(current_inv['battle_multiplier'] + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)),
-                    )
+                    extra = max(0,(current_inv[item] + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)),)
                     extra_creds += extra * self.CREDITS_PER_MULTI
-                    if extra_creds == 0:
+
+                    if current_inv[item] + extra <= 50:
                         await self.bot.commondb.add_bag_item(
                             ctx.author.id,
                             item,
-                            pack[item],
+                            extra,
                             True
                         )
+
             except:
                 continue
         async with ctx.bot.db[0].acquire() as pconn:

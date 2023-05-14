@@ -7,7 +7,7 @@ ADD_BAG_ITEM = {
     "wiki_berry": 'UPDATE bag SET wiki_berry = wiki_berry + $1 WHERE u_id = $2',
     "wiki_seed": 'UPDATE bag SET wiki_seed = wiki_seed + $1 WHERE u_id = $2',
     "sitrus_berry": 'UPDATE bag SET sitrus_berry = sitrus_berry + $1 WHERE u_id = $2',
-    "sitrus_seed": 'UPDATE bag SET sitrus_seed = sitrus_seed - $1 WHERE u_id = $2',
+    "sitrus_seed": 'UPDATE bag SET sitrus_seed = sitrus_seed + $1 WHERE u_id = $2',
     "lansat_berry": 'UPDATE bag SET lansat_berry = lansat_berry + $1 WHERE u_id = $2',
     "berry": 'UPDATE bag SET berry = berry + $1 WHERE u_id = $2',
     "ganlon_berry": 'UPDATE bag SET ganlon_berry = ganlon_berry + $1 WHERE u_id = $2',
@@ -232,6 +232,7 @@ ADD_BAG_ITEM = {
     "wide_lens": 'UPDATE bag SET wide_lens = wide_lens + $1 WHERE u_id = $2',
     "quick_claw": 'UPDATE bag SET quick_claw = quick_claw + $1 WHERE u_id = $2',
     "psychic_seed": 'UPDATE bag SET psychic_seed = psychic_seed + $1 WHERE u_id = $2',
+    "power_herb": 'UPDATE bag SET power_herb = power_herb + $1 WHERE u_id = $2'
 }
 
 ADD_BOUND_ITEM = {
@@ -484,6 +485,7 @@ REMOVE_BAG_ITEM = {
     "wide_lens": 'UPDATE bag SET wide_lens = wide_lens - $1 WHERE u_id = $2',
     "quick_claw": 'UPDATE bag SET quick_claw = quick_claw - $1 WHERE u_id = $2',
     "psychic_seed": 'UPDATE bag SET psychic_seed = psychic_seed - $1 WHERE u_id = $2',
+    "power_herb": 'UPDATE bag SET power_herb = power_herb - $1 WHERE u_id = $2'
 }
 
 REMOVE_BOUND_ITEM = {

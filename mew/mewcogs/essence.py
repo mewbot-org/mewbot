@@ -1,6 +1,7 @@
 import asyncio
+import discord
 from discord.ext import commands
-from mewutils.checks import check_owner
+from mewutils.checks import check_owner, check_mod
 from mewcogs.json_files import make_embed
 from mewcogs.pokemon_list import (
     LegendList,
@@ -14,12 +15,14 @@ class Essence(commands.Cog):
         self.bot = bot
         super().__init__()
 
+    @check_mod()
     @commands.hybrid_group()
     async def essence(self, ctx):
         ...
 
+    #@check_mod()
     @essence.command(name="craft")
-    @check_owner()
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def essence_craft(self, ctx: commands.Context, poke_num: int):
         """Trade-in shiny starter/pseudo/ub/legends for essence."""
         e = make_embed(
@@ -50,12 +53,24 @@ class Essence(commands.Cog):
             )
             return
         name = records['pokname']
+        poke_id = records['id']
+
         # Embed fun
-        e.title = "Still Crafting..."
-        e.description = f"Found a {name} !"
+        if name == 'Egg' or name == 'egg':
+            e.title = "Uh Oh"
+            e.description = "Found an Egg, it should be hatched first!"
+            await msg.edit(embed=e)
+            return
+        else:
+            e.title = "Still Crafting..."
+            e.description = f"Found a {name} !"
         await msg.add_reaction('<a:mewspin:998520051432968273>')
         await asyncio.sleep(1)
         await msg.edit(embed=e)
+
+
+        # message = await ctx.send(embed=embed, view=view)
+
         await asyncio.sleep(3)
 
         form_info = await ctx.bot.db[1].forms.find_one({"identifier": name.lower()})
@@ -70,8 +85,9 @@ class Essence(commands.Cog):
             )
             return
         
-        async with ctx.bot.db[0].acquire() as pconn:
-            if name in starterList:
+        
+        if name in starterList:
+            async with ctx.bot.db[0].acquire() as pconn:
                 maxed = await pconn.fetchval("SELECT (essence).x >= 25 FROM users WHERE u_id = $1", ctx.author.id)
                 if maxed:
                     await msg.edit(
@@ -85,9 +101,10 @@ class Essence(commands.Cog):
                 e.title = f"Crafted 1 X-Essence from your Shiny {name}"
                 e.description = "You are one step closer to Crystallization!"
                 await msg.edit(embed=e)
-                await ctx.bot.commondb.remove_poke(ctx.author.id, poke_num, delete=True)
+                await ctx.bot.commondb.remove_poke(ctx.author.id, poke_id, delete=True)
 
-            elif name in LegendList or name in pseudoList or name in ubList:
+        elif name in LegendList or name in pseudoList or name in ubList:
+            async with ctx.bot.db[0].acquire() as pconn:
                 maxed = await pconn.fetchval("SELECT (essence).y >= 100 FROM users WHERE u_id = $1", ctx.author.id)
                 if maxed:
                     await msg.edit(
@@ -97,21 +114,57 @@ class Essence(commands.Cog):
                                 )
                     )
                     return
-                await pconn.execute("UPDATE users SET essence.y = (essence).y + 1 WHERE u_id = $1", ctx.author.id)
-                e.title = f"Crafted 1 Y-Essence from your Shiny {name}"
-                e.description = "You are one step closer to Crystallization!"
-                await msg.edit(embed=e)
-                await msg.add_reaction('<a:mewspin:998520051432968273>')
-                await ctx.bot.commondb.remove_poke(ctx.author.id, poke_num, delete=True)
-                
-            else:
-                await msg.edit(
-                    embed=make_embed(
-                        title="Invalid Pokemon.",
-                        description=f"This Pokémon can not be traded-in for essence!",
-                    )
+
+            
+            async def button1_callback(interaction: discord.Interaction):
+                if interaction.user == ctx.author:
+                    async with ctx.bot.db[0].acquire() as pconn:
+                        await pconn.execute("UPDATE users SET essence.x = (essence).x + 1 WHERE u_id = $1", ctx.author.id)
+                    await ctx.bot.commondb.remove_poke(ctx.author.id, poke_id, delete=True)
+                    e.title = f"Crafted 1 X-Essence from your :star2: {name}"
+                    e.description = "You are one step closer to Crystallization!"
+                    await msg.edit(embed=e, view=None)
+                    await msg.add_reaction('<a:mewspin:998520051432968273>')
+
+            async def button2_callback(interaction: discord.Interaction):
+                if interaction.user == ctx.author:
+                    async with ctx.bot.db[0].acquire() as pconn:
+                        await pconn.execute("UPDATE users SET essence.y = (essence).y + 1 WHERE u_id = $1", ctx.author.id)
+                    await ctx.bot.commondb.remove_poke(ctx.author.id, poke_id, delete=True)
+                    e.title = f"Crafted 1 Y-Essence from your :star2: {name}"
+                    e.description = "You are one step closer to Crystallization!"
+                    await msg.edit(embed=e, view=None)
+                    await msg.add_reaction('<a:mewspin:998520051432968273>')
+
+            button1 = discord.ui.Button(label='Craft X-Essence?', custom_id='button1')
+            button1.callback = button1_callback
+
+            button2 = discord.ui.Button(label='Craft Y-Essence?', custom_id='button2')
+            button2.callback = button2_callback
+
+            view = discord.ui.View(timeout=15)
+            view.add_item(button1)
+            view.add_item(button2)
+            await msg.edit(embed=e, view=view)
+            
+            interaction : discord.Interaction = await ctx.bot.wait_for('button_click', check=lambda i: i.message.id == msg.id and i.user.id == ctx.author.id)
+
+            if interaction.custom_id == 'button1':
+                button1.disabled = True
+                await interaction.response.send_message('Button 1 was clicked')
+            elif interaction.custom_id == 'button2':
+                button2.disabled = True
+                await interaction.response.send_message('Button 2 was clicked')
+            
+            
+        else:
+            await msg.edit(
+                embed=make_embed(
+                    title="Invalid Pokemon.",
+                    description=f"This Pokémon can not be traded-in for essence!",
                 )
-                return
+            )
+            return
             
 async def setup(bot):
     await bot.add_cog(Essence(bot))

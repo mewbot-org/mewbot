@@ -435,6 +435,26 @@ class MewBotAdmin(commands.Cog):
             )
             await ctx.send(":white_check_mark:")
 
+    @check_admin()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def edit_essence(
+        self,
+        ctx,
+        user: discord.User,
+        x_y: str = None
+    ):
+        if x_y:
+            x_y = [int(i) for i in x_y.split()]
+        else:
+            x_y = [0, 0]
+        print(x_y)
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                f"UPDATE users set essence = $1 WHERE u_id = $2", x_y, user.id
+            )
+            await ctx.send(":white_check_mark:")
+
     @commands.hybrid_group()
     async def gym(self, ctx):
         ...

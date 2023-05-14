@@ -71,6 +71,10 @@ class Items(commands.Cog):
         if held_item in ("None", None, "none"):
             await ctx.send("Your selected Pokemon is not holding any item!")
             return None
+        #If dash in held_item this stuff breaks , replace it if it's there
+        if "-" in held_item:
+            held_item = held_item.replace("-", "_")
+            
         if (
             held_item in ("megastone", "mega_stone", "mega_stone_x", "mega_stone_y")
             and any(name.endswith(x) for x in ("-mega", "-x", "-y"))

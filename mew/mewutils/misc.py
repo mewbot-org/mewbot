@@ -812,6 +812,8 @@ def get_battle_emoji(*, item_name:str):
         emoji = "<:heat_rock:1103331091600912425>"
     elif item_name == "smooth_rock":
         emoji = "<:smooth_rock:1103331093580624022>"
+    elif item_name == "power_herb":
+        emoji = "<:power_herb:1105263111600087110>"
     else:
         emoji = "‼️" #Means emoji is missing
     return emoji

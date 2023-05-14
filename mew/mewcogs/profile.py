@@ -288,6 +288,10 @@ class ProfileView(discord.ui.View):
         self.player_data = player_data
         self.event = asyncio.Event()
         self.embed = ""
+    
+    # @discord.ui.Button(style=discord.ButtonStyle.red, label="Refresh", emoji="♺", row=2)
+    # async def refresh(self, interaction, button):
+
 
     @discord.ui.button(style=discord.ButtonStyle.primary, label="Chests", emoji="🎁", row=1)
     async def chests(self, interaction, button):
@@ -402,6 +406,7 @@ class ProfileView(discord.ui.View):
                 f"**Daycare Slots**: {daycared}/{dlimit}\n"
                 f"**Nature Capsules**: {nature_caps}\n"
                 f"**Honey**: {honey}\n"
+                f"**Terastal Essence**:\n`X: {essence['x']}/25 | Y: {essence['y']}/100`"
             ),
             inline=True
         )
@@ -412,7 +417,6 @@ class ProfileView(discord.ui.View):
                 f"**Breeding**: `{breed_mult} - {calculate_breeding_multiplier(breed_mult)}`\n"
                 f"**Shiny**: `{shiny_mult}`\n"
                 f"**Battling**: `{battle_mult}`\n"
-                f"**Terastal Essence**: `{essence['x']},{essence['y']}/125`"
             ),
             inline=True
         )

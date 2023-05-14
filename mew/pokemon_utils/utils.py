@@ -780,7 +780,7 @@ async def evolve(
         else:
             active_item_id = active_item_id["id"]
     held_item_id = await bot.mongo_pokemon_db.items.find_one(
-        {"identifier": pokemon.hitem}
+        {"identifier": pokemon.hitem.replace("_", "-")}
     )
     if held_item_id is not None:
         held_item_id = held_item_id["id"]

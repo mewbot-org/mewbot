@@ -87,6 +87,7 @@ class Filter(commands.Cog):
 
     @commands.hybrid_group(aliases=["filter"])
     async def f(self, ctx):
+        """Use this command to Filter Pokémon! See /f p .shiny."""
         ...
 
     @f.command()

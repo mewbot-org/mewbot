@@ -201,7 +201,7 @@ class Chests(commands.Cog):
         )
         reward = random.choices(
             ("radiant", "redeem", "chest", "boostedshiny", "shiny", "shinystarter"),
-            weights=(0.300, 0.200, 0.15, 0.15, 0.190, 0.010),
+            weights=(0.250, 0.200, 0.15, 0.18, 0.200, 0.040),
         )[0]
         # Radiant Reward
         if reward == "radiant":
@@ -283,7 +283,7 @@ class Chests(commands.Cog):
             )
         reward = random.choices(
             ("radiant", "redeem", "chest", "shiny", "boostedshiny"),
-            weights=(0.30, 0.22, 0.19, 0.15, 0.14),
+            weights=(0.20, 0.20, 0.14, 0.22, 0.24),
         )[0]
 
         if reward == "redeem":
@@ -369,13 +369,13 @@ class Chests(commands.Cog):
 
         if ctx.author.id == 334155028170407949:
             reward = random.choices(
-                ("redeem", "radiant", "boostedshiny", "exalted"),
-                weights=(0.01, 0.01, 0.49, 0.49),
+                ("redeem", "radiant", "boostedradiant", "boostedshiny", "exalted"),
+                weights=(0.35, 0.175, 0.196, 0.300, 0.002),
             )[0]
         else:
             reward = random.choices(
                 ("redeem", "radiant", "boostedradiant", "boostedshiny", "exalted"),
-                weights=(0.35, 0.180, 0.201, 0.250, 0.002),
+                weights=(0.248, 0.150, 0.250, 0.350, 0.002),
             )[0]
 
         if reward == "boostedshiny":
@@ -654,13 +654,13 @@ class Chests(commands.Cog):
                     item = inventory['breeding_multiplier']
                 if item >= 50:
                     await ctx.send("You have hit the cap for that multiplier!")
-                    return
+                    return                
                 gain = min(item + 1, 50)
-                await self.bot.commondb.add_bag_item(
-                    ctx.author.id,
-                    name,
+                #This isn't good but set values so it's okay...
+                await pconn.execute(
+                    f"UPDATE account_bound SET {name} = $1 WHERE u_id = $2",
                     gain,
-                    True
+                    ctx.author.id
                 )
             elif packnum == 5:
                 await self.bot.commondb.add_bag_item(

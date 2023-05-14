@@ -1654,6 +1654,8 @@ ubList = [
     "Slither-wing",
     "Flutter-mane",
     "Roaring-moon",
+    "Walking-wake",
+    "Iron-leaves",
 ]
 
 # TOTAL LIST SHOULD CONTAIN EACH POKEMON ONCE

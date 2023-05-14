@@ -69,6 +69,15 @@ class ChoicesView(discord.ui.View):
                 shiny_multi = min(50, inventory["shiny_multiplier"], 0) + 5
                 iv_multi = min(50, inventory["iv_multiplier"], 0) + 3
                 breeding_multi = min(50, inventory["breeding_multiplier"], 0) + 3
+
+                await pconn.execute(
+                    "UPDATE account_bound SET battle_multiplier = $1, shiny_multiplier = $2, iv_multiplier = $3, breeding_multiplier = $4 WHERE u_id = $5",
+                    battle_multi,
+                    shiny_multi,
+                    iv_multi,
+                    breeding_multi,
+                    ctx.author.id
+                )
             elif choice == 3:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems + 3, mewcoins = mewcoins + 150000 WHERE u_id = $1",

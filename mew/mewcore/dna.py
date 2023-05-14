@@ -568,6 +568,7 @@ class Mew(commands.AutoShardedBot):
             "duel",
             "dylee",
             # "events",
+            "essence",
             "evs",
             "extras",
             "favs",
@@ -651,6 +652,8 @@ class Mew(commands.AutoShardedBot):
                 else:
                     safe_to_load = [
                         "botlist",
+                        "bag",
+                        "farm",
                         "boost",
                         "breeding",
                         "chests",
@@ -685,7 +688,10 @@ class Mew(commands.AutoShardedBot):
                         "cooldown",
                         "market",
                         "shop",
+                        "profile",
+                        "essence"
                         # "events",
+
                     ]
 
                 for cog in safe_to_load:
