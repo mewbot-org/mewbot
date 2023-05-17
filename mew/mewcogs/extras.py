@@ -576,7 +576,7 @@ class Extras(commands.Cog):
                 ctx.author.id,
             )
             update_data = await pconn.fetchrow(
-                "SELECT id, dev, update, update_date FROM updates ORDER BY update_date DESC LIMIT 1"
+                "SELECT id, dev, update, update_date FROM updates ORDER BY id DESC LIMIT 1"
             )
             if data is None:
                 vote_streak = 0
