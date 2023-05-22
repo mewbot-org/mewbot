@@ -692,7 +692,8 @@ async def vote_handler(data, auth, user_id, list_name):
                     )
                     msg += f"-**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
-                    chest_name = f"{reward["chest"]}_chest"
+                    chest_name = reward["chest"]
+                    chest_name = f"{chest_name}_chest"
                     await pconn.execute(
                         f"UPDATE account_bound SET {chest_name} = {chest_name} + 1 WHERE u_id = $1",
                         user_id
