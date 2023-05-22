@@ -452,6 +452,7 @@ class Redeem(commands.Cog):
                 and pokemon.lower() in REDEEM_DROPS
             ):
                 item = REDEEM_DROPS[pokemon.lower()]
+                item = item.replace("-", "_")
                 await self.bot.commondb.add_bag_item(
                     ctx.author.id,
                     item,

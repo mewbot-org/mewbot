@@ -84,11 +84,11 @@ class Extras(commands.Cog):
     async def honey(self, ctx):
         """Spread honey in this channel to attract Pokémon."""
         async with ctx.bot.db[0].acquire() as pconn:
-            honey = await pconn.fetchval(
+            user_honey = await pconn.fetchval(
                 "SELECT honey FROM account_bound WHERE u_id = $1", 
                 ctx.author.id
             )
-            if honey is None:
+            if user_honey is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
             honey = await pconn.fetchval(
@@ -100,7 +100,7 @@ class Extras(commands.Cog):
                     "There is already honey in this channel! You can't add more yet."
                 )
                 return
-            if honey >= 1:
+            if user_honey >= 1:
                 await self.bot.commondb.remove_bag_item(
                     ctx.author.id,
                     "honey",
@@ -115,11 +115,6 @@ class Extras(commands.Cog):
                 "INSERT INTO honey (channel, expires, owner, type) VALUES ($1, $2, $3, 'honey')",
                 ctx.channel.id,
                 expires,
-                ctx.author.id,
-            )
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json WHERE u_id = $2",
-                inv,
                 ctx.author.id,
             )
             await ctx.send(

@@ -264,6 +264,9 @@ class Misc(commands.Cog):
                 await owner.send(embed=(e))
             except Exception:
                 pass
+            await self.bot.get_partial_messageable(1110257863059849256).send(
+                f"__**Server Join**__\N{SMALL BLUE DIAMOND}- {owner_name} - ``{owner_id}`` has given added Mewbot to\n{guild_name} - `{guild.id}`\n"
+            )
             # await self.bot.log(
             #     929516766965694545,
             #     f"**New Join:**\n**Server Name** = `{guild_name}`\n**Ownerid id** = `{owner_id}`\n**Owner name** = `{owner_name}`\n**Members** = `{member_count}`",
