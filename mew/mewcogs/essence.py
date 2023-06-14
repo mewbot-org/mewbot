@@ -105,7 +105,7 @@ class Essence(commands.Cog):
 
         elif name in LegendList or name in pseudoList or name in ubList:
             async with ctx.bot.db[0].acquire() as pconn:
-                maxed = await pconn.fetchval("SELECT (essence).y >= 100 FROM users WHERE u_id = $1", ctx.author.id)
+                maxed = await pconn.fetchval("SELECT (essence).y >= 50 FROM users WHERE u_id = $1", ctx.author.id)
                 if maxed:
                     await msg.edit(
                         embed=make_embed(

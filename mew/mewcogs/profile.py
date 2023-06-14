@@ -406,7 +406,7 @@ class ProfileView(discord.ui.View):
                 f"**Daycare Slots**: {daycared}/{dlimit}\n"
                 f"**Nature Capsules**: {nature_caps}\n"
                 f"**Honey**: {honey}\n"
-                f"**Terastal Essence**:\n`X: {essence['x']}/25 | Y: {essence['y']}/100`"
+                f"**Terastal Essence**:\n`X: {essence['x']}/25 | Y: {essence['y']}/50`"
             ),
             inline=True
         )

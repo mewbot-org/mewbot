@@ -306,6 +306,8 @@ async def get_pokemon_info(ctx, records, info_type=None):
     ab_index = records["ability_index"]
     skin = records["skin"]
     tradable = records["tradable"]
+    crystalized = records["crystalized"]
+
     move1, move2, move3, move4 = (
         move.capitalize().replace("-", " ") for move in records["moves"]
     )
@@ -512,7 +514,8 @@ async def get_pokemon_info(ctx, records, info_type=None):
     speedev_display = f"{speedev:03d}"
     desc = ""
 
-    desc += f"**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n**Happiness**: `{happiness}`\n\n"
+    happiness_txt = f"**Happiness**: `{happiness}` - {('❌' if not tradable else '')} {('💎' if crystalized else '')}"
+    desc += f"**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n{happiness_txt}\n\n"
     desc += f"**__Stats__ {blank*2}__Total__{blank*2}<:ivs:1029331472789819442> __|__ <:evs:1029331432792915988>**\n"
     desc += f"`HP:       {hp:03d} `{blank}` {hpiv:02d} | {hpev_display}`\n"
     desc += f"`Attack:   {attack:03d} `{blank}` {atkiv:02d} | {atkev_display}`\n"

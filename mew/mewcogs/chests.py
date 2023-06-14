@@ -23,15 +23,15 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = [
-            "Entei", 
-            "Zapdos", 
-            "Weedle", 
-            "Mawile", 
-            "Omanyte", 
-            "Anorith", 
-            "Togepi", 
-            "Torkoal", 
-            "Bellsprout",        
+            "Piplup", 
+            "Treecko", 
+            "Axew", 
+            "Clamperl", 
+            "Scyther", 
+            "Latios", 
+            "Deoxys", 
+            "Poliwag", 
+            "Roggenrola",        
         ]
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
@@ -117,8 +117,8 @@ class Chests(commands.Cog):
                 True
             )
         reward = random.choices(
-            ("gleam", "chest", "ev", "poke", "redeem", "cred"),
-            weights=(0.010, 0.010, 0.1, 0.2, 0.25, 0.43),
+            ("chest", "ev", "poke", "redeem", "cred"),
+            weights=(0.010, 0.1, 0.2, 0.25, 0.44),
         )[0]
         if reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
@@ -201,7 +201,7 @@ class Chests(commands.Cog):
         )
         reward = random.choices(
             ("radiant", "redeem", "chest", "boostedshiny", "shiny", "shinystarter"),
-            weights=(0.250, 0.200, 0.15, 0.18, 0.200, 0.040),
+            weights=(0.150, 0.200, 0.15, 0.18, 0.300, 0.040),
         )[0]
         # Radiant Reward
         if reward == "radiant":
@@ -375,7 +375,7 @@ class Chests(commands.Cog):
         else:
             reward = random.choices(
                 ("redeem", "radiant", "boostedradiant", "boostedshiny", "exalted"),
-                weights=(0.248, 0.150, 0.250, 0.350, 0.002),
+                weights=(0.248, 0.100, 0.150, 0.500, 0.002),
             )[0]
 
         if reward == "boostedshiny":

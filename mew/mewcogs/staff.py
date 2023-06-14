@@ -423,6 +423,7 @@ class MewBotAdmin(commands.Cog):
     async def editiv(
         self,
         ctx,
+        essence: Literal["False", "True"],
         iv: Literal["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"],
         amount: int,
         globalid: int,
@@ -430,9 +431,16 @@ class MewBotAdmin(commands.Cog):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(
-                f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid
-            )
+            if essence == 'True':
+                await pconn.execute(
+                    f"UPDATE pokes SET {iv} = $1, crystalized = True WHERE id = $2",
+                    amount,
+                    globalid
+                )
+            else:
+                await pconn.execute(
+                    f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid
+                )
             await ctx.send(":white_check_mark:")
 
     @check_admin()

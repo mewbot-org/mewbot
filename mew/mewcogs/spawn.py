@@ -459,10 +459,10 @@ class Spawn(commands.Cog):
             return
 
         # This is the toggle for extended hints - 2 lettes with underscores
-        # updated_hint, letter_count = scatter(pokemon)
-        # updated_hint = updated_hint.capitalize()
+        updated_hint, letter_count = scatter(pokemon)
+        updated_hint = updated_hint.capitalize()
         # Uncomment this for normal spawn name - 1 letter
-        updated_hint = pokemon[0].capitalize()
+        #updated_hint = pokemon[0].capitalize()
 
         # Create & send the pokemon spawn embed
         embed = discord.Embed(
