@@ -1,6 +1,10 @@
 import discord
-from discord.ext import commands
+import asyncio
+import random
+import time
 
+from discord.ext import commands
+from typing import Literal
 from mewcogs.pokemon_list import LegendList, ubList, starterList, pseudoList, pList
 from mewutils.checks import tradelock
 from mewutils.misc import (
@@ -10,9 +14,7 @@ from mewutils.misc import (
     MenuView,
     ConfirmView,
 )
-import asyncio
-import random
-import time
+
 
 
 # Map of skin name -> list[pokemon name]
@@ -184,12 +186,14 @@ class Skins(commands.Cog):
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
 
+    #Remade to allow preview of skin without having it purchased.
+    #That way players can see skins and such before having them.
     @skin.command()
     @discord.app_commands.describe(
         pokemon="The Pokémon number you want to preview the skin on",
         skin="The name of the Skin to preview.",
     )
-    async def skin_preview(self, ctx, pokemon: str, skin: str):
+    async def skin_preview(self, ctx, pokemon: str, skin: Literal["halloween", "xmas2022", "valentines2023", "easter2023", "summer2023"]):
         """Preview a skin on a pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
             skins = await pconn.fetchval(
@@ -201,6 +205,9 @@ class Skins(commands.Cog):
         poke = pokemon.lower().replace(" ", "-")
         skin = skin.lower()
         if skin in BUYABLE_SKINS:
+            #This can be removed once shop is redone
+            await ctx.send("That skin is not a valid option!")
+            return
             form_poke = await ctx.bot.db[1].forms.find_one({"identifier": poke})
             if form_poke is None:
                 await ctx.send("That pokemon does not exist!")
@@ -215,11 +222,15 @@ class Skins(commands.Cog):
                 search_poke = await ctx.bot.db[1].pfile.find_one(
                     {"id": search_poke["evolves_from_species_id"]}
                 )
-        elif skins.get(poke, {}).get(skin, 0) < 1:
-            await ctx.send(f"You do not have any {skin} skins for {poke} to preview.")
-            return
+        #Remove skin inventory checking
+        #elif skins.get(poke, {}).get(skin, 0) < 1:
+            #await ctx.send(f"You do not have any {skin} skins for {poke} to preview.")
+            #return
         poke = poke.capitalize()
         iurl = await get_pokemon_image(poke, ctx.bot, skin=skin)
+        if iurl is None:
+            await ctx.send("That skin does not exist! Check your entry and try again.")
+            return
         embed = discord.Embed(
             title=f"{poke}'s {skin} skin preview",
             color=ctx.bot.get_random_color(),
@@ -263,7 +274,9 @@ class Skins(commands.Cog):
             return 40
         return 404
 
-    @skin.command()
+    #We don't have skins for the shop at the moment. Closed command.
+    #TODO: Eventually add skins back and reopen the shop.
+    #@skin.command()
     async def shop(self, ctx):
         """View the skins available to you for purchase this week."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -287,7 +300,7 @@ class Skins(commands.Cog):
         embed.set_footer(text="Options rotate every Wednesday at 8pm ET.")
         await ctx.send(embed=embed)
 
-    @skin.command()
+    #@skin.command()
     @discord.app_commands.describe(
         pokemon="The Pokémon name you want to buy the skin for",
         skin="The name of the Skin to buy.",

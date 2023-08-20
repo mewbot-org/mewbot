@@ -526,11 +526,23 @@ class Move():
             msg += defender.damage(defender.hp // 2, battle, move=self, move_type=current_type, attacker=attacker)
             numhits = 1
         elif self.effect == 42:
-            msg += defender.damage(40, battle, move=self, move_type=current_type, attacker=attacker)
-            numhits = 1
+            #Parental Bond should trigger this twice
+            if attacker.ability() == Ability.PARENTAL_BOND:
+                for i in range(2):
+                    msg += defender.damage(40, battle, move=self, move_type=current_type, attacker=attacker)
+                    numhits = 2
+            else:
+                msg += defender.damage(40, battle, move=self, move_type=current_type, attacker=attacker)
+                numhits = 1
         elif self.effect == 88:
-            msg += defender.damage(attacker.level, battle, move=self, move_type=current_type, attacker=attacker)
-            numhits = 1
+            #Parental Bond should trigger this twice
+            if attacker.ability() == Ability.PARENTAL_BOND:
+                for i in range(2):
+                    msg += defender.damage(attacker.level, battle, move=self, move_type=current_type, attacker=attacker)
+                    numhits = 2
+            else:
+                msg += defender.damage(attacker.level, battle, move=self, move_type=current_type, attacker=attacker)
+                numhits = 1
         elif self.effect == 89:
             # 0.5-1.5, increments of .1
             scale = (random.randint(0, 10) / 10.0) + .5

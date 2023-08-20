@@ -334,7 +334,7 @@ class Forms(commands.Cog):
         val = form_name.lower()
         if any(
             val.lower().endswith(x)
-            for x in ("alola", "galar", "hisui", "paldea", "misfit", "skylarr")
+            for x in ("alola", "galar", "hisui", "paldea", "misfit", "skylarr", "eternamax")
         ):
             await ctx.send("You cannot form your pokemon to a regional form!")
             return

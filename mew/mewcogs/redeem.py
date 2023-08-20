@@ -220,6 +220,14 @@ class Redeem(commands.Cog):
                         item,
                         1
                     )
+                if item in ('honey', 'nature_capsules'):
+                    amount = pack[item]
+                    await self.bot.commondb.add_bag_item(
+                        ctx.author.id,
+                        item,
+                        amount,
+                        True
+                    )
                 elif item == "bike":
                     async with ctx.bot.db[0].acquire() as pconn:
                         await pconn.execute(
@@ -228,15 +236,16 @@ class Redeem(commands.Cog):
                             True,
                         )
                 elif item in ("battle_multiplier", "shiny_multiplier"):
-                    #Provide compensation credits for battle multis above 50
+                    #Provide compensation credits for multis above 50
                     extra = max(0,(current_inv[item] + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)),)
                     extra_creds += extra * self.CREDITS_PER_MULTI
 
                     if current_inv[item] + extra <= 50:
+                        amount = pack[item] - extra
                         await self.bot.commondb.add_bag_item(
                             ctx.author.id,
                             item,
-                            extra,
+                            amount,
                             True
                         )
 
@@ -282,7 +291,7 @@ class Redeem(commands.Cog):
         await ctx.send(embed=e)
 
     @tradelock
-    @redeem.command()
+    #@redeem.command()
     async def shiny(self, ctx):
         """Spend your redeems for a random shiny."""
         e = discord.Embed(color=ctx.bot.get_random_color())
@@ -335,7 +344,7 @@ class Redeem(commands.Cog):
         await ctx.send(embed=e)
 
     @tradelock
-    @redeem.command(aliases=["coins"])
+    #@redeem.command(aliases=["coins"])
     async def credits(self, ctx):
         """Trade 1 redeem for 50,000 credits."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -490,6 +499,8 @@ class Redeem(commands.Cog):
     async def multiple(self, ctx, amount: int, option: str):
         """Redeem multiple Pokemon or Credits"""
         if option == "credits":
+            await ctx.send("This has been temporarily disabled.")
+            return
             async with ctx.bot.db[0].acquire() as pconn:
                 redeems = await pconn.fetchval(
                     "SELECT redeems FROM users WHERE u_id = $1",

@@ -693,18 +693,18 @@ async def vote_handler(data, auth, user_id, list_name):
                     msg += f"-**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
                     chest_name = reward["chest"]
-                    chest_name = f"{chest_name}_chest"
+                    chest_name = f"{chest_name}"
                     await pconn.execute(
                         f"UPDATE account_bound SET {chest_name} = {chest_name} + 1 WHERE u_id = $1",
                         user_id
                     )
-                    msg += f"-A **{reward['chest']} chest**\n"
+                    msg += f"- A **{reward['chest']} chest**\n"
                 if reward["skin"]:
                     # await app.utils.send_skin_message(user_id)
                     skin = random.choice(
                         [("mewtwo", "vote"), ("mewtwo", "vote2"), ("mewtwo", "vote3")]
                     )
-                    msg += f"-An **exclusive {skin[0].title()} skin** for voting! See `/skin` for more information.\n"
+                    msg += f"- An **exclusive {skin[0].title()} skin** for voting! See `/skin` for more information.\n"
                     # TODO: replace with default dict?
                     if skin[0] not in skins:
                         skins[skin[0]] = {}

@@ -505,7 +505,7 @@ class Extras(commands.Cog):
         """
         Our Contributors
         """
-        desc = f"**Soure Repo Credit**: \n[GitHub](https://github.com/skylarr1227/dittobot-open)\n[Gen 9 Preview Sprites](https://www.deviantart.com/kingofthe-x-roads)\n"
+        desc = f"**Source Repo Credit**: [Gen 9 Preview Sprites](https://www.deviantart.com/kingofthe-x-roads)\n"
         desc += f"\n**Various Artwork/Skins:**"
         desc += f"\n\n**Gleam Artwork:**"
         desc += f"\n\n**Art Team:**"

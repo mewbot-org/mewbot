@@ -17,10 +17,8 @@ import re
 import io
 import os
 
-from email.message import EmailMessage
 from discord.ext import commands
 from dotenv import load_dotenv
-import aiosmtplib
 import aiohttp
 import discord
 

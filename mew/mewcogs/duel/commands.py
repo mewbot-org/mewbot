@@ -437,9 +437,9 @@ class Duel(commands.Cog):
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
-                if held_item != "xp-block":
+                if held_item != "xp_block":
                     exp = (150 * poke.level) / 7
-                    if held_item == "lucky-egg":
+                    if held_item == "lucky_egg":
                         exp *= 2.5
                     # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
@@ -535,9 +535,9 @@ class Duel(commands.Cog):
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
-                if held_item != "xp-block":
+                if held_item != "xp_block":
                     exp = (150 * poke.level) / 7
-                    if held_item == "lucky-egg":
+                    if held_item == "lucky_egg":
                         exp *= 2.5
                     # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
@@ -669,9 +669,9 @@ class Duel(commands.Cog):
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
-                if held_item != "xp-block":
+                if held_item != "xp_block":
                     exp = (150 * poke.level) / 7
-                    if held_item == "lucky-egg":
+                    if held_item == "lucky_egg":
                         exp *= 2.5
                     # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
@@ -791,9 +791,9 @@ class Duel(commands.Cog):
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
                 exp = 0
-                if held_item != "xp-block":
+                if held_item != "xp_block":
                     exp = (150 * poke.level) / 7
-                    if held_item == "lucky-egg":
+                    if held_item == "lucky_egg":
                         exp *= 2.5
                     # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)

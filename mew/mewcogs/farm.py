@@ -176,8 +176,11 @@ class FarmView(discord.ui.View):
 
     async def wait(self):
         """Returns the user's choice, or None if they did not choose in time."""
-        self.message = await self.ctx.send(embed=self.first_embed, view=self)
-        await self.event.wait()
+        try:
+            self.message = await self.ctx.send(embed=self.first_embed, view=self)
+            await self.event.wait()
+        except:
+            self.message = await self.ctx.send(embed=self.first_embed)
         
 
 class DropdownSelect(discord.ui.Select):
@@ -192,6 +195,7 @@ class DropdownSelect(discord.ui.Select):
 
         length = len(berry_ids)
         count = 0
+        add = False
         options = []
 
         for idx in range(length):
@@ -368,7 +372,7 @@ class Farming(commands.Cog):
         if len(berry_data) == 0:
             first_embed = discord.Embed(
                 title=f"{ctx.author.name}'s Farm!",
-                description=f"Each button below simulates a landplot!\n🚰 `Water Tank`: {water_tank} / 10\n<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
+                description=f"🚰 `Water Tank`: {water_tank} / 10\n<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
                 color=0x03FC85
             )
             first_embed.set_thumbnail(
@@ -395,14 +399,14 @@ class Farming(commands.Cog):
 
         first_embed = discord.Embed(
             title=f"{ctx.author.name}'s Farm!",
-            description=f"Each button below simulates a landplot!\n🚰 `Water Tank`: {water_tank} / 10\n<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
+            description=f"🚰 `Water Tank`: {water_tank} / 10\n<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
             color=0x03FC85
         )
         first_embed.set_thumbnail(
             url="https://archives.bulbagarden.net/media/upload/6/61/Spr_DP_Rancher.png"
         )
         first_embed.set_footer(
-            text="Use the dropdown menu to water/pick your berries"
+            text="Use the menu below to water/pick your berries"
         )
         length = len(berry_ids)
         for idx in range(length):
@@ -466,7 +470,7 @@ class Farming(commands.Cog):
         if len(berry_data) == 0:
             first_embed = discord.Embed(
                 title=f"{ctx.author.name}'s Farm!",
-                description=f"Each button below simulates a landplot!\n<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
+                description=f"<:fertilizer:1097357605690675251> `Fertilizer`: {fertilizer}",
                 color=0x03FC85
             )
             first_embed.set_thumbnail(

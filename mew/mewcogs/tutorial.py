@@ -226,7 +226,7 @@ class Tutorial(commands.Cog):
                 "Credits and Redeems",
                 """
                 In Mewbot, you have two major currencies, Credits and Redeems.
-                `/bal` - Shows your Credits, Redeems, EV points, Upvote Points and your Fishing Rod.
+                `/profile view` - Shows your Credits, Redeems, EV points, Upvote Points and your Fishing Rod.
                
                 **Credits**
                 Credits are the main currency of Mewbot that you can use to buy most things.

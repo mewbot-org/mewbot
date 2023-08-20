@@ -798,6 +798,30 @@ class Items(commands.Cog):
             await ctx.send(f"Command on cooldown for {cooldown}")
             return
 
+        #Flipped these so that players who don't have the 25k trigger the redis cooldown
+        async with ctx.bot.db[0].acquire() as pconn:
+            msg = await ctx.send(embed=make_embed(title="Refilling all your Energy..."))
+            try:
+                if ctx.author.id in (455277032625012737, 449401742568849409):
+                    await pconn.execute(
+                        "UPDATE users SET mewcoins = mewcoins - 25000, npc_energy = 10 WHERE u_id = $1",
+                        ctx.author.id,
+                    )
+                    await msg.edit(embed=make_embed(title="SMH!"))
+                else:
+                    await pconn.execute(
+                        "UPDATE users SET mewcoins = mewcoins - 25000, energy = 10 WHERE u_id = $1",
+                        ctx.author.id,
+                    )
+                    await msg.edit(embed=make_embed(title="Your energy has been refilled!"))
+            except:
+                await msg.edit(
+                    embed=make_embed(
+                        title=f"You don't have 25000{ctx.bot.misc.emotes['CREDITS']}"
+                    )
+                )
+                return
+
         patreon = await ctx.bot.patreon_tier(ctx.author.id)
         if ctx.author.id in (455277032625012737, 449401742568849409):
             await ctx.bot.redis_manager.redis.execute(
@@ -821,27 +845,6 @@ class Items(commands.Cog):
                 str(time.time() + 60 * 60 * 12),
             )
 
-        async with ctx.bot.db[0].acquire() as pconn:
-            msg = await ctx.send(embed=make_embed(title="Refilling all your Energy..."))
-            try:
-                if ctx.author.id in (455277032625012737, 449401742568849409):
-                    await pconn.execute(
-                        "UPDATE users SET mewcoins = mewcoins - 25000, npc_energy = 10 WHERE u_id = $1",
-                        ctx.author.id,
-                    )
-                    await msg.edit(embed=make_embed(title="SMH!"))
-                else:
-                    await pconn.execute(
-                        "UPDATE users SET mewcoins = mewcoins - 25000, energy = 10 WHERE u_id = $1",
-                        ctx.author.id,
-                    )
-                    await msg.edit(embed=make_embed(title="Your energy has been refilled!"))
-            except:
-                await msg.edit(
-                    embed=make_embed(
-                        title=f"You don't have 25000{ctx.bot.misc.emotes['CREDITS']}"
-                    )
-                )
 
     @buy.command(name="candy")
     async def buy_candy(self, ctx, amount: int = 1):
@@ -921,7 +924,7 @@ class Items(commands.Cog):
         self,
         ctx,
         chest_type: Literal["Rare", "Mythic", "Legend"],
-        credits_or_redeems: Literal["Credits", "Redeems"],
+        credits_or_redeems: Literal["Credits"],
     ):
         """Buy a gleam chest."""
         ct = chest_type.lower().strip()

@@ -51,24 +51,24 @@ class ChoicesView(discord.ui.View):
         await ctx.bot.db[1].boosters.update_one(
             {}, {"$push": {"boosters": ctx.author.id}}
         )
-        async with ctx.bot.db[0].acquire() as pconn:
+        async with interaction.client.db[0].acquire() as pconn:
             inventory = await pconn.fetchrow(
                 "SELECT * FROM account_bound WHERE u_id = $1",
                 ctx.author.id,
             )
             inventory = dict(inventory)
             if choice == 1:
-                ctx.bot.commondb.add_bag_item(
+                await interaction.client.commondb.add_bag_item(
                     ctx.author.id,
                     "rare_chest",
                     1,
                     True
                 )
             elif choice == 2:
-                battle_multi = min(50, inventory["battle_multiplier"], 0) + 5
-                shiny_multi = min(50, inventory["shiny_multiplier"], 0) + 5
-                iv_multi = min(50, inventory["iv_multiplier"], 0) + 3
-                breeding_multi = min(50, inventory["breeding_multiplier"], 0) + 3
+                battle_multi = min(50, inventory["battle_multiplier"] + 5) 
+                shiny_multi = min(50, inventory["shiny_multiplier"] + 5) 
+                iv_multi = min(50, inventory["iv_multiplier"] + 3) + 3
+                breeding_multi = min(50, inventory["breeding_multiplier"] + 3)
 
                 await pconn.execute(
                     "UPDATE account_bound SET battle_multiplier = $1, shiny_multiplier = $2, iv_multiplier = $3, breeding_multiplier = $4 WHERE u_id = $5",

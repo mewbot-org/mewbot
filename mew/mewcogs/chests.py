@@ -23,15 +23,17 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = [
-            "Piplup", 
-            "Treecko", 
-            "Axew", 
-            "Clamperl", 
-            "Scyther", 
-            "Latios", 
-            "Deoxys", 
-            "Poliwag", 
-            "Roggenrola",        
+            "Arceus", 
+            "Pheromosa", 
+            "Rotom", 
+            "Goomy", 
+            "Milcery", 
+            "Minccino", 
+            "Turtwig", 
+            "Salandit", 
+            "Scorbunny",
+            "Dreepy",
+            "Tornadus"
         ]
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
@@ -374,8 +376,8 @@ class Chests(commands.Cog):
             )[0]
         else:
             reward = random.choices(
-                ("redeem", "radiant", "boostedradiant", "boostedshiny", "exalted"),
-                weights=(0.248, 0.100, 0.150, 0.500, 0.002),
+                ("redeem", "boostedradiant", "boostedshiny", "exalted"),
+                weights=(0.200, 0.150, 0.648, 0.002),
             )[0]
 
         if reward == "boostedshiny":
@@ -574,6 +576,8 @@ class Chests(commands.Cog):
         )
         await ctx.send(embed=e)
 
+    #            "5. Legend Chest",
+
     @gleam.command()
     async def pack(
         self,
@@ -583,7 +587,6 @@ class Chests(commands.Cog):
             "2. Battle Multiplier x1",
             "3. IV Multiplier x1",
             "4. Breeding Multiplier x1",
-            "5. Legend Chest",
             "6. Gleam Pokemon (common & starter)",
             "7. Gleam Pokemon (legend & pseudo)",
         ],
