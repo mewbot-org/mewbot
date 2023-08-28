@@ -128,8 +128,8 @@ class Sell(commands.Cog):
                 except ValueError:
                     try:
                         egg_nums = [int(x) for x in egg_ids.split(" ")]
-                        if len(egg_nums) > 10:
-                            await ctx.send("You can only sell a max of 10 eggs at once.")
+                        if len(egg_nums) > 15:
+                            await ctx.send("You can only sell a max of 15 eggs at once.")
                             return
                     except:
                         await ctx.send(

@@ -924,7 +924,7 @@ class Items(commands.Cog):
         self,
         ctx,
         chest_type: Literal["Rare", "Mythic", "Legend"],
-        credits_or_redeems: Literal["Credits"],
+        credits_or_redeems: Literal["Credits", "Redeems"],
     ):
         """Buy a gleam chest."""
         ct = chest_type.lower().strip()

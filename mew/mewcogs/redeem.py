@@ -1,3 +1,4 @@
+import time
 import discord
 import random
 from discord.ext import commands
@@ -69,6 +70,7 @@ class Redeem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.CREDITS_PER_MULTI = 125000
+        self.limit_active = False
 
     @commands.hybrid_command()
     async def packs(self, ctx):
@@ -291,7 +293,7 @@ class Redeem(commands.Cog):
         await ctx.send(embed=e)
 
     @tradelock
-    #@redeem.command()
+    @redeem.command()
     async def shiny(self, ctx):
         """Spend your redeems for a random shiny."""
         e = discord.Embed(color=ctx.bot.get_random_color())
@@ -306,21 +308,103 @@ class Redeem(commands.Cog):
             if redeems < 30:
                 await ctx.send("You don't have 30 Redeems!")
                 return
+            
+            
+            # Set class variable incase we need to expand this
+            # OR reactive it
+            if self.limit_active:
+                amount = 1
+                await pconn.execute(
+                    "INSERT INTO redeemshinystore VALUES ($1, 0, 0) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                )
+                info = await pconn.fetchrow(
+                    "SELECT * FROM redeemshinystore WHERE u_id = $1", ctx.author.id
+                )
+
+                if not info:
+                    info = {"u_id": ctx.author.id, "bought": 0, "restock": 0}
+                else:
+                    info = {
+                        "u_id": info["u_id"],
+                        "bought": info["bought"],
+                        "restock": int(info["restock"]),
+                    }
+
+                max_shinies = 5
+                restock_time = 604800
+
+                if info["restock"] <= int(time.time() // restock_time):
+                    await pconn.execute(
+                        "UPDATE redeemshinystore SET bought = 0, restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+                    info = {
+                        "u_id": ctx.author.id,
+                        "bought": 0,
+                        "restock": int(time.time() // restock_time) + 1,
+                    }
+
+                if not amount:
+                    if info["restock"] != 0:
+                        desc = f"You have redeemed {info['bought']} shinies this week.\n"
+                        if info["bought"] >= max_shinies:
+                            desc += "You cannot buy any more this week."
+                        else:
+                            desc += "Buy more !"
+                        embed = discord.Embed(
+                            title="Redeem Shiny",
+                            description=desc,
+                            color=0xFFB6C1,
+                        )
+                        embed.set_footer(text="Shiny Redeems restock every Wednesday at 8pm ET.")
+                    else:
+                        embed = discord.Embed(
+                            title="Redeem Shiny",
+                            description="You haven't redeemed any shinies this week!!",
+                            color=0xFFB6C1,
+                        )
+
+                    await ctx.send(embed=embed)
+                else:
+                    if info["bought"] + amount > max_shinies:
+                        await ctx.send(
+                            f"You can't redeem more than {max_shinies} per week!  You've already redeemed {info['bought']}."
+                        )
+                        return
+                
+   
             await pconn.execute(
                 "UPDATE users SET redeems = redeems - 30 WHERE u_id = $1",
                 ctx.author.id,
             )
-        pokedata = await ctx.bot.commondb.create_poke(
-            ctx.bot, ctx.author.id, shiny, shiny=True
-        )
-        ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
-        await ctx.bot.get_partial_messageable(998341289164689459).send(
-            f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a random shiny {shiny} (`{pokedata.id}`)\n----------------------------------"
-        )
-        e.add_field(
-            name="Random Shiny", value=f"{shiny} ({ivpercent}% iv)", inline=False
-        )
-        await ctx.send(embed=e)
+            
+            if self.limit_active:
+                await pconn.execute(
+                        "UPDATE redeemshinystore SET bought = bought + $1 WHERE u_id = $2",
+                        amount,
+                        ctx.author.id,
+                    )
+            
+                if info["restock"] == 0:
+                    await pconn.execute(
+                        "UPDATE redeemshinystore SET restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+                    
+            pokedata = await ctx.bot.commondb.create_poke(
+                ctx.bot, ctx.author.id, shiny, shiny=True
+            )
+            ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
+            await ctx.bot.get_partial_messageable(998341289164689459).send(
+                f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas redeemed a random shiny {shiny} (`{pokedata.id}`)\n----------------------------------"
+            )
+            e.add_field(
+                name="Random Shiny", value=f"{shiny} ({ivpercent}% iv)", inline=False
+            )
+            await ctx.send(embed=e)
 
     @tradelock
     @redeem.command()

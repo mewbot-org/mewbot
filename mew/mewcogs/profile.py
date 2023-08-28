@@ -493,12 +493,13 @@ class ProfileView(discord.ui.View):
         gleam_gems = self.bound_data['radiant_gem']
         evpoints = self.player_data["evpoints"]
         visible = self.player_data["visible"]
+        trainer_image = self.player_data['trainer_image']
         if visible:
             hidden_text = "Private: True"
         else:
             hidden_text = "Private: False"
         if is_staff.lower() != "user":
-            staff_msg = f"\nMewbot Staff Member: **{is_staff.capitalize()}**"
+            staff_msg = f"\nMewbot Staff Member: **{is_staff.title()}**"
         else:
             staff_msg = f"\nMewbot User"
         embed = discord.Embed(
@@ -524,7 +525,7 @@ class ProfileView(discord.ui.View):
             inline=True
         )
         embed.set_thumbnail(
-            url="https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png"
+            url=trainer_image
         )
         embed.set_footer( 
             text=f"{self.ctx.author.name}'s Profile | {hidden_text}"

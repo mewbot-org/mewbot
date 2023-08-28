@@ -1,3 +1,4 @@
+import time
 import discord
 import random
 import asyncio
@@ -52,6 +53,7 @@ class Chests(commands.Cog):
         common = set(pList + starterList) - legend
         self.LEGEND = set(self.CURRENTLY_ACTIVE) & legend
         self.COMMON = set(self.CURRENTLY_ACTIVE) & common
+        self.purchaselock = []
 
     # async def log_chest(self, ctx):
     #     async with ctx.bot.db[0].acquire() as pconn:
@@ -576,8 +578,6 @@ class Chests(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    #            "5. Legend Chest",
-
     @gleam.command()
     async def pack(
         self,
@@ -587,6 +587,7 @@ class Chests(commands.Cog):
             "2. Battle Multiplier x1",
             "3. IV Multiplier x1",
             "4. Breeding Multiplier x1",
+            "5. Legend Chest",
             "6. Gleam Pokemon (common & starter)",
             "7. Gleam Pokemon (legend & pseudo)",
         ],
@@ -596,6 +597,83 @@ class Chests(commands.Cog):
         if packnum < 1 or packnum > len(self.PACKS):
             await ctx.send("That is not a valid pack number.")
             return
+        if ctx.author.id in self.purchaselock:
+            await ctx.send("Please finish any pending purchases!")
+            return
+        self.purchaselock.append(ctx.author.id)
+
+        if packnum == 5:
+            amount = 1
+            async with ctx.bot.db[0].acquire() as pconn:
+                if not await pconn.fetchval(
+                    "SELECT exists(SELECT * from users WHERE u_id = $1)", ctx.author.id
+                ):
+                    await ctx.send("You have not started!\nStart with `/start` first.")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+
+                await pconn.execute(
+                    "INSERT INTO gleampackstore VALUES ($1, 0, 0) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                )
+                info = await pconn.fetchrow(
+                    "SELECT * FROM gleampackstore WHERE u_id = $1", ctx.author.id
+                )
+
+            if not info:
+                info = {"u_id": ctx.author.id, "bought": 0, "restock": 0}
+            else:
+                info = {
+                    "u_id": info["u_id"],
+                    "bought": info["bought"],
+                    "restock": int(info["restock"]),
+                }
+
+            max_packs = 5
+            restock_time = 604800
+
+            if info["restock"] <= int(time.time() // restock_time):
+                async with ctx.bot.db[0].acquire() as pconn:
+                    await pconn.execute(
+                        "UPDATE gleampackstore SET bought = 0, restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+                info = {
+                    "u_id": ctx.author.id,
+                    "bought": 0,
+                    "restock": int(time.time() // restock_time) + 1,
+                }
+
+            if not amount:
+                if info["restock"] != 0:
+                    desc = f"You have bought {info['bought']} gleam pack 5 this week.\n"
+                    if info["bought"] >= max_packs:
+                        desc += "You cannot buy any more this week."
+                    else:
+                        desc += "Buy more !"
+                    embed = discord.Embed(
+                        title="Buy Gleam Pack 5",
+                        description=desc,
+                        color=0xFFB6C1,
+                    )
+                    embed.set_footer(text="Gleam Pack 5 restocks every Wednesday at 8pm ET.")
+                else:
+                    embed = discord.Embed(
+                        title="Buy Gleam Pack 5",
+                        description="You haven't bought any Gleam packs yet!!",
+                        color=0xFFB6C1,
+                    )
+
+                await ctx.send(embed=embed)
+                self.purchaselock.remove(ctx.author.id)
+            else:
+                if info["bought"] + amount > max_packs:
+                    await ctx.send(
+                        f"You can't buy more than {max_packs} per week!  You've already bought {info['bought']}."
+                    )
+                    self.purchaselock.remove(ctx.author.id)
+                    return
         pack = self.PACKS[packnum - 1]
 
         if not await ConfirmView(
@@ -603,6 +681,7 @@ class Chests(commands.Cog):
             f"Are you sure you want to buy {pack[0]} for <a:radiantgem:774866137472827432>x{pack[1]}?",
         ).wait():
             await ctx.send("Purchase cancelled.")
+            self.purchaselock.remove(ctx.author.id)
             return
 
         choice = ""
@@ -615,12 +694,14 @@ class Chests(commands.Cog):
                 await ctx.send(
                     "There are currently no valid pokemon in the pool. Please try again later."
                 )
+                self.purchaselock.remove(ctx.author.id)
                 return
             choice = await ListSelectView(
                 ctx, "Which pokemon do you want?", options
             ).wait()
             if choice is None:
                 await ctx.send("You did not select in time, cancelling.")
+                self.purchaselock.remove(ctx.author.id)
                 return
         async with ctx.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchrow(
@@ -629,12 +710,14 @@ class Chests(commands.Cog):
             )
             if inventory is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
+                self.purchaselock.remove(ctx.author.id)
                 return
             inventory = dict(inventory)
 
             radiant_gems = inventory['radiant_gem']
             if radiant_gems < pack[1]:
                 await ctx.send("You cannot afford that pack!")
+                self.purchaselock.remove(ctx.author.id)
                 return
             await self.bot.commondb.remove_bag_item(
                 ctx.author.id,
@@ -666,6 +749,17 @@ class Chests(commands.Cog):
                     ctx.author.id
                 )
             elif packnum == 5:
+                await pconn.execute(
+                    "UPDATE gleampackstore SET bought = bought + $1 WHERE u_id = $2",
+                    amount,
+                    ctx.author.id,
+                )
+                if info["restock"] == 0:
+                    await pconn.execute(
+                        "UPDATE gleampackstore SET restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
                 await self.bot.commondb.add_bag_item(
                     ctx.author.id,
                     "legend_chest",
@@ -679,6 +773,7 @@ class Chests(commands.Cog):
         await ctx.send(
             f"You have successfully bought {pack[0]} for <a:radiantgem:774866137472827432>x{pack[1]}."
         )
+        self.purchaselock.remove(ctx.author.id)
 
 
 async def setup(bot):

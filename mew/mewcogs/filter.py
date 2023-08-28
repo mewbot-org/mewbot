@@ -39,6 +39,7 @@ KEYS = {
     "genderless": "genderless",
     "shiny": "shiny",
     "gleam": "gleam",
+    "alpha": "alpha",
     "radiant": "radiant",
     "regular": "regular",
     "owned": "owned",
@@ -420,6 +421,8 @@ class Filter(commands.Cog):
                     postfix.append("shiny = true")
                 elif key == "gleam":
                     postfix.append("skin = 'gleam'")
+                elif key == "alpha":
+                    postfix.append("skin = 'alpha'")
                 elif key == "radiant":
                     postfix.append("skin = 'radiant'")
                 elif key == "regular":

@@ -611,6 +611,8 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
             emoji = "<:radiant:1010558960027308052>"
         elif skin == "gleam":
             emoji = "<:gleam:1010559151472115772>"
+        elif skin == "alpha":
+            emoji = "<:alphapoke2:1145814445239574538>"
         else:
             emoji = "<:skin:1010890087074123777>"
     elif radiant:

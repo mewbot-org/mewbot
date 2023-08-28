@@ -33,6 +33,14 @@ class Item():
 class CommonDB:
     def __init__(self, bot):
         self.bot = bot
+        self.ALPHA_MOVESETS = {
+            'Golurk' : ['mach-punch', 'tackle', 'tackle', 'tackle'],
+            'Snorlax': ['slack-off', 'tackle', 'tackle', 'tackle'],
+            'Banette': ['topsy-turvy', 'tackle', 'tackle', 'tackle'],
+            'Aerodactyl': ['brave-bird', 'tackle', 'tackle', 'tackle'],
+            'Torterra': ['shell-smash', 'tackle', 'tackle', 'tackle'],
+            'Goodra': ['core-enforcer', 'tackle', 'tackle', 'tackle'],
+            }
 
     async def remove_poke(self, user_id: int, poke_id: int, delete: bool = False):
         """
@@ -107,7 +115,7 @@ class CommonDB:
         skin: str = None,
         gender: str = None,
         level: int = 1,
-        tradable: bool = True,
+        tradable: bool = True
     ):
         """
         Creates a poke and gives it to user.
@@ -197,7 +205,7 @@ class CommonDB:
             0,
             0,
             level,
-            ["tackle", "tackle", "tackle", "tackle"],
+            ["tackle", "tackle", "tackle", "tackle"] if not skin == 'alpha' else self.ALPHA_MOVESETS.get(pokemon.capitalize()),
             "None",
             1,
             nature,

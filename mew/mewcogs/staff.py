@@ -347,7 +347,7 @@ class MewBotAdmin(commands.Cog):
         *,
         pokemon: str,
         shiny: bool,
-        skin: Literal["radiant", "gleam", "false"],
+        skin: Literal["radiant", "gleam", "alpha", "false"],
         boosted: bool,
     ):
         """Creates a new poke and gives it to the author."""

@@ -387,6 +387,7 @@ class Events(commands.Cog):
             '?': 1,
         }
         self.UNOWN_WORDLIST = []
+        self.start_purchaselock = []
         try:
             with open(self.bot.app_directory / "shared" / "data" / "wordlist.txt") as f:
                 self.UNOWN_WORDLIST = f.readlines().copy()
@@ -746,15 +747,23 @@ class Events(commands.Cog):
             return
         async with ctx.bot.db[0].acquire() as pconn:
             try:
-                milk_count = await pconn.fetchval(
-                    "SELECT milk FROM events_new WHERE u_id = $1",
+                event_data = await pconn.fetchrow(
+                    "SELECT milk, event_limit FROM events_new WHERE u_id = $1",
                     ctx.author.id
                 )
+                raffle_count = await pconn.fetchval(
+                    "SELECT raffle FROM users WHERE u_id = $1",
+                    ctx.author.id
+                )
+                milk_count = event_data['milk']
+                event_limit = event_data['event_limit']
             except:
-                milk_count = None
-
-            if milk_count is None:
                 milk_count = 0
+                event_limit = 0
+                raffle_count = 0
+
+            if event_limit >= 100:
+                event_limit = 100
 
         embed = discord.Embed(
             title="Summer Shop",
@@ -767,23 +776,24 @@ class Events(commands.Cog):
         embed.add_field(
             name="Currency",
             value=(
-                "\n`1.` 1-25 Gleam Gems <a:radiantgem:774866137472827432>\n**Cost**: 75 🥛"
+                f"`1.` 2-3 Redeems <:redeem:1037942226132668417>\n**Cost**: 50 🥛 - **Limit**: {event_limit}/100"
+                "\n`2.` 1-25 Gleam Gems <a:radiantgem:774866137472827432>\n**Cost**: 75 🥛"
             ),
             inline=False
         )
         embed.add_field(
             name="Multipliers",
             value=(
-                "`2.` 2x Battle Multi ⏫\n**Cost**: 50 🥛"
-                "\n`3.` 2x Shiny Multi ⏫\n**Cost**: 50 🥛"
+                "`3.` 2x Battle Multi ⏫\n**Cost**: 50 🥛"
+                "\n`4.` 2x Shiny Multi ⏫\n**Cost**: 50 🥛"
             ),
             inline=False
         )
         embed.add_field(
             name="Misc",
             value=(
-                "`4.` 1 Raffle Entry\n**Cost**: 100 🥛"
-                "\n`5.` Random Summer Skin\n**Cost**: 100 🥛"
+                f"`5.` 1 Raffle Entry\n**Cost**: 100 🥛 - **Entries**: {raffle_count}"
+                "\n`6.` Random Summer Skin\n**Cost**: 100 🥛"
             ),
             inline=False
         )
@@ -803,29 +813,46 @@ class Events(commands.Cog):
         #User can't participate in event
         #if ctx.author.id == 1075429458271547523:
             #return
-        if option < 1 or option > 5:
+        if option < 1 or option > 6:
             await ctx.send("That isn't a valid option. Select a valid option from `/summer shop`.")
             return
+        if ctx.author.id in self.start_purchaselock:
+            await ctx.send("Sorry, finish any pending purchases first.")
+            return
+        self.start_purchaselock.append(ctx.author.id)
+
         async with self.bot.db[0].acquire() as pconn:
-            milk = await pconn.fetchval("SELECT milk FROM events_new WHERE u_id = $1", ctx.author.id)
+            event_data = await pconn.fetchrow("SELECT milk, event_limit FROM events_new WHERE u_id = $1", ctx.author.id)
+            milk = event_data['milk']
+            limit = event_data['event_limit']
+
             if milk == 0:
                 await ctx.send("You haven't gotten any 🥛 yet!")
                 return
             
-            #Redeems were removed from event but left code here for future
-            #if option == 1:
-                #if milk < 30:
-                    #await ctx.send("You don't have enough 🥛 for that!")
-                    #return
-                #milk -= 30
-                #await pconn.execute("UPDATE users SET redeems = redeems + 3 WHERE u_id = $1", ctx.author.id)
-                #await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
-                #await ctx.send("You bought 3 Redeems.")
-
             if option == 1:
+                if limit >= 100:
+                    await ctx.send("You've reached the daily purchase limit.")
+                    self.start_purchaselock.remove(ctx.author.id)
+                    return
+
+                if milk < 50:
+                    await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
+                    return
+                
+                milk -= 50
+                redeem_amount = random.randint(2, 3)
+                await pconn.execute("UPDATE users SET redeems = redeems + $1 WHERE u_id = $2", redeem_amount, ctx.author.id)
+                await pconn.execute("UPDATE events_new SET milk = $1, event_limit = event_limit + $2 WHERE u_id = $3", milk, redeem_amount, ctx.author.id)
+                await ctx.send(f"You bought {redeem_amount} Redeems.")
+                self.start_purchaselock.remove(ctx.author.id)
+
+            if option == 2:
                 amount = random.randint(1, 25)
                 if milk < 75:
                     await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 milk -= 75
                 await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
@@ -836,10 +863,13 @@ class Events(commands.Cog):
                     True
                 )
                 await ctx.send(f"You bought {amount}x gleam gems.")
+                self.start_purchaselock.remove(ctx.author.id)
+                return
 
-            if option == 2:
+            if option == 3:
                 if milk < 50:
                     await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 milk -= 50
                 inventory = await pconn.fetchrow("SELECT u_id, battle_multiplier FROM users WHERE u_id = $1", ctx.author.id)
@@ -847,16 +877,20 @@ class Events(commands.Cog):
 
                 if inventory['battle_multiplier'] >= 50:
                     await ctx.send("You're maxed out.")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
 
                 new_amount = min(inventory.get("battle_multiplier", 0) + 2, 50)
                 await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
                 await pconn.execute("UPDATE account_bound SET battle_multiplier = $1 WHERE u_id = $2", new_amount, ctx.author.id)
                 await ctx.send(f"You bought 2x Battle Multipliers.")
-
-            if option == 3:
+                self.start_purchaselock.remove(ctx.author.id)
+                return
+            
+            if option == 4:
                 if milk < 50:
                     await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 milk -= 50
                 inventory = await pconn.fetchrow("SELECT u_id, shiny_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id)
@@ -864,25 +898,32 @@ class Events(commands.Cog):
 
                 if inventory['shiny_multiplier'] >= 50:
                     await ctx.send("You're maxed out.")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 
                 new_amount = min(inventory.get("shiny_multiplier", 0) + 2, 50)
                 await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
                 await pconn.execute("UPDATE account_bound SET shiny_multiplier = $1 WHERE u_id = $2", new_amount, ctx.author.id)
                 await ctx.send(f"You bought 2x Shiny Multipliers.")
-                
-            if option == 4:
+                self.start_purchaselock.remove(ctx.author.id)
+                return
+            
+            if option == 5:
                 if milk < 100:
                     await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 milk -= 100
                 await pconn.execute("UPDATE users SET raffle = raffle + 1 WHERE u_id = $1", ctx.author.id)
                 await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
                 await ctx.send(f"You were given an entry into the Summer Raffle!\nThe raffle will be drawn in the Mewbot Official Server. `\invite`")       
+                self.start_purchaselock.remove(ctx.author.id)
+                return
             
-            if option == 5:
+            if option == 6:
                 if milk < 100:
                     await ctx.send("You don't have enough 🥛 for that!")
+                    self.start_purchaselock.remove(ctx.author.id)
                     return
                 milk -= 100
                 skins = await pconn.fetchval("SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id)
@@ -896,7 +937,8 @@ class Events(commands.Cog):
                 await pconn.execute("UPDATE events_new SET milk = $1 WHERE u_id = $2", milk, ctx.author.id)
                 await pconn.execute("UPDATE users SET skins = $1::json WHERE u_id = $2", skins, ctx.author.id)
                 await ctx.send(f"You got a {pokemon} summer skin! Apply it with `/skin apply`.")
-
+                self.start_purchaselock.remove(ctx.author.id)
+                return
 
 
     #@commands.hybrid_group()
@@ -2037,7 +2079,6 @@ class Events(commands.Cog):
         await channel.send(f"The pokemon dropped some holiday cheer!\nUse command `/spread cheer` to share it with the rest of the server.")
 
     async def maybe_spawn_christmas(self, channel):
-        # Not sure why this is here
         # async with self.bot.db[0].acquire() as pconn:
         # honey = await pconn.fetchval(
         #"SELECT type FROM honey WHERE channel = $1 LIMIT 1",
@@ -2144,7 +2185,8 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_poke_spawn(self, channel, user):
-        if self.bot.botbanned(user.id):
+        return
+        if self.bot.botbanned(user.id) or channel.guild.id != 998128574898896906:
             return
         if self.EASTER_DROPS:
             if not random.randrange(10):
@@ -2485,15 +2527,15 @@ class RaidMove(discord.ui.Button):
         if damage == 2:
             #self.effective = "It's super effective! You will get a Large Present if the poke is defeated."
             #self.effective = "It's super effective! You'll receive hearts if the poke is defeated!"
-            self.effective = "It's Super Effective! You will get a 11-15 🥛 if the Pokemon is defeated."
+            self.effective = "It's Super Effective! You will get a 20-30 🥛 if the Pokemon is defeated."
         elif damage == 1:
             #self.effective = "It's not very effective... You will get a Small Present if the poke is defeated."
             #self.effective = "It's not very effective... You'll receive hearts if the poke is defeated!"
-            self.effective = "It's not Very Effective... You will get a 4-10 🥛 if the Pokemon is defeated."
+            self.effective = "It's not Very Effective... You will get a 10-15 🥛 if the Pokemon is defeated."
         else:
             #self.effective = "It had no effect... You will only get Snowflakes if the poke is defeated."
             #self.effective = "It had no effect... You'll receive hearts if the poke is defeated!"
-            self.effective = "It had No Effect... You will get a 1-3 🥛 if the Pokemon is defeated."
+            self.effective = "It had No Effect... You will get a 1-5 🥛 if the Pokemon is defeated."
 
     async def callback(self, interaction):
         self.view.attacked[interaction.user] = self.damage

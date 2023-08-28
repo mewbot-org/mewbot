@@ -1071,8 +1071,12 @@ class Trade(commands.Cog):
             )
 
     @commands.hybrid_group()
+    async def trade(self, ctx):
+        ...
+
+    @trade.command(name='user')
     @discord.app_commands.describe(user="The User to begin the trade with.")
-    async def trade(self, ctx, user: discord.Member):
+    async def user(self, ctx, user: discord.Member):
         """Begin a trade with another user!"""
         # SETUP
         if ctx.author.id == user.id:

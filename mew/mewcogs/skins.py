@@ -155,7 +155,7 @@ class Skins(commands.Cog):
                 ctx.author.id,
             )
             await pconn.execute("UPDATE pokes SET skin = $1 WHERE id = $2", skin, pid)
-            if skin in BUYABLE_SKINS:
+            if skin in BUYABLE_SKINS or 'patreon' in skin:
                 await pconn.execute(
                     "UPDATE pokes SET tradable = false WHERE id = $1", pid
                 )
