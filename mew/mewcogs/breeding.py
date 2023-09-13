@@ -574,16 +574,16 @@ class Breeding(commands.Cog):
                 )
                 multipliers = await pconn.fetchrow(
                     "SELECT shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 if multipliers is None:
                     shiny_multiplier = 0
                     breedmulti = 0
                 else:
-                    shiny_multiplier = multipliers['shiny_multiplier']
-                    breedmulti = multipliers['breeding_multiplier']
+                    shiny_multiplier = multipliers["shiny_multiplier"]
+                    breedmulti = multipliers["breeding_multiplier"]
 
-                #Check if not existing
+                # Check if not existing
                 if shiny_multiplier is None:
                     shiny_multiplier = 0
                 if breedmulti is None:
@@ -596,7 +596,7 @@ class Breeding(commands.Cog):
                 is_shiny = random.choice([False for i in range(s_threshold)] + [True])
 
                 dlimit = pokes["daycarelimit"]
-                chain = pokes['chain']
+                chain = pokes["chain"]
                 pokes = pokes["pokes"]
                 daycared = await pconn.fetchval(
                     "SELECT count(*) FROM pokes WHERE id = ANY ($1) AND pokname = 'Egg'",
@@ -745,7 +745,7 @@ class Breeding(commands.Cog):
             success = random.choices([True, False], weights=(chance, 1 - chance))[0]
             chance_message = f"Chance of success: {chance * 100:.2f}% | {ctx.author}"
 
-            #Failed attempt
+            # Failed attempt
             if not success:
                 embed = discord.Embed(
                     title=f"Breeding Attempt Failed!",
@@ -771,7 +771,7 @@ class Breeding(commands.Cog):
                         self, ctx, male, females=str(female) + "auto"
                     )
 
-            #Got an egg
+            # Got an egg
             else:
 
                 self.auto_redo[ctx.author.id] = None
@@ -823,7 +823,7 @@ class Breeding(commands.Cog):
                     + child.speed
                     + child.hp
                 )
-                #TODO: achievement code
+                # TODO: achievement code
 
                 ivpercent = round((ivsum / 186) * 100, 2)
                 e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
@@ -831,26 +831,26 @@ class Breeding(commands.Cog):
                 embed = discord.Embed(
                     title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
                     description="It's been automatically added to your Pokemon list.",
-                    color=0x00FF00
+                    color=0x00FF00,
                 )
                 embed.add_field(
                     name="Egg Details",
                     value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
-                    inline=True
+                    inline=True,
                 )
                 embed.add_field(
                     name="Cooldowns",
                     value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again in **<t:{int(time.time()) + 36}:R>**",
-                    inline=True
+                    inline=True,
                 )
                 if is_shadow:
                     embed.add_field(
                         name="Shadow Details",
                         value=f"This Shadow took {chain} attempts! WOW!",
-                        inline=True
+                        inline=True,
                     )
                 embed.set_image(
-                    url="https://dyleee.github.io/mewbot-images/eastereggs.png"
+                    url="https://mewbot.xyz/eastereggs.png"
                 )
                 embed.set_footer(text=chance_message)
                 if auto:
@@ -865,26 +865,26 @@ class Breeding(commands.Cog):
                 embed = discord.Embed(
                     title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
                     description="It's been automatically added to your Pokemon list.",
-                    color=0x00FF00
+                    color=0x00FF00,
                 )
                 embed.add_field(
                     name="Egg Details",
                     value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
-                    inline=True
+                    inline=True,
                 )
                 embed.add_field(
                     name="Cooldowns",
                     value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again **Now**",
-                    inline=True
+                    inline=True,
                 )
                 if is_shadow:
                     embed.add_field(
                         name="Shadow Details",
                         value=f"This Shadow took {chain} attempts! WOW!",
-                        inline=True
+                        inline=True,
                     )
                 embed.set_image(
-                    url="https://dyleee.github.io/mewbot-images/eastereggs.png"
+                    url="https://mewbot.xyz/eastereggs.png"
                 )
                 embed.set_footer(text=chance_message)
                 try:

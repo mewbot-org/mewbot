@@ -549,7 +549,7 @@ async def get_spawn_url(pokemon_name):
     # cipher_suite = Fernet(key);
     # cipher_text = cipher_suite.encrypt(pokemon_name.encode())
     # payload = {'cipher_text': cipher_text.decode(), 'key': key.decode()}
-    return "https://dyleee.github.io/mewbot-images/sprites/" + pokemon_name
+    return "https://mewbot.xyz/sprites/" + pokemon_name
 
 
 async def get_battle_image(poke1, poke2, bot):
@@ -582,7 +582,7 @@ async def get_battle_image(poke1, poke2, bot):
 
 def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
     """Gets the prefix emoji for a particular pokemon."""
-    #Currently covers Shiny, Radiant, Gleam, and Skins
+    # Currently covers Shiny, Radiant, Gleam, and Skins
     emoji = blank
     if skin is not None:
         skin = skin.lower()
@@ -622,8 +622,8 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
     return emoji
 
 
-def get_farm_thumbnail(*, interval: int=None, name: str):
-    #Aguav
+def get_farm_thumbnail(*, interval: int = None, name: str):
+    # Aguav
     if name == "Aguav_Berry":
         berry_url = "https://archives.bulbagarden.net/media/upload/d/d6/Dream_Aguav_Berry_Sprite.png"
     elif name == "Figy_Berry":
@@ -667,10 +667,11 @@ def get_farm_thumbnail(*, interval: int=None, name: str):
     elif name == "Cheri_Berry":
         berry_url = "https://archives.bulbagarden.net/media/upload/a/a6/Dream_Cheri_Berry_Sprite.png"
     else:
-        berry_url = "https://archives.bulbagarden.net/media/upload/thumb/b/be/48ERROR.png/159px-48ERROR.png" #Means emoji is missing
+        berry_url = "https://archives.bulbagarden.net/media/upload/thumb/b/be/48ERROR.png/159px-48ERROR.png"  # Means emoji is missing
     return berry_url
 
-def get_berry_emoji(*, name:str):
+
+def get_berry_emoji(*, name: str):
     if name == "Aguav_Berry":
         berry_emoji = "<:aguav_berry:1085430968455811112>"
     elif name == "Figy_Berry":
@@ -714,39 +715,40 @@ def get_berry_emoji(*, name:str):
     elif name == "Cheri_Berry":
         berry_emoji = "<:cheri_berry:1085430875300302909>"
     else:
-        berry_emoji = "‼️" #Means emoji is missing
+        berry_emoji = "‼️"  # Means emoji is missing
     return berry_emoji
 
-def get_battle_emoji(*, item_name:str):
-    if item_name == 'assault_vest':
+
+def get_battle_emoji(*, item_name: str):
+    if item_name == "assault_vest":
         emoji = "<:assault_vest:1092675798093275176>"
-    elif item_name == 'air_balloon':
+    elif item_name == "air_balloon":
         emoji = "<:air_balloon:1092675918985703476>"
-    elif item_name == 'charcoal':
+    elif item_name == "charcoal":
         emoji = "<:charcoal:1092675938162065488>"
-    elif item_name == 'weakness_policy':
+    elif item_name == "weakness_policy":
         emoji = "<:weakness_policy:1092675951814525028>"
-    elif item_name == 'eviolite':
+    elif item_name == "eviolite":
         emoji = "<:eviolite:1092675966540718131>"
-    elif item_name == 'white_herb':
+    elif item_name == "white_herb":
         emoji = "<:white_herb:1092675979102650388>"
-    elif item_name == 'life_orb':
+    elif item_name == "life_orb":
         emoji = "<:life_orb:1092675989932347392>"
-    elif item_name == 'choice_scarf':
+    elif item_name == "choice_scarf":
         emoji = "<:choice_scarf:1092675794490372128>"
-    elif item_name == 'expert_belt':
+    elif item_name == "expert_belt":
         emoji = "<:expert_belt:1092676028972945419>"
-    elif item_name == 'choice_band':
+    elif item_name == "choice_band":
         emoji = "<:choice_band:1092676047402709034>"
-    elif item_name == 'choice_specs':
+    elif item_name == "choice_specs":
         emoji = "<:choice_specs:1092676062971957288>"
-    elif item_name == 'soul_dew':
+    elif item_name == "soul_dew":
         emoji = "<:soul_dew:1092676109998501978>"
-    elif item_name == 'leftovers':
+    elif item_name == "leftovers":
         emoji = "<:leftovers:1092675790820347925>"
-    elif item_name == 'silk_scarf':
+    elif item_name == "silk_scarf":
         emoji = "<:silk_scarf:1092676135663439902>"
-    elif item_name == 'focus_sash':
+    elif item_name == "focus_sash":
         emoji = "<:focus_sash:1092676207348297738>"
     elif item_name == "big_root":
         emoji = "<:big_root:1092676206526206012>"
@@ -817,10 +819,11 @@ def get_battle_emoji(*, item_name:str):
     elif item_name == "power_herb":
         emoji = "<:power_herb:1105263111600087110>"
     else:
-        emoji = "‼️" #Means emoji is missing
+        emoji = "‼️"  # Means emoji is missing
     return emoji
 
-def get_trade_emoji(*, item_name:str):
+
+def get_trade_emoji(*, item_name: str):
     if item_name == "deep_sea_scale":
         emoji = "<:seascale:671571987814154240>"
     elif item_name == "deep_sea_tooth":
@@ -857,13 +860,14 @@ def get_trade_emoji(*, item_name:str):
         emoji = "<:dreamrazor:671571987470221322>"
     elif item_name == "oval_stone":
         emoji = "<:ovalstone:671571987461570570>"
-    elif item_name == 'air_balloon':
+    elif item_name == "air_balloon":
         emoji = "<:air_balloon:1092675918985703476>"
     else:
-        emoji = "‼️" #Means emoji is missing
+        emoji = "‼️"  # Means emoji is missing
     return emoji
 
-def get_stone_emoji(*, item_name:str):
+
+def get_stone_emoji(*, item_name: str):
     if item_name == "sun_stone":
         emoji = "<:sunstone:669922327085187083>"
     elif item_name == "dusk_stone":
@@ -893,41 +897,42 @@ def get_stone_emoji(*, item_name:str):
     elif item_name == "mega_stone_y":
         emoji = "<:mega_stone_y:1085424852141346878>"
     else:
-        emoji = "‼️" #Means emoji is missing
+        emoji = "‼️"  # Means emoji is missing
     return emoji
 
-def get_form_emoji(*, item_name:str):
-    if item_name == 'rusty_shield':
+
+def get_form_emoji(*, item_name: str):
+    if item_name == "rusty_shield":
         emoji = "<:rusty_shield:1093339674833064046>"
-    elif item_name == 'rusty_sword':
+    elif item_name == "rusty_sword":
         emoji = "<:rusty_sword:1093339676762456094>"
-    elif item_name == 'griseous_orb':
+    elif item_name == "griseous_orb":
         emoji = "<:griseous_orb:1085406074590478366>"
-    elif item_name == 'gracidea_flower':
+    elif item_name == "gracidea_flower":
         emoji = "<:gracidea_flower:1085406076301737984>"
-    elif item_name == 'zygarde_cell':
+    elif item_name == "zygarde_cell":
         emoji = "<:zygarde_cell:1085407575106924645>"
-    elif item_name == 'reveal_glass':
+    elif item_name == "reveal_glass":
         emoji = "<:reveal_glass:1085406077186736248>"
-    elif item_name == 'dark_stone':
+    elif item_name == "dark_stone":
         emoji = "<:dark_stone:1101567529241034752>"
-    elif item_name == 'light_stone':
+    elif item_name == "light_stone":
         emoji = "<:light_stone:1101567530570620959>"
-    elif item_name == 'ultranecronium_z':
+    elif item_name == "ultranecronium_z":
         emoji = "<:ultranecrozmium_z:1089022956388237352>"
-    elif item_name == 'n_lunarizer':
+    elif item_name == "n_lunarizer":
         emoji = "<:nlunarizer:1101567532109930649>"
-    elif item_name == 'n_solarizer':
+    elif item_name == "n_solarizer":
         emoji = "<:n_solarizer:1101567533645037648>"
-    elif item_name == 'meteorite':
+    elif item_name == "meteorite":
         emoji = "<:meteorite:1101567535838662778>"
-    elif item_name == 'red_orb':
+    elif item_name == "red_orb":
         emoji = "<:red_orb:1101567536849498143>"
-    elif item_name == 'blue_orb':
+    elif item_name == "blue_orb":
         emoji = "<:blue_orb:1101567538313310429>"
-    elif item_name == 'meltan_candy':
+    elif item_name == "meltan_candy":
         emoji = "<:meltan_candy:1093365238998511647>"
-    elif item_name == 'black_augurite':
+    elif item_name == "black_augurite":
         emoji = "<:black_augurite:1093365542624182282>"
     elif item_name == "peat_block":
         emoji = "<:peat_block:1093365914579247154>"
@@ -936,7 +941,7 @@ def get_form_emoji(*, item_name:str):
     elif item_name == "primal_orb":
         emoji = "<:primal_orb:1103809299362353272>"
     else:
-        emoji = "‼️" #Means emoji is missing
+        emoji = "‼️"  # Means emoji is missing
     return emoji
 
 
@@ -945,7 +950,8 @@ async def run_in_tpe(func, *args, **kwargs):
     partial = functools.partial(func, *args, **kwargs)
     return await loop.run_in_executor(None, partial)
 
-#TODO: Add footer field for shop embeds that use SlashMenuView - REQUIRES RESTART
+
+# TODO: Add footer field for shop embeds that use SlashMenuView - REQUIRES RESTART
 def pagify(text: str, *, per_page: int = 15, sep: str = "\n", base_embed=None):
     """
     Splits the provided `text` into pages.
@@ -1103,9 +1109,10 @@ class MenuView(discord.ui.View):
         return self.message
 
 
-#Interaction [Slash] MenuView
+# Interaction [Slash] MenuView
 class SlashMenuView(discord.ui.View):
     """View that creates a menu using the List[str] or List[embed] provided."""
+
     def __init__(self, interaction, pages: "List[Union[str, discord.Embed]]"):
         super().__init__(timeout=60)
         self.interaction = interaction
@@ -1121,16 +1128,19 @@ class SlashMenuView(discord.ui.View):
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.interaction.user.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.message.edit(view=None)
         except discord.NotFound:
             pass
-    
+
     async def on_error(self, error, item, interaction):
         await self.interaction.client.misc.log_error(self.interaction, error)
 
@@ -1139,14 +1149,18 @@ class SlashMenuView(discord.ui.View):
             await edit_func(embed=self.pages[self.page])
         else:
             await edit_func(content=self.pages[self.page])
-    
+
     async def start(self):
         if len(self.pages) < 1:
             raise RuntimeError("Must provide at least 1 page.")
         if isinstance(self.pages[0], discord.Embed):
-            self.message = await self.interaction.response.send_message(embed=self.pages[0], view=self)
+            self.message = await self.interaction.response.send_message(
+                embed=self.pages[0], view=self
+            )
         else:
-            self.message = await self.interaction.response.send_message(self.pages[0], view=self)
+            self.message = await self.interaction.response.send_message(
+                self.pages[0], view=self
+            )
         return self.message
 
 

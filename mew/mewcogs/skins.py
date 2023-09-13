@@ -16,7 +16,6 @@ from mewutils.misc import (
 )
 
 
-
 # Map of skin name -> list[pokemon name]
 # Every skin pack must have at least 5 skins in it, or the code must be modified
 BUYABLE_SKINS = {
@@ -155,7 +154,7 @@ class Skins(commands.Cog):
                 ctx.author.id,
             )
             await pconn.execute("UPDATE pokes SET skin = $1 WHERE id = $2", skin, pid)
-            if skin in BUYABLE_SKINS or 'patreon' in skin:
+            if skin in BUYABLE_SKINS or "patreon" in skin:
                 await pconn.execute(
                     "UPDATE pokes SET tradable = false WHERE id = $1", pid
                 )
@@ -186,14 +185,21 @@ class Skins(commands.Cog):
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
 
-    #Remade to allow preview of skin without having it purchased.
-    #That way players can see skins and such before having them.
+    # Remade to allow preview of skin without having it purchased.
+    # That way players can see skins and such before having them.
     @skin.command()
     @discord.app_commands.describe(
         pokemon="The Pokémon number you want to preview the skin on",
         skin="The name of the Skin to preview.",
     )
-    async def skin_preview(self, ctx, pokemon: str, skin: Literal["halloween", "xmas2022", "valentines2023", "easter2023", "summer2023"]):
+    async def skin_preview(
+        self,
+        ctx,
+        pokemon: str,
+        skin: Literal[
+            "halloween", "xmas2022", "valentines2023", "easter2023", "summer2023"
+        ],
+    ):
         """Preview a skin on a pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
             skins = await pconn.fetchval(
@@ -205,7 +211,7 @@ class Skins(commands.Cog):
         poke = pokemon.lower().replace(" ", "-")
         skin = skin.lower()
         if skin in BUYABLE_SKINS:
-            #This can be removed once shop is redone
+            # This can be removed once shop is redone
             await ctx.send("That skin is not a valid option!")
             return
             form_poke = await ctx.bot.db[1].forms.find_one({"identifier": poke})
@@ -222,10 +228,10 @@ class Skins(commands.Cog):
                 search_poke = await ctx.bot.db[1].pfile.find_one(
                     {"id": search_poke["evolves_from_species_id"]}
                 )
-        #Remove skin inventory checking
-        #elif skins.get(poke, {}).get(skin, 0) < 1:
-            #await ctx.send(f"You do not have any {skin} skins for {poke} to preview.")
-            #return
+        # Remove skin inventory checking
+        # elif skins.get(poke, {}).get(skin, 0) < 1:
+        # await ctx.send(f"You do not have any {skin} skins for {poke} to preview.")
+        # return
         poke = poke.capitalize()
         iurl = await get_pokemon_image(poke, ctx.bot, skin=skin)
         if iurl is None:
@@ -274,9 +280,9 @@ class Skins(commands.Cog):
             return 40
         return 404
 
-    #We don't have skins for the shop at the moment. Closed command.
-    #TODO: Eventually add skins back and reopen the shop.
-    #@skin.command()
+    # We don't have skins for the shop at the moment. Closed command.
+    # TODO: Eventually add skins back and reopen the shop.
+    # @skin.command()
     async def shop(self, ctx):
         """View the skins available to you for purchase this week."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -300,7 +306,7 @@ class Skins(commands.Cog):
         embed.set_footer(text="Options rotate every Wednesday at 8pm ET.")
         await ctx.send(embed=embed)
 
-    #@skin.command()
+    # @skin.command()
     @discord.app_commands.describe(
         pokemon="The Pokémon name you want to buy the skin for",
         skin="The name of the Skin to buy.",
@@ -446,7 +452,7 @@ class RaidSpawn(discord.ui.View):
 
     async def start(self):
         pokeurl = (
-            "https://dyleee.github.io/mewbot-images/sprites/"
+            "https://mewbot.xyz/sprites/"
             + await get_file_name(self.poke, self.bot, skin=self.skin)
         )
         guild = await self.bot.mongo_find("guilds", {"id": self.channel.guild.id})

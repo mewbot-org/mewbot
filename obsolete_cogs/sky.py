@@ -47,8 +47,8 @@ from mewcogs.pokemon_list import LegendList
 from email.message import EmailMessage
 
 
-IMG_SERVER_BASE_SKIN = "https://dyleee.github.io/mewbot-images/sprites/skins/"
-IMG_SERVER_BASE_RAD = "https://dyleee.github.io/mewbot-images/sprites/radiant/"
+IMG_SERVER_BASE_SKIN = "https://mewbot.xyz/sprites/skins/"
+IMG_SERVER_BASE_RAD = "https://mewbot.xyz/sprites/radiant/"
 SKIN_BASE = "/home/dyroot/mewbot/shared/duel/sprites/skins/"
 RAD_BASE = "/home/dyroot/mewbot/shared/duel/sprites/radiant/"
 
@@ -1518,7 +1518,7 @@ class Sky(commands.Cog):
         """PUBLIC: View Pride 2022 Skins"""
         pages = []
         SERVER_BASE_PRIDE_SKIN = (
-            "https://dyleee.github.io/mewbot-images/sprites/skins/pride2022/"
+            "https://mewbot.xyz/sprites/skins/pride2022/"
         )
         PRIDE_BASE = "/home/dylee/clustered/shared/duel/sprites/skins/pride2022/"
         pages = []

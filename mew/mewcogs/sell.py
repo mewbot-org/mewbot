@@ -59,7 +59,7 @@ class Sell(commands.Cog):
             return
 
         item = await ctx.bot.db[1].new_shop.find_one({"item": item_name})
-        
+
         if item_name in berryList:
             shop_price = 7500
         else:
@@ -84,7 +84,7 @@ class Sell(commands.Cog):
             if inventory[item_name] < amount_sold:
                 await ctx.send(f"You don't have enough `{item_name}`s!")
                 return
-            
+
             credits_gained = round((shop_price * 0.65) * amount_sold)
 
             await pconn.execute(
@@ -93,10 +93,7 @@ class Sell(commands.Cog):
                 ctx.author.id,
             )
         await ctx.bot.commondb.remove_bag_item(
-            ctx.author.id,
-            item_name,
-            amount_sold,
-            False
+            ctx.author.id, item_name, amount_sold, False
         )
         await ctx.bot.get_partial_messageable(1104056398125465630).send(
             f"__**Sell Item Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has sold\n`{amount_sold}x {fancy_name}` for `{credits_gained:,}`\n"
@@ -129,7 +126,9 @@ class Sell(commands.Cog):
                     try:
                         egg_nums = [int(x) for x in egg_ids.split(" ")]
                         if len(egg_nums) > 15:
-                            await ctx.send("You can only sell a max of 15 eggs at once.")
+                            await ctx.send(
+                                "You can only sell a max of 15 eggs at once."
+                            )
                             return
                     except:
                         await ctx.send(
@@ -137,12 +136,12 @@ class Sell(commands.Cog):
                         )
                         return
 
-            #Sort the eggs in descending order to account for ID shift
+            # Sort the eggs in descending order to account for ID shift
             egg_nums.sort(reverse=True)
             egg_count = 0
             total_credits_gained = 0
             previous_id = 0
-            
+
             for egg_num in egg_nums:
                 if egg_num <= 1:
                     await ctx.send("That isn't a valid pokemon number.")
@@ -154,14 +153,16 @@ class Sell(commands.Cog):
                         egg_num,
                         ctx.author.id,
                     )
-                    #await ctx.send(f"ID Changed : {egg_id}")
+                    # await ctx.send(f"ID Changed : {egg_id}")
                 if egg_id is None:
                     await ctx.send("You do not have that many pokemon.")
                     return
                 if egg_id == previous_id:
-                    await ctx.send("Duplicate ID found , check your list and try again!")
+                    await ctx.send(
+                        "Duplicate ID found , check your list and try again!"
+                    )
                     return
-                
+
                 # Add check for eggs under 100 step count
                 data = await pconn.fetchrow(
                     "SELECT counter, pokname, name, fav, COALESCE(hpiv, 0) + COALESCE(atkiv, 0) + COALESCE(spatkiv, 0) + COALESCE(defiv, 0) + COALESCE(spdefiv, 0) + COALESCE(speediv, 0) as ivs FROM pokes WHERE id = $1",
@@ -170,8 +171,8 @@ class Sell(commands.Cog):
                 if data is None:
                     await ctx.send("That pokemon doesn't exist.")
                     return
-                
-                #Divide data
+
+                # Divide data
                 step_count = data["counter"]
                 name = data["pokname"]
                 iv_total = data["ivs"]
@@ -182,13 +183,13 @@ class Sell(commands.Cog):
                     await ctx.send(f"That's a {name}, not an egg!")
                     return
                 if step_count < 70:
-                    #if ctx.author.id == 334155028170407949:
-                        #pass
-                    #else:
-                        #await ctx.send(
-                            #"That egg is too close to hatching, go hatch it instead!"
-                        #)
-                        #return
+                    # if ctx.author.id == 334155028170407949:
+                    # pass
+                    # else:
+                    # await ctx.send(
+                    # "That egg is too close to hatching, go hatch it instead!"
+                    # )
+                    # return
                     await ctx.send(
                         "That egg is too close to hatching, go hatch it instead!"
                     )
@@ -214,11 +215,11 @@ class Sell(commands.Cog):
                 egg_count += 1
                 total_credits_gained += credits_gained
 
-                #Need to set this to None so it grabs the next egg's ID
+                # Need to set this to None so it grabs the next egg's ID
                 sell_ids.append(egg_id)
                 previous_id = egg_id
                 egg_id = None
-            
+
             # Have check if eggs are sellable and calculated total
             if not await ConfirmView(
                 ctx,
@@ -234,7 +235,7 @@ class Sell(commands.Cog):
                 total_credits_gained,
             )
 
-            #Loop through eggs again
+            # Loop through eggs again
             for egg_num in sell_ids:
                 if not egg_id:
                     egg_id = await pconn.fetchval(
@@ -242,7 +243,7 @@ class Sell(commands.Cog):
                         egg_num,
                         ctx.author.id,
                     )
-                
+
                 await ctx.bot.commondb.remove_poke(ctx.author.id, egg_num)
                 egg_id = None
 

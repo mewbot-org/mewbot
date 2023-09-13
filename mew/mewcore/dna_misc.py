@@ -173,7 +173,7 @@ class MewMisc:
                 ) + page
             try:
                 await ctx.bot.get_partial_messageable(998290948863836160).send(
-                   f"```py\n{page}\n```"
+                    f"```py\n{page}\n```"
                 )
             except:
                 ctx.bot.logger.exception("Could not send log to channel")

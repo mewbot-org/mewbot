@@ -33,7 +33,6 @@ class Mother(commands.Cog):
     async def berries(self):
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute("UPDATE berries SET ready = True")
-            
 
     @tasks.loop(seconds=60 * 10)
     async def mother(self):

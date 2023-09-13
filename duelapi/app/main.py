@@ -26,7 +26,9 @@ PRELOADED = {
     "sun": Image.open(str(DIR / "sun.png")).convert("RGBA"),
     "sandstorm": Image.open(str(DIR / "sandstorm.png")).convert("RGBA"),
     "sub": sresize(Image.open(str(DIR / "sub.png"))).convert("RGBA"),
-    "preview_sub": sresize(Image.open(str(DIR / "sub.png")), dimensions=(64, 64)).convert("RGBA"),
+    "preview_sub": sresize(
+        Image.open(str(DIR / "sub.png")), dimensions=(64, 64)
+    ).convert("RGBA"),
 }
 
 font = ImageFont.truetype(str(DIR / "futur.ttf"), 16, encoding="unic")
@@ -54,7 +56,9 @@ def draw_pixel_pokemon_card(path, level, gender="-m"):
         with Image.open(DIR / path).convert("RGBA") as pokemon_sprite:
             base_card.paste(pokemon_sprite, (5, -10), mask=pokemon_sprite)
     except:
-        base_card.paste(PRELOADED["preview_sub"], (5, -10), mask=PRELOADED["preview_sub"])
+        base_card.paste(
+            PRELOADED["preview_sub"], (5, -10), mask=PRELOADED["preview_sub"]
+        )
 
     draw = ImageDraw.Draw(base_card)
     draw.text(

@@ -528,6 +528,7 @@ class MegaEvolveButton(discord.ui.Button):
         self.style = self.get_color()
         await interaction.response.edit_message(view=self.view)
 
+
 class DuelInfoButton(discord.ui.Button):
     """A button that displays duel data when pressed"""
 
@@ -535,18 +536,16 @@ class DuelInfoButton(discord.ui.Button):
         self.battle = battle
         self.turn = battle.turn
         self.trainer = trainer
-        self.opponent = opponent        
-        super().__init__(
-            style=discord.ButtonStyle.primary, label="Duel Info", row=1
-        )
-    
+        self.opponent = opponent
+        super().__init__(style=discord.ButtonStyle.primary, label="Duel Info", row=1)
+
     async def callback(self, interaction):
         embed = discord.Embed(
             title="Active Duel Information",
             description="Hope this helps!",
-            color=0x0084FD
+            color=0x0084FD,
         )
-        #Format some text
+        # Format some text
         if self.battle.weather._weather_type is not None:
             weather = self.battle.weather._weather_type.title()
         else:
@@ -573,35 +572,33 @@ class DuelInfoButton(discord.ui.Button):
             value=(
                 f"`Status Effect`: {status1}\n"
                 f"`Attack Change`: {self.trainer.current_pokemon.attack_stage}\n"
-                f"`Defense Change`: {self.trainer.current_pokemon.defense_stage}\n"    
+                f"`Defense Change`: {self.trainer.current_pokemon.defense_stage}\n"
                 f"`Sp.Atk Change`: {self.trainer.current_pokemon.spatk_stage}\n"
                 f"`Sp.Def Change`: {self.trainer.current_pokemon.spdef_stage}\n"
                 f"`Speed Change`: {self.trainer.current_pokemon.speed_stage}\n"
                 f"`Accuracy Change`: {self.trainer.current_pokemon.accuracy_stage}\n"
                 f"`Evasion Change`: {self.trainer.current_pokemon.evasion_stage}"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Opponent's Information",
             value=(
                 f"`Status Effect`: {status2}\n"
                 f"`Attack Change`: {self.opponent.current_pokemon.attack_stage}\n"
-                f"`Defense Change`: {self.opponent.current_pokemon.defense_stage}\n"    
+                f"`Defense Change`: {self.opponent.current_pokemon.defense_stage}\n"
                 f"`Sp.Atk Change`: {self.opponent.current_pokemon.spatk_stage}\n"
                 f"`Sp.Def Change`: {self.opponent.current_pokemon.spdef_stage}\n"
                 f"`Speed Change`: {self.opponent.current_pokemon.speed_stage}\n"
                 f"`Accuracy Change`: {self.opponent.current_pokemon.accuracy_stage}\n"
                 f"`Evasion Change`: {self.opponent.current_pokemon.evasion_stage}"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Duel Information",
             value=(
-                f"`Turn`: {turn}\n"
-                f"`Weather`: {weather}\n"
-                f"`Terrain`: {terrain}"
-            )
+                f"`Turn`: {turn}\n" f"`Weather`: {weather}\n" f"`Terrain`: {terrain}"
+            ),
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)

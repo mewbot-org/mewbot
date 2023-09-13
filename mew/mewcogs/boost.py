@@ -59,14 +59,11 @@ class ChoicesView(discord.ui.View):
             inventory = dict(inventory)
             if choice == 1:
                 await interaction.client.commondb.add_bag_item(
-                    ctx.author.id,
-                    "rare_chest",
-                    1,
-                    True
+                    ctx.author.id, "rare_chest", 1, True
                 )
             elif choice == 2:
-                battle_multi = min(50, inventory["battle_multiplier"] + 5) 
-                shiny_multi = min(50, inventory["shiny_multiplier"] + 5) 
+                battle_multi = min(50, inventory["battle_multiplier"] + 5)
+                shiny_multi = min(50, inventory["shiny_multiplier"] + 5)
                 iv_multi = min(50, inventory["iv_multiplier"] + 3) + 3
                 breeding_multi = min(50, inventory["breeding_multiplier"] + 3)
 
@@ -76,7 +73,7 @@ class ChoicesView(discord.ui.View):
                     shiny_multi,
                     iv_multi,
                     breeding_multi,
-                    ctx.author.id
+                    ctx.author.id,
                 )
             elif choice == 3:
                 await pconn.execute(

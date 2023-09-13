@@ -4,12 +4,27 @@ import asyncio
 from discord.ext import commands
 from mewcogs.pokemon_list import *
 from mewcogs.json_files import *
-from mewutils.misc import get_battle_emoji, get_trade_emoji, get_stone_emoji, get_form_emoji, pagify, SlashMenuView, MenuView
+from mewutils.misc import (
+    get_battle_emoji,
+    get_trade_emoji,
+    get_stone_emoji,
+    get_form_emoji,
+    pagify,
+    SlashMenuView,
+    MenuView,
+)
 from typing import Literal
 
-#This is temporary until pagify under mewutils.misc can be updated to match below
-#Requires bot restart, noted under todo.
-def shop_pagify(text: str, *, per_page: int = 15, sep: str = "\n", base_embed=None, footer:str=None):
+# This is temporary until pagify under mewutils.misc can be updated to match below
+# Requires bot restart, noted under todo.
+def shop_pagify(
+    text: str,
+    *,
+    per_page: int = 15,
+    sep: str = "\n",
+    base_embed=None,
+    footer: str = None,
+):
     """
     Splits the provided `text` into pages.
 
@@ -35,32 +50,82 @@ def shop_pagify(text: str, *, per_page: int = 15, sep: str = "\n", base_embed=No
                 if footer is None:
                     embed.set_footer(text=f"Page {(idx // per_page) + 1}/{total_pages}")
                 else:
-                    embed.set_footer(text=f"Page {(idx // per_page) + 1}/{total_pages} | {footer}")
+                    embed.set_footer(
+                        text=f"Page {(idx // per_page) + 1}/{total_pages} | {footer}"
+                    )
                 pages.append(embed)
             else:
                 pages.append(page)
             page = ""
     return pages
 
+
 class DropdownSelect(discord.ui.Select):
-    def __init__(self, credits):
+    def __init__(self, credits, ctx: commands.Context):
         options = [
-            discord.SelectOption(label="Minigames", description="Rods & Shovels for Minigames", emoji='<:fishingrod:679809835939790877>'),
-            discord.SelectOption(label="Items", description="Items for Pokemon, Breeding, etc", emoji='<:destinyknot:679168705141407764>'),
-            discord.SelectOption(label="Battle Items", description="Items for Dueling Friends or NPCs", emoji='<:focus_sash:1092676207348297738>'),
-            discord.SelectOption(label="Trade Items", description="Items Held by Pokemon when being Traded", emoji='<:kingsrock:671571987214368812>'),
-            discord.SelectOption(label="Mega & Evo Stones", description="Trigger Type or Mega Evolutions", emoji='<:mega_stone:1085424851277324379>'),
-            discord.SelectOption(label="Plates and Memories", description="Change Arceus/Judgement and Silvally Typing", emoji='<:draco_plate:1085322300791996486>'),
-            discord.SelectOption(label="Forms", description="Items that trigger Form changes", emoji='<:reveal_glass:1085406077186736248>'),
-            discord.SelectOption(label="Vitamins", description="Help with increasing EVs on Pokemon", emoji='<:hp_up:1093288050035003442>'),
-            discord.SelectOption(label="Berry Seeds", description="Use to grow berries in your farm", emoji='<:iapapa_berry:1085430969684742215>'),
+            discord.SelectOption(
+                label="Minigames",
+                description="Rods & Shovels for Minigames",
+                emoji="<:fishingrod:679809835939790877>",
+            ),
+            discord.SelectOption(
+                label="Items",
+                description="Items for Pokemon, Breeding, etc",
+                emoji="<:destinyknot:679168705141407764>",
+            ),
+            discord.SelectOption(
+                label="Battle Items",
+                description="Items for Dueling Friends or NPCs",
+                emoji="<:focus_sash:1092676207348297738>",
+            ),
+            discord.SelectOption(
+                label="Trade Items",
+                description="Items Held by Pokemon when being Traded",
+                emoji="<:kingsrock:671571987214368812>",
+            ),
+            discord.SelectOption(
+                label="Mega & Evo Stones",
+                description="Trigger Type or Mega Evolutions",
+                emoji="<:mega_stone:1085424851277324379>",
+            ),
+            discord.SelectOption(
+                label="Plates and Memories",
+                description="Change Arceus/Judgement and Silvally Typing",
+                emoji="<:draco_plate:1085322300791996486>",
+            ),
+            discord.SelectOption(
+                label="Forms",
+                description="Items that trigger Form changes",
+                emoji="<:reveal_glass:1085406077186736248>",
+            ),
+            discord.SelectOption(
+                label="Vitamins",
+                description="Help with increasing EVs on Pokemon",
+                emoji="<:hp_up:1093288050035003442>",
+            ),
+            discord.SelectOption(
+                label="Berry Seeds",
+                description="Use to grow berries in your farm",
+                emoji="<:iapapa_berry:1085430969684742215>",
+            ),
+            discord.SelectOption(
+                label="Monthly Alpha Rotation",
+                description="Purchase Rare Alpha Pokemon",
+                emoji="<:alphapoke2:1145814445239574538>",
+            ),
         ]
         self.credits = credits
-        super().__init__(placeholder='Make your selection...', min_values=1, max_values=1, options=options)
-    
+        self.ctx = ctx
+        super().__init__(
+            placeholder="Make your selection...",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
     async def callback(self, interaction: discord.Interaction):
-        self.view.choice = interaction.data['values'][0]
-        if self.view.choice == 'Minigames':
+        self.view.choice = interaction.data["values"][0]
+        if self.view.choice == "Minigames":
             embed = discord.Embed(
                 title="Minigame Equipment",
                 description="Items give benefits through their respective activity!\n",
@@ -73,7 +138,7 @@ class DropdownSelect(discord.ui.Select):
                     f"\n`Good Rod`: 15,000 credits"
                     f"\n`Super Rod`: 20,000 credits"
                     f"\n`Ultra Rod`: 40,000 credits"
-                )
+                ),
             )
             embed.add_field(
                 name="Mining Shovels <:shovel:1083508753065848994>",
@@ -83,165 +148,165 @@ class DropdownSelect(discord.ui.Select):
                     f"\n`Good Shovel`: 15,000 credits"
                     f"\n`Super Shovel`: 20,000 credits"
                     f"\n`Ultra Shovel`: 40,000 credits"
-                )
+                ),
             )
-            embed.set_footer( 
-                text=f"{interaction.user.name}'s bal: {self.credits:,}"
-            )
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
             await interaction.response.edit_message(embed=embed)
 
-        if self.view.choice == 'Items':
+        if self.view.choice == "Items":
             embed = discord.Embed(
-                title="General Items", 
-                description="Various items that help with different parts of the bot."
+                title="General Items",
+                description="Various items that help with different parts of the bot.",
             )
             embed.add_field(
                 name="<:rarecandy:669758477089898525> Rare Candies",
                 value="Increase Lvl by 1\n`/buy item rare candy`\nCost: 100 credits each",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="🍫 Energy Refill",
                 value="Refills your Energy!\n`/buy energy`\nCost: 25,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:everstone:676820212741308451> Everstone",
                 value="Automatically stops evolutions\n`/buy item everstone`\nCost: 3,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:xp_block:1092656579993665568> Exp Blocker",
                 value="Stop any Exp Gain!\n`/buy item xp block`\nCost: 3,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:luckyegg:668821570973597716> Lucky Egg",
                 value="150% EXP Gain for selected Pokemon\n`/buy item lucky egg`\nCost: 5,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:soothebell:707992343772659793> Soothe Bell",
                 value="50% Friendship Gain for selected Pokemon\n`/buy item soothe bell`\nCost: 5,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:ability_capsule:726906080948518962> Ability Capsule",
                 value="Change selected Pokemon's Ability\n`/buy item ability capsule`\nCost: 10,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:poke_egg:676810968000495633> Daycare Space",
                 value="Increases Daycare Spaces so you can breed more\n`/buy daycare`\nCost: 10,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="🛒 Market Space",
                 value="Increases Market Spaces so you can list more Pokemon!\n`/buy item market space`\nCost: 30,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:destinyknot:679168705141407764> Destiny Knot",
                 value="Pass down 2-3 random IVs to an Offspring during Breeding\n`/buy item destiny knot`\nCost: 15,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:destinyknot:679168705141407764> Ultra Destiny Knot",
                 value="Pass down 2-5 random IVs to an Offspring during Breeding\n`/buy item ultra destiny knot`\nCost: 30,000 credits",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:evs:1029331432792915988> EV Reset",
                 value="Reset EVs on your selected Pokemon.\n`buy item ev reset`\nCost: 10,000 credits",
-                inline=True 
+                inline=True,
             )
-            embed.set_footer( 
-                text=f"{interaction.user.name}'s bal: {self.credits:,}")
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
             await interaction.response.edit_message(embed=embed)
 
-        if self.view.choice == 'Battle Items':
-            BATTLE_ITEMS = await interaction.client.db[1].battle_items.find({}).to_list(None)
+        if self.view.choice == "Battle Items":
+            BATTLE_ITEMS = (
+                await interaction.client.db[1].battle_items.find({}).to_list(None)
+            )
             items = [t["item"] for t in BATTLE_ITEMS]
             prices = [t["price"] for t in BATTLE_ITEMS]
             desc = ""
             count = 1
             for idx, item in enumerate(items):
-                emoji = get_battle_emoji(
-                    item_name=item.lower()
-                )
-                #So on each of these items essentially page break
-                if count in [7, 14, 21, 28, 35, 42, 49, 56, 63, 70]: 
+                emoji = get_battle_emoji(item_name=item.lower())
+                # So on each of these items essentially page break
+                if count in [7, 14, 21, 28, 35, 42, 49, 56, 63, 70]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n\n"
                 else:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n"
                 count += 1
 
             footer_text = "Each item cost 10,000 credits"
-            embed = discord.Embed(
-                title="Items for Battles!", color=3553600)
+            embed = discord.Embed(title="Items for Battles!", color=3553600)
             pages = shop_pagify(desc, base_embed=embed, footer=footer_text)
             await SlashMenuView(interaction, pages).start()
 
-        if self.view.choice == 'Trade Items':
-            TRADE_ITEMS = await interaction.client.db[1].trade_items.find({}).to_list(None)
+        if self.view.choice == "Trade Items":
+            TRADE_ITEMS = (
+                await interaction.client.db[1].trade_items.find({}).to_list(None)
+            )
             items = [t["item"] for t in TRADE_ITEMS]
             prices = [t["price"] for t in TRADE_ITEMS]
             desc = ""
             count = 1
             for idx, item in enumerate(items):
                 price = prices[idx]
-                emoji = get_trade_emoji(
-                    item_name=item.lower()
-                )
-                #So on each of these items essentially page break
-                if count in [7, 14, 21]: 
+                emoji = get_trade_emoji(item_name=item.lower())
+                # So on each of these items essentially page break
+                if count in [7, 14, 21]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n\n"
                 else:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n"
                 count += 1
 
-
             footer_text = "Each item is 3,000 credits"
-            embed = discord.Embed(
-                title="Held Items for Trades!", color=3553600)
+            embed = discord.Embed(title="Held Items for Trades!", color=3553600)
             pages = shop_pagify(desc, base_embed=embed, footer=footer_text)
             await SlashMenuView(interaction, pages).start()
-        
+
         if self.view.choice == "Mega & Evo Stones":
-            stones = ['sun', 'dusk', 'thunder', 'fire', 'ice', 'water', 'dawn', 'leaf', 'moon', 'shiny']
-            megastone = ['mega_stone_x', 'mega_stone_y', 'mega_stone']
+            stones = [
+                "sun",
+                "dusk",
+                "thunder",
+                "fire",
+                "ice",
+                "water",
+                "dawn",
+                "leaf",
+                "moon",
+                "shiny",
+            ]
+            megastone = ["mega_stone_x", "mega_stone_y", "mega_stone"]
             desc = ""
             count = 1
             for stone in megastone:
-                emoji = get_stone_emoji(
-                    item_name=stone
-                )
+                emoji = get_stone_emoji(item_name=stone)
                 desc += f"**{emoji} {stone.title().replace('_', ' ')}**\n`/buy item {stone.lower().replace('_', ' ')}`\n"
                 count += 1
 
             for stone in stones:
                 full_name = f"{stone}_stone"
-                emoji = get_stone_emoji(
-                    item_name=full_name
-                )
-                #So on each of these items essentially page break
-                if count in [7, 14, 21, 28]: 
+                emoji = get_stone_emoji(item_name=full_name)
+                # So on each of these items essentially page break
+                if count in [7, 14, 21, 28]:
                     desc += f"**{emoji} {full_name.title().replace('_', ' ')}**\n`/buy item {full_name.lower().replace('_', ' ')}`\n\n"
                 else:
                     desc += f"**{emoji} {full_name.title().replace('_', ' ')}**\n`/buy item {full_name.lower().replace('_', ' ')}`\n"
                 count += 1
 
             footer_text = "Each item is 3,000 credits"
-            embed = discord.Embed(
-                title="Evolution Stones!", color=3553600)
+            embed = discord.Embed(title="Evolution Stones!", color=3553600)
             pages = shop_pagify(desc, base_embed=embed, footer=footer_text)
             await SlashMenuView(interaction, pages).start()
 
         if self.view.choice == "Plates and Memories":
             embed = discord.Embed(
-                title=f"Arceus Plates and Silvally Memories", 
-                description=f"Plates are used for Arceus, they affect Arceus and Judgement's Type!\nMemories are used for Silvally, they effect Silvally's Type\nCost 10,000 each - Buy with `/buy item draco plate`", 
-                color=0x0084FD
+                title=f"Arceus Plates and Silvally Memories",
+                description=f"Plates are used for Arceus, they affect Arceus and Judgement's Type!\nMemories are used for Silvally, they effect Silvally's Type\nCost 10,000 each - Buy with `/buy item draco plate`",
+                color=0x0084FD,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
@@ -253,19 +318,19 @@ class DropdownSelect(discord.ui.Select):
                     f"\n<:flame_plate:1085322264112803901> **Flame Plate**"
                     f"\n<:icicle_plate:1085322263236194404> **Icicle Plate**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                f"\n<:splash_plate:1085322093127807096> **Splash Plate**"
-                f"\n<:sky_plate:1085322093928906902> **Sky Plate**"
-                f"\n<:pixie_plate:1085322095237533787> **Pixie Plate**"
-                f"\n<:mind_plate:1085322095761829940> **Mind Plate**"
-                f"\n<:meadow_plate:1085322259817828383> **Meadow Plate**"
-                f"\n<:insect_plate:1085322262426689728> **Insect Plate**"
+                    f"\n<:splash_plate:1085322093127807096> **Splash Plate**"
+                    f"\n<:sky_plate:1085322093928906902> **Sky Plate**"
+                    f"\n<:pixie_plate:1085322095237533787> **Pixie Plate**"
+                    f"\n<:mind_plate:1085322095761829940> **Mind Plate**"
+                    f"\n<:meadow_plate:1085322259817828383> **Meadow Plate**"
+                    f"\n<:insect_plate:1085322262426689728> **Insect Plate**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
@@ -276,7 +341,7 @@ class DropdownSelect(discord.ui.Select):
                     f"\n<:zap_plate:1085322088656687225> **Zap Plate**"
                     f"\n<:icon_plate:1085322261487173733> **Iron Plate**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
@@ -288,7 +353,7 @@ class DropdownSelect(discord.ui.Select):
                     f"\n<:fire_memory:1085589597486067743> **Fire Memory**"
                     f"\n<:ice_memory:1085589635977191454> **Ice Memory**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
@@ -300,7 +365,7 @@ class DropdownSelect(discord.ui.Select):
                     f"\n<:grass_memory:1085589593723777054> **Grass Memory**"
                     f"\n<:bug_memory:1085589412441772164> **Bug Memory**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
@@ -310,14 +375,15 @@ class DropdownSelect(discord.ui.Select):
                     f"\n<:poison_memory:1085589633972318238> **Poison Memory**"
                     f"\n<:electric_memory:1085589409459605534> **Electric Memory**"
                 ),
-                inline=True
+                inline=True,
             )
-            embed.set_footer( 
-                text=f"{interaction.user.name}'s bal: {self.credits:,}")
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
             await interaction.response.edit_message(embed=embed)
 
         if self.view.choice == "Forms":
-            FORM_ITEMS = await interaction.client.db[1].form_items.find({}).to_list(None)
+            FORM_ITEMS = (
+                await interaction.client.db[1].form_items.find({}).to_list(None)
+            )
             items = [t["item"] for t in FORM_ITEMS]
             prices = [t["price"] for t in FORM_ITEMS]
             descriptions = [t["description"] for t in FORM_ITEMS]
@@ -326,58 +392,54 @@ class DropdownSelect(discord.ui.Select):
             for idx, item in enumerate(items):
                 price = prices[idx]
                 description = descriptions[idx]
-                emoji = get_form_emoji(
-                    item_name=item.lower()
-                )
-                #So on each of these items essentially page break
-                if count in [5, 10, 15, 20, 25, 30, 35]: 
+                emoji = get_form_emoji(item_name=item.lower())
+                # So on each of these items essentially page break
+                if count in [5, 10, 15, 20, 25, 30, 35]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n{description}\n`/buy item {item.title().replace('_', ' ')}` - {price:,.0f} credits\n\n"
                 else:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n{description}\n`/buy item {item.title().replace('_', ' ')}` - {price:,.0f} credits\n"
                 count += 1
 
-            embed = discord.Embed(
-                title="Form Items!", color=3553600)
+            embed = discord.Embed(title="Form Items!", color=3553600)
             pages = pagify(desc, base_embed=embed)
             await SlashMenuView(interaction, pages).start()
 
         if self.view.choice == "Vitamins":
             embed = discord.Embed(
                 title="Pokemon Vitamins!",
-                description="Each vitamin increases a different Effort Value!\nEVs are a boost to a particular stat. All costing 100 credits each!"
+                description="Each vitamin increases a different Effort Value!\nEVs are a boost to a particular stat. All costing 100 credits each!",
             )
             embed.add_field(
                 name="<:hp_up:1093288050035003442> HP Up",
                 value="Increases HP EV\n`/buy vitamin hp-up`",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:protein:1093288048462147715> Protein",
                 value="Increases Attack EV\n`/buy vitamin protein`",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:iron:1093288047577157773> Iron",
                 value="Increases Defense EV\n`/buy vitamin iron`",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:calcium:1093288046536953977> Calcium",
                 value="Increases Special Attack EV\n`/buy vitamin calcium`",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:zinc:1093288045765198004> Zinc",
                 value="Increases Special Defense EV\n`/buy vitamin zinc`",
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:carbos:1093288043991007302> Carbos",
                 value="Increases Speed EV\n`/buy vitamin carbos`",
-                inline=True
+                inline=True,
             )
-            embed.set_footer( 
-                text=f"{interaction.user.name}'s bal: {self.credits:,}")
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
             await interaction.response.edit_message(embed=embed)
 
         if self.view.choice == "Berry Seeds":
@@ -396,7 +458,7 @@ class DropdownSelect(discord.ui.Select):
                     f"<:figy_berry:1085430966899720223> **Figy Seed**\n"
                     f"<:ganlon_berry:1085430940001640509> **Ganlon Seed**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:blank:1012504803496177685>",
@@ -409,7 +471,7 @@ class DropdownSelect(discord.ui.Select):
                     f"<:micle_berry:1085430912977739826> **Micle Seed**\n"
                     f"<:pecha_berry:1085430872523681872> **Pecha Seed**"
                 ),
-                inline=True
+                inline=True,
             )
             embed.add_field(
                 name="<:blank:1012504803496177685>",
@@ -422,27 +484,50 @@ class DropdownSelect(discord.ui.Select):
                     f"<:starf_berry:1085430909492273182> **Starf Seed**\n"
                     f"<:wiki_berry:1085430943071883304> **Wiki Seed**\n"
                 ),
-                inline=True
+                inline=True,
             )
-            embed.set_footer( 
-                text=f"{interaction.user.name}'s bal: {self.credits:,}")
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
             await interaction.response.edit_message(embed=embed)
 
+        if self.view.choice == "Monthly Alpha Rotation":
+            embed = discord.Embed(
+                title="Monthly Alpha Rotation",
+                description="Purchase a new breed of Rare Pokemon called Alpha Pokemon, these come with preconfigured moves!\nYou can get one with `/redeem alpha`, they all cost 850,500 credits.",
+            )
+
+            for alpha_pokemon in self.ctx.bot.commondb.ALPHA_POKEMON:
+                embed.add_field(
+                    name="<:blank:1012504803496177685>",
+                    value=(
+                        f"{self.ctx.bot.misc.get_random_egg_emote()} **"
+                        + alpha_pokemon
+                        + "**"
+                    ),
+                    inline=True,
+                )
+            embed.set_footer(text=f"{interaction.user.name}'s bal: {self.credits:,}")
+            await interaction.response.edit_message(embed=embed)
+
+
 class ShopView(discord.ui.View):
-    """View that helps character commands""" 
+    """View that helps character commands"""
+
     def __init__(self, ctx, credits):
         super().__init__(timeout=30)
         self.ctx = ctx
         self.event = asyncio.Event()
         self.message = ""
-        self.add_item(DropdownSelect(credits))
+        self.add_item(DropdownSelect(credits, ctx))
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.message.edit(view=None)
@@ -455,16 +540,16 @@ class ShopView(discord.ui.View):
 
     async def wait(self):
         """Returns the user's choice, or None if they did not choose in time."""
-        #Start creating base embed    
+        # Start creating base embed
         embed = discord.Embed(
             title=f"Mewbot Shop",
             description=f"Choose an option from the dropdown menu below!",
-            color=0x4F2683
+            color=0x4F2683,
         )
-        embed.set_image(url="https://dyleee.github.io/mewbot-images/shop_image.png")
+        embed.set_image(url="https://mewbot.xyz/shop_image.png")
         self.message = await self.ctx.send(embed=embed, view=self)
         await self.event.wait()
-    
+
 
 class Shop(commands.Cog):
     def __init__(self, bot):
@@ -481,23 +566,35 @@ class Shop(commands.Cog):
     @shop.command()
     async def view(self, ctx):
         """New Shop with Menu"""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Sorry, this isn't ready yet!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Sorry, this isn't ready yet!")
+        # return
         async with ctx.bot.db[0].acquire() as pconn:
             credits = await pconn.fetchval(
-                "SELECT mewcoins FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
             )
-        await ShopView(
-            ctx,
-            credits 
-        ).wait()
+        await ShopView(ctx, credits).wait()
 
     @shop.command()
     @commands.cooldown(1, 10, commands.BucketType.user)
-    @discord.app_commands.describe(section="What section of the shop do you want to look at?")
-    async def old(self, ctx, section:Literal["forms", "mega stones", "items", "trade items", "battle items", "evolution stones", "arceus plates", "vitamins", "rods"]):
+    @discord.app_commands.describe(
+        section="What section of the shop do you want to look at?"
+    )
+    async def old(
+        self,
+        ctx,
+        section: Literal[
+            "forms",
+            "mega stones",
+            "items",
+            "trade items",
+            "battle items",
+            "evolution stones",
+            "arceus plates",
+            "vitamins",
+            "rods",
+        ],
+    ):
         """Old shop system"""
         if not section:
             e = discord.Embed(
@@ -506,11 +603,9 @@ class Shop(commands.Cog):
                 color=3553600,
             )
             e.add_field(name="Forms", value=f"`/shop forms`", inline=False)
-            e.add_field(name="Mega Pokemon",
-                        value=f"`/shop mega`", inline=False)
+            e.add_field(name="Mega Pokemon", value=f"`/shop mega`", inline=False)
             e.add_field(name="Items", value=f"`/shop items`", inline=False)
-            e.add_field(name="Trade items",
-                        value=f"`/shop trade items`", inline=False)
+            e.add_field(name="Trade items", value=f"`/shop trade items`", inline=False)
             e.add_field(
                 name="Battle Items",
                 value=f"`/shop battle items`",
@@ -521,11 +616,11 @@ class Shop(commands.Cog):
                 value=f"`/shop stones` Evolution stones",
                 inline=False,
             )
-            e.add_field(name="Vitamins",
-                        value=f"`/shop vitamins`", inline=False)
+            e.add_field(name="Vitamins", value=f"`/shop vitamins`", inline=False)
             e.add_field(name="Rods", value=f"`/shop rods`", inline=False)
             e.set_footer(
-                text="Items can also be gotten through Item Drops from spawned Pokemon!")
+                text="Items can also be gotten through Item Drops from spawned Pokemon!"
+            )
             await ctx.send(embed=e)
             return
         elif section == "rods":
@@ -542,11 +637,13 @@ class Shop(commands.Cog):
                     value=f"Costs {prices[idx]} {ctx.bot.misc.emotes['CREDITS']}",
                 )
             e.set_footer(
-                text="Items can also be gotten through Item Drops from spawned Pokemon!")
+                text="Items can also be gotten through Item Drops from spawned Pokemon!"
+            )
             await ctx.send(embed=e)
         elif section == "items":
             e = discord.Embed(
-                title="Items to evolve or Boost stats, e.t.c", color=3553600)
+                title="Items to evolve or Boost stats, e.t.c", color=3553600
+            )
 
             e.add_field(
                 name="Rare Candies",
@@ -614,9 +711,9 @@ class Shop(commands.Cog):
             e.description += "\nLeaf stone"
             e.description += "\nMoon stone"
             e.description += "\nShiny stone"
-            #e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
+            # e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
             await ctx.send(embed=e)
-        
+
         elif section == "berry seeds":
             e = discord.Embed(title="Berry Seeds", color=3553600)
             e.description = f"All Seeds Cost 2,500{ctx.bot.misc.emotes['CREDITS']}!"
@@ -639,12 +736,13 @@ class Shop(commands.Cog):
             e.description += "\nIapapa Seed"
             e.description += "\nMago Seed"
             e.description += "\nLansat Seed"
-            #e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
+            # e.add_field(name="Evo Stone", value="Evolves any Pokemon | Costs 10,000 Credits")
             await ctx.send(embed=e)
 
         elif section == "forms":
             e = discord.Embed(
-                title="Buy Items to change your pokemon Forms!!", color=3553600)
+                title="Buy Items to change your pokemon Forms!!", color=3553600
+            )
             e.add_field(
                 name="Blue orb",
                 value="Buy the Blue Orb to make your Kyogre Primal! | 10,000ℳ",
@@ -739,8 +837,9 @@ class Shop(commands.Cog):
                 description=f"Say `/buy <mega_stone>` to buy it",
                 color=3553600,
             )
-            e.add_field(name="Buy Mega Stones",
-                        value="To evolve your Pokemon to It's Mega Form")
+            e.add_field(
+                name="Buy Mega Stones", value="To evolve your Pokemon to It's Mega Form"
+            )
             e.add_field(
                 name=f"Choose Between\nMega Stone - 2000{ctx.bot.misc.emotes['CREDITS']} \nMega stone X - 3500{ctx.bot.misc.emotes['CREDITS']}\nMega stone Y - 3500{ctx.bot.misc.emotes['CREDITS']}",
                 value="To Mega your selected Pokemon",
@@ -748,7 +847,9 @@ class Shop(commands.Cog):
             await ctx.send(embed=e)
         elif section == "trade items":
             e = discord.Embed(title="Trade Item Shop!", color=3553600)
-            e.description = f"All Trade Items Cost 3,000 {ctx.bot.misc.emotes['CREDITS']}"
+            e.description = (
+                f"All Trade Items Cost 3,000 {ctx.bot.misc.emotes['CREDITS']}"
+            )
             e.description += "\nDeep Sea Scale"
             e.description += "\n Sea Tooth"
             e.description += "\nDragon Scale"
@@ -808,11 +909,14 @@ class Shop(commands.Cog):
                 desc += f"**{item.capitalize().replace('-', ' ')}** - {price:,.0f}\n"
 
             embed = discord.Embed(
-                title="Items for Battles! Buy with /buy <item>", color=3553600)
+                title="Items for Battles! Buy with /buy <item>", color=3553600
+            )
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
         else:
-            await ctx.send("That is not a valid shop! To view the available shops, run `/shop`.")
+            await ctx.send(
+                "That is not a valid shop! To view the available shops, run `/shop`."
+            )
 
 
 async def setup(bot):

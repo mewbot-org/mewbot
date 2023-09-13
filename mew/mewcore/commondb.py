@@ -11,11 +11,13 @@ class UserNotStartedError(Exception):
     Generic exception that is raised when a DB
     util is used on a user who has not started.
     """
+
     pass
 
 
 class Pokemon:
     """Dataclass to hold information about a created pokemon."""
+
     def __init__(self, id, gender, iv_sum, emoji):
         self.id = id
         self.gender = gender
@@ -23,8 +25,9 @@ class Pokemon:
         self.emoji = emoji
 
 
-class Item():
+class Item:
     """Dataclass to hold info about an added item"""
+
     def __init__(self, item_name, quantity):
         self.item_name = item_name
         self.quantity = quantity
@@ -33,14 +36,67 @@ class Item():
 class CommonDB:
     def __init__(self, bot):
         self.bot = bot
+        self.ALPHA_POKEMON = [
+            "Golurk",
+            "Snorlax",
+            "Banette",
+            "Aerodactyl",
+            "Torterra",
+            "Goodra",
+        ]
+
+        self.ALL_ALPHA_POKEMON = [
+            "Heatran",
+            "Regigigas",
+            "Regirock",
+            "Regice",
+            "Registeel",
+            "Arceus",
+            "Darkrai",
+            "Diancie",
+            "Volcanion",
+            "Deoxys",
+            "Latios",
+            "Mewtwo",
+            "Solgaleo",
+        ]
         self.ALPHA_MOVESETS = {
-            'Golurk' : ['mach-punch', 'tackle', 'tackle', 'tackle'],
-            'Snorlax': ['slack-off', 'tackle', 'tackle', 'tackle'],
-            'Banette': ['topsy-turvy', 'tackle', 'tackle', 'tackle'],
-            'Aerodactyl': ['brave-bird', 'tackle', 'tackle', 'tackle'],
-            'Torterra': ['shell-smash', 'tackle', 'tackle', 'tackle'],
-            'Goodra': ['core-enforcer', 'tackle', 'tackle', 'tackle'],
-            }
+            "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],
+            "Snorlax": ["slack-off", "tackle", "tackle", "tackle"],
+            "Banette": ["spectral-thief", "tackle", "tackle", "tackle"],
+            "Aerodactyl": ["brave-bird", "tackle", "tackle", "tackle"],
+            "Torterra": ["shell-smash", "tackle", "tackle", "tackle"],
+            "Goodra": ["core-enforcer", "tackle", "tackle", "tackle"],
+            "Heatran": ["meteor-beam", "tackle", "tackle", "tackle"],
+            "Regigigas": ["power-swap", "tackle", "tackle", "tackle"],
+            "Regirock": ["shore-up", "tackle", "tackle", "tackle"],
+            "Regice": ["freeze-dry", "tackle", "tackle", "tackle"],
+            "Registeel": ["knock-off", "tackle", "tackle", "tackle"],
+            "Arceus": ["springtide-storm", "tackle", "tackle", "tackle"],
+            "Darkrai": ["lovely-kiss", "tackle", "tackle", "tackle"],
+            "Diancie": ["moonlight", "tackle", "tackle", "tackle"],
+            "Volcanion": ["thunderbolt", "tackle", "tackle", "tackle"],
+            "Deoxys": ["fire-blast", "tackle", "tackle", "tackle"],
+            "Latios": ["flash-cannon", "tackle", "tackle", "tackle"],
+            "Mewtwo": ["extreme-speed", "tackle", "tackle", "tackle"],
+            "Solgaleo": ["head-smash", "tackle", "tackle", "tackle"],
+            "Lapras": ["shell-trap", "tackle", "tackle", "tackle"],
+            "Politoed": ["recover", "tackle", "tackle", "tackle"],
+            "Ampharos": ["tail-glow", "tackle", "tackle", "tackle"],
+            "Xurkitree": ["soak", "tackle", "tackle", "tackle"],
+            "Charizard": ["raging-fury", "tackle", "tackle", "tackle"],
+            "Sharpedo": ["obstruct", "tackle", "tackle", "tackle"],
+            "Trevenant": ["strength-sap", "tackle", "tackle", "tackle"],
+            "Ninetales": ["yawn", "tackle", "tackle", "tackle"],
+            "Raticate-alola": ["no-retreat", "tackle", "tackle", "tackle"],
+            "Espeon": ["mystical-power", "tackle", "tackle", "tackle"],
+            "Sigilyph": ["psycho-boost", "tackle", "tackle", "tackle"],
+            "Uxie": ["recover", "tackle", "tackle", "tackle"],
+            "Regidrago": ["flamethrower", "tackle", "tackle", "tackle"],
+            "Scovillain": ["sleep-powder", "tackle", "tackle", "tackle"],
+            "Tinkaton": ["tidy-up", "tackle", "tackle", "tackle"],
+            "Jirachi": ["teleport", "tackle", "tackle", "tackle"],
+        }
 
     async def remove_poke(self, user_id: int, poke_id: int, delete: bool = False):
         """
@@ -67,10 +123,7 @@ class CommonDB:
                 party,
             )
             if delete:
-                await pconn.execute(
-                    "DELETE FROM pokes WHERE id = $1", 
-                    poke_id
-                )
+                await pconn.execute("DELETE FROM pokes WHERE id = $1", poke_id)
             else:
                 await pconn.execute(
                     "UPDATE pokes SET fav = false WHERE id = $1", poke_id
@@ -115,7 +168,7 @@ class CommonDB:
         skin: str = None,
         gender: str = None,
         level: int = 1,
-        tradable: bool = True
+        tradable: bool = True,
     ):
         """
         Creates a poke and gives it to user.
@@ -205,7 +258,9 @@ class CommonDB:
             0,
             0,
             level,
-            ["tackle", "tackle", "tackle", "tackle"] if not skin == 'alpha' else self.ALPHA_MOVESETS.get(pokemon.capitalize()),
+            ["tackle", "tackle", "tackle", "tackle"]
+            if not skin == "alpha"
+            else self.ALPHA_MOVESETS.get(pokemon.capitalize()),
             "None",
             1,
             nature,
@@ -233,81 +288,70 @@ class CommonDB:
             pokeid, gender, sum((hpiv, atkiv, defiv, spaiv, spdiv, speiv)), emoji
         )
 
-
     async def add_bag_item(
-            self, 
-            user: int, 
-            item_name: str, 
-            quantity: int,
-            bound=False,
+        self,
+        user: int,
+        item_name: str,
+        quantity: int,
+        bound=False,
     ):
         """
         Creates new bag for user and inserts item
         If user already has bag just insert item
         """
-        async with self.bot.db[0].acquire() as pconn:        
-            #This can be removed after sometime
-            #Create user's bag if doesn't exist
+        async with self.bot.db[0].acquire() as pconn:
+            # This can be removed after sometime
+            # Create user's bag if doesn't exist
             await pconn.execute(
-                "INSERT INTO bag (u_id) VALUES ($1) ON CONFLICT DO NOTHING", 
-                user
+                "INSERT INTO bag (u_id) VALUES ($1) ON CONFLICT DO NOTHING", user
             )
-            
-            #Create user's account bound table if doesn't exist
+
+            # Create user's account bound table if doesn't exist
             await pconn.execute(
-                "INSERT INTO account_bound VALUES ($1) ON CONFLICT DO NOTHING",
-                user
+                "INSERT INTO account_bound VALUES ($1) ON CONFLICT DO NOTHING", user
             )
 
             if bound:
-                #Pull item's query from account bound dict above and execute query
+                # Pull item's query from account bound dict above and execute query
                 try:
                     query = ADD_BOUND_ITEM.get(item_name)
                 except:
-                    #Must have been bound
+                    # Must have been bound
                     query = ADD_BAG_ITEM.get(item_name)
             else:
-                #Pull item's query from bag dict above and execute query
+                # Pull item's query from bag dict above and execute query
                 try:
                     query = ADD_BAG_ITEM.get(item_name)
                 except:
                     query = ADD_BOUND_ITEM.get(item_name)
 
-            args = (
-                quantity,
-                user
-            )
+            args = (quantity, user)
             await pconn.execute(query, *args)
             return Item(item_name, quantity)
-    
-    
+
     async def remove_bag_item(
-            self, 
-            user: int, 
-            item_name: str, 
-            quantity: int,
-            bound=False,
+        self,
+        user: int,
+        item_name: str,
+        quantity: int,
+        bound=False,
     ):
         """
         Creates new bag for user and inserts item
         If user already has bag just insert item
         """
-        async with self.bot.db[0].acquire() as pconn:                    
+        async with self.bot.db[0].acquire() as pconn:
             if bound:
-                #Pull item's query from account bound dict above and execute query
+                # Pull item's query from account bound dict above and execute query
                 query = REMOVE_BOUND_ITEM.get(item_name)
             else:
-                #Pull item's query from bag dict above and execute query
+                # Pull item's query from bag dict above and execute query
                 query = REMOVE_BAG_ITEM.get(item_name)
 
-            args = (
-                quantity,
-                user
-            )
+            args = (quantity, user)
             await pconn.execute(query, *args)
             return Item(item_name, quantity)
-    
-    
+
     class TradeLock:
         """
         A context manager for tradelocking users.

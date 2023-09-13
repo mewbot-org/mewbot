@@ -1,4 +1,3 @@
-
 import random
 from .enums import Ability, ElementType
 
@@ -585,8 +584,8 @@ class NonVolatileEffect:
 
         if self.pokemon.held_item.should_eat_berry_status(attacker):
             msg += self.pokemon.held_item.eat_berry(attacker=attacker, move=move)
-            
-        #Apply status to the pokemon class
+
+        # Apply status to the pokemon class
         self.pokemon.active_status = self.current
         return msg
 

@@ -262,7 +262,9 @@ class Filter(commands.Cog):
                             names.add(name)
                         names = await self._expand_forms(ctx, names)
                         sql_data.append(list(names))
-                        postfix.append(f"name = ANY(${len(sql_data)}) AND pokname = 'Egg'")
+                        postfix.append(
+                            f"name = ANY(${len(sql_data)}) AND pokname = 'Egg'"
+                        )
                 elif key == "evo":
                     names = set()
                     for evo in data:

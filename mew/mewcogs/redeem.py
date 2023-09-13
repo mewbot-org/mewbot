@@ -209,7 +209,8 @@ class Redeem(commands.Cog):
         pack.pop("daycare_limit", None)
         async with ctx.bot.db[0].acquire() as pconn:
             current_inv = await pconn.fetchrow(
-                "SELECT shiny_multiplier, battle_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
+                "SELECT shiny_multiplier, battle_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
             )
             current_inv = dict(current_inv)
         # current_inv.pop('coin-case', None) if 'coin-case' in current_inv else None
@@ -217,18 +218,11 @@ class Redeem(commands.Cog):
         for item in pack:
             try:
                 if item.endswith("_z"):
-                    await self.bot.commondb.add_bag_item(
-                        ctx.author.id,
-                        item,
-                        1
-                    )
-                if item in ('honey', 'nature_capsules'):
+                    await self.bot.commondb.add_bag_item(ctx.author.id, item, 1)
+                if item in ("honey", "nature_capsules"):
                     amount = pack[item]
                     await self.bot.commondb.add_bag_item(
-                        ctx.author.id,
-                        item,
-                        amount,
-                        True
+                        ctx.author.id, item, amount, True
                     )
                 elif item == "bike":
                     async with ctx.bot.db[0].acquire() as pconn:
@@ -238,17 +232,18 @@ class Redeem(commands.Cog):
                             True,
                         )
                 elif item in ("battle_multiplier", "shiny_multiplier"):
-                    #Provide compensation credits for multis above 50
-                    extra = max(0,(current_inv[item] + pack[item]) - (multiplier_max.get(item, 9999999999999999999999999)),)
+                    # Provide compensation credits for multis above 50
+                    extra = max(
+                        0,
+                        (current_inv[item] + pack[item])
+                        - (multiplier_max.get(item, 9999999999999999999999999)),
+                    )
                     extra_creds += extra * self.CREDITS_PER_MULTI
 
                     if current_inv[item] + extra <= 50:
                         amount = pack[item] - extra
                         await self.bot.commondb.add_bag_item(
-                            ctx.author.id,
-                            item,
-                            amount,
-                            True
+                            ctx.author.id, item, amount, True
                         )
 
             except:
@@ -308,8 +303,7 @@ class Redeem(commands.Cog):
             if redeems < 30:
                 await ctx.send("You don't have 30 Redeems!")
                 return
-            
-            
+
             # Set class variable incase we need to expand this
             # OR reactive it
             if self.limit_active:
@@ -348,7 +342,9 @@ class Redeem(commands.Cog):
 
                 if not amount:
                     if info["restock"] != 0:
-                        desc = f"You have redeemed {info['bought']} shinies this week.\n"
+                        desc = (
+                            f"You have redeemed {info['bought']} shinies this week.\n"
+                        )
                         if info["bought"] >= max_shinies:
                             desc += "You cannot buy any more this week."
                         else:
@@ -358,7 +354,9 @@ class Redeem(commands.Cog):
                             description=desc,
                             color=0xFFB6C1,
                         )
-                        embed.set_footer(text="Shiny Redeems restock every Wednesday at 8pm ET.")
+                        embed.set_footer(
+                            text="Shiny Redeems restock every Wednesday at 8pm ET."
+                        )
                     else:
                         embed = discord.Embed(
                             title="Redeem Shiny",
@@ -373,27 +371,26 @@ class Redeem(commands.Cog):
                             f"You can't redeem more than {max_shinies} per week!  You've already redeemed {info['bought']}."
                         )
                         return
-                
-   
+
             await pconn.execute(
                 "UPDATE users SET redeems = redeems - 30 WHERE u_id = $1",
                 ctx.author.id,
             )
-            
+
             if self.limit_active:
                 await pconn.execute(
-                        "UPDATE redeemshinystore SET bought = bought + $1 WHERE u_id = $2",
-                        amount,
-                        ctx.author.id,
-                    )
-            
+                    "UPDATE redeemshinystore SET bought = bought + $1 WHERE u_id = $2",
+                    amount,
+                    ctx.author.id,
+                )
+
                 if info["restock"] == 0:
                     await pconn.execute(
                         "UPDATE redeemshinystore SET restock = $1 WHERE u_id = $2",
                         str(int(time.time() // restock_time) + 1),
                         ctx.author.id,
                     )
-                    
+
             pokedata = await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, shiny, shiny=True
             )
@@ -403,6 +400,120 @@ class Redeem(commands.Cog):
             )
             e.add_field(
                 name="Random Shiny", value=f"{shiny} ({ivpercent}% iv)", inline=False
+            )
+            await ctx.send(embed=e)
+
+    @tradelock
+    @redeem.command()
+    async def alpha(self, ctx):
+        """Spend your credits for a random alpha."""
+        e = discord.Embed(color=ctx.bot.get_random_color())
+        pokemon = random.choice(self.bot.commondb.ALPHA_POKEMON)
+        async with ctx.bot.db[0].acquire() as pconn:
+            credits = await pconn.fetchval(
+                "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
+            )
+            if credits is None:
+                await ctx.send(f"You have not Started!\nStart with `/start` first!")
+                return
+            if credits < 845000:
+                await ctx.send("You don't have enough credits!")
+                return
+
+            # Set class variable incase we need to expand this
+            # OR reactive it
+            if self.limit_active:
+                amount = 1
+                await pconn.execute(
+                    "INSERT INTO alphastore VALUES ($1, 0, 0) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                )
+                info = await pconn.fetchrow(
+                    "SELECT * FROM alphastore WHERE u_id = $1", ctx.author.id
+                )
+
+                if not info:
+                    info = {"u_id": ctx.author.id, "bought": 0, "restock": 0}
+                else:
+                    info = {
+                        "u_id": info["u_id"],
+                        "bought": info["bought"],
+                        "restock": int(info["restock"]),
+                    }
+
+                max_pokemon = 5
+                restock_time = 604800
+
+                if info["restock"] <= int(time.time() // restock_time):
+                    await pconn.execute(
+                        "UPDATE alphastore SET bought = 0, restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+                    info = {
+                        "u_id": ctx.author.id,
+                        "bought": 0,
+                        "restock": int(time.time() // restock_time) + 1,
+                    }
+
+                if not amount:
+                    if info["restock"] != 0:
+                        desc = f"You have bought {info['bought']} alpha Pokemon this week.\n"
+                        if info["bought"] >= max_pokemon:
+                            desc += "You cannot buy any more this week."
+                        else:
+                            desc += "Buy more !"
+                        embed = discord.Embed(
+                            title="Purchase Alpha",
+                            description=desc,
+                            color=0xFFB6C1,
+                        )
+                        embed.set_footer(
+                            text="Alpha Pokemon restock every Wednesday at 8pm ET."
+                        )
+                    else:
+                        embed = discord.Embed(
+                            title="Purchase Alpha",
+                            description="You haven't bought any alpha this week!!",
+                            color=0xFFB6C1,
+                        )
+
+                    await ctx.send(embed=embed)
+                else:
+                    if info["bought"] + amount > max_pokemon:
+                        await ctx.send(
+                            f"You can't buy more than {max_pokemon} alpha Pokemon per week!  You've already bought {info['bought']}."
+                        )
+                        return
+
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins - 845000 WHERE u_id = $1",
+                ctx.author.id,
+            )
+
+            if self.limit_active:
+                await pconn.execute(
+                    "UPDATE alphastore SET bought = bought + $1 WHERE u_id = $2",
+                    amount,
+                    ctx.author.id,
+                )
+
+                if info["restock"] == 0:
+                    await pconn.execute(
+                        "UPDATE alphastore SET restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+
+            pokedata = await ctx.bot.commondb.create_poke(
+                ctx.bot, ctx.author.id, pokemon, skin="alpha"
+            )
+            ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
+            await ctx.bot.get_partial_messageable(998341289164689459).send(
+                f"``User:`` {ctx.author} | ``ID:`` {ctx.author.id}\nHas bought a random alpha {pokemon} (`{pokedata.id}`)\n----------------------------------"
+            )
+            e.add_field(
+                name="Random Alpha", value=f"{pokemon} ({ivpercent}% iv)", inline=False
             )
             await ctx.send(embed=e)
 
@@ -428,7 +539,7 @@ class Redeem(commands.Cog):
         await ctx.send(embed=e)
 
     @tradelock
-    #@redeem.command(aliases=["coins"])
+    # @redeem.command(aliases=["coins"])
     async def credits(self, ctx):
         """Trade 1 redeem for 50,000 credits."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -450,12 +561,7 @@ class Redeem(commands.Cog):
     async def honey(self, ctx):
         """Spend your redeems and get honey | Can be spread on a channel to attract rare & shiny Pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await self.bot.commondb.add_bag_item(
-                ctx.author.id,
-                "honey",
-                1,
-                True
-            )
+            await self.bot.commondb.add_bag_item(ctx.author.id, "honey", 1, True)
             try:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems - 5 WHERE u_id = $2",
@@ -493,10 +599,7 @@ class Redeem(commands.Cog):
         """Redeem 5 nature capsules"""
         async with ctx.bot.db[0].acquire() as pconn:
             await self.bot.commondb.add_bag_item(
-                ctx.author.id,
-                "nature_capsules",
-                5,
-                True
+                ctx.author.id, "nature_capsules", 5, True
             )
             try:
                 await pconn.execute(
@@ -522,16 +625,15 @@ class Redeem(commands.Cog):
         threshold = 4000
         async with ctx.bot.db[0].acquire() as pconn:
             redeems = await pconn.fetchval(
-                "SELECT redeems FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT redeems FROM users WHERE u_id = $1", ctx.author.id
             )
             shiny_multiplier = await pconn.fetchval(
                 "SELECT shiny_multiplier FROM account_bound WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
-        if not shiny_multiplier: 
-            shiny_multiplier = 0 
-            
+        if not shiny_multiplier:
+            shiny_multiplier = 0
+
         threshold = round(threshold - threshold * (shiny_multiplier / 100))
         shiny = random.choice([False for i in range(threshold)] + [True])
 
@@ -619,12 +721,12 @@ class Redeem(commands.Cog):
             )
             shiny_multiplier = await pconn.fetchval(
                 "SELECT shiny_multiplier FROM account_bound WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
         if redeems is None:
             await ctx.send("You have not started!\nStart with `/start` first.")
             return
-        
+
         threshold = round(threshold - threshold * (shiny_multiplier / 100))
 
         if redeems < amount:

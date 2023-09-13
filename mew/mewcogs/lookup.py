@@ -79,16 +79,18 @@ class Lookup(commands.Cog):
         if exists is None:
             await ctx.send("That item does not exist in Mewbot.")
             return
-        
+
         # Call the API to fetch the data for the move
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://pokeapi.co/api/v2/item/{item}") as response:
+            async with session.get(
+                f"https://pokeapi.co/api/v2/item/{item}"
+            ) as response:
                 if response.status != 200:
                     await ctx.send("That item does not exist.")
                     return
                 data = await response.json()
 
-        #Build base embed
+        # Build base embed
         desc = ""
         embed = discord.Embed(
             title=f"{item.title()}",
@@ -96,7 +98,7 @@ class Lookup(commands.Cog):
             description=desc,
         )
         effects = ""
-        for effect in data['effect_entries']:
+        for effect in data["effect_entries"]:
             if effect["language"]["name"] == "en":
                 effects += "- " + effect["short_effect"] + "\n"
         if not effects:
@@ -105,7 +107,7 @@ class Lookup(commands.Cog):
                     effects += effect["flavor_text"] + "\n"
         if effects:
             embed.add_field(name="Effect", value=effects, inline=False)
-        
+
         await ctx.send(embed=embed)
 
     @lookup.command()

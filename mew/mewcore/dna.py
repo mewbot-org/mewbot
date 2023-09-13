@@ -361,7 +361,7 @@ class Mew(commands.AutoShardedBot):
         - "Crystal Tier"
         - "Sapphire Tier"
         """
-        if user_id == 499740738138013696: ## VK
+        if user_id == 499740738138013696:  ## VK
             return "Silver Tier"
         expired = await self.redis_manager.redis.execute("GET", "patreonreset")
         if expired is None or time.time() > float(expired):
@@ -691,7 +691,6 @@ class Mew(commands.AutoShardedBot):
                         "profile",
                         "essence"
                         # "events",
-
                     ]
 
                 for cog in safe_to_load:

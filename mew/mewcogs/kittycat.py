@@ -937,12 +937,7 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def gems(self, ctx, user: discord.Member, gems: int):
         """Give Gems to a user."""
-        await ctx.bot.commondb.add_bag_item(
-            user.id,
-            "radiant_gem",
-            gems,
-            True
-        )
+        await ctx.bot.commondb.add_bag_item(user.id, "radiant_gem", gems, True)
         embed = discord.Embed(
             title="Success!", description=f"{user} gained {gems} radiant gem(s)"
         )
@@ -1000,10 +995,7 @@ class KittyCat(commands.Cog):
         """Add a chest"""
         user_id = int(user_id)
         await ctx.bot.commondb.add_bag_item(
-            user_id,
-            chest.replace(" ", "_"),
-            amount,
-            True
+            user_id, chest.replace(" ", "_"), amount, True
         )
         await ctx.send(f"<@{user_id}> gained `{amount}` `{chest}'s`")
 

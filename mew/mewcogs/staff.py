@@ -24,7 +24,7 @@ from mewutils.checks import (
     check_helper,
     check_gymauth,
 )
-from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER
+from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER, get_file_name
 import datetime
 
 
@@ -337,7 +337,70 @@ class MewBotAdmin(commands.Cog):
                 "UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id
             )
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
+        
+        
+    @check_admin()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def create_image(self, ctx, name: str, shiny: bool, *, skin: str = None, image_url: str):
+        # Check if the URL is valid
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.head(image_url) as response:
+                    if response.status != 200:
+                        await ctx.send("Invalid image URL. Please provide a valid URL.")
+                        return
+            except Exception as e:
+                await ctx.send(f"An error occurred while checking the image URL: {e}")
+                return
 
+        # Define the destination folder
+        destination_folder = '/home/dyroot/mewbot/shared/duel/sprites/'
+
+        # Create a new filename based on the parameters
+        # filename = f"{name}_{skin}_{'shiny' if shiny else 'normal'}.png"
+        try:
+            filename = await get_file_name(name, ctx.bot, shiny = shiny, skin = skin)
+        except:
+            await ctx.send(f"Invalid name ({name}) passed to mew/utils/misc.py get_file_name.")
+
+        # Build the full destination path
+        full_destination_path = os.path.join(destination_folder, filename)
+
+        # Download and save the image
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as response:
+                    if response.status == 200:
+                        with open(full_destination_path, 'wb') as f:
+                            f.write(await response.read())
+                        await ctx.send(f"Image '{filename}' has been successfully created and stored.")
+                    else:
+                        await ctx.send(f"Failed to download the image: HTTP status {response.status}")
+        except Exception as e:
+            await ctx.send(f"An error occurred while downloading and saving the image: {e}")
+
+        
+    @check_admin()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def forcelearn(
+        self,
+        ctx,
+        *,
+        global_id: int,
+        slot: Literal[1, 2, 3, 4],
+        new_move: str
+    ):
+        """Force a move on a Pokemon"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "UPDATE pokes SET moves[$1] = $2 WHERE id = $3",
+                slot,
+                new_move.lower(),
+                global_id
+            )
+            await ctx.send(":white_check_mark:")
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -431,11 +494,11 @@ class MewBotAdmin(commands.Cog):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            if essence == 'True':
+            if essence == "True":
                 await pconn.execute(
                     f"UPDATE pokes SET {iv} = $1, crystalized = True WHERE id = $2",
                     amount,
-                    globalid
+                    globalid,
                 )
             else:
                 await pconn.execute(
@@ -446,12 +509,7 @@ class MewBotAdmin(commands.Cog):
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def edit_essence(
-        self,
-        ctx,
-        user: discord.User,
-        x_y: str = None
-    ):
+    async def edit_essence(self, ctx, user: discord.User, x_y: str = None):
         if x_y:
             x_y = [int(i) for i in x_y.split()]
         else:

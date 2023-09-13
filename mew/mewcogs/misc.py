@@ -156,12 +156,9 @@ class Misc(commands.Cog):
                     chest_chance = not random.randint(0, 200)
                     if chest_chance:
                         await self.bot.commondb.add_bag_item(
-                            message.author.id,
-                            "common_chest",
-                            1,
-                            True
+                            message.author.id, "common_chest", 1, True
                         )
-                        response += "It was holding a common chest!\n" 
+                        response += "It was holding a common chest!\n"
             if hatched_pokemon:
                 #
                 user = await self.bot.mongo_find(
@@ -180,13 +177,10 @@ class Misc(commands.Cog):
                 )
                 chest_chance = not random.randint(0, 200)
                 if chest_chance:
-                        await self.bot.commondb.add_bag_item(
-                            message.author.id,
-                            "common_chest",
-                            1,
-                            True
-                        )
-                        response += "It was holding a common chest!\n" 
+                    await self.bot.commondb.add_bag_item(
+                        message.author.id, "common_chest", 1, True
+                    )
+                    response += "It was holding a common chest!\n"
             if level_pokemon:
                 pokemon_details = await pconn.fetchrow(
                     "SELECT users.silenced, pokes.* FROM users INNER JOIN pokes on pokes.id = (SELECT selected FROM users WHERE u_id = $1) AND users.u_id = $1",

@@ -69,12 +69,12 @@ class Duel(commands.Cog):
                 self.duel_reset_time.decode("utf-8"), DATE_FORMAT
             )
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     async def battle_tower_diag(self, ctx):
         """Diagnose Battle Tower"""
         await ctx.send(f"Current Queue: {self.bt_queue}\n\n\nRanks: {self.ranks}")
 
-    #@commands.Cog.listener()
+    # @commands.Cog.listener()
     async def on_ready(self):
 
         """Starts the matchmaking loop when the bot is ready"""
@@ -267,7 +267,7 @@ class Duel(commands.Cog):
 
         return winner
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     async def train(self, ctx):
         data = (await ctx.bot.db[1].npc_data.find_one())["npc_data"]
         df = pd.DataFrame(data)
@@ -314,7 +314,7 @@ class Duel(commands.Cog):
         """Initiate a 1v1 duel, 6v6 battle, NPC duel or an Inverse duel."""
         ...
 
-    #@duel.command()
+    # @duel.command()
     async def tower(self, ctx):
         """A battle tower duel."""
         await ctx.send("Coming soon...")
@@ -693,7 +693,7 @@ class Duel(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             # Reduce energy
             energy = await pconn.fetchval(
-                "SELECT npc_energy FROM users WHERE u_id = $1", 
+                "SELECT npc_energy FROM users WHERE u_id = $1",
                 ctx.author.id,
             )
             if energy is None:
@@ -737,6 +737,11 @@ class Duel(commands.Cog):
                 challenger1["pokelevel"],
             )
             challenger2 = dict(random.choice(npc_pokemon))
+
+            # If Eternatus-eternamax pick another Pokemon
+            if challenger2["pokname"] == "Eternatus-eternamax":
+                challenger2 = dict(random.choice(npc_pokemon))
+
             challenger2["poknick"] = "None"
 
         # Gets a Pokemon object based on the specifics of each poke
@@ -756,11 +761,11 @@ class Duel(commands.Cog):
         async with ctx.bot.db[0].acquire() as pconn:
             battle_multi = await pconn.fetchval(
                 "SELECT battle_multiplier FROM account_bound WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if battle_multi is None:
                 battle_multi = 1
-                
+
         # Update mission progress
         user = await ctx.bot.mongo_find(
             "users",

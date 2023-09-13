@@ -28,8 +28,9 @@ def despawn_embed(e, status):
     # e.set_image(url=e.image.url)
     return e
 
-#To assist with names when images aren't working
-#Displays first 2 letters and any dashes for regions
+
+# To assist with names when images aren't working
+# Displays first 2 letters and any dashes for regions
 def scatter(iterable):
     new_name = []
     count = 0
@@ -41,6 +42,7 @@ def scatter(iterable):
         count += 1
         name = " ".join(new_name)
     return name, count
+
 
 class SpawnResult:
     def __init__(self, text: str):
@@ -120,12 +122,7 @@ async def add_spawn(
         #
         chest_chance = not random.randint(0, 200)
         if chest_chance:
-            await bot.commondb.add_bag_item(
-                user_id,
-                "common_chest",
-                1,
-                True
-            )
+            await bot.commondb.add_bag_item(user_id, "common_chest", 1, True)
         if bot.premium_server(guild_id):
             credits = random.randint(100, 250)
             await pconn.execute(
@@ -250,10 +247,10 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                 return await interaction.followup.send(
                     "You have not started!\nStart with `/start` first!", ephemeral=True
                 )
-            #Grab iv multiplier for below
+            # Grab iv multiplier for below
             iv_multiplier = await pconn.fetchval(
                 "SELECT iv_multiplier FROM account_bound WHERE u_id = $1",
-                interaction.user.id
+                interaction.user.id,
             )
 
         self.guessed = True
@@ -400,9 +397,7 @@ class Spawn(commands.Cog):
             )
             threshold = 4000
             if shiny_multiplier is not None:
-                threshold = round(
-                    threshold - threshold * (shiny_multiplier / 100)
-                )
+                threshold = round(threshold - threshold * (shiny_multiplier / 100))
             shiny = random.choice([False for i in range(threshold)] + [True])
 
             honey = await pconn.fetchval(
@@ -462,7 +457,7 @@ class Spawn(commands.Cog):
         updated_hint, letter_count = scatter(pokemon)
         updated_hint = updated_hint.capitalize()
         # Uncomment this for normal spawn name - 1 letter
-        #updated_hint = pokemon[0].capitalize()
+        # updated_hint = pokemon[0].capitalize()
 
         # Create & send the pokemon spawn embed
         embed = discord.Embed(
@@ -470,17 +465,17 @@ class Spawn(commands.Cog):
             color=0x0084FD,
         )
         embed.add_field(
-            name="Say it's name to catch it!", 
-            value=f"This Pokémons name begins with\n`{updated_hint}`"
-            )
+            name="Say it's name to catch it!",
+            value=f"This Pokémons name begins with\n`{updated_hint}`",
+        )
         try:
             if small_images:
                 embed.set_thumbnail(
-                    url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl
+                    url="http://mewbot.xyz/sprites/" + pokeurl
                 )
             else:
                 embed.set_image(
-                    url="http://dyleee.github.io/mewbot-images/sprites/" + pokeurl
+                    url="http://mewbot.xyz/sprites/" + pokeurl
                 )
         except Exception:
             return
@@ -536,7 +531,7 @@ class Spawn(commands.Cog):
                     break
                 iv_multiplier = await pconn.fetchval(
                     "SELECT iv_multiplier FROM account_bound WHERE u_id = $1",
-                    msg.author.id
+                    msg.author.id,
                 )
 
         poke_guess.guessed = True

@@ -311,14 +311,15 @@ class Pokemon(commands.Cog):
                 "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
             )
             tag_data = await pconn.fetch(
-                "SELECT id, tags FROM pokes WHERE id = ANY($1) ORDER BY id ASC", poke_ids
+                "SELECT id, tags FROM pokes WHERE id = ANY($1) ORDER BY id ASC",
+                poke_ids,
             )
-        ids = [record['id'] for record in tag_data]
-        tag_data = [record['tags'] for record in tag_data]
+        ids = [record["id"] for record in tag_data]
+        tag_data = [record["tags"] for record in tag_data]
         embed = discord.Embed(
             title="Your Pokemon Tags",
             description="Hope there's nothing bad!!",
-            color=0x000084
+            color=0x000084,
         )
         desc = ""
         tag_array = []
@@ -328,7 +329,7 @@ class Pokemon(commands.Cog):
                 tag = tag_data[idx]
                 if len(tag) != 0:
                     pn = poke_ids.index(id) + 1
-                    tag = ','.join(tag)
+                    tag = ",".join(tag)
                     desc += f"`ID`: {pn} - `Tags`: {tag}\n"
         else:
             for idx, id in enumerate(ids):
@@ -337,7 +338,7 @@ class Pokemon(commands.Cog):
                     for tag in tags:
                         if tag not in tag_array:
                             tag_array.append(tag)
-                            desc += f"{tag}\n"   
+                            desc += f"{tag}\n"
 
         pages = pagify(desc, base_embed=embed)
         await MenuView(ctx, pages).start()
@@ -653,6 +654,9 @@ class Pokemon(commands.Cog):
         elif "gleam" in pokemon:
             skin = "gleam"
             pokemon.remove("gleam")
+        elif "alpha" in pokemon:
+            skin = "alpha"
+            pokemon.remove("alpha")
         elif "radiant" in pokemon:
             skin = "radiant"
             pokemon.remove("radiant")

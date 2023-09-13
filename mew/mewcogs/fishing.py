@@ -75,58 +75,72 @@ def scatter(iterable):
 
 class CatchView(discord.ui.View):
     def __init__(
-            self, 
-            ctx: commands.Context, 
-            pokemon: str, 
-            name_being_guessed: str, 
-            item: str, exp_gain: int, 
-            inventory: dict, 
-            shiny: bool, 
-            start_time: float,
-            activity: str,
-            held_item : str,
-        ):
+        self,
+        ctx: commands.Context,
+        pokemon: str,
+        name_being_guessed: str,
+        item: str,
+        exp_gain: int,
+        inventory: dict,
+        shiny: bool,
+        start_time: float,
+        activity: str,
+        held_item: str,
+    ):
         self.modal = ActivitySpawnModal(
-            pokemon, name_being_guessed, item, exp_gain, inventory, shiny, start_time, activity, held_item, self
+            pokemon,
+            name_being_guessed,
+            item,
+            exp_gain,
+            inventory,
+            shiny,
+            start_time,
+            activity,
+            held_item,
+            self,
         )
         super().__init__(timeout=30)
         self.ctx = ctx
         self.msg = None
         self.pokemon = pokemon
-    
+
     def set_message(self, msg: discord.Message):
         self.msg = msg
-    
+
     async def on_timeout(self):
         if self.msg:
             embed = self.msg.embeds[0]
             embed.title = "Timed out!"
-            embed.description = f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+            embed.description = (
+                f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+            )
             await self.msg.edit(embed=embed, view=None)
             return
 
     async def interaction_check(self, interaction):
         return interaction.user == self.ctx.author
 
-    @discord.ui.button(label="What Pokemon might this be!", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(
+        label="What Pokemon might this be!", style=discord.ButtonStyle.blurple
+    )
     async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
         await interaction.response.send_modal(self.modal)
 
 
 class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
     def __init__(
-            self, 
-            pokemon: str, 
-            name_being_guessed: str, 
-            item: str, 
-            exp_gain: int, 
-            inventory: dict, 
-            shiny: bool, 
-            start_time: float, 
-            activity: str,
-            held_item: str, 
-            view: discord.ui.View
-        ):
+        self,
+        pokemon: str,
+        name_being_guessed: str,
+        item: str,
+        exp_gain: int,
+        inventory: dict,
+        shiny: bool,
+        start_time: float,
+        activity: str,
+        held_item: str,
+        view: discord.ui.View,
+    ):
         self.pokemon = pokemon
         self.name_being_guessed = name_being_guessed
         self.guessed = False
@@ -141,7 +155,9 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         self.attempts = 1
         super().__init__()
 
-    name = discord.ui.TextInput(label=f'Pokemon Name', placeholder="What do you think this Pokemon is?!")
+    name = discord.ui.TextInput(
+        label=f"Pokemon Name", placeholder="What do you think this Pokemon is?!"
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         self.embedmsg = interaction.message
@@ -155,8 +171,8 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         exp_gain = self.exp_gain
         energy = self.inventory["energy"]
 
-        #Depends on activity
-        if activity == 'fishing':
+        # Depends on activity
+        if activity == "fishing":
             exp = self.inventory["fishing_exp"]
             level = self.inventory["fishing_level"]
             cap = self.inventory["fishing_level_cap"]
@@ -168,9 +184,11 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
 
         # Check if pokemon name is correct
         if self.guessed:
-            return await interaction.followup.send("Someone's already guessed this pokemon!", ephemeral=True) 
+            return await interaction.followup.send(
+                "Someone's already guessed this pokemon!", ephemeral=True
+            )
 
-        #Leave original Botban code in
+        # Leave original Botban code in
         if interaction.client.botbanned(interaction.user.id):
             btn = self.view.children[0]
             btn.disabled = True
@@ -179,10 +197,10 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             embed = self.embedmsg.embeds[0]
             embed.title = f"The {pokemon} escaped."
             embed.description = f"Lost an Energy Point - {energy-1} remaining!"
-            #embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
+            # embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
             return await self.embedmsg.edit(embed=embed, view=self.view)
 
-        #Added multiple attempts. So Users should get 2 tries towards the name.  
+        # Added multiple attempts. So Users should get 2 tries towards the name.
         if not poke_spawn_check(str(self.name), pokemon) and self.attempts > 2:
             btn = self.view.children[0]
             btn.disabled = True
@@ -191,22 +209,24 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             embed = self.embedmsg.embeds[0]
             embed.title = f"The {pokemon} escaped."
             embed.description = f"Lost an Energy Point - {energy-1} remaining!"
-            #embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
+            # embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
             return await self.embedmsg.edit(embed=embed, view=self.view)
         elif not poke_spawn_check(str(self.name), pokemon) and self.attempts >= 0:
             self.attempts += 1
             return await interaction.followup.send(
                 "Incorrect name! Try again.", ephemeral=True
             )
-        else: 
+        else:
             pass
 
         # Someone caught the poke, create it
-        pokedata = await interaction.client.commondb.create_poke(interaction.client, interaction.user.id, pokemon, shiny=shiny)
+        pokedata = await interaction.client.commondb.create_poke(
+            interaction.client, interaction.user.id, pokemon, shiny=shiny
+        )
         ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
-        
+
         async with interaction.client.db[0].acquire() as pconn:
-            #Handle points
+            # Handle points
             end_time = perf_counter()
             final_time = round(end_time - self.start_time)
 
@@ -219,74 +239,68 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             else:
                 newPoints = random.randint(1, 5)
 
-            if activity == 'fishing':
+            if activity == "fishing":
                 await pconn.execute(
                     "UPDATE users SET fishing_points = fishing_points + $1 WHERE u_id = $2",
                     newPoints,
-                    interaction.user.id
+                    interaction.user.id,
                 )
             else:
                 await pconn.execute(
                     "UPDATE users SET mining_points = mining_points + $1 WHERE u_id = $2",
                     newPoints,
-                    interaction.user.id
+                    interaction.user.id,
                 )
-            
-            #Credit Reward - Only Fishing
-            if type(item) is int and activity == 'fishing':
+
+            # Credit Reward - Only Fishing
+            if type(item) is int and activity == "fishing":
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                     item,
-                    interaction.user.id
+                    interaction.user.id,
                 )
                 item_msg = f"**{item}** credits"
-            
-            #Radiant Gems - Only Mining
-            elif type(item) is int and activity == 'mining':
+
+            # Radiant Gems - Only Mining
+            elif type(item) is int and activity == "mining":
                 await interaction.client.commondb.add_bag_item(
-                    interaction.user.id,
-                    'radiant_gem',
-                    item,
-                    True
+                    interaction.user.id, "radiant_gem", item, True
                 )
                 item_msg = f"**{item}** Gleam Gems"
 
-            #Item/Chest Reward
+            # Item/Chest Reward
             else:
-                #Chest, Gleam Gems are Account Bound items
+                # Chest, Gleam Gems are Account Bound items
                 if item not in ("common_chest", "rare_chest"):
                     bound = False
                 else:
                     bound = True
-                
-                #TODO:Can be removed once spelling is right in pokemon_list.py
-                if item == 'poison_bard':
-                    item = 'poison_barb'
+
+                # TODO:Can be removed once spelling is right in pokemon_list.py
+                if item == "poison_bard":
+                    item = "poison_barb"
                 print(item)
                 await interaction.client.commondb.add_bag_item(
-                    interaction.user.id,
-                    item,
-                    1,
-                    bound
+                    interaction.user.id, item, 1, bound
                 )
 
-                #If we pass a credit here it errors. Only done during battle items or chest
+                # If we pass a credit here it errors. Only done during battle items or chest
                 item = item.replace("_", " ").title()
                 item_msg = f"**{item}**"
 
-            #Exp rewards
+            # Exp rewards
             leveled_up = cap < (exp_gain + exp) and level < 100
             if leveled_up:
                 newcap = getcap(level)
                 level += 1
-                if activity == 'fishing':
+                if activity == "fishing":
                     await pconn.execute(
                         f"UPDATE users SET fishing_level = $3, fishing_level_cap = $2, fishing_exp = 0 WHERE u_id = $1",
                         interaction.user.id,
                         newcap,
                         level,
                     )
-                else: #Mining
+                else:  # Mining
                     await pconn.execute(
                         f"UPDATE users SET mining_level = $3, mining_level_cap = $2, mining_exp = 0 WHERE u_id = $1",
                         interaction.user.id,
@@ -294,45 +308,45 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                         level,
                     )
             else:
-                if activity == 'fishing':
+                if activity == "fishing":
                     await pconn.execute(
                         f"UPDATE users SET fishing_exp = fishing_exp + $2 WHERE u_id = $1",
                         interaction.user.id,
                         exp_gain,
                     )
-                else: #Mining
+                else:  # Mining
                     await pconn.execute(
                         f"UPDATE users SET mining_exp = mining_exp + $2 WHERE u_id = $1",
                         interaction.user.id,
                         exp_gain,
                     )
 
-        #Start embed
+        # Start embed
         e = discord.Embed(
             title=f"{activity.capitalize()} Complete!",
             description=f"Here's what you got from {activity} with your **{self.held_item.title()}**!",
             color=0xFFB6C1,
         )
-        #Caught pokemon and item 
+        # Caught pokemon and item
         e.add_field(
-            name="Rewards!", 
+            name="Rewards!",
             value=f"`Caught`: {pokedata.emoji}{pokemon} - {ivpercent}% IV\n`Item`: {item_msg}",
-            inline=True
+            inline=True,
         )
-        #Handle exp gain
-        exp_msg = f"`{activity.capitalize()} Points`: {newPoints}\n`Exp Gain`: {exp_gain} exp"
+        # Handle exp gain
+        exp_msg = (
+            f"`{activity.capitalize()} Points`: {newPoints}\n`Exp Gain`: {exp_gain} exp"
+        )
         if leveled_up:
             exp_msg += f"\nLeveled up!\nYour {activity.capitalize()} Level is now **Level {level}**!"
         e.add_field(
-            name=f"{activity.capitalize()} Skill",
-            value=f"{exp_msg}",
-            inline=True
+            name=f"{activity.capitalize()} Skill", value=f"{exp_msg}", inline=True
         )
         e.set_footer(
             text=f"Lost an Energy Point - {energy-1} remaining! | Took {final_time} secs."
         )
-        #Only if fishing
-        if activity == 'fishing':
+        # Only if fishing
+        if activity == "fishing":
             user = await interaction.client.mongo_find(
                 "users",
                 {"user": interaction.user.id},
@@ -340,7 +354,9 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             )
             progress = user["progress"]
             progress["fish"] = progress.get("fish", 0) + 1
-            await interaction.client.mongo_update("users", {"user": interaction.user.id}, {"progress": progress})
+            await interaction.client.mongo_update(
+                "users", {"user": interaction.user.id}, {"progress": progress}
+            )
         #
         try:
             await self.embedmsg.edit(embed=e, view=None)
@@ -350,20 +366,19 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             await interaction.channel.send(
                 "You have used up all your Energy!\nWait for your Energy to be replenished, or vote for Mewbot to get more energy!"
             )
-        
+
         self.guessed = True
         self.view.stop()
-        #Dispatches an event that a poke was fished.
-        #on_poke_fish(self, channel, user)
-        #TODO: Update bottom event for event orientated fishing events
-        #interaction.client.dispatch("poke_fish", interaction.channel, interaction.user)
-
+        # Dispatches an event that a poke was fished.
+        # on_poke_fish(self, channel, user)
+        # TODO: Update bottom event for event orientated fishing events
+        # interaction.client.dispatch("poke_fish", interaction.channel, interaction.user)
 
 
 class Minigames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.hybrid_group()
     async def mg(self, ctx):
         """
@@ -376,22 +391,27 @@ class Minigames(commands.Cog):
         """Provides Battle Items and Pokemon"""
         async with ctx.bot.db[0].acquire() as pconn:
             details = await pconn.fetchrow(
-                "SELECT *, inventory::json as cast_inv FROM users WHERE u_id = $1", ctx.author.id
+                "SELECT *, inventory::json as cast_inv FROM users WHERE u_id = $1",
+                ctx.author.id,
             )
             if details is None:
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
             rod = details["held_item"]
             if not rod or not rod.endswith("rod"):
-                await ctx.send("You are not Holding a Fishing Rod!\nBuy one in the shop with `/shop minigames` first.\nIf currently own one, unequip it and then equip it again!")
+                await ctx.send(
+                    "You are not Holding a Fishing Rod!\nBuy one in the shop with `/shop minigames` first.\nIf currently own one, unequip it and then equip it again!"
+                )
                 return
             rod = rod.capitalize().replace("-", " ")
             level = details["fishing_level"]
 
-            #Handle energy
-            energy = details['energy']
+            # Handle energy
+            energy = details["energy"]
             if energy <= 0:
-                await ctx.send("You don't have any more energy points!\nWait for your Energy to be replenished, or vote for Mewbot to get more energy!")
+                await ctx.send(
+                    "You don't have any more energy points!\nWait for your Energy to be replenished, or vote for Mewbot to get more energy!"
+                )
                 cog = ctx.bot.get_cog("Extras")
                 if cog is not None:
                     await cog.vote.callback(cog, ctx)
@@ -402,15 +422,13 @@ class Minigames(commands.Cog):
             )
             energy = energy - 1
 
-            #Initial embed
+            # Initial embed
             e = discord.Embed(
-                title=f"Let's go Fishing", 
+                title=f"Let's go Fishing",
                 description=f"You cast your {rod.title()} into the water!",
-                 color=0xFFBC61
+                color=0xFFBC61,
             )
-            e.set_image(
-                url = "https://dyleee.github.io/mewbot-images/poke-fish.gif"
-            )
+            e.set_image(url="https://mewbot.xyz/poke-fish.gif")
             embed = await ctx.send(embed=e)
 
             # Added two different chances for items and fish
@@ -422,11 +440,11 @@ class Minigames(commands.Cog):
 
             if fish_chance == "common":
                 poke = random.choice(common_water)
-            elif fish_chance == "uncommon": 
+            elif fish_chance == "uncommon":
                 poke = random.choice(uncommon_water)
-            elif fish_chance == "rare": 
+            elif fish_chance == "rare":
                 poke = random.choice(rare_water)
-            elif fish_chance == "extreme_rare": 
+            elif fish_chance == "extreme_rare":
                 poke = random.choice(extremely_rare_water)
             poke = poke.capitalize()
 
@@ -434,67 +452,69 @@ class Minigames(commands.Cog):
                 ("credits", "item", "common_chest", "rare_chest"),
                 weights=(0.440, 0.36, 0.15, 0.05),
             )[0]
-            if item_chance == 'credits':
+            if item_chance == "credits":
                 item = random.randint(5000, 10000)
-            elif item_chance == 'item':
+            elif item_chance == "item":
                 item = random.choice(battle_items)
-            elif item_chance == 'common_chest':
-                item = 'common_chest'
-            elif item_chance == 'rare_chest':
-                item = 'rare_chest'
+            elif item_chance == "common_chest":
+                item = "common_chest"
+            elif item_chance == "rare_chest":
+                item = "rare_chest"
 
             name = poke
-            
-            #If Fishing Lvl 100 set threshold to normal
+
+            # If Fishing Lvl 100 set threshold to normal
             if level >= 100:
                 threshold = 4000
             else:
                 threshold = 8000
 
-            inventory = details["cast_inv"]            
-            threshold = round(threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100))
+            inventory = details["cast_inv"]
+            threshold = round(
+                threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100)
+            )
             shiny = random.choice([False for i in range(threshold)] + [True])
 
             SHOP = await ctx.bot.db[1].new_shop.find({}).to_list(None)
-            exp_gain = [t["price"] for t in SHOP if t["item"] == rod.lower().replace(" ", "_")][0] / 1000
-            #If Rod isn't Super or Ultra reduce exp gain by 50%
+            exp_gain = [
+                t["price"] for t in SHOP if t["item"] == rod.lower().replace(" ", "_")
+            ][0] / 1000
+            # If Rod isn't Super or Ultra reduce exp gain by 50%
             if rod not in ("super rod", "ultra rod"):
                 exp_gain += exp_gain * level / 2
-            
+
             await asyncio.sleep(random.randint(3, 7))
             scattered_name = scatter(name)
 
             if ctx.author.id == 334155028170407949:
                 await ctx.send(f"{name}")
 
-            #Resend embed with scrambled name
+            # Resend embed with scrambled name
             e = discord.Embed(
                 title=f"Something bit your hook!",
                 description=f"You've encountered `{scattered_name}`",
-                color=0xFFBC61
+                color=0xFFBC61,
             )
-            e.set_image(
-                url = "https://dyleee.github.io/mewbot-images/poke-fish.gif"
-            )
+            e.set_image(url="https://mewbot.xyz/poke-fish.gif")
             e.set_footer(
                 text=f"You have 30 secs to guess the Pokemon to catch it.",
-                #icon_url = ctx.author.avatar_url
+                # icon_url = ctx.author.avatar_url
             )
             try:
-                #Start timer
+                # Start timer
                 start_time = perf_counter()
 
                 view = CatchView(
-                    ctx = ctx,
-                    pokemon = poke,
-                    name_being_guessed = scattered_name,
-                    item = item,
-                    inventory = details,
-                    exp_gain = exp_gain,
-                    shiny = shiny,
-                    start_time = start_time,
-                    activity = 'fishing',
-                    held_item= rod,
+                    ctx=ctx,
+                    pokemon=poke,
+                    name_being_guessed=scattered_name,
+                    item=item,
+                    inventory=details,
+                    exp_gain=exp_gain,
+                    shiny=shiny,
+                    start_time=start_time,
+                    activity="fishing",
+                    held_item=rod,
                 )
 
                 await embed.edit(embed=e, view=view)
@@ -503,28 +523,32 @@ class Minigames(commands.Cog):
             except discord.NotFound:
                 await ctx.send(embed=e)
 
-
     @mg.command()
     async def mine(self, ctx):
         """Provides Crystals and Pokemon"""
         async with ctx.bot.db[0].acquire() as pconn:
             details = await pconn.fetchrow(
-                "SELECT *, inventory::json as mine_inv FROM users WHERE u_id = $1", ctx.author.id
+                "SELECT *, inventory::json as mine_inv FROM users WHERE u_id = $1",
+                ctx.author.id,
             )
             if details is None:
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
             shovel = details["shovel"]
             if not shovel or not shovel.endswith("shovel"):
-                await ctx.send("You are not holding a Shovel!\nBuy one in the shop with `/shop minigames` first.")
+                await ctx.send(
+                    "You are not holding a Shovel!\nBuy one in the shop with `/shop minigames` first."
+                )
                 return
             shovel = shovel.capitalize().replace("_", " ")
             level = details["mining_level"]
 
-            #Handle energy
-            energy = details['energy']
+            # Handle energy
+            energy = details["energy"]
             if energy <= 0:
-                await ctx.send("You don't have any more energy points!\nWait for your Energy to be replenished, or vote for Mewbot to get more energy!")
+                await ctx.send(
+                    "You don't have any more energy points!\nWait for your Energy to be replenished, or vote for Mewbot to get more energy!"
+                )
                 cog = ctx.bot.get_cog("Extras")
                 if cog is not None:
                     await cog.vote.callback(cog, ctx)
@@ -535,16 +559,14 @@ class Minigames(commands.Cog):
             )
             energy = energy - 1
 
-            #Initial embed
+            # Initial embed
             chance = random.uniform(1000, 10000)
             e = discord.Embed(
-                title=f"Let's go Mining", 
+                title=f"Let's go Mining",
                 description=f"You start digging with your **{shovel.title()}**!",
-                 color=0xFFBC61
+                color=0xFFBC61,
             )
-            e.set_image(
-                url = "https://dyleee.github.io/mewbot-images/mining.png"
-            )
+            e.set_image(url="https://mewbot.xyz/mining.png")
             embed = await ctx.send(embed=e)
 
             # Added two different chances for items and fish
@@ -556,11 +578,11 @@ class Minigames(commands.Cog):
 
             if fish_chance == "common":
                 poke = random.choice(common_mining)
-            elif fish_chance == "uncommon": 
+            elif fish_chance == "uncommon":
                 poke = random.choice(uncommon_mining)
-            elif fish_chance == "rare": 
+            elif fish_chance == "rare":
                 poke = random.choice(rare_mining)
-            elif fish_chance == "extreme_rare": 
+            elif fish_chance == "extreme_rare":
                 poke = random.choice(extremely_rare_mining)
             poke = poke.capitalize()
 
@@ -568,70 +590,74 @@ class Minigames(commands.Cog):
                 ("radiant_gem", "item", "common_chest", "rare_chest"),
                 weights=(0.25, 0.50, 0.15, 0.05),
             )[0]
-            if item_chance == 'radiant_gem':
+            if item_chance == "radiant_gem":
                 item = random.randint(1, 10)
-            elif item_chance == 'item':
+            elif item_chance == "item":
                 item = random.choice(crystals)
-            elif item_chance == 'common_chest':
-                item = 'common_chest'
-            elif item_chance == 'rare_chest':
-                item = 'rare_chest'
+            elif item_chance == "common_chest":
+                item = "common_chest"
+            elif item_chance == "rare_chest":
+                item = "rare_chest"
 
             name = poke
-            
-            #If Mining Lvl 100 set threshold to normal
+
+            # If Mining Lvl 100 set threshold to normal
             if level >= 100:
                 threshold = 4000
             else:
                 threshold = 8000
 
-            inventory = details["mine_inv"]            
-            threshold = round(threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100))
+            inventory = details["mine_inv"]
+            threshold = round(
+                threshold - threshold * (inventory.get("shiny-multiplier", 0) / 100)
+            )
             shiny = random.choice([False for i in range(threshold)] + [True])
 
             SHOP = await ctx.bot.db[1].new_shop.find({}).to_list(None)
-            exp_gain = [t["price"] for t in SHOP if t["item"] == shovel.lower().replace(" ", "_")][0] / 1000
-            #If Rod isn't Super or Ultra reduce exp gain by 50%
+            exp_gain = [
+                t["price"]
+                for t in SHOP
+                if t["item"] == shovel.lower().replace(" ", "_")
+            ][0] / 1000
+            # If Rod isn't Super or Ultra reduce exp gain by 50%
             if shovel not in ("super shovel", "ultra shovel"):
                 exp_gain += exp_gain * level / 2
-            
+
             await asyncio.sleep(random.randint(3, 7))
-            #scattered_name = scatter(name)
+            # scattered_name = scatter(name)
             letter_list = list(name)
             shuffle(letter_list)
-            provided_name = ''.join(letter_list)
+            provided_name = "".join(letter_list)
 
             if ctx.author.id == 334155028170407949:
                 await ctx.send(f"{name}")
 
-            #Resend embed with scrambled name
+            # Resend embed with scrambled name
             e = discord.Embed(
                 title=f"Your **{shovel.title()}** hit something!",
                 description=f"You've encountered `{provided_name}`",
-                color=0xFFBC61
+                color=0xFFBC61,
             )
-            e.set_image(
-                url = "https://dyleee.github.io/mewbot-images/mining_active.gif"
-            )
+            e.set_image(url="https://mewbot.xyz/mining_active.gif")
             e.set_footer(
                 text=f"You have 30 secs to guess the Pokemon to catch it.",
-                #icon_url = ctx.author.avatar_url
+                # icon_url = ctx.author.avatar_url
             )
             try:
-                #Start timer
+                # Start timer
                 start_time = perf_counter()
 
                 view = CatchView(
-                    ctx = ctx,
-                    pokemon = poke,
-                    name_being_guessed = provided_name,
-                    item = item,
-                    inventory = details,
-                    exp_gain = exp_gain,
-                    shiny = shiny,
-                    start_time = start_time,
-                    activity = 'mining',
-                    held_item = shovel
+                    ctx=ctx,
+                    pokemon=poke,
+                    name_being_guessed=provided_name,
+                    item=item,
+                    inventory=details,
+                    exp_gain=exp_gain,
+                    shiny=shiny,
+                    start_time=start_time,
+                    activity="mining",
+                    held_item=shovel,
                 )
 
                 await embed.edit(embed=e, view=view)
@@ -640,7 +666,7 @@ class Minigames(commands.Cog):
             except discord.NotFound:
                 await ctx.send(embed=e)
 
-    #Moved to minigames b/c it's mainly used in relation to this.
+    # Moved to minigames b/c it's mainly used in relation to this.
     @commands.hybrid_command()
     async def energy(self, ctx):
         """Energy and Minigame info"""
@@ -655,24 +681,24 @@ class Minigames(commands.Cog):
                 f"SELECT u_id, mining_points FROM users WHERE mining_points != 0 ORDER BY mining_points DESC"
             )
             fishing_ids = [record["u_id"] for record in fishing_players]
-            mining_ids = [record['u_id'] for record in mining_players]
+            mining_ids = [record["u_id"] for record in mining_players]
 
         if details is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
         embed = discord.Embed(
-            title="Your Energy", 
+            title="Your Energy",
             description="Different stats and levels from various minigames!",
-            color=0xFFB6C1
+            color=0xFFB6C1,
         )
         fishing_level = details["fishing_level"]
         fishing_exp = details["fishing_exp"]
         fishing_levelcap = details["fishing_level_cap"]
-        fishing_points = details['fishing_points']
+        fishing_points = details["fishing_points"]
         mining_level = details["mining_level"]
         mining_exp = details["mining_exp"]
         mining_levelcap = details["mining_level_cap"]
-        mining_points = details['mining_points']
+        mining_points = details["mining_points"]
         mg_energy = do_health(10, details["energy"])
         npc_energy = do_health(10, details["npc_energy"])
 
@@ -693,21 +719,20 @@ class Minigames(commands.Cog):
             value=(
                 f"__**Fishing Stats**__ 🐟\n`Level`: {fishing_level} - `Exp`: {fishing_exp}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}\n"
                 f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {mining_exp}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}"
-            )
+            ),
         )
 
         embed.add_field(
-            name="Energy Levels", 
+            name="Energy Levels",
             value=(
                 f"__**Minigame Energy**__\n{mg_energy}\n"
                 f"__**NPC Energy**__\n{npc_energy}"
-            )
+            ),
         )
 
-        embed.set_footer(
-            text="If you have some Energy go fishing or mining!" 
-        )
+        embed.set_footer(text="If you have some Energy go fishing or mining!")
         await ctx.send(embed=embed)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Minigames(bot))

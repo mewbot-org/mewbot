@@ -640,19 +640,19 @@ async def vote_handler(data, auth, user_id, list_name):
         berry = random.choice(list(app.utils.berryList))
     if berry:
         async with app.pool.acquire() as pconn:
-            #Old bag system w/JSON array
-            #items = await pconn.fetchval(
-                #"SELECT items::json FROM users WHERE u_id = $1", user_id
-            #)
-            #if items is not None:
-                #items[berry] = items.get(berry, 0) + 1
-                #await pconn.execute(
-                    #"UPDATE users SET items = $1::json WHERE u_id = $2",
-                    #items,
-                    #user_id,
-                #)
+            # Old bag system w/JSON array
+            # items = await pconn.fetchval(
+            # "SELECT items::json FROM users WHERE u_id = $1", user_id
+            # )
+            # if items is not None:
+            # items[berry] = items.get(berry, 0) + 1
+            # await pconn.execute(
+            # "UPDATE users SET items = $1::json WHERE u_id = $2",
+            # items,
+            # user_id,
+            # )
             query = f"UPDATE bag SET {berry} = {berry} + 1 WHERE u_id = $1"
-            args = (user_id)
+            args = user_id
             await pconn.execute(query, args)
 
     async with app.pool.acquire() as pconn:
@@ -677,7 +677,7 @@ async def vote_handler(data, auth, user_id, list_name):
                 vote_streak,
                 user_id,
             )
-            #inventory = data["inventory"]
+            # inventory = data["inventory"]
             skins = data["skins"]
             # different than vote_streak for it to wrap around while displaying as the correct #
             reward_value = ((vote_streak - 1) % 100) + 1
@@ -688,7 +688,7 @@ async def vote_handler(data, auth, user_id, list_name):
                     await pconn.execute(
                         "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
                         reward["gems"],
-                        user_id
+                        user_id,
                     )
                     msg += f"-**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
@@ -696,7 +696,7 @@ async def vote_handler(data, auth, user_id, list_name):
                     chest_name = f"{chest_name}"
                     await pconn.execute(
                         f"UPDATE account_bound SET {chest_name} = {chest_name} + 1 WHERE u_id = $1",
-                        user_id
+                        user_id,
                     )
                     msg += f"- A **{reward['chest']} chest**\n"
                 if reward["skin"]:

@@ -85,8 +85,7 @@ class Extras(commands.Cog):
         """Spread honey in this channel to attract Pokémon."""
         async with ctx.bot.db[0].acquire() as pconn:
             user_honey = await pconn.fetchval(
-                "SELECT honey FROM account_bound WHERE u_id = $1", 
-                ctx.author.id
+                "SELECT honey FROM account_bound WHERE u_id = $1", ctx.author.id
             )
             if user_honey is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
@@ -101,12 +100,7 @@ class Extras(commands.Cog):
                 )
                 return
             if user_honey >= 1:
-                await self.bot.commondb.remove_bag_item(
-                    ctx.author.id,
-                    "honey",
-                    1,
-                    True
-                )
+                await self.bot.commondb.remove_bag_item(ctx.author.id, "honey", 1, True)
             else:
                 await ctx.send("You do not have any units of Honey!")
                 return
@@ -226,7 +220,7 @@ class Extras(commands.Cog):
             embed = discord.Embed(
                 title="Fishing Points Leaderboard",
                 description="Catch some fish!",
-                color=0xFFB6C1
+                color=0xFFB6C1,
             )
             embed.set_footer(
                 text="This only accounts for users with at least 1 Fishing Point"
@@ -259,7 +253,7 @@ class Extras(commands.Cog):
             embed = discord.Embed(
                 title="Mining Points Leaderboard",
                 description="Mine some rocks!",
-                color=0xFFB6C1
+                color=0xFFB6C1,
             )
             embed.set_footer(
                 text="This only accounts for users with at least 1 Mining Point"
@@ -332,18 +326,19 @@ class Extras(commands.Cog):
         nature = nature.capitalize()
         async with ctx.bot.db[0].acquire() as conn:
             nature_capsule = await conn.fetchval(
-                "SELECT nature_capsules FROM account_bound WHERE u_id = $1", 
-                ctx.author.id
+                "SELECT nature_capsules FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
             )
             credits = await conn.fetchval(
-                "SELECT mewcoins FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
             )
         if credits is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
         if nature_capsule is None:
-            await ctx.send(f"This command uses our new bag system!\nUse `/bag convert` if you haven't!")
+            await ctx.send(
+                f"This command uses our new bag system!\nUse `/bag convert` if you haven't!"
+            )
             return
         if nature_capsule <= 0 or nature == None:
             await ctx.send(
@@ -351,10 +346,7 @@ class Extras(commands.Cog):
             )
             return
         await self.bot.commondb.remove_bag_item(
-            ctx.author.id,
-            "nature_capsules",
-            1,
-            True
+            ctx.author.id, "nature_capsules", 1, True
         )
         async with ctx.bot.db[0].acquire() as pconn:
             _id = await pconn.fetchval(
@@ -367,7 +359,7 @@ class Extras(commands.Cog):
             f"You have successfully changed your selected Pokemon's nature to {nature}"
         )
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     async def bag(self, ctx):
         """
         Lists your items in your backpack.
@@ -579,11 +571,11 @@ class Extras(commands.Cog):
                 vote_streak = 0
             else:
                 vote_streak = data["vote_streak"]
-            uppoints = data['upvotepoints']
+            uppoints = data["upvotepoints"]
         embed = discord.Embed(
             title="Mewbot Voting!",
             description="Vote for Mewbot through one of the links below!\nYou'll receive 1 Upvote Point, 1,500 credits, and 5 Energy Bars after upvoting!",
-            color=0xFFB6C1
+            color=0xFFB6C1,
         )
         embed.add_field(
             name="Websites",
@@ -591,7 +583,7 @@ class Extras(commands.Cog):
                 "[#1 top.gg](https://top.gg/bot/519850436899897346/vote)\n"
                 "[#2 DiscordBotList](https://discordbotlist.com/bots/mewbot/upvote)"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Vote Counts",
@@ -600,7 +592,7 @@ class Extras(commands.Cog):
                 f"**<:upvotestreak:1037942367929503766> Vote Streak**: {vote_streak}\n"
                 f"Note: For Top.gg Only"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Official Server",
@@ -608,12 +600,12 @@ class Extras(commands.Cog):
                 "Join for support and our huge community of Mewbot users!\n"
                 "[Mewbot Official](https://discord.gg/mewbot)"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Newest Update!",
             value=f"{update_data['update']}\n{update_data['dev']} on {update_data['update_date']}",
-            inline=False
+            inline=False,
         )
 
         await ctx.send(embed=embed)
@@ -729,7 +721,7 @@ class Extras(commands.Cog):
             return
         await ctx.send(f"Successfully changed Pokemon nickname to {nick}.")
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     async def stats(self, ctx):
         """Show some statistics about yourself."""
         async with ctx.bot.db[0].acquire() as tconn:
@@ -745,14 +737,14 @@ class Extras(commands.Cog):
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
             return
         embed = discord.Embed(
-            title="Your Stats", 
+            title="Your Stats",
             description="Different stats and levels from various activities!",
-            color=0xFFB6C1
+            color=0xFFB6C1,
         )
         fishing_level = details["fishing_level"]
         fishing_exp = details["fishing_exp"]
         fishing_levelcap = details["fishing_level_cap"]
-        fishing_points = details['fishing_points']
+        fishing_points = details["fishing_points"]
         energy = do_health(10, details["energy"])
 
         if ctx.author.id in ids:
@@ -814,7 +806,7 @@ class Extras(commands.Cog):
             f"`{ctx.author.id} - {hunt} @ {chain}x -> {pokemon}`"
         )
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view trainer information.")
     async def trainer(self, ctx, user: discord.User = None):
         """View your trainer card or the trainer card of another user."""
@@ -1030,7 +1022,7 @@ class Extras(commands.Cog):
             )
         await ctx.send(f"Your region has been set to **{reg.title()}**.")
 
-    #@commands.hybrid_command()
+    # @commands.hybrid_command()
     @discord.app_commands.describe(user="A User to view their balance details.")
     async def bal(self, ctx, user: discord.User = None):
         """Shows your Balance & Lists credits, redeems, EV points, upvote points, and selected fishing rod."""
@@ -1185,12 +1177,12 @@ class Extras(commands.Cog):
             inline=True,
         )
 
-        #This is for the purchased chest
-        #This table is only made when players buy a chest
-        #So new players won't have it causing command to fail
+        # This is for the purchased chest
+        # This table is only made when players buy a chest
+        # So new players won't have it causing command to fail
         if info is not None:
-            rare_count = info.get("rare",0)
-            mythic_count = info.get("mythic",0)
+            rare_count = info.get("rare", 0)
+            mythic_count = info.get("mythic", 0)
             legend_count = info.get("legend", 0)
             embed.add_field(name="Exalted", value=f"Count: {exalted}", inline=True)
             embed.add_field(

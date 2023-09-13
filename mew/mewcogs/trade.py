@@ -45,6 +45,7 @@ class TradeList:
             if poke.sender == sender:
                 yield poke
 
+
 class TradeUtilView(discord.ui.View):
     def __init__(
         self,
@@ -53,12 +54,15 @@ class TradeUtilView(discord.ui.View):
         self.modal = TradeUtilModal(self)
         super().__init__(timeout=30)
         self.ctx = ctx
+        self.msg = None
 
     async def on_timeout(self):
         if self.msg:
             embed = self.msg.embeds[0]
             embed.title = "Timed out!"
-            embed.description = f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+            embed.description = (
+                f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+            )
             await self.msg.edit(embed=embed, view=None)
             return
 
@@ -69,31 +73,34 @@ class TradeUtilView(discord.ui.View):
     async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
         await interaction.response.send_modal(self.modal)
 
+
 class TradeUtilModal(discord.ui.Modal, title="Mewbot Trade/Breed Util"):
-    def __init__(
-        self,
-        view: discord.ui.View
-    ):
+    def __init__(self, view: discord.ui.View):
         super().__init__()
 
-    msg_id = discord.ui.TextInput(label=f'Message ID', placeholder="Just the ID, not the whole link please...")
+    msg_id = discord.ui.TextInput(
+        label=f"Message ID", placeholder="Just the ID, not the whole link please..."
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         m = await interaction.channel.fetch_message(self.msg_id)
-        lines = m.embeds[0].description.split('\n')
+        lines = m.embeds[0].description.split("\n")
         result = []  #  <---here?
         for line in lines:
-            form = '<:num:1029030329350111232>**`'
+            form = "<:num:1029030329350111232>**`"
             start = line.find(form)
-            sub = line[start + len(form):]
-            end = sub.find('`**')
+            sub = line[start + len(form) :]
+            end = sub.find("`**")
             final = sub[:end]
             result.append(int(final))
         result = " ".join([str(x) for x in result])
-        embed = discord.Embed(title = "ID's requested", description=result, color=0xEE8700)
+        embed = discord.Embed(
+            title="ID's requested", description=result, color=0xEE8700
+        )
         await interaction.response.send_message(embed=embed)
         await interaction.followup.send(result)
         return
+
 
 class PokeAddModal(discord.ui.Modal, title="Add A Pokemon!"):
     def __init__(self, view: discord.ui.View):
@@ -1074,7 +1081,7 @@ class Trade(commands.Cog):
     async def trade(self, ctx):
         ...
 
-    @trade.command(name='user')
+    @trade.command(name="user")
     @discord.app_commands.describe(user="The User to begin the trade with.")
     async def user(self, ctx, user: discord.Member):
         """Begin a trade with another user!"""
@@ -1188,19 +1195,19 @@ class Trade(commands.Cog):
         )
         view.set_message(msg)
 
-
     @trade.command(name="util")
     async def trade_util(self, ctx):
         """Spits out Poke IDs from provided message ID"""
         embed = discord.Embed(
             title="Mewbot Trade/Breeding Utils",
             description="This helps you by taking all of the Pokemon IDs listed in an embed\nand sending them in a message that is copy and pastable!",
-            color=0x0084FD
+            color=0x0084FD,
         )
         view = TradeUtilView(
-            ctx = ctx,
+            ctx=ctx,
         )
         await ctx.send(embed=embed, view=view)
+
 
 async def setup(bot):
     await bot.add_cog(Trade(bot))

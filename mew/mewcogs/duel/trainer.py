@@ -59,9 +59,9 @@ class Trainer:
         self.future_sight = ExpiringItem()
         # Boolean - Whether or not any of this trainer's pokemon have mega evolved yet this battle.
         self.has_mega_evolved = False
-        #Int - Stores the number of times a pokemon in this trainer's party has fainted, including after being revived.
+        # Int - Stores the number of times a pokemon in this trainer's party has fainted, including after being revived.
         self.num_fainted = 0
-        #Int - Stores the HP of the subsitute this trainer's next pokemon on the field will receive.
+        # Int - Stores the HP of the subsitute this trainer's next pokemon on the field will receive.
         self.next_substitute = 0
 
     def has_alive_pokemon(self) -> bool:
@@ -211,11 +211,11 @@ class Trainer:
             if self.current_pokemon.torment and self.current_pokemon.last_move is move:
                 continue
             if (
-                    self.current_pokemon.last_move is not None
-                    and self.current_pokemon.last_move.effect == 492
-                    and self.current_pokemon.last_move.id == move.id
-                    and not self.current_pokemon.last_move_failed
-                ):
+                self.current_pokemon.last_move is not None
+                and self.current_pokemon.last_move.effect == 492
+                and self.current_pokemon.last_move.id == move.id
+                and not self.current_pokemon.last_move_failed
+            ):
                 continue
             if defender.imprison and move.id in [x.id for x in defender.moves]:
                 continue
