@@ -4,6 +4,7 @@ This source code is un-licensed.  As such, standard copyright laws apply.
 Any unauthorized access, distribution, or use is strictly prohibited.
 """
 import sys
+import uvloop
 import os
 
 if not os.path.isdir(sys.argv[6]):
@@ -143,7 +144,13 @@ if __name__ == "__main__":
 
     try:
         with SIGINTController(client, logger):
-            asyncio.run(client._run())
+            
+            if sys.version_info >= (3, 11):
+                with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+                    runner.run(main())
+            else:
+                uvloop.install()
+                asyncio.run(client._run())
     except Exception as e:
         logger.critical("Ran into a critical error!", exc_info=True)
     finally:

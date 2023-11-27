@@ -121,6 +121,15 @@ class Start(commands.Cog):
         )
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(user_query, *user_args)
+
+            #This preps bag and account bound tables
+            await pconn.execute(
+                "INSERT INTO bag (u_id) VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+            )
+            await pconn.execute(
+                "INSERT INTO account_bound VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+            )
+
         await ctx.bot.commondb.create_poke(
             ctx.bot, ctx.author.id, starter, boosted=True
         )

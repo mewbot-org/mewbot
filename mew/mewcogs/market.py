@@ -181,6 +181,7 @@ class Market(commands.Cog):
                     )
                     return
                 poke, owner, price, buyer = details
+                vat_price = self.bot.misc.get_vat_price(price)
                 if owner == ctx.author.id:
                     await ctx.send("You can not buy your own pokemon.")
                     await self.bot.redis_manager.redis.execute(
@@ -208,7 +209,7 @@ class Market(commands.Cog):
             pokename = pokename.capitalize()
             if not await ConfirmView(
                 ctx,
-                f"Are you sure you want to buy a level {pokelevel} {pokename} for {price} credits?",
+                f"Are you sure you want to buy a level {pokelevel} {pokename} for {vat_price} (7% value-added tax) credits?",
             ).wait():
                 await ctx.send("Purchase cancelled.")
                 return
@@ -230,7 +231,7 @@ class Market(commands.Cog):
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
-                if price > credits:
+                if vat_price > credits:
                     await ctx.send("You don't have enough credits to buy that pokemon.")
                     await self.bot.redis_manager.redis.execute(
                         "LREM", "marketlock", "1", str(listing_id)
@@ -244,7 +245,7 @@ class Market(commands.Cog):
                 await pconn.execute(
                     "UPDATE users SET pokes = array_append(pokes, $1), mewcoins = mewcoins - $2 WHERE u_id = $3",
                     poke,
-                    price,
+                    vat_price,
                     ctx.author.id,
                 )
                 deposit = int(price * DEPOSIT_RATE)
@@ -256,12 +257,12 @@ class Market(commands.Cog):
                 )
             try:
                 await ctx.author.send(
-                    f"You have Successfully Bought A {pokename} for {price} credits."
+                    f"You have Successfully Bought A {pokename} for {vat_price} credits."
                 )
             except discord.HTTPException:
                 pass
             await ctx.send(
-                f"You have Successfully Bought A {pokename} for {price} credits."
+                f"You have Successfully Bought A {pokename} for {vat_price} credits."
             )
             try:
                 user = await ctx.bot.fetch_user(owner)

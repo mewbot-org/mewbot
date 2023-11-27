@@ -197,7 +197,7 @@ class Skins(commands.Cog):
         ctx,
         pokemon: str,
         skin: Literal[
-            "halloween", "xmas2022", "valentines2023", "easter2023", "summer2023"
+            "halloween", "xmas2022", "valentines2023", "easter2023", "summer2023", "halloween2023"
         ],
     ):
         """Preview a skin on a pokemon."""

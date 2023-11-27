@@ -37,12 +37,12 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Golurk",
-            "Snorlax",
-            "Banette",
-            "Aerodactyl",
-            "Torterra",
-            "Goodra",
+            "Ninetales",
+            "Scovillain",
+            "Politoed",
+            "Heatran",
+            "Latios",
+            "Solgaleo",
         ]
 
         self.ALL_ALPHA_POKEMON = [
@@ -59,6 +59,36 @@ class CommonDB:
             "Latios",
             "Mewtwo",
             "Solgaleo",
+            "Ampharos",
+            "Raticate-alola",
+            "Tinkaton",
+            "Darkrai",
+            "Uxie",
+            "Diancie",
+            "Mewtwo"
+            "Gardevoir",
+            "Rayquaza",
+            "Leafeon",
+            "Hydreigon",
+            "Azumarill",
+            "Groudon",
+            "Dhelmise",
+            "Electivire",
+            "Magmortar",
+            "Rhyperior",
+            "Kyogre",
+            "Cobalion",
+            "Camerupt",
+            "Absol",
+            "Guzzlord",
+            "Spiritomb",
+            "Manectric",
+            "Greninja",
+            "Rabsca",
+            "Lokix",
+            "Koraidon",
+            "Dialga",
+            "Necrozma"
         ]
         self.ALPHA_MOVESETS = {
             "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],
@@ -96,6 +126,29 @@ class CommonDB:
             "Scovillain": ["sleep-powder", "tackle", "tackle", "tackle"],
             "Tinkaton": ["tidy-up", "tackle", "tackle", "tackle"],
             "Jirachi": ["teleport", "tackle", "tackle", "tackle"],
+            "Gardevoir": ["boomburst", "tackle", "tackle", "tackle"],
+            "Rayquaza": ["collision-course", "tackle", "tackle", "tackle"],
+            "Leafeon": ["jungle-healing", "tackle", "tackle", "tackle"],
+            "Hydreigon": ["geomancy", "tackle", "tackle", "tackle"],
+            "Azumarill": ["sucker-punch", "tackle", "tackle", "tackle"],
+            "Groudon": ["hydro-stream", "tackle", "tackle", "tackle"],
+            "Dhelmise": ["double-iron-bash", "tackle", "tackle", "tackle"],
+            "Electivire": ["plasma-fists", "tackle", "tackle", "tackle"],
+            "Magmortar": ["blue-flare", "tackle", "tackle", "tackle"],
+            "Rhyperior": ["strength-sap", "tackle", "tackle", "tackle"],
+            "Kyogre": ["hurricane", "tackle", "tackle", "tackle"],
+            "Cobalion": ["glare", "tackle", "tackle", "tackle"],
+            "Camerupt": ["magma-storm", "tackle", "tackle", "tackle"],
+            "Absol": ["victory-dance", "tackle", "tackle", "tackle"],
+            "Guzzlord": ["fillet-away", "tackle", "tackle", "tackle"],
+            "Spiritomb": ["toxic-thread", "tackle", "tackle", "tackle"],
+            "Manectric": ["nasty-plot", "tackle", "tackle", "tackle"],
+            "Greninja": ["strange-steam", "tackle", "tackle", "tackle"],
+            "Rabsca": ["quiver-dance", "tackle", "tackle", "tackle"],
+            "Lokix": ["fell-stinger", "tackle", "tackle", "tackle"],
+            "Koraidon": ["dragon-dance", "tackle", "tackle", "tackle"],
+            "Dialga": ["hydro-pump", "tackle", "tackle", "tackle"],
+            "Necrozma": ["secret-sword", "tackle", "tackle", "tackle"]
         }
 
     async def remove_poke(self, user_id: int, poke_id: int, delete: bool = False):

@@ -29,6 +29,14 @@ class Credit:
     def __init__(self):
         self.p1 = 0
         self.p2 = 0
+    
+    def charge(self, amount):
+        tax_charge = round(amount * (.5/100))
+        if tax_charge > 35000:
+            tax_charge = 35000
+        total_charge = amount + tax_charge
+        return tax_charge, total_charge
+
 
 
 class TradeList:
@@ -61,7 +69,7 @@ class TradeUtilView(discord.ui.View):
             embed = self.msg.embeds[0]
             embed.title = "Timed out!"
             embed.description = (
-                f"**{self.pokemon.capitalize()}** got away! Better luck next time..."
+                f"Enter an ID quicker"
             )
             await self.msg.edit(embed=embed, view=None)
             return
@@ -167,7 +175,7 @@ class CreditsSetModal(discord.ui.Modal, title="Set Credits!"):
         self.output = None
         self.out_interaction = None
         super().__init__()
-
+  
     credits = discord.ui.TextInput(
         label="Credit Number", placeholder="Number of credits to trade"
     )
@@ -534,13 +542,15 @@ class TradeMainView(discord.ui.View):
 
         if interaction.user.id == self.p1:
             self.credits.p1 = modal.output
+            tax_charge, total_charge = self.credits.charge(self.credits.p1)
             await modal.out_interaction.response.send_message(
-                f"Set {modal.output} credits for Player 1", ephemeral=True
+                f"Set {total_charge:,} credits for Player 1 with fee", ephemeral=True
             )
         if interaction.user.id == self.p2:
             self.credits.p2 = modal.output
+            tax_charge, total_charge = self.credits.charge(self.credits.p2)
             await modal.out_interaction.response.send_message(
-                f"Set {modal.output} credits for Player 2", ephemeral=True
+                f"Set {total_charge:,} credits for Player 2 with fee", ephemeral=True
             )
 
         await self.update_msg()
@@ -640,6 +650,10 @@ class TradeMainView(discord.ui.View):
         )
 
         # Recheck pokes
+        # Mewcoins
+        p1_taxes, p1_total, = self.credits.charge(self.credits.p1)
+        p2_taxes, p2_total = self.credits.charge(self.credits.p2)
+
         async with self.ctx.bot.db[0].acquire() as pconn:
             for poke in TradeList(self.pokes).iter(self.p1):
                 is_owner = await pconn.fetchval(
@@ -679,9 +693,9 @@ class TradeMainView(discord.ui.View):
                 self.stop()
                 return
 
-            if self.credits.p1 and self.credits.p1 > p1_info["mewcoins"]:
+            if self.credits.p1 and p1_total > p1_info["mewcoins"]:
                 await interaction.followup.send(
-                    f"<@{self.p1}> does not have enough credits to complete this trade, canceling trade!"
+                    f"<@{self.p1}> does not have enough credits to complete this trade including transaction surcharge, canceling trade!"
                 )
                 await self.on_timeout()
                 self.stop()
@@ -699,27 +713,27 @@ class TradeMainView(discord.ui.View):
                 self.stop()
                 return
 
-            if self.credits.p2 and self.credits.p2 > p2_info["mewcoins"]:
+            if self.credits.p2 and p2_total  > p2_info["mewcoins"]:
                 await interaction.followup.send(
-                    f"<@{self.p2}> does not have enough credits to complete this trade, canceling trade!"
+                    f"<@{self.p2}> does not have enough credits to complete this trade including transaction surcharge, canceling trade!"
                 )
                 await self.on_timeout()
                 self.stop()
                 return
 
             # Begin the trade
-
-            # Mewcoins
+            
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                self.credits.p2,  # Credits p2 is giving to p1
+                self.credits.p2, # Credits p2 is giving to p1
                 self.p1,
             )
 
             # Remove credits from p2
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                self.credits.p2,
+                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
+                p2_total,
+                p2_taxes,
                 self.p2,
             )
 
@@ -729,9 +743,11 @@ class TradeMainView(discord.ui.View):
                 self.p2,
             )
 
+            # Remove credits from p1
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                self.credits.p1,
+                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
+                p1_total,
+                p1_taxes,
                 self.p1,
             )
 
@@ -920,6 +936,7 @@ class Trade(commands.Cog):
             await ctx.send("You need to give at least 1 credit!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
+            tax_charge, total_charge = ctx.bot.misc.get_txn_surcharge(val)
             if any(
                 [
                     i["tradelock"]
@@ -952,7 +969,7 @@ class Trade(commands.Cog):
             await ctx.send("You don't have that many credits!")
             return
         if not await ConfirmView(
-            ctx, f"Are you sure you want to give {val} credits to {user.name}?"
+            ctx, f"Are you sure you want to give {val} credits to {user.name}?\nYou will be debited {total_charge:,}"
         ).wait():
             await ctx.send("Trade Canceled")
             return
@@ -961,12 +978,13 @@ class Trade(commands.Cog):
             curcreds = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
             )
-            if val > curcreds:
+            if total_charge > curcreds:
                 await ctx.send("You don't have that many credits anymore...")
                 return
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                val,
+                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
+                total_charge,
+                tax_charge,
                 ctx.author.id,
             )
             await pconn.execute(
@@ -1196,18 +1214,30 @@ class Trade(commands.Cog):
         view.set_message(msg)
 
     @trade.command(name="util")
-    async def trade_util(self, ctx):
+    async def trade_util(self, ctx, id:str):
         """Spits out Poke IDs from provided message ID"""
-        embed = discord.Embed(
-            title="Mewbot Trade/Breeding Utils",
-            description="This helps you by taking all of the Pokemon IDs listed in an embed\nand sending them in a message that is copy and pastable!",
-            color=0x0084FD,
-        )
-        view = TradeUtilView(
-            ctx=ctx,
-        )
-        await ctx.send(embed=embed, view=view)
+        try:
+            id = int(id)
+        except ValueError:
+            await ctx.send("Please end a message ID.")
+            return
+        m = await ctx.channel.fetch_message(id)
+        lines = m.embeds[0].description.split("\n")
+        result = []  #  <---here?
+        for line in lines:
+            form = "<:num:1029030329350111232>**`"
+            start = line.find(form)
+            sub = line[start + len(form) :]
+            end = sub.find("`**")
+            final = sub[:end]
+            result.append(int(final))
+        result = " ".join([str(x) for x in result])
 
+        embed = discord.Embed(
+            title="ID's requested", description=result, color=0xEE8700
+        )
+        await ctx.send(embed=embed)
+        await ctx.send(result)
 
 async def setup(bot):
     await bot.add_cog(Trade(bot))

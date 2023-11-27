@@ -561,16 +561,20 @@ class Redeem(commands.Cog):
     async def honey(self, ctx):
         """Spend your redeems and get honey | Can be spread on a channel to attract rare & shiny Pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
-            await self.bot.commondb.add_bag_item(ctx.author.id, "honey", 1, True)
-            try:
-                await pconn.execute(
-                    "UPDATE users SET redeems = redeems - 5 WHERE u_id = $2",
-                    ctx.author.id,
-                )
-            except:
+            redeems = await pconn.fetchval(
+                "SELECT redeems FROM users WHERE u_id = $1",
+                ctx.author.id
+            )
+            if redeems - 5 < 0:
                 await ctx.send("You do not have enough redeems")
                 return
-            await ctx.send("You redeemed 1x honey!")
+            else:
+                await self.bot.commondb.add_bag_item(ctx.author.id, "honey", 1, True)
+                await pconn.execute(
+                    "UPDATE users SET redeems = redeems - 5 WHERE u_id = $1",
+                    ctx.author.id,
+                )
+        await ctx.send("You redeemed 1x honey!")
 
     @tradelock
     @redeem.command()

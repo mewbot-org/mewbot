@@ -573,8 +573,7 @@ class Extras(commands.Cog):
                 vote_streak = data["vote_streak"]
             uppoints = data["upvotepoints"]
         embed = discord.Embed(
-            title="Mewbot Voting!",
-            description="Vote for Mewbot through one of the links below!\nYou'll receive 1 Upvote Point, 1,500 credits, and 5 Energy Bars after upvoting!",
+            description="Vote for Mewbot through one of the links below!\nYou will get 1 upvote point, 1,500 credits, and 5 Energy Bars after upvoting!",
             color=0xFFB6C1,
         )
         embed.add_field(
@@ -595,10 +594,9 @@ class Extras(commands.Cog):
             inline=True,
         )
         embed.add_field(
-            name="Official Server",
+            name="",
             value=(
-                "Join for support and our huge community of Mewbot users!\n"
-                "[Mewbot Official](https://discord.gg/mewbot)"
+                "[Mewbot Official Server](https://discord.gg/mewbot)"
             ),
             inline=True,
         )
@@ -606,6 +604,11 @@ class Extras(commands.Cog):
             name="Newest Update!",
             value=f"{update_data['update']}\n{update_data['dev']} on {update_data['update_date']}",
             inline=False,
+        )
+        
+        embed.set_footer(
+            text = "Need redeems quicker? Get 1 Redeem + 2,000 credits for every USD donated. See `/donate`",
+            icon_url = "https://mewbot.xyz/eastereggs.png"
         )
 
         await ctx.send(embed=embed)
@@ -650,15 +653,20 @@ class Extras(commands.Cog):
             )
             return
         if patreon_status == "Sapphire Tier":
-            amount = 150
+            redeems = 150
+            credits = 3000000
         elif patreon_status == "Crystal Tier":
-            amount = 75
+            redeems = 100
+            credits = 2000000
         elif patreon_status == "Silver Tier":
-            amount = 30
+            redeems = 30
+            credits = 500000
         elif patreon_status == "Yellow Tier":
-            amount = 15
+            redeems = 15
+            credits = 250000
         elif patreon_status == "Red Tier":
-            amount = 3
+            redeems = 3
+            credits = 50000
         else:
             await ctx.send(
                 "Uh oh, you have an invalid patreon tier! The tiers may have been modified without updating this command... Please report this bug!"
@@ -680,10 +688,15 @@ class Extras(commands.Cog):
             await pconn.execute(
                 "UPDATE users SET redeems = redeems + $2 WHERE u_id = $1",
                 ctx.author.id,
-                amount,
+                redeems,
+            )
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                ctx.author.id,
+                credits
             )
         await ctx.send(
-            f"You have received **{amount}** redeems. Thank you for supporting Mewbot!"
+            f"You have received **{redeems}** redeems and **{credits}**.\nThank you for supporting Mewbot!"
         )
 
     @commands.hybrid_command()
@@ -1287,6 +1300,53 @@ class Extras(commands.Cog):
                 name=f"{tnick if tnick is not None else user.name}'s Miscellaneous Balances"
             )
         await ctx.send(embed=embed)
+
+    @commands.hybrid_group()
+    async def raffle(self, ctx):
+        pass
+
+    @raffle.command()
+    async def view(self, ctx):
+        """View the ongoing raffle total"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            total_credits = await pconn.fetchval(
+                "SELECT SUM(raffle_credits) FROM users WHERE raffle_credits != 0"
+            )
+        embed = discord.Embed(
+            title="Mewbot Raffle",
+            description="This raffle is composed off the fees found across in-game transfers.\nEntries cost 35,000 and are limited to 1 per player."
+        )
+        embed.add_field(
+            name="<:blank:1012504803496177685>",
+            value=f"{total_credits:,} <:mewcoin:1010959258638094386>",
+            inline=True
+        )
+        embed.set_footer(
+            text="Raffle is drawn on Mondays!"
+        )
+        await ctx.send(embed=embed)
+
+    @raffle.command()
+    async def enter(self, ctx):
+        """Enter the raffle"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            user_data = await pconn.fetchrow(
+                "SELECT mewcoins, creds_raffle FROM users WHERE u_id = $1",
+                ctx.author.id
+            )
+            total_credits = user_data['mewcoins']
+            raffle = user_data['creds_raffle']
+            if raffle:
+                await ctx.send("You've already joined the raffle!")
+                return
+            if total_credits < 35000:
+                await ctx.send("You do not have enough credits to join the raffle!")
+                return
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins - 35000, raffle_credits = raffle_credits + 35000, creds_raffle = True WHERE u_id = $1",
+                ctx.author.id
+            )
+        await ctx.send("You have entered the raffle! It's drawn each Monday!")
 
 
 async def setup(bot):

@@ -394,10 +394,19 @@ class RedoBreedView(discord.ui.View):
         await self.cog.breed.callback(
             self.cog, self.ctx, self.male, females=self.female
         )
+        
+    @discord.ui.button(label="Cancel breed", style=discord.ButtonStyle.danger)
+    async def cancel(self, interaction, button):
+        await interaction.response.defer()
+        self.ctx._created_at = time.time()
+        self.ctx._interaction = interaction
+        self.ctx.command.cancel = True
+        await self.message.edit(embed=make_embed(title=f"Auto Breeding Canceled"), view=None)
+        return
 
-    @discord.ui.button(
-        label="Auto redo until success", style=discord.ButtonStyle.primary
-    )
+    #@discord.ui.button(
+        #label="Auto redo until success", style=discord.ButtonStyle.primary
+    #)
     async def auto(self, interaction, button):
         await interaction.response.defer()
         if self.cog.auto_redo[self.ctx.author.id] is not None:
@@ -498,6 +507,20 @@ class Breeding(commands.Cog):
         await self.bot.redis_manager.redis.execute(
             "HMSET", "breedcooldowns", "examplekey", "examplevalue"
         )
+        
+    async def get_female_max(self, user):
+        patreon_status = await self.bot.patreon_tier(user)
+        if patreon_status in ("Crystal Tier", "Sapphire Tier"):
+            limit = 150
+        elif patreon_status == "Silver Tier":
+            limit = 45
+        elif patreon_status == "Yellow Tier":
+            limit = 30
+        elif patreon_status == "Red Tier" and random.randint(0, 1):
+            limit = 15
+        else:
+            limit = 10
+        return limit
 
     async def reset_cooldown(self, id_):
         await self.bot.redis_manager.redis.execute(
@@ -530,7 +553,20 @@ class Breeding(commands.Cog):
             auto = False
             females_list = [females]
 
+        #TODO: Add Patreon specific rewards    
+        #get_female_max uses get_patreon which requires
+        #specific return int value per tier
+        #if len(females_list) > self.get_female_max(ctx.author.id):
+            #await ctx.send(f"You can not breed more than {self.get_female_max(ctx.author.id)} females.")
+            #return
+        #TEMP:
+        limit = await self.get_female_max(ctx.author.id)
+        if len(females_list) > limit:
+            await ctx.send(f"You can not queue more than {limit} Female IDs.\nPatreon increases your limit, `/donate`")
+            return
+
         for female in females_list:
+            ctx.command.cancel = False
             # Remove this female from the list of females - "unorthodoxly"
             # females = females.replace(str(female), "")
             # await ctx.send(f"Breeding {female}")
@@ -755,9 +791,13 @@ class Breeding(commands.Cog):
                     view = CancelRedoView(ctx, self)
                 else:
                     view = RedoBreedView(ctx, self, male, female)
-                message = await ctx.send(embed=embed, view=view)
+                message = await ctx.send(embed=embed, view=view, ephemeral=True)
                 view.message = message
                 await asyncio.sleep(37)
+                
+                if ctx.command.cancel:
+                    return
+                
                 embed = discord.Embed(
                     title="Breeding Attempt Failed!",
                     description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: Now!",
@@ -777,6 +817,12 @@ class Breeding(commands.Cog):
                 self.auto_redo[ctx.author.id] = None
 
                 patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
+
+                # Reduce Cgrubb's base step count for testing
+                # Test will be for reducing overall step count in the bot.
+                if ctx.author.id == (366319068476866570, 334155028170407949):
+                    # Let's start with a flat 15% decrease
+                    counter = counter - round(counter * (10 / 100))
 
                 if patreon_status in ("Crystal Tier", "Sapphire Tier"):
                     counter = counter - round(counter * (50 / 100))
@@ -853,44 +899,92 @@ class Breeding(commands.Cog):
                     url="https://mewbot.xyz/eastereggs.png"
                 )
                 embed.set_footer(text=chance_message)
-                if auto:
-                    message = await ctx.send(ctx.author.mention, embed=embed)
-                else:
-                    message = await ctx.send(embed=embed)
-                # Dispatches an event that a poke was bred.
-                # on_poke_breed(self, channel, user)
-                self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
-                await asyncio.sleep(36)
+                
+                async def button1_callback(interaction: discord.Interaction):
+                    if interaction.user == ctx.author:
+                        ctx.command.cancel = True
+                        await interaction.message.edit(embed=make_embed(title=f"Auto Breeding Canceled"))
+                        return
 
-                embed = discord.Embed(
-                    title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
-                    description="It's been automatically added to your Pokemon list.",
-                    color=0x00FF00,
-                )
-                embed.add_field(
-                    name="Egg Details",
-                    value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
-                    inline=True,
-                )
-                embed.add_field(
-                    name="Cooldowns",
-                    value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again **Now**",
-                    inline=True,
-                )
-                if is_shadow:
-                    embed.add_field(
-                        name="Shadow Details",
-                        value=f"This Shadow took {chain} attempts! WOW!",
-                        inline=True,
-                    )
-                embed.set_image(
-                    url="https://mewbot.xyz/eastereggs.png"
-                )
-                embed.set_footer(text=chance_message)
+                button1 = discord.ui.Button(label="Cancel Next Breed", custom_id="button1")
+                button1.callback = button1_callback
+
+                view = discord.ui.View(timeout=15)
+                view.add_item(button1)
                 try:
-                    await message.edit(embed=embed)
+                    if auto:
+                        message = await ctx.send(ctx.author.mention, embed=embed, view=view)
+                    else:
+                        message = await ctx.send(embed=embed, view=view)
                 except discord.NotFound:
                     pass
+                self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
+                
+                try:
+                    interaction: discord.Interaction = await ctx.bot.wait_for(
+                        "button_click",
+                        check=lambda i: i.message.id == message.id and i.user.id == ctx.author.id,
+                        timeout=120
+                    )
+                    await message.edit(view=None)
+                except:
+                    await message.edit(view=None)
+                    pass
+                
+                if ctx.command.cancel:
+                    print("Canceled cmd")
+                    return
+                    
+                # Dispatches an event that a poke was bred.
+                # on_poke_breed(self, channel, user)
+                # self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
+
+                # embed = discord.Embed(
+                #     title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",
+                #     description="It's been automatically added to your Pokemon list.",
+                #     color=0x00FF00,
+                # )
+                # embed.add_field(
+                #     name="Egg Details",
+                #     value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
+                #     inline=True,
+                # )
+                # embed.add_field(
+                #     name="Cooldowns",
+                #     value=f"{mother_details['pokname'].title()} will be on a 6hr cooldown\nYou can breed again **Now**",
+                #     inline=True,
+                # )
+                # if is_shadow:
+                #     embed.add_field(
+                #         name="Shadow Details",
+                #         value=f"This Shadow took {chain} attempts! WOW!",
+                #         inline=True,
+                #     )
+                # embed.set_image(
+                #     url="https://mewbot.xyz/eastereggs.png"
+                # )
+                # embed.set_footer(text=chance_message)
+                
+                # async def button1_callback(interaction: discord.Interaction):
+                #     if interaction.user == ctx.author:
+                #         return
+
+                # button1 = discord.ui.Button(label="Cancel Next Breed", custom_id="button1")
+                # button1.callback = button1_callback
+
+                # view = discord.ui.View(timeout=15)
+                # view.add_item(button1)
+                # try:
+                #     await message.edit(embed=e, view=view)
+                # except discord.NotFound:
+                #     pass
+
+                # interaction: discord.Interaction = await ctx.bot.wait_for(
+                #     "button_click",
+                #     check=lambda i: i.message.id == message.id and i.user.id == ctx.author.id,
+                #     timeout=36
+                # )
+                
 
     @commands.hybrid_command()
     @discord.app_commands.describe(

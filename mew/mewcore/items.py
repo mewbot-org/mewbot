@@ -233,6 +233,7 @@ ADD_BAG_ITEM = {
     "quick_claw": "UPDATE bag SET quick_claw = quick_claw + $1 WHERE u_id = $2",
     "psychic_seed": "UPDATE bag SET psychic_seed = psychic_seed + $1 WHERE u_id = $2",
     "power_herb": "UPDATE bag SET power_herb = power_herb + $1 WHERE u_id = $2",
+    "primal_orb": "UPDATE bag SET primal_orb = primal_orb + $1 WHERE u_id = $2",
 }
 
 ADD_BOUND_ITEM = {
@@ -249,6 +250,9 @@ ADD_BOUND_ITEM = {
     "battle_multiplier": "UPDATE account_bound SET battle_multiplier = battle_multiplier + $1 WHERE u_id = $2",
     "breeding_multiplier": "UPDATE account_bound SET breeding_multiplier = breeding_multiplier + $1 WHERE u_id = $2",
     "nature_capsules": "UPDATE account_bound SET nature_capsules = nature_capsules + $1 WHERE u_id = $2",
+    "fleshy_chest" : "UPDATE account_bound SET fleshy_chest = fleshy_chest + $1 WHERE u_id = $2",
+    "horrific_chest": "UPDATE account_bound SET horrific_chest = horrific_chest + $1 WHERE u_id = $2",
+    "spooky_chest": "UPDATE account_bound SET spooky_chest = spooky_chest + $1 WHERE u_id = $2",
 }
 
 # Queries for removing bag items
@@ -486,6 +490,7 @@ REMOVE_BAG_ITEM = {
     "quick_claw": "UPDATE bag SET quick_claw = quick_claw - $1 WHERE u_id = $2",
     "psychic_seed": "UPDATE bag SET psychic_seed = psychic_seed - $1 WHERE u_id = $2",
     "power_herb": "UPDATE bag SET power_herb = power_herb - $1 WHERE u_id = $2",
+    "primal_orb": "UPDATE bag SET primal_orb = primal_orb - $1 WHERE u_id = $2",
 }
 
 REMOVE_BOUND_ITEM = {
@@ -502,4 +507,7 @@ REMOVE_BOUND_ITEM = {
     "battle_multiplier": "UPDATE account_bound SET battle_multiplier = battle_multiplier - $1 WHERE u_id = $2",
     "breeding_multiplier": "UPDATE account_bound SET breeding_multiplier = breeding_multiplier - $1 WHERE u_id = $2",
     "nature_capsules": "UPDATE account_bound SET nature_capsules = nature_capsules - $1 WHERE u_id = $2",
+    "fleshy_chest" : "UPDATE account_bound SET fleshy_chest = fleshy_chest - $1 WHERE u_id = $2",
+    "horrific_chest": "UPDATE account_bound SET horrific_chest = horrific_chest - $1 WHERE u_id = $2",
+    "spooky_chest": "UPDATE account_bound SET spooky_chest = spooky_chest - $1 WHERE u_id = $2",
 }

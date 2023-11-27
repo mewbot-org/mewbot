@@ -397,7 +397,7 @@ class MewBotAdmin(commands.Cog):
             await pconn.execute(
                 "UPDATE pokes SET moves[$1] = $2 WHERE id = $3",
                 slot,
-                new_move.lower(),
+                new_move.lower().replace(' ', '-'),
                 global_id
             )
             await ctx.send(":white_check_mark:")
@@ -410,8 +410,9 @@ class MewBotAdmin(commands.Cog):
         *,
         pokemon: str,
         shiny: bool,
-        skin: Literal["radiant", "gleam", "alpha", "false"],
+        skin: str,
         boosted: bool,
+        u_id: str
     ):
         """Creates a new poke and gives it to the author."""
         extras = ""
@@ -421,11 +422,21 @@ class MewBotAdmin(commands.Cog):
             extras += "boosted "
         if skin == "false":
             skin = None
+        if u_id is None:
+            u_id = ctx.author.id
+        else:
+            u_id = int(u_id)
         pokemon = pokemon.replace(" ", "-").capitalize()
-        await ctx.bot.commondb.create_poke(
-            ctx.bot, ctx.author.id, pokemon, shiny=shiny, skin=skin, boosted=boosted
-        )
-        await ctx.send(f"Gave you a {extras}{pokemon}!")
+        if skin == 'none':
+            pokedata = await ctx.bot.commondb.create_poke(
+                ctx.bot, u_id, pokemon, shiny=shiny, boosted=boosted
+            )
+        else:
+            pokedata = await ctx.bot.commondb.create_poke(
+                ctx.bot, u_id, pokemon, shiny=shiny, skin=skin, boosted=boosted
+            )
+        ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
+        await ctx.send(f"Gave you a {extras}{pokemon} w/iv {ivpercent}%!")
 
     @check_admin()
     @admin.command()
@@ -954,6 +965,9 @@ class MewBotAdmin(commands.Cog):
         user = int(user)
         async with ctx.bot.db[0].acquire() as pconn:
             info = await pconn.fetchrow("SELECT * FROM users WHERE u_id = $1", user)
+            bound_data = await pconn.fetchrow(
+                "SELECT * FROM account_bound WHERE u_id = $1", user
+            )
         if info is None:
             await ctx.send("User has not started.")
             return
@@ -1016,6 +1030,7 @@ class MewBotAdmin(commands.Cog):
         desc += f"\n**Botbanned?**: `{botbanned}`"
         embed = discord.Embed(color=0xFFB6C1, description=desc)
         embed.add_field(name=f"Inventory", value=f"{inv}", inline=False)
+        embed.add_field(name=f"Bound Data", value=f"{bound_data}", inline=False)
         embed.set_footer(text="Information live from Database")
         await ctx.send(embed=embed)
 

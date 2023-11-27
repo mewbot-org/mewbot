@@ -40,7 +40,7 @@ OXI_DATABASE_URL = "postgresql://postgres:liger666@143.198.171.254:5432/mewbot"
 
 class Mew(commands.AutoShardedBot):
     def __init__(self, cluster_info, *args, **kwargs):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
         intents = discord.Intents.none()
         intents.guilds = True
@@ -199,6 +199,10 @@ class Mew(commands.AutoShardedBot):
                 pass
 
     async def on_ready(self):
+        
+        game = discord.Streaming(name="NPC move strategies", url="https://mewbot.xyz/")
+        await self.change_presence(status=discord.Status.dnd, activity=game)
+        
         await self.log_cluster_action(
             {
                 "event": "shards_launched",
@@ -706,6 +710,8 @@ class Mew(commands.AutoShardedBot):
                     "Initializing Discord Connection..."
                 )  # Actually say Connecting to Discord WHEN it's connecting.
                 await self.start(self.token)
+                
+                
         except (BaseException, Exception) as e:
             self.logger.error(f"Error - {str(e)}")
             raise e

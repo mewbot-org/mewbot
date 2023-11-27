@@ -272,8 +272,6 @@ class DropdownSelect(discord.ui.Select):
         interval = self.intervals[optnum]
         fertilized = self.fertilizers[optnum]
         berry_thumbnail = get_farm_thumbnail(name=berry_name.title())
-        print(interaction.data)
-        print(self.options)
 
         async with interaction.client.db[0].acquire() as pconn:
             # Berry should be delete from table and given to player
@@ -331,7 +329,7 @@ class Farming(commands.Cog):
         pass
 
     @farm.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
+    @commands.cooldown(1, 60, commands.BucketType.user)
     async def plant(
         self,
         ctx,
@@ -404,7 +402,7 @@ class Farming(commands.Cog):
         )
 
     @farm.command()
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 60, commands.BucketType.user)
     async def info(self, ctx):
         """Take a look at your farm!"""
         async with self.bot.db[0].acquire() as pconn:
@@ -496,7 +494,7 @@ class Farming(commands.Cog):
         ).wait()
 
     @farm.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
+    @commands.cooldown(1, 60, commands.BucketType.user)
     async def fertilize(self, ctx):
         """Fertilize a berry!"""
         async with self.bot.db[0].acquire() as pconn:

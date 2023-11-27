@@ -14,6 +14,17 @@ class MewMisc:
             "CREDITS": "<:mewcoin:1010959258638094386>",
             "REDEEMS": "<:redeem:1037942226132668417>",
         }
+        
+    def get_vat_price(self, price : int):
+        return price
+        return price + round(price * (7/100))
+    
+    def get_txn_surcharge(self, amount : int):
+        tax_charge = round(amount * (.5/100))
+        if tax_charge > 35000:
+            tax_charge = 35000
+        total_charge = amount + tax_charge
+        return tax_charge, total_charge
 
     def get_skin_emote(
         self, *, blank="", shiny=False, radiant=False, gleam=False, skin=None

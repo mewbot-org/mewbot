@@ -23,7 +23,7 @@ class Chests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
-        self.CURRENTLY_ACTIVE = ['Genesect', 'Groudon', 'Xurkitree', 'Popplio', 'Litten', 'Chikorita', 'Noibat', 'Sneasel', 'Timburr']
+        self.CURRENTLY_ACTIVE = ['Budew', 'Spritzee', 'Koraidon', 'Vulpix-alola', 'Teddiursa', 'Victini']
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
         # packs that can be bought with ;radiant, (("Pack Desc", <int - Price in radiant gems>))
@@ -150,7 +150,7 @@ class Chests(commands.Cog):
                 ctx.bot, ctx.author.id, pokemon
             )
             msg = f"You received a {pokedata.emoji}{pokemon}!\n"
-        gems = 2
+        gems = random.randint(0, 2) # wind change
         if gems:
             await self.bot.commondb.add_bag_item(
                 ctx.author.id, "radiant_gem", gems, True
@@ -174,8 +174,8 @@ class Chests(commands.Cog):
                 return
         await self.bot.commondb.remove_bag_item(ctx.author.id, "rare_chest", 1, True)
         reward = random.choices(
-            ("radiant", "redeem", "chest", "boostedshiny", "shiny", "shinystarter"),
-            weights=(0.150, 0.200, 0.15, 0.18, 0.300, 0.040),
+            ("radiant", "redeem", "mythicchest", "commonchest", "boostedshiny", "shiny", "shinystarter"),
+            weights=(0.150, 0.050, 0.20, 0.10, 0.18, 0.300, 0.040),
         )[0]
         # Radiant Reward
         if reward == "radiant":
@@ -195,9 +195,17 @@ class Chests(commands.Cog):
                 )
             msg = f"You received {amount} redeems!\n"
         # Chest Reward
-        elif reward == "chest":
+        elif reward == "mythicchest":
             await self.bot.commondb.add_bag_item(ctx.author.id, "mythic_chest", 1, True)
             msg = "You received a Mythic Chest!\n"
+            
+        
+            
+        elif reward == "commonchest":
+            await self.bot.commondb.add_bag_item(ctx.author.id, "common_chest", 1, True)
+            msg = "You received a Common Chest!\n"
+            
+            
         # Shiny Reward
         elif reward == "shiny":
             pokemon = random.choice(pList)
@@ -218,7 +226,7 @@ class Chests(commands.Cog):
                 ctx.bot, ctx.author.id, pokemon, shiny=True
             )
             msg = f"You received a shiny {pokemon}!\n"
-        gems = random.randint(3, 5)
+        gems = random.randint(2, 5)
         await self.bot.commondb.add_bag_item(ctx.author.id, "radiant_gem", gems, True)
         msg += (
             f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
@@ -243,8 +251,8 @@ class Chests(commands.Cog):
                 ctx.author.id, "mythic_chest", 1, True
             )
         reward = random.choices(
-            ("radiant", "redeem", "chest", "shiny", "boostedshiny"),
-            weights=(0.20, 0.20, 0.14, 0.22, 0.24),
+            ("gleam", "redeem", "legendchest", "rarechest", "shiny", "boostedshiny"),
+            weights=(0.19, 0.075, 0.17, 0.125, 0.20, 0.24),
         )[0]
 
         if reward == "redeem":
@@ -257,9 +265,13 @@ class Chests(commands.Cog):
                 )
             msg = f"You received {amount} redeems!\n"
 
-        elif reward == "chest":
+        elif reward == "legendchest":
             await self.bot.commondb.add_bag_item(ctx.author.id, "legend_chest", 1, True)
             msg = "You received a Legend Chest!\n"
+            
+        elif reward == "rarechest":
+            await self.bot.commondb.add_bag_item(ctx.author.id, "rare_chest", 1, True)
+            msg = "You received a Rare Chest!\n"
 
         elif reward == "boostedleg":
             pokemon = random.choice(LegendList)
@@ -268,7 +280,7 @@ class Chests(commands.Cog):
             )
             msg = f"You received a boosted IV {pokedata.emoji}{pokemon}!\n"
 
-        elif reward == "radiant":
+        elif reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, skin="gleam"
@@ -314,13 +326,13 @@ class Chests(commands.Cog):
 
         if ctx.author.id == 334155028170407949:
             reward = random.choices(
-                ("redeem", "radiant", "boostedradiant", "boostedshiny", "exalted"),
+                ("redeem", "gleam", "boostedgleam", "boostedshiny", "exalted"),
                 weights=(0.35, 0.175, 0.196, 0.300, 0.002),
             )[0]
         else:
             reward = random.choices(
-                ("redeem", "boostedradiant", "boostedshiny", "exalted"),
-                weights=(0.200, 0.150, 0.648, 0.002),
+                ("redeem", "mythicchest", "boostedgleam", "boostedshiny", "exalted"),
+                weights=(0.070, 0.130, 0.150, 0.648, 0.002),
             )[0]
 
         if reward == "boostedshiny":
@@ -329,11 +341,16 @@ class Chests(commands.Cog):
                 ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True
             )
             msg = f"You received a shiny boosted IV {pokemon}!\n"
-        if reward == "exalted":
+        elif reward == "exalted":
             await self.bot.commondb.add_bag_item(
                 ctx.author.id, "exalted_chest", 1, True
             )
             msg = f"🎊 You received an Exalted Chest!! 🎊\n"
+            
+        elif reward == "mythicchest":
+            await self.bot.commondb.add_bag_item(ctx.author.id, "mythic_chest", 1, True)
+            msg = "Not so lucky, You received a Mythic Chest!\n"
+            
         elif reward == "redeem":
             amount = random.randint(15, 25)
             async with ctx.bot.db[0].acquire() as pconn:
@@ -343,13 +360,13 @@ class Chests(commands.Cog):
                     ctx.author.id,
                 )
             msg = f"You received {amount} redeems!\n"
-        elif reward == "radiant":
+        elif reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, skin="gleam"
             )
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Gleam {pokemon}!**\n"
-        elif reward == "boostedradiant":
+        elif reward == "boostedgleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, skin="gleam", boosted=True
@@ -522,6 +539,10 @@ class Chests(commands.Cog):
     ):
         """Spend your gleam gems to obtain gleam Pokemon."""
         packnum = int(pack[0])
+        DEFAULT_MAX = {
+            634179052512739340: 500,
+            455277032625012737: 7
+        }
         if packnum < 1 or packnum > len(self.PACKS):
             await ctx.send("That is not a valid pack number.")
             return
@@ -557,7 +578,7 @@ class Chests(commands.Cog):
                     "restock": int(info["restock"]),
                 }
 
-            max_packs = 5
+            max_packs = DEFAULT_MAX.get(ctx.author.id, 5)
             restock_time = 604800
 
             if info["restock"] <= int(time.time() // restock_time):
@@ -666,6 +687,7 @@ class Chests(commands.Cog):
                     item = inventory["breeding_multiplier"]
                 if item >= 50:
                     await ctx.send("You have hit the cap for that multiplier!")
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 gain = min(item + 1, 50)
                 # This isn't good but set values so it's okay...
@@ -693,10 +715,10 @@ class Chests(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, choice, skin="gleam", boosted=True
                 )
+        self.purchaselock.remove(ctx.author.id)                
         await ctx.send(
             f"You have successfully bought {pack[0]} for <a:radiantgem:774866137472827432>x{pack[1]}."
         )
-        self.purchaselock.remove(ctx.author.id)
 
 
 async def setup(bot):

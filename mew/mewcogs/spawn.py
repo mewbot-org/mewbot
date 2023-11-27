@@ -110,13 +110,7 @@ async def add_spawn(
                 berry = random.choice(expensives)
             else:
                 berry = random.choice(list(berryList))
-            # items = user_info["items"]
-            items[berry] = items.get(berry, 0) + 1
-            await pconn.execute(
-                f"UPDATE users SET items = $1::json WHERE u_id = $2",
-                items,
-                user_id,
-            )
+            await bot.commondb.add_bag_item(user_id, berry, 1)        
         else:
             berry_chance = None
         #

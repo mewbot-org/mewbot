@@ -588,10 +588,10 @@ class Minigames(commands.Cog):
 
             item_chance = random.choices(
                 ("radiant_gem", "item", "common_chest", "rare_chest"),
-                weights=(0.25, 0.50, 0.15, 0.05),
+                weights=(0.25, 0.50, 0.17, 0.03),
             )[0]
             if item_chance == "radiant_gem":
-                item = random.randint(1, 10)
+                item = random.randint(2, 8)
             elif item_chance == "item":
                 item = random.choice(crystals)
             elif item_chance == "common_chest":

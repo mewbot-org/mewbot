@@ -454,6 +454,8 @@ class Items(commands.Cog):
             if current_creds < price:
                 await ctx.send(f"You don't have {price:,}ℳ")
                 return
+            
+            vat_price = ctx.bot.misc.get_vat_price(price)
 
             # Market spaces
             if item_name == "market_space":
@@ -471,7 +473,8 @@ class Items(commands.Cog):
                     )
                     return
                 await pconn.fetchval(
-                    "UPDATE users SET marketlimit = marketlimit + 1, mewcoins = mewcoins - 30000 WHERE u_id = $1",
+                    "UPDATE users SET marketlimit = marketlimit + 1, mewcoins = mewcoins - $1 WHERE u_id = $2",
+                    ctx.bot.misc.get_vat_price(30000),
                     ctx.author.id,
                 )
                 await ctx.send("You have successfully bought an extra market space!")
@@ -487,7 +490,7 @@ class Items(commands.Cog):
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $2 WHERE u_id = $1",
                     ctx.author.id,
-                    price,
+                    vat_price,
                 )
                 await ctx.send(
                     f"You have successfully bought the {fancy_name.title()} for {price:,} credits!"
@@ -500,10 +503,11 @@ class Items(commands.Cog):
                     item_name,
                     ctx.author.id,
                 )
+                vat_price = ctx.bot.misc.get_vat_price(price)
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $2 WHERE u_id = $1",
                     ctx.author.id,
-                    price,
+                    vat_price,
                 )
                 await ctx.send(
                     f"You have successfully bought the {fancy_name.title()} for {price:,} credits!"
@@ -514,7 +518,7 @@ class Items(commands.Cog):
             if item_name in activeItemList:
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    price,
+                    vat_price,
                     ctx.author.id,
                 )
                 await ctx.bot.commondb.add_bag_item(ctx.author.id, item_name, 1)
@@ -527,7 +531,7 @@ class Items(commands.Cog):
             if item_name in bagItemList:
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    price,
+                    vat_price,
                     ctx.author.id,
                 )
                 if item_name == "water_tank":
@@ -581,7 +585,7 @@ class Items(commands.Cog):
                 ]
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    price,
+                    vat_price,
                     ctx.author.id,
                 )
                 await ctx.send(
@@ -596,7 +600,7 @@ class Items(commands.Cog):
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $2 WHERE u_id = $1",
                     ctx.author.id,
-                    price,
+                    vat_price,
                 )
                 await ctx.send(
                     "You have successfully reset the Effort Values (EVs) of your selected Pokemon!"
@@ -615,7 +619,7 @@ class Items(commands.Cog):
                 return
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                price,
+                vat_price,
                 ctx.author.id,
             )
             await pconn.execute(
@@ -694,7 +698,7 @@ class Items(commands.Cog):
                 try:
                     await pconn.execute(
                         "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                        total_price,
+                        ctx.bot.misc.get_vat_price(total_price),
                         ctx.author.id,
                     )
                 except:
@@ -865,7 +869,7 @@ class Items(commands.Cog):
                 return
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                price,
+                ctx.bot.misc.get_vat_price(price),
                 ctx.author.id,
             )
             pokemon_details = await pconn.fetchrow(
@@ -930,6 +934,11 @@ class Items(commands.Cog):
                         f"You do not have the {price} credits you need to buy a {ct} chest!"
                     )
                     return
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                    ctx.bot.misc.get_vat_price(price),
+                    ctx.author.id,
+                )
 
                 await pconn.execute(
                     "INSERT INTO cheststore VALUES ($1, 0, 0, 0, 0) ON CONFLICT DO NOTHING",
@@ -981,11 +990,6 @@ class Items(commands.Cog):
                         "UPDATE cheststore SET legend = legend + 1 WHERE u_id = $1",
                         ctx.author.id,
                     )
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    price,
-                    ctx.author.id,
-                )
             elif cor == "redeems":
                 bal = await pconn.fetchval(
                     "SELECT redeems FROM users WHERE u_id = $1",

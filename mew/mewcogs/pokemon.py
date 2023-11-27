@@ -72,30 +72,44 @@ class Pokemon(commands.Cog):
         form[0], form[1] = form[1], form[0]
         form = "-".join(form)
         return form
+    
+    @commands.hybrid_group()
+    async def pokedex(self, ctx):
+        """Pokedex Commands"""
+        pass
+    
+    @pokedex.command()
+    async def national(self, ctx, shiny:Literal['True', 'False']):
+        """View Caught & Uncaught Pokémon."""
+        await self._build_pokedex(ctx, True, shiny)
 
-    @commands.hybrid_command()
-    async def pokedex_national(self, ctx):
-        """View your Pokédex or all caught & uncaught Pokémon."""
-        await self._build_pokedex(ctx, True)
+    @pokedex.command()
+    async def unowned(self, ctx, shiny:Literal['True', 'False']):
+        """View Uncaught Pokémon."""
+        await self._build_pokedex(ctx, False, shiny)
 
-    @commands.hybrid_command()
-    async def pokedex_unowned(self, ctx):
-        """View your Pokédex of uncaught Pokémon."""
-        await self._build_pokedex(ctx, False)
-
-    async def _build_pokedex(self, ctx, include_owned: bool):
+    async def _build_pokedex(self, ctx, include_owned: bool, shiny:bool):
         """Helper func to build & send the pokedex."""
         async with self.bot.db[0].acquire() as pconn:
+            msg = ''
             pokes = await pconn.fetchval(
                 "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
             )
             if pokes is None:
                 return
-            owned = await pconn.fetch(
-                "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2)",
-                pokes,
-                custom_poke,
-            )
+            if shiny == 'True':
+                msg = 'Shiny '
+                owned = await pconn.fetch(
+                    "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2) AND shiny = True",
+                    pokes,
+                    custom_poke,
+                )
+            else:
+                owned = await pconn.fetch(
+                    "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2)",
+                    pokes,
+                    custom_poke,
+                )
         allpokes = self.bot.db[1].pfile.find(
             projection={"identifier": True, "_id": False}
         )
@@ -113,7 +127,7 @@ class Pokemon(commands.Cog):
             elif include_owned:
                 desc += f"**{poke}** - <a:check_arn:1044340391748571136>\n"
         embed = discord.Embed(
-            title=f"You have {len(owned)} out of {len(total)} available Pokemon!",
+            title=f"{msg}Pokedex for {ctx.author.name}\nYou have {len(owned)} out of {len(total)}!",
             colour=random.choice(self.bot.colors),
         )
         pages = pagify(desc, per_page=20, base_embed=embed)
