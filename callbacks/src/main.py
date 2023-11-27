@@ -670,7 +670,10 @@ async def vote_handler(data, auth, user_id, list_name):
             if data["last_vote"] < time.time() - (36 * 60 * 60):
                 vote_streak = 1
             else:
-                vote_streak = data["vote_streak"] + 1
+                original_vote_streak = data["vote_streak"] + 1
+                if original_vote_streak > 100:
+                    vote_streak = 0
+                    
             await pconn.execute(
                 "UPDATE users SET last_vote = $1, vote_streak = $2 WHERE u_id = $3",
                 int(time.time()),
@@ -690,7 +693,7 @@ async def vote_handler(data, auth, user_id, list_name):
                         reward["gems"],
                         user_id,
                     )
-                    msg += f"-**{reward['gems']}x** radiant gems\n"
+                    msg += f"**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
                     chest_name = reward["chest"]
                     chest_name = f"{chest_name}"
@@ -718,7 +721,7 @@ async def vote_handler(data, auth, user_id, list_name):
                     user_id,
                 )
                 dm_id = await app.utils.get_dm_id(user_id)
-                await app.utils.send_vote_message(dm_id, vote_streak, msg)
+                await app.utils.send_vote_message(dm_id, original_vote_streak, msg)
     user = await app.utils.mongo_find(
         "users",
         {"user": user_id},
