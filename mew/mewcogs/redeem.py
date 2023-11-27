@@ -746,7 +746,7 @@ class Redeem(commands.Cog):
                     item = None
                     if not random.randrange(30) and pokemon.lower() in REDEEM_DROPS:
                         item = REDEEM_DROPS[pokemon.lower()]
-                        self.bot.commondb.add_bag_item(
+                        await self.bot.commondb.add_bag_item(
                             ctx.author.id,
                             item,
                             1,
