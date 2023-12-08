@@ -18,6 +18,7 @@ class Battle:
     DUEL = "DUEL"
     PARTY_DUEL = "PARTY DUEL"
     NPC = "NPC"
+    RANKED = "RANKED"
 
     async def send(
         self, content=None, *, embed=None, file: discord.File = None, view=None
@@ -32,7 +33,7 @@ class Battle:
         self.ctxs = ctxs
         self.ctx = ctxs[0] if isinstance(ctxs, list) else ctxs
 
-        if type not in (self.BATTLE_TOWER, self.DUEL, self.PARTY_DUEL, self.NPC):
+        if type not in (self.BATTLE_TOWER, self.DUEL, self.PARTY_DUEL, self.NPC, self.RANKED):
             raise ValueError("Invalid battle type")
 
         self.type = type
@@ -344,13 +345,19 @@ class Battle:
                 self.msg += (
                     f"{self.trainer1.name} forfeited, {self.trainer2.name} wins!\n"
                 )
-                winner = self.trainer2
+                if self.type == self.RANKED:
+                    winner = [self.trainer2, True]
+                else:
+                    winner = self.trainer2
                 break
             if self.trainer2.selected_action is None:
                 self.msg += (
                     f"{self.trainer2.name} forfeited, {self.trainer1.name} wins!\n"
                 )
-                winner = self.trainer1
+                if self.type == self.RANKED:
+                    winner = [self.trainer1, True]
+                else:
+                    winner = self.trainer1
                 break
 
             # Run setup for both pokemon

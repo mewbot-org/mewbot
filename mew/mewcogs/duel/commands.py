@@ -269,7 +269,7 @@ class Duel(commands.Cog):
 
         return winner
 
-    async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member):
+    async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member, forfeit:bool):
         """
         Updates the ranks between two members, based on the result of the match.
 
@@ -278,7 +278,10 @@ class Duel(commands.Cog):
         # This is the MAX amount of ELO that can be swapped in any particular match.
         # Matches between players of the same rank will transfer half this amount.
         # TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
-        K = 50
+        if forfeit:
+            K = 10
+        else:
+            K = 50
 
         # Original example, used self.ranks saved within class.
         # Completed todo and moved to db. Left for reference.
@@ -836,6 +839,9 @@ class Duel(commands.Cog):
         if winner is None:
             return
 
+        forfeit = winner[1]
+        winner = winner[0]
+
         # Grant xp
         desc = ""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -872,15 +878,18 @@ class Duel(commands.Cog):
                 inline=False
             )
         # Prepare loser
-        # If winner issues challenged
+        # If winner issued challenged
         if winner.id == ctx.author.id:
             loser = opponent
-        msg = await self.update_ranks(ctx, winner, loser)
+        else:
+            loser = ctx.author
+        msg = await self.update_ranks(ctx, winner, loser, forfeit)
         embed.add_field(
             name="Rank Adjustments",
             value=f"{msg}",
             inline=False
         )
+        await ctx.send(embed=embed)
 
     @duel.command()
     async def npc(self, ctx):
