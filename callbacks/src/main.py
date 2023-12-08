@@ -29,7 +29,7 @@ CREDITS_PER_DOLLAR = 2000
 app = FastAPI()
 
 home = str(Path.home())
-os.chdir(f"{home}/mewbot/callbacks/src")
+os.chdir(f"/home/dyroot/mewbot/callbacks/src")
 load_dotenv("../../env/bot.env")
 load_dotenv("../../env/mongo.env")
 load_dotenv("../../env/postgres.env")
@@ -418,9 +418,9 @@ async def startup():
 
     app.pool = await asyncpg.create_pool(DATABASE, init=init)
     app.mongo = AsyncIOMotorClient(MONGO_URL).pokemon
-    app.redis = await aioredis.create_pool(
-        "redis://178.28.0.13", minsize=10, maxsize=20
-    )
+    # app.redis = await aioredis.create_pool(
+    #     "redis://178.28.0.13", minsize=10, maxsize=20
+    # )
     app.utils = AppUtils()
     print("Pool has been Created Successfully!")
 
@@ -430,8 +430,8 @@ async def shutdown():
     await app.pool.close()
     await app.utils.session.close()
 
-    app.redis.close()
-    await app.redis.wait_closed()
+    # app.redis.close()
+    # await app.redis.wait_closed()
 
 
 # Stripe is no longer used
@@ -673,6 +673,8 @@ async def vote_handler(data, auth, user_id, list_name):
                 original_vote_streak = data["vote_streak"] + 1
                 if original_vote_streak > 100:
                     vote_streak = 0
+                else:
+                    vote_streak = original_vote_streak
                     
             await pconn.execute(
                 "UPDATE users SET last_vote = $1, vote_streak = $2 WHERE u_id = $3",
@@ -739,4 +741,5 @@ async def index():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=15211)
+    
+    uvicorn.run("main:app", host="0.0.0.0", port=15210)

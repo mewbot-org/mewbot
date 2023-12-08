@@ -605,6 +605,7 @@ class Mew(commands.AutoShardedBot):
             "profile",
             "bag",
             "farm",
+            "achieve"
         ]
         for cog in cogs:
             if "_" in cog:
@@ -693,7 +694,8 @@ class Mew(commands.AutoShardedBot):
                         "market",
                         "shop",
                         "profile",
-                        "essence"
+                        "essence",
+                        "achieve"
                         # "events",
                     ]
 

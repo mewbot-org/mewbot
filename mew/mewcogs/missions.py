@@ -93,17 +93,43 @@ class Missions(commands.Cog):
                         "**You have already claimed rewards for today!\nPlease wait till missions reset.**"
                     )
                 else:
-                    await pconn.execute(
-                        "UPDATE users SET mewcoins = mewcoins + 10000 WHERE u_id = $1",
-                        ctx.author.id,
-                    )
+                    reward = random.choices(
+                        ("chest", "credits", "redeem"),
+                        weights=(.25, .50, .25),
+                    )[0]
+
+                    if reward == "chest":
+                        chest_type = random.choice("common_chest", "rare_chest")
+                        chest_name = chest_type.replace("_", " ").title()
+                        await ctx.bot.commondb.add_bag_item(
+                            ctx.author.id,
+                            chest_type,
+                            1,
+                            True
+                        )
+                        msg = f"You have claimed a {chest_name}!"
+                    elif reward == 'redeem':
+                        count = random.randint(1, 3)
+                        await pconn.execute(
+                            "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                            count,
+                            ctx.author.id
+                        )
+                        msg = f"You have claimed {count} redeems!"
+                    elif reward == 'credits':
+                        count = random.randint(10000, 50000)
+                        await pconn.execute(
+                            "UPDATE users SET mewcoins = mewcoins + 10000 WHERE u_id = $1",
+                            ctx.author.id,
+                        )
+                        msg = f"You have claimed {count} credits!"
                     progress.update({"collected": True})
                     await ctx.bot.mongo_update(
                         "users", {"user": ctx.author.id}, {"progress": progress}
                     )
                     await ctx.send(
                         embed=make_embed(
-                            title=f"Congratulations!\nYou have claimed 10,000 credits!"
+                            title=f"Congratulations!\n{msg}"
                         )
                     )
         else:

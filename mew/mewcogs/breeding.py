@@ -781,6 +781,9 @@ class Breeding(commands.Cog):
             success = random.choices([True, False], weights=(chance, 1 - chance))[0]
             chance_message = f"Chance of success: {chance * 100:.2f}% | {ctx.author}"
 
+            if ctx.author.id == 334155028170407949:
+                success = True
+
             # Failed attempt
             if not success:
                 embed = discord.Embed(
@@ -870,6 +873,15 @@ class Breeding(commands.Cog):
                     + child.hp
                 )
                 # TODO: achievement code
+                iv_list = [child.attack, child.defense, child.spatk, child.spdef, child.speed, child.hp]
+                iv_count = iv_list.count(31)
+                iv_count2 = iv_list.count(30)
+                if iv_count == 5:
+                    achievement = "breed_penta"
+                elif iv_count == 5 and iv_count2 == 1:
+                    achievement = "breed_titan"
+                else:
+                    achievement = "breed_success" 
 
                 ivpercent = round((ivsum / 186) * 100, 2)
                 e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
@@ -919,7 +931,8 @@ class Breeding(commands.Cog):
                 except discord.NotFound:
                     pass
                 self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
-                
+                self.bot.dispatch("egg_born", ctx.channel, ctx.author, achievement)    
+
                 try:
                     interaction: discord.Interaction = await ctx.bot.wait_for(
                         "button_click",

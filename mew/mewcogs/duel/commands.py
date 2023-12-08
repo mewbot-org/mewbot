@@ -20,6 +20,8 @@ from .trainer import MemberTrainer, NPCTrainer
 from .battle import Battle
 from .buttons import DuelAcceptView, BattleTowerAcceptView
 from .data import generate_team_preview
+from mewutils.misc import STAFFSERVER
+
 
 import os
 
@@ -266,6 +268,60 @@ class Duel(commands.Cog):
             #         t1, t2 = t2, t1
 
         return winner
+
+    async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member):
+        """
+        Updates the ranks between two members, based on the result of the match.
+
+        https://en.wikipedia.org/wiki/Elo_rating_system#Theory
+        """
+        # This is the MAX amount of ELO that can be swapped in any particular match.
+        # Matches between players of the same rank will transfer half this amount.
+        # TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
+        K = 50
+
+        # Original example, used self.ranks saved within class.
+        # Completed todo and moved to db. Left for reference.
+        # R1 = self.ranks.get(winner.id, 1000)
+        # R2 = self.ranks.get(loser.id, 1000)
+
+        # Have to pull ranks from database for both players
+        # Value should have a default of 1000 in database     
+        async with ctx.bot.db[0].acquire() as pconn:
+            R1 = await pconn.fetchval(
+                "SELECT rank FROM users WHERE u_id = $1", winner.id
+            )
+            R2 = await pconn.fetchval(
+                "SELECT rank FROM users WHERE u_id = $1", loser.id
+            )
+
+            # This calc was left the same as example
+            E1 = 1 / (1 + (10 ** ((R2 - R1) / 400)))
+            E2 = 1 / (1 + (10 ** ((R1 - R2) / 400)))
+
+            # If tieing is added, this needs to be the score of each player
+            # 12/8/23 - Was not added so we will these this as is. 
+            S1 = 1
+            S2 = 0
+
+            newR1 = round(R1 + K * (S1 - E1))
+            newR2 = round(R2 + K * (S2 - E2))
+
+            # This was here for reference, moved to db code below
+            #self.ranks[winner.id] = newR1
+            #self.ranks[loser.id] = newR2
+
+            # Update rankings in the database
+            await pconn.execute(
+                "UPDATE users SET rank = $1 WHERE u_id = $2", newR1, winner.id
+            )
+            await pconn.execute(
+                "UPDATE users SET rank = $1 WHERE u_id = $2", newR2, loser.id
+            )
+
+        msg = f"**{winner.name}**: {R1} -> {newR1} ({newR1-R1:+})\n"
+        msg += f"**{loser.name}**: {R2} -> {newR2} ({newR2-R2:+})"
+        return msg
 
     # @commands.hybrid_command()
     async def train(self, ctx):
@@ -560,6 +616,15 @@ class Duel(commands.Cog):
         """A 6v6 inverse battle with another user's selected party."""
         await self.run_party_duel(ctx, opponent, inverse_battle=True)
 
+    @duel.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def ranked(self, ctx, opponent: discord.Member):
+        """A 6v6 ranked duel with another user's party."""
+        if ctx.author.id != 334155028170407949:
+            await ctx.send("Coming Soon")
+            return
+        await self.run_ranked_duel(ctx, opponent)
+
     async def run_party_duel(self, ctx, opponent, *, inverse_battle=False):
         """Creates and runs a party duel."""
         battle_type = "party duel"
@@ -683,6 +748,139 @@ class Duel(commands.Cog):
                 )
         if desc:
             await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
+
+    async def run_ranked_duel(self, ctx, opponent, *, inverse_battle=False):
+        """Creates and runs a ranked duel."""
+        battle_type = "party duel"
+        # At the moment ranked does not support inverse battles
+        #if inverse_battle:
+            #battle_type += " in the **inverse battle ruleset**"
+        if not await self._get_opponent(ctx, opponent, battle_type):
+            return
+
+        # e = discord.Embed(
+        #     title="Pokemon Battle accepted! Loading...",
+        #     description="Please wait",
+        #     color=0xFFB6C1,
+        # )
+        # e.set_image(url=random.choice(PREGAME_GIFS))
+        # await ctx.send(embed=e)
+
+        if not await self._check_cooldowns(ctx, opponent):
+            return
+
+        async with ctx.bot.db[0].acquire() as pconn:
+            party1 = await pconn.fetchval(
+                "SELECT party FROM users WHERE u_id = $1",
+                ctx.author.id,
+            )
+            if party1 is None:
+                await ctx.send(
+                    f"{ctx.author.name} has not Started!\nStart with `/start` first!"
+                )
+                return
+            party1 = [x for x in party1 if x != 0]
+            raw1 = await pconn.fetch("SELECT * FROM pokes WHERE id = any($1)", party1)
+            raw1 = list(filter(lambda e: e["pokname"] != "Egg", raw1))
+            raw1.sort(key=lambda e: party1.index(e["id"]))
+            party2 = await pconn.fetchval(
+                "SELECT party FROM users WHERE u_id = $1",
+                opponent.id,
+            )
+            if party2 is None:
+                await ctx.send(
+                    f"{opponent.name} has not Started!\nStart with `/start` first!"
+                )
+                return
+            party2 = [x for x in party2 if x != 0]
+            raw2 = await pconn.fetch("SELECT * FROM pokes WHERE id = any($1)", party2)
+            raw2 = list(filter(lambda e: e["pokname"] != "Egg", raw2))
+            raw2.sort(key=lambda e: party2.index(e["id"]))
+
+        if not raw1:
+            await ctx.send(
+                f"{ctx.author.name} has no pokemon in their party!\nAdd some with `/party` first!"
+            )
+            return
+        if not raw2:
+            await ctx.send(
+                f"{opponent.name} has no pokemon in their party!\nAdd some with `/party` first!"
+            )
+            return
+
+        # Gets a Pokemon object based on the specifics of each poke
+        pokes1 = []
+        for pdata in raw1:
+            poke = await DuelPokemon.create(ctx, pdata)
+            pokes1.append(poke)
+        pokes2 = []
+        for pdata in raw2:
+            poke = await DuelPokemon.create(ctx, pdata)
+            pokes2.append(poke)
+        owner1 = MemberTrainer(ctx.author, pokes1)
+        owner2 = MemberTrainer(opponent, pokes2)
+
+        battle = Battle(
+            ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=inverse_battle
+        )
+
+        battle.trainer1.event.clear()
+        battle.trainer2.event.clear()
+        preview_view = await generate_team_preview(battle)
+        await battle.trainer1.event.wait()
+        await battle.trainer2.event.wait()
+        preview_view.stop()
+
+        winner = await self.wrapped_run(battle)
+
+        if winner is None:
+            return
+
+        # Grant xp
+        desc = ""
+        async with ctx.bot.db[0].acquire() as pconn:
+            for poke in winner.party:
+                if poke.hp == 0 or not poke.ever_sent_out:
+                    continue
+                # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
+                data = await pconn.fetchrow(
+                    "SELECT hitem, exp FROM pokes WHERE id = $1", poke.id
+                )
+                held_item = data["hitem"].lower()
+                current_exp = data["exp"]
+                exp = 0
+                if held_item != "xp_block":
+                    exp = (150 * poke.level) / 7
+                    if held_item == "lucky_egg":
+                        exp *= 2.5
+                    # Max int for the exp col
+                    exp = min(int(exp), 2147483647 - current_exp)
+                    desc += f"{poke._starting_name} got {exp} exp from winning.\n"
+                await pconn.execute(
+                    "UPDATE pokes SET happiness = happiness + 1, exp = exp + $1 WHERE id = $2",
+                    exp,
+                    poke.id,
+                )
+        embed = discord.Embed(
+            title="Duel Over",
+            color=0xFFB6C1
+        )
+        if desc:
+            embed.add_field(
+                name="Pokemon Details",
+                value=f"{desc}",
+                inline=False
+            )
+        # Prepare loser
+        # If winner issues challenged
+        if winner.id == ctx.author.id:
+            loser = opponent
+        msg = await self.update_ranks(ctx, winner, loser)
+        embed.add_field(
+            name="Rank Adjustments",
+            value=f"{msg}",
+            inline=False
+        )
 
     @duel.command()
     async def npc(self, ctx):
@@ -811,33 +1009,3 @@ class Duel(commands.Cog):
         desc += f"\nConsider joining the [Official Mewbot Server]({'https://discord.gg/mewbot'}) if you are a fan of pokemon duels!\n"
         await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
 
-    async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member):
-        """
-        Updates the ranks between two members, based on the result of the match.
-
-        https://en.wikipedia.org/wiki/Elo_rating_system#Theory
-        """
-        # This is the MAX amount of ELO that can be swapped in any particular match.
-        # Matches between players of the same rank will transfer half this amount.
-        # TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
-        K = 50
-
-        R1 = self.ranks.get(winner.id, 1000)
-        R2 = self.ranks.get(loser.id, 1000)
-
-        E1 = 1 / (1 + (10 ** ((R2 - R1) / 400)))
-        E2 = 1 / (1 + (10 ** ((R1 - R2) / 400)))
-
-        # If tieing is added, this needs to be the score of each player
-        S1 = 1
-        S2 = 0
-
-        newR1 = round(R1 + K * (S1 - E1))
-        newR2 = round(R2 + K * (S2 - E2))
-
-        self.ranks[winner.id] = newR1
-        self.ranks[loser.id] = newR2
-        msg = "**__Rank Adjustments__**\n"
-        msg += f"**{winner.name}**: {R1} -> {newR1} ({newR1-R1:+})\n"
-        msg += f"**{loser.name}**: {R2} -> {newR2} ({newR2-R2:+})"
-        await ctx.send(msg)
