@@ -824,7 +824,7 @@ class Duel(commands.Cog):
         owner2 = MemberTrainer(opponent, pokes2)
 
         battle = Battle(
-            ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=inverse_battle
+            ctx, Battle.RANKED, owner1, owner2, inverse_battle=inverse_battle
         )
 
         battle.trainer1.event.clear()
@@ -838,9 +838,12 @@ class Duel(commands.Cog):
 
         if winner is None:
             return
-
-        forfeit = winner[1]
-        winner = winner[0]
+        if type(winner) == list:
+            forfeit = winner[1]
+            winner = winner[0]
+        else:
+            forfeit = False
+            winner = winner
 
         # Grant xp
         desc = ""
