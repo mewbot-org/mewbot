@@ -272,7 +272,7 @@ class Market(commands.Cog):
             except discord.HTTPException:
                 pass
             await ctx.bot.log(
-                1004190550678831214,
+                1017198932704637008,
                 f"<:market1:820145226495950898><:market2:820145226357932042>\n{ctx.author.name}(`{ctx.author.id}`) has bought a {pokename} on the market. Seller - {owner}. Listing id - {listing_id}\n-----------",
             )
         except Exception:
