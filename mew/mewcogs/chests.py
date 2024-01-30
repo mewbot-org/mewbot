@@ -23,7 +23,7 @@ class Chests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
-        self.CURRENTLY_ACTIVE = ['Skarmory', 'Solosis', 'Hawlucha', 'Sentret', 'Diancie', 'Audino', 'Tapu-Fini', 'Suicune', 'Froakie']
+        self.CURRENTLY_ACTIVE = ['Ho-oh', 'Jangmo-o', 'Raikou', 'Zekrom', 'Hippopotas']
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
         # packs that can be bought with ;radiant, (("Pack Desc", <int - Price in radiant gems>))

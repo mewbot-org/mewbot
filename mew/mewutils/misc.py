@@ -588,31 +588,33 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
         skin = skin.lower()
         emoji = ":question:"
         if skin == "staff":
-            emoji = "<:staff:867903114841423902>"
+            emoji = "<:staff_custom:1184571383393554623>" 
         elif skin == "custom":
-            emoji = "<:custom:867904645447548929>"
+            emoji = "<:custom:867904645447548929>" # Not used atm
         elif skin == "patreon":
-            emoji = "<a:patreon:906307892565672036>"
+            emoji = "<:patreon:1184571762705432679>" 
         elif skin in ("vote", "vote2", "vote3"):
             emoji = "<a:votestreak:998338987070603354>"  # Can Use
-        elif skin in ("rad", "rad2", "rad3"):
-            emoji = "<a:radiant2:909627287094317097>"
-        elif skin == "xmas":
-            emoji = "<:xmas:927667765135945798>"
+        elif skin in ("xmas", "xmas2022", "xmas2023"):
+            emoji = "<:xmas:1184562262137114715>" 
         elif skin == "xmas_special":
-            emoji = "<:xmas_special:927668471943282698>"
+            emoji = "<:xmas_special:1184562294156439572>" 
         elif skin == "tourney":
-            emoji = "<:tourney:927669898715471893>"
+            emoji = "<:tourney:927669898715471893>" # Needs emote
         elif skin == "shadow":
             emoji = "<:shadow:1010559067590246410>"
         elif skin == "oldrad":
             emoji = "<:radiant:1010558960027308052>"
-        elif skin == "radiant":
+        elif skin in ("radiant", "oldrad", "rad", "rad2", "rad3"):
             emoji = "<:radiant:1010558960027308052>"
         elif skin == "gleam":
             emoji = "<:gleam:1010559151472115772>"
         elif skin == "alpha":
             emoji = "<:alphapoke2:1145814445239574538>"
+        elif skin in ('valentines2023'):
+            emoji = "<:heart:1184895213399982140>"
+        elif skin in ('easter2023'):
+            emoji = "<:easter:1184895215060914277>"
         else:
             emoji = "<:skin:1010890087074123777>"
     elif radiant:

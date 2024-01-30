@@ -34,7 +34,7 @@ class Credit:
         tax_charge = round(amount * (.5/100))
         if tax_charge > 35000:
             tax_charge = 35000
-        total_charge = amount + tax_charge
+        total_charge = amount
         return tax_charge, total_charge
 
 
@@ -544,13 +544,13 @@ class TradeMainView(discord.ui.View):
             self.credits.p1 = modal.output
             tax_charge, total_charge = self.credits.charge(self.credits.p1)
             await modal.out_interaction.response.send_message(
-                f"Set {total_charge:,} credits for Player 1 with fee", ephemeral=True
+                f"Set {total_charge:,} credits for Player 1", ephemeral=True
             )
         if interaction.user.id == self.p2:
             self.credits.p2 = modal.output
             tax_charge, total_charge = self.credits.charge(self.credits.p2)
             await modal.out_interaction.response.send_message(
-                f"Set {total_charge:,} credits for Player 2 with fee", ephemeral=True
+                f"Set {total_charge:,} credits for Player 2", ephemeral=True
             )
 
         await self.update_msg()
@@ -695,7 +695,7 @@ class TradeMainView(discord.ui.View):
 
             if self.credits.p1 and p1_total > p1_info["mewcoins"]:
                 await interaction.followup.send(
-                    f"<@{self.p1}> does not have enough credits to complete this trade including transaction surcharge, canceling trade!"
+                    f"<@{self.p1}> does not have enough credits to complete this trade, canceling trade!"
                 )
                 await self.on_timeout()
                 self.stop()
@@ -715,7 +715,7 @@ class TradeMainView(discord.ui.View):
 
             if self.credits.p2 and p2_total  > p2_info["mewcoins"]:
                 await interaction.followup.send(
-                    f"<@{self.p2}> does not have enough credits to complete this trade including transaction surcharge, canceling trade!"
+                    f"<@{self.p2}> does not have enough credits to complete this trade, canceling trade!"
                 )
                 await self.on_timeout()
                 self.stop()
@@ -731,9 +731,8 @@ class TradeMainView(discord.ui.View):
 
             # Remove credits from p2
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
+                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
                 p2_total,
-                p2_taxes,
                 self.p2,
             )
 
@@ -745,9 +744,8 @@ class TradeMainView(discord.ui.View):
 
             # Remove credits from p1
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
+                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
                 p1_total,
-                p1_taxes,
                 self.p1,
             )
 
@@ -936,7 +934,6 @@ class Trade(commands.Cog):
             await ctx.send("You need to give at least 1 credit!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            tax_charge, total_charge = ctx.bot.misc.get_txn_surcharge(val)
             if any(
                 [
                     i["tradelock"]
@@ -969,7 +966,7 @@ class Trade(commands.Cog):
             await ctx.send("You don't have that many credits!")
             return
         if not await ConfirmView(
-            ctx, f"Are you sure you want to give {val} credits to {user.name}?\nYou will be debited {total_charge:,}"
+            ctx, f"Are you sure you want to give {val} credits to {user.name}?"
         ).wait():
             await ctx.send("Trade Canceled")
             return
@@ -978,13 +975,12 @@ class Trade(commands.Cog):
             curcreds = await pconn.fetchval(
                 "SELECT mewcoins FROM users WHERE u_id = $1", ctx.author.id
             )
-            if total_charge > curcreds:
+            if amount > curcreds:
                 await ctx.send("You don't have that many credits anymore...")
                 return
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1, raffle_credits = raffle_credits + $2 WHERE u_id = $3",
-                total_charge,
-                tax_charge,
+                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                amount,
                 ctx.author.id,
             )
             await pconn.execute(

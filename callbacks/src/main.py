@@ -462,7 +462,8 @@ async def shutdown():
 @app.post("/paypal/")
 @app.post("/paypal")
 async def paypalhook(request: Request):
-    data = await request.form()
+    data = await request.json()
+    pprint.pprint(data)
     print("Requester - ", request.client.host)
     if is_donation(data):
         data = {k: v for k, v in data.items()}
@@ -698,12 +699,12 @@ async def vote_handler(data, auth, user_id, list_name):
                     msg += f"**{reward['gems']}x** radiant gems\n"
                 if reward["chest"]:
                     chest_name = reward["chest"]
-                    chest_name = f"{chest_name}"
+                    fancy_chest_name = chest_name.replace("_", " ").title()
                     await pconn.execute(
                         f"UPDATE account_bound SET {chest_name} = {chest_name} + 1 WHERE u_id = $1",
                         user_id,
                     )
-                    msg += f"- A **{reward['chest']} chest**\n"
+                    msg += f"- A **{fancy_chest_name}**\n"
                 if reward["skin"]:
                     # await app.utils.send_skin_message(user_id)
                     skin = random.choice(
@@ -742,4 +743,4 @@ async def index():
 
 if __name__ == "__main__":
     
-    uvicorn.run("main:app", host="0.0.0.0", port=15210)
+    uvicorn.run("main:app", port=15210)

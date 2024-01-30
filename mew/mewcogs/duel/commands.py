@@ -278,10 +278,10 @@ class Duel(commands.Cog):
         # This is the MAX amount of ELO that can be swapped in any particular match.
         # Matches between players of the same rank will transfer half this amount.
         # TODO: dynamically update this based on # of games played, rank, and whether the duel participants were random.
-        if forfeit:
-            K = 10
-        else:
-            K = 50
+        winner_K, loser_K = [50, 50]
+        if forfeit is not None:
+            winner_K = 15
+            loser_k = 200
 
         # Original example, used self.ranks saved within class.
         # Completed todo and moved to db. Left for reference.
@@ -307,14 +307,18 @@ class Duel(commands.Cog):
             S1 = 1
             S2 = 0
 
-            newR1 = round(R1 + K * (S1 - E1))
-            newR2 = round(R2 + K * (S2 - E2))
+            newR1 = round(R1 + winner_K * (S1 - E1))    
+            newR2 = round(R2 + loser_K * (S2 - E2))
 
             # This was here for reference, moved to db code below
             #self.ranks[winner.id] = newR1
             #self.ranks[loser.id] = newR2
 
             # Update rankings in the database
+            if newR1 < 0:
+                newR1 = 0
+            if newR2 < 0:
+                newR2 = 0
             await pconn.execute(
                 "UPDATE users SET rank = $1 WHERE u_id = $2", newR1, winner.id
             )
@@ -623,8 +627,13 @@ class Duel(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def ranked(self, ctx, opponent: discord.Member):
         """A 6v6 ranked duel with another user's party."""
-        if ctx.author.id != 334155028170407949:
-            await ctx.send("Coming Soon")
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Coming Soon")
+            #return
+        if ctx.guild != ctx.bot.official_server:
+            await ctx.send(
+                "You can only use this command in the Mewbot Official Server."
+            )
             return
         await self.run_ranked_duel(ctx, opponent)
 
@@ -989,7 +998,7 @@ class Duel(commands.Cog):
         )
 
         # Grant credits & xp
-        creds = random.randint(100, 600)
+        creds = random.randint(600, 1000)
         creds *= min(battle_multi, 50)
         desc = f"You received {creds} credits for winning the duel!\n\n"
         async with ctx.bot.db[0].acquire() as pconn:

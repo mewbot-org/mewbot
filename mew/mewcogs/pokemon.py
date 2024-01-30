@@ -605,7 +605,7 @@ class Pokemon(commands.Cog):
     @discord.app_commands.describe(
         pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
     )
-    async def info(self, ctx, *, pokemon: str = None):
+    async def info(self, ctx, *, pokemon: str = None, type: Literal['Shiny', 'Gleam', 'Radiant', 'Alpha', 'Shadow'] = "None"):
         """Get information about a Pokémon."""
         if pokemon is None:
             async with ctx.bot.db[0].acquire() as pconn:
@@ -662,21 +662,21 @@ class Pokemon(commands.Cog):
         pokemon = pokemon.lower().replace("alolan", "alola").split()
         shiny = False
         skin = None
-        if "shiny" in pokemon:
+        if "Shiny" in type:
             shiny = True
-            pokemon.remove("shiny")
-        elif "gleam" in pokemon:
+            #pokemon.remove("shiny")
+        elif "Gleam" in type:
             skin = "gleam"
-            pokemon.remove("gleam")
-        elif "alpha" in pokemon:
+            #pokemon.remove("gleam")
+        elif "Alpha" in type:
             skin = "alpha"
-            pokemon.remove("alpha")
-        elif "radiant" in pokemon:
+            #pokemon.remove("alpha")
+        elif "Radiant" in type:
             skin = "radiant"
-            pokemon.remove("radiant")
-        elif "shadow" in pokemon and pokemon.index("shadow") == 0:
+            #pokemon.remove("radiant")
+        elif "Shadow" in type:
             skin = "shadow"
-            pokemon.remove("shadow")
+            #pokemon.remove("shadow")
         pokemon = "-".join(pokemon)
         val = pokemon.capitalize()
 
@@ -792,6 +792,7 @@ class Pokemon(commands.Cog):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
+        gender_rate = pfile['gender_rate']
         if pfile is not None:
             raw_evos = (
                 await ctx.bot.db[1]
@@ -804,6 +805,24 @@ class Pokemon(commands.Cog):
 
         # Weight
         weight = f'{form_info["weight"] / 10:.1f} kg'
+
+        # Gender
+        if gender_rate == -1:
+            gender_txt = "Genderless"
+        elif gender_rate == 0:
+            gender_txt = "Male Only"
+        elif gender_rate == 8:
+            gender_txt = "Female Only"
+        elif gender_rate == 1:
+            gender_txt = "87.5% Male, 12.5% Female"
+        elif gender_rate == 2:
+            gender_txt = "75% Male, 25% Female"
+        elif gender_rate == 4:
+            gender_txt = "50% Male, 50% Female"
+        elif gender_rate == 6:
+            gender_txt = "25% Male, 75% Female"
+        elif gender_rate == 7:
+            gender_txt = "12.5% Male, 87.5% Female"
 
         if "arceus-" in val.lower():
             tlist = val.split("-")[1]
@@ -824,6 +843,7 @@ class Pokemon(commands.Cog):
                 f"**Types**: {tlist}\n"
                 f"**Egg Groups**: {egg_groups}\n"
                 f"**Weight**: {weight}\n"
+                f"**Gender Ratio**: {gender_txt}\n"
                 f"{catch_rate}"
                 f"**Stats**\n{stats_str}\n"
                 f"**Available Forms**:\n{forms}\n"

@@ -757,11 +757,26 @@ class KittyCat(commands.Cog):
         """HELPER: Show radiant count statistics"""
         async with ctx.bot.db[0].acquire() as pconn:
             data = await pconn.fetch(
-                "select count(*), pokname from pokes where radiant = true group by pokname order by count desc"
+                "select count(*), pokname from pokes where skin = 'radiant' group by pokname order by count desc"
             )
         desc = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
         pages = pagify(desc, base_embed=discord.Embed(title="***Radiant Counts***"))
         await MenuView(ctx, pages).start()
+
+
+    @check_helper()
+    @mew_stats.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def gleamcount(self, ctx):
+        """HELPER: Show gleam count statistics"""
+        async with ctx.bot.db[0].acquire() as pconn:
+            data = await pconn.fetch(
+                "select count(*), pokname from pokes where skin = 'gleam' group by pokname order by count desc"
+            )
+        desc = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
+        pages = pagify(desc, base_embed=discord.Embed(title="***Gleam Counts***"))
+        await MenuView(ctx, pages).start()
+
 
     @check_helper()
     @mew_stats.command()

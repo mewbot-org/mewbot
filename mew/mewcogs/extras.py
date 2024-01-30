@@ -117,7 +117,7 @@ class Extras(commands.Cog):
 
     @commands.hybrid_command()
     async def leaderboard(
-        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing", "Mining"]
+        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing", "Mining", "Dueling"]
     ):
         """Displays a Leaderboard Based on Votes, Servers, Pokémon or Fishing."""
         LEADERBOARD_IMMUNE_USERS = [
@@ -270,6 +270,37 @@ class Extras(commands.Cog):
                 else:
                     name = f"Unknown user - ({id})"
                 desc += f"__{true_idx}__. `Points` : **{exp}** - `{name}`\n"
+                true_idx += 1
+            pages = pagify(desc, base_embed=embed)
+            await MenuView(ctx, pages).start()
+        elif board.lower() == "dueling":
+            async with ctx.bot.db[0].acquire() as pconn:
+                details = await pconn.fetch(
+                    f"""SELECT u_id, tnick, rank, staff FROM users WHERE rank NOT IN (1000, 0) ORDER BY rank DESC"""
+                )
+            exps = [t["rank"] for t in details]
+            ids = [record["u_id"] for record in details]
+            names = [record["tnick"] for record in details]
+            staffs = [record["staff"] for record in details]
+            embed = discord.Embed(
+                title="Ranked Duel Leaderboard",
+                description="Duel within Mewbot Official to rise in rankins!",
+                color=0xFFB6C1,
+            )
+            embed.set_footer(
+                text="This only accounts for users with at least 1 Elo Ranking"
+            )
+            desc = ""
+            true_idx = 1
+            for idx, id in enumerate(ids):
+                if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                    continue
+                exp = exps[idx]
+                if names[idx] is not None:
+                    name = f"{names[idx]} - ({id})"
+                else:
+                    name = f"Unknown user - ({id})"
+                desc += f"__{true_idx}__. `Rank Position` : **{exp}** - `{name}`\n"
                 true_idx += 1
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
@@ -626,9 +657,16 @@ class Extras(commands.Cog):
             ):
                 await ctx.send("You have not started!\nStart with `/start` first!")
                 return
+            staff = await pconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1",
+                ctx.author.id
+            )
             last = await pconn.fetchval(
                 "SELECT lastdate FROM patreonstore WHERE u_id = $1", ctx.author.id
             )
+        if staff not in ('User', 'Art Squad'):
+            await ctx.send("Not part of benefits.")
+            return
         if last == date:
             await ctx.send(
                 "You have already received your patreon redeems for this month... Come back later!"
@@ -1326,7 +1364,7 @@ class Extras(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @raffle.command()
+    #@raffle.command()
     async def enter(self, ctx):
         """Enter the raffle"""
         async with ctx.bot.db[0].acquire() as pconn:

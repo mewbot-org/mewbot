@@ -509,6 +509,12 @@ class Breeding(commands.Cog):
         )
         
     async def get_female_max(self, user):
+        achievement_bonus = await self.bot.db[0].fetchval(
+            "SELECT breed_success FROM achievements WHERE u_id = $1",
+            user
+        )
+        if achievement_bonus is None:
+            achievement_bonus = 0
         patreon_status = await self.bot.patreon_tier(user)
         if patreon_status in ("Crystal Tier", "Sapphire Tier"):
             limit = 150
@@ -516,7 +522,7 @@ class Breeding(commands.Cog):
             limit = 45
         elif patreon_status == "Yellow Tier":
             limit = 30
-        elif patreon_status == "Red Tier" and random.randint(0, 1):
+        elif patreon_status == "Red Tier" or achievement_bonus >= 500:
             limit = 15
         else:
             limit = 10
@@ -823,9 +829,12 @@ class Breeding(commands.Cog):
 
                 # Reduce Cgrubb's base step count for testing
                 # Test will be for reducing overall step count in the bot.
-                if ctx.author.id == (366319068476866570, 334155028170407949):
+                #if ctx.author.id == (366319068476866570, 334155028170407949):
                     # Let's start with a flat 15% decrease
-                    counter = counter - round(counter * (10 / 100))
+                    #counter = counter - round(counter * ounter * (10 / 100))
+                
+                #THIS IS OFFICIAL REDUCTION IN STEPS
+                counter = counter - round(counter * (10 / 100))
 
                 if patreon_status in ("Crystal Tier", "Sapphire Tier"):
                     counter = counter - round(counter * (50 / 100))
@@ -849,6 +858,7 @@ class Breeding(commands.Cog):
                     shiny=child.shiny,
                     skin="shadow" if is_shadow else None,
                 )
+                gender_emote = ctx.bot.misc.get_gender_emote(child.gender)
 
                 query, args = get_insert_query(ctx, child, counter, mother, is_shadow)
                 mother_query, mother_args = get_mother_query(
@@ -876,10 +886,10 @@ class Breeding(commands.Cog):
                 iv_list = [child.attack, child.defense, child.spatk, child.spdef, child.speed, child.hp]
                 iv_count = iv_list.count(31)
                 iv_count2 = iv_list.count(30)
-                if iv_count == 5:
-                    achievement = "breed_penta"
-                elif iv_count == 5 and iv_count2 == 1:
+                if iv_count == 5 and iv_count2 == 1:
                     achievement = "breed_titan"
+                elif iv_count == 5:
+                    achievement = "breed_penta"
                 else:
                     achievement = "breed_success" 
 
@@ -893,7 +903,7 @@ class Breeding(commands.Cog):
                 )
                 embed.add_field(
                     name="Egg Details",
-                    value=f"You received a {emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
+                    value=f"You received a {gender_emote}{emoji}{name.capitalize()} Egg!\nIt'll hatch after {counter} messages.",
                     inline=True,
                 )
                 embed.add_field(

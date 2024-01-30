@@ -627,6 +627,55 @@ class Bag(commands.Cog):
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
 
+    @bag.command()
+    async def pokeskins(self, ctx):
+        """View all your owned Pokemon Skins."""
+        async with ctx.bot.db[0].acquire() as pconn:
+            skins = await pconn.fetchval(
+                "SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id
+            )
+        if skins is None:
+            await ctx.send("You have not started!\nStart with `/start` first.")
+            return
+        desc = ""
+        for poke in sorted(skins):
+            for skin, count in skins[poke].items():
+                if count > 0:
+                    desc += f"**{poke.title()}** | {skin} | {count}x\n"
+        if not desc:
+            await ctx.send("You do not have any skins.")
+            return
+        embed = discord.Embed(
+            title="Your Pokemon Skins",
+            color=ctx.bot.get_random_color(),
+        )
+        pages = pagify(desc, per_page=20, base_embed=embed)
+        await MenuView(ctx, pages).start()
+
+    @bag.command()
+    async def trainerskins(self, ctx):
+        "View trainer skins for profile"
+        async with ctx.bot.db[0].acquire() as pconn:
+            skins = await pconn.fetchval(
+                "SELECT trainer_images::json FROM account_bound WHERE u_id = $1", ctx.author.id
+            )
+        if skins is None:
+            await ctx.send("You have not started!\nStart with `/start` first.")
+            return
+        desc = ""
+        for poke in sorted(skins):
+            for skin, count in skins[poke].items():
+                if count > 0:
+                    desc += f"**{poke.title()}** | {skin} | {count}x\n"
+        if not desc:
+            await ctx.send("You do not have any skins.")
+            return
+        embed = discord.Embed(
+            title="Your Trainer Skins",
+            color=ctx.bot.get_random_color(),
+        )
+        pages = pagify(desc, per_page=20, base_embed=embed)
+        await MenuView(ctx, pages).start()
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bag(bot))

@@ -213,9 +213,11 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             return await self.embedmsg.edit(embed=embed, view=self.view)
         elif not poke_spawn_check(str(self.name), pokemon) and self.attempts >= 0:
             self.attempts += 1
-            return await interaction.followup.send(
+            await interaction.followup.send(
                 "Incorrect name! Try again.", ephemeral=True
             )
+            await interaction.response.defer()
+            return
         else:
             pass
 

@@ -8,7 +8,7 @@ from unicodedata import name
 from discord.ext import commands
 from mewcogs.pokemon_list import *
 from mewutils.checks import tradelock, check_mod
-from mewutils.misc import get_file_name, get_emoji, ConfirmView
+from mewutils.misc import get_file_name, get_emoji, ConfirmView, MenuView, pagify
 from collections import defaultdict
 from datetime import datetime
 from typing import Literal
@@ -16,6 +16,124 @@ from dataclasses import dataclass
 
 ORANGE = 0xF4831B
 RED_GREEN = [0xBB2528, 0x146B3A]
+XMAS_ROLE = 1184182751067377674
+
+GLEAM_POKEMON = [
+    'Cutiefly', 
+    'Flabebe', 
+    'Darkrai', 
+    'Larvitar', 
+    'Scraggy', 
+    'Nihilego', 
+    'Cleffa', 
+    'Zeraora', 
+    'Cresselia', 
+    'Shaymin', 
+    'Dratini', 
+    'Wooper', 
+    'Wurmple', 
+    'Lunatone', 
+    'Reshiram', 
+    'Meltan', 
+    'Zapdos-galar', 
+    'Charmander', 
+    'Deerling', 
+    'Unown', 
+    'Pancham', 
+    'Corphish', 
+    'Kyogre', 
+    'Cyndaquil', 
+    'Ralts', 
+    'Magikarp', 
+    'Heracross', 
+    'Drowzee', 
+    'Porygon', 
+    'Shellder', 
+    'Chingling', 
+    'Entei', 
+    'Zapdos', 
+    'Weedle', 
+    'Mawile', 
+    'Omanyte',
+    'Anorith', 
+    'Togepi', 
+    'Torkoal', 
+    'Bellsprout', 
+    'Piplup', 
+    'Treecko', 
+    'Axew', 
+    'Clamperl', 
+    'Scyther', 
+    'Latios', 
+    'Deoxys', 
+    'Poliwag', 
+    'Roggenrola', 
+    'Yveltal', 
+    'Liligant', 
+    'Landorus', 
+    'Aegislash', 
+    'Infernape', 
+    'Gastrodon', 
+    'Chesnaught', 
+    'Zoroark', 
+    'Arceus', 
+    'Pheromosa', 
+    'Rotom', 
+    'Goomy', 
+    'Milcery', 
+    'Minccino', 
+    'Turtwig', 
+    'Salandit', 
+    'Scorbunny', 
+    'Dreepy', 
+    'Tornadus', 
+    'Genesect', 
+    'Groudon', 
+    'Xurkitree', 
+    'Popplio', 
+    'Litten', 
+    'Chikorita', 
+    'Noibat', 
+    'Sneasel', 
+    'Impidimp', 
+    'Eternatus', 
+    'Mudkip', 
+    'Zacian', 
+    'Giratina', 
+    'Dracovish', 
+    'Budew ', 
+    'Spritzee ', 
+    'Koraidon ', 
+    'Vulpix-alola ', 
+    'Teddiursa', 
+    'Skarmory',
+    'Solosis', 
+    'Hawlucha', 
+    'Sentret', 
+    'Diancie', 
+    'Audino', 
+    'Tapu-fini', 
+    'Suicune', 
+    'Froakie',
+]
+
+RADIANT_POKEMON = [
+    'Necrozma',
+    'Yveltal',
+    'Salamence',
+    'Xerneas',
+    'Eevee',
+    'Charmander',
+    'Celebi',
+    'Riolu',
+    'Rockruff',
+    'Zorua',
+    'Dreepy',
+    'Lapras',
+    'Tyrantrum',
+    'Mimikyu',
+    'Jynx'
+]
 
 uncoded_ids = [
     266,
@@ -103,8 +221,6 @@ uncoded_ids = [
     10018,
 ]
 
-
-
 @dataclass
 class Pokemon:
     name: str
@@ -131,6 +247,65 @@ class Pokemon:
             self.name.endswith(form) for form in ["alola", "galar", "hisui", "paldea"]
         )
 
+class ListSelectChristmas(discord.ui.Select):
+    """Drop down selection for trainer image"""
+    def __init__(self):
+        options = [
+            discord.SelectOption(
+                label="Maleskier",
+                emoji="<:skier_trainer_male:1184275356606267472>"
+            ),
+            discord.SelectOption(
+                label="Femaleskier",
+                emoji="<:skier_trainer_female:1184275354324582420>"
+            ),
+            discord.SelectOption(
+                label="Pyrce",
+                emoji="<:pyrce_trainer:1184275351749283850>"
+            )
+        ]
+        super().__init__(
+            options=options
+        )
+
+    async def callback(self, interaction):
+        self.view.choice = interaction.data["values"][0]
+        self.view.event.set()
+
+class ListSelectView(discord.ui.View):
+    """View to handle trainer selection"""
+    def __init__(self, ctx, confirm_content: str):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.choice = None
+        self.event = asyncio.Event()
+        self.confirm_content = confirm_content
+        self.add_item(ListSelectChristmas())
+
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    async def on_timeout(self):
+        try:
+            await self.message.edit(view=None)
+        except discord.NotFound:
+            pass
+        self.event.set()
+
+    async def on_error(self, interaction, error, item):
+        await self.ctx.bot.misc.log_error(self.ctx, error)
+
+    async def wait(self):
+        """Returns the user's choice, or None if they did not choose in time."""
+        self.message = await self.ctx.send(self.confirm_content, view=self)
+        await self.event.wait()
+        return self.choice
 
 # Here for Easter 2023 Event
 async def get_egg(ctx, fund):
@@ -276,7 +451,6 @@ async def get_egg(ctx, fund):
     )
     return p, emoji, boosted
 
-
 # Here for Easter 2023 Event
 def get_insert_query(ctx, poke, is_shadow=False):
     tackle = "tackle"
@@ -319,7 +493,6 @@ def get_insert_query(ctx, poke, is_shadow=False):
     )
     return query2, args
 
-
 class Events(commands.Cog):
     """Various seasonal events in Mewbot."""
 
@@ -331,8 +504,7 @@ class Events(commands.Cog):
         self.HALLOWEEN_DROPS = False
         self.HALLOWEEN_COMMANDS = False
         self.CHRISTMAS_DROPS = False
-        self.CHRISTMAS_COMMANDS = False
-        self.CHRISTMAS_DROPS = False
+        self.CHRISTMAS_COMMANDS = True
         self.VALENTINE_DROPS = False
         self.VALENTINE_COMMANDS = False
         self.SUMMER_DROPS = False
@@ -373,18 +545,16 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Plusle",
-            "Minun",
-            "Mimikyu",
-            "Keldeo",
-            "Cacnea",
-            "Makuhita",
-            "Yamask",
-            "Solosis",
-            "Spiritomb",
-            "Illumise",
-            "Pincurchin",
-            "Golett",
+            "Pheromosa",
+            "Stakataka",
+            "Celesteela",
+            "Guzzlord",
+            "Poipole",
+            "Kartana",
+            "Nihilego",
+            "Blacephalon",
+            "Xurkitree",
+            "Buzzwole",
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -482,7 +652,7 @@ class Events(commands.Cog):
             "?": 1,
         }
         self.UNOWN_WORDLIST = []
-        self.start_purchaselock = []
+        self.purchaselock = []
         try:
             with open(self.bot.app_directory / "shared" / "data" / "wordlist.txt") as f:
                 self.UNOWN_WORDLIST = f.readlines().copy()
@@ -922,10 +1092,10 @@ class Events(commands.Cog):
                 "That isn't a valid option. Select a valid option from `/summer shop`."
             )
             return
-        if ctx.author.id in self.start_purchaselock:
+        if ctx.author.id in self.purchaselock:
             await ctx.send("Sorry, finish any pending purchases first.")
             return
-        self.start_purchaselock.append(ctx.author.id)
+        self.purchaselock.append(ctx.author.id)
 
         async with self.bot.db[0].acquire() as pconn:
             event_data = await pconn.fetchrow(
@@ -942,12 +1112,12 @@ class Events(commands.Cog):
             if option == 1:
                 if limit >= 100:
                     await ctx.send("You've reached the daily purchase limit.")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
 
                 if milk < 50:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
 
                 milk -= 50
@@ -964,13 +1134,13 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(f"You bought {redeem_amount} Redeems.")
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
 
             if option == 2:
                 amount = random.randint(1, 25)
                 if milk < 75:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 milk -= 75
                 await pconn.execute(
@@ -982,13 +1152,13 @@ class Events(commands.Cog):
                     ctx.author.id, "radiant_gem", amount, True
                 )
                 await ctx.send(f"You bought {amount}x gleam gems.")
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
                 return
 
             if option == 3:
                 if milk < 50:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 milk -= 50
                 inventory = await pconn.fetchrow(
@@ -999,7 +1169,7 @@ class Events(commands.Cog):
 
                 if inventory["battle_multiplier"] >= 50:
                     await ctx.send("You're maxed out.")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
 
                 new_amount = min(inventory.get("battle_multiplier", 0) + 2, 50)
@@ -1014,13 +1184,13 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(f"You bought 2x Battle Multipliers.")
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
                 return
 
             if option == 4:
                 if milk < 50:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 milk -= 50
                 inventory = await pconn.fetchrow(
@@ -1031,7 +1201,7 @@ class Events(commands.Cog):
 
                 if inventory["shiny_multiplier"] >= 50:
                     await ctx.send("You're maxed out.")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
 
                 new_amount = min(inventory.get("shiny_multiplier", 0) + 2, 50)
@@ -1046,13 +1216,13 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(f"You bought 2x Shiny Multipliers.")
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
                 return
 
             if option == 5:
                 if milk < 100:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 milk -= 100
                 await pconn.execute(
@@ -1067,13 +1237,13 @@ class Events(commands.Cog):
                 await ctx.send(
                     f"You were given an entry into the Summer Raffle!\nThe raffle will be drawn in the Mewbot Official Server. `\invite`"
                 )
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
                 return
 
             if option == 6:
                 if milk < 100:
                     await ctx.send("You don't have enough 🥛 for that!")
-                    self.start_purchaselock.remove(ctx.author.id)
+                    self.purchaselock.remove(ctx.author.id)
                     return
                 milk -= 100
                 skins = await pconn.fetchval(
@@ -1099,7 +1269,7 @@ class Events(commands.Cog):
                 await ctx.send(
                     f"You got a {pokemon} summer skin! Apply it with `/skin apply`."
                 )
-                self.start_purchaselock.remove(ctx.author.id)
+                self.purchaselock.remove(ctx.author.id)
                 return
 
     # @commands.hybrid_group()
@@ -1797,10 +1967,209 @@ class Events(commands.Cog):
                 f"You have successfully started a ghost detector, ghost spawn chances are greatly increased for the next hour!"
             )
 
-    # @commands.hybrid_group()
+    @commands.hybrid_group()
     async def christmas(self, ctx):
         """Christmas commands."""
         pass
+
+    @christmas.command(name="leaderboard")
+    async def leaderboard(self, ctx, board: Literal['Staff', 'User'], type:Literal['thrown', 'hit']):
+        if type == 'thrown':
+            async with ctx.bot.db[0].acquire() as pconn:
+                details = await pconn.fetch(
+                    f"""SELECT u_id, times_thrown FROM events_new WHERE times_thrown != 0 ORDER BY times_thrown DESC"""
+                )
+                exps = [t["times_thrown"] for t in details]
+                ids = [record["u_id"] for record in details]
+                embed = discord.Embed(
+                    title="Snowballs Thrown Leaderboard",
+                    description="Toss snowballs at players during our event to rise in these rankings!",
+                    color=0xFFB6C1,
+                )
+                desc = ""
+                true_idx = 1
+                for idx, id in enumerate(ids):
+                    #if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                        #continue
+                    tnick, staff = await pconn.fetchrow(
+                        "SELECT tnick, staff FROM users WHERE u_id = $1", id
+                    )
+                    exp = exps[idx]
+                    if board == 'Staff':
+                        if id == 744831273406824449:
+                            pass
+                        elif staff not in ('Admin', 'Mod', 'Investigator'):
+                            continue
+                    elif board == 'User':
+                        if staff != 'User' or id == 744831273406824449:
+                            continue
+                    else:
+                        await ctx.send("That is not a valid event leaderboard type, please try again...")
+                        return
+                    if tnick is not None:
+                        name = f"{tnick} - ({id})"
+                    else:
+                        name = f"Unknown user - ({id})"
+                    desc += f"__{true_idx}__. `Position` : **{exp}** - `{name}`\n"
+                    true_idx += 1
+            pages = pagify(desc, base_embed=embed)
+            await MenuView(ctx, pages).start()
+        elif type == 'hit':
+            async with ctx.bot.db[0].acquire() as pconn:
+                details = await pconn.fetch(
+                    f"""SELECT u_id, times_hit FROM events_new WHERE times_thrown != 0 ORDER BY times_hit DESC"""
+                )
+                exps = [t["times_hit"] for t in details]
+                ids = [record["u_id"] for record in details]
+                embed = discord.Embed(
+                    title="Snowballs Hit Leaderboard",
+                    description="Get hit by snowballs during our event to rise in these rankings!",
+                    color=0xFFB6C1,
+                )
+                desc = ""
+                true_idx = 1
+                for idx, id in enumerate(ids):
+                    #if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                        #continue
+                    tnick, staff = await pconn.fetchrow(
+                        "SELECT tnick, staff FROM users WHERE u_id = $1", id
+                    )
+                    exp = exps[idx]
+                    if board == 'Staff':
+                        if id == 744831273406824449:
+                            pass
+                        elif staff not in ('Admin', 'Mod', 'Investigator'):
+                            continue
+                    elif board == 'User':
+                        if staff != 'User' or id == 744831273406824449:
+                            continue
+                    else:
+                        await ctx.send("That is not a valid event leaderboard type, please try again...")
+                        return
+                    if tnick is not None:
+                        name = f"{tnick} - ({id})"
+                    else:
+                        name = f"Unknown user - ({id})"
+                    desc += f"__{true_idx}__. `Position` : **{exp}** - `{name}`\n"
+                    true_idx += 1
+            pages = pagify(desc, base_embed=embed)
+            await MenuView(ctx, pages).start()
+
+    @christmas.command(name="snowball")
+    async def throw_snowball(self, ctx, player:discord.Member):
+        if ctx.guild != ctx.bot.official_server:
+            await ctx.send(
+                "You can only use this command in the Mewbot Official Server."
+            )
+            return
+        if ctx.author.id == player.id:
+            await ctx.send(
+                "Santa does not like a cheater!\nThrow it at someone else..."
+            )
+            return
+        async with ctx.bot.db[0].acquire() as pconn:
+            msg = ""
+            snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed = await pconn.fetchrow(
+                "SELECT snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed FROM events_new WHERE u_id = $1",
+                ctx.author.id
+            )
+            if snowballs is None:
+                await ctx.send("You have not started the event!")
+                return
+            elif snowballs < 1:
+                await ctx.send("You have to get some snowballs <:snowballs:1184292806190182420>!")
+                return
+            
+            attacked_times_hit = await pconn.fetchval(
+                "SELECT times_hit FROM events_new WHERE u_id = $1",
+                player.id
+            )
+            if attacked_times_hit is None:
+                #Meaning player hit hasn't started event
+                await pconn.execute(
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", player.id
+                )
+                await ctx.send("Please try this command again shortly...")
+                return
+                        
+            #Let's hit player
+            await pconn.execute(
+                "UPDATE events_new SET times_hit = times_hit + 1 WHERE u_id = $1",
+                player.id
+            )
+            #Remove snowball and update stats
+            snowballs -= 1
+            times_thrown += 1
+            await pconn.execute(
+                "UPDATE events_new SET snowballs = $1, times_thrown = $2 WHERE u_id = $3",
+                snowballs,
+                times_thrown,
+                ctx.author.id
+            )
+            if times_thrown >= 100 and role_redeemed is False:
+                event_role = ctx.guild.get_role(1184182751067377674)
+                await ctx.author.add_roles(
+                    event_role, reason=f"Event threshold reward - {ctx.author}"
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET role_redeemed = True WHERE u_id = $1",
+                    ctx.author.id
+                )
+                msg += "You've received the Xmas2023 Official Server Role!"
+            elif times_thrown >= 250 and trainer_redeemed is False:
+                choice = await ListSelectView(
+                    ctx, "Please choose a trainer image!"
+                ).wait()
+                if choice is None:
+                    await ctx.send("You did not select in time, cancelling.")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                trainer_images = await pconn.fetchval(
+                    "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
+                    ctx.author.id
+                )
+                choice = str(choice)
+                category = "xmas"
+                if category not in trainer_images:
+                    trainer_images[category] = {}
+                if choice not in trainer_images[category]:
+                    trainer_images[category][choice] = 1
+                else:
+                    trainer_images[category][choice] += 1
+                await pconn.execute(
+                    "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
+                    trainer_images,
+                    ctx.author.id
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET trainer_redeemed = True WHERE u_id = $1",
+                    ctx.author.id
+                )
+                msg += f"You've successfully redeemed {choice} as your trainer image!\nIt's been added to your trainer image inventory."
+
+        embed = discord.Embed(
+            title="Mewbot Christmas",
+            description=f"You've throw a snowball!\nDid it hit?!",
+            color=0x0084FD
+        )
+        embed.add_field(
+            name="Victim",
+            value=f"You've hit **{player.name}**!",
+            inline=False
+        )
+        embed.add_field(
+            name=f"{ctx.author.name}'s Stats",
+            value=f"You've been hit __{times_hit} times__.\nYou've thrown __{times_thrown} snowballs__!",
+            inline=False
+        )
+        if msg != "":
+            embed.add_field(
+                name="Rewards",
+                value=f"{msg}",
+                inline=False
+            )
+        await ctx.send(embed=embed)
+
 
     # @christmas.command(name="spread_cheer")
     async def spread_cheer(self, ctx):
@@ -1849,382 +2218,543 @@ class Events(commands.Cog):
                 f"You have successfully spread holiday cheer! Christmas spirits will be attracted to this channel for 1 hour."
             )
 
-    # @christmas.command(name="buy")
-    async def christmas_buy(self, ctx, option: int):
+    @christmas.command(name="buy")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def christmas_buy(
+        self, 
+        ctx, 
+        pack: Literal[
+            "1. 2x Battle Multi.",
+            "2. 2x Shiny Multi.",
+            "3. 1-25 Gleam Gems",
+            "4. Event Gleam",
+            "5. Boosted Event Gleam",
+            "6. Returning Gleams",
+            "7. Returning Radiants",
+        ],
+    ):
         """Buy something from the christmas shop."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
-        if option < 1 or option > 5:
-            await ctx.send(
-                "That isn't a valid option. Select a valid option from `/christmas shop`."
-            )
+        option = int(pack[0])
+        if option < 1 or option > 7:
+            await ctx.send("That is not a valid option number.")
             return
+        if ctx.author.id in self.purchaselock:
+            await ctx.send("Please finish any pending purchases!")
+            return
+
         async with self.bot.db[0].acquire() as pconn:
-            holidayinv = await pconn.fetchval(
-                "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
+            credits, redeems = await pconn.fetchrow(
+                "SELECT mewcoins, redeems FROM users WHERE u_id = $1", ctx.author.id
             )
-            if "snowflakes" not in holidayinv:
-                await ctx.send("You haven't gotten any snowflakes yet!")
+            if credits is None:
+                await ctx.send("You haven't started! Please use `/start` to start your adventure!")
                 return
+            
+            radiant_gems, battle_multiplier, shiny_multiplier = await pconn.fetchrow(
+                "SELECT radiant_gem, battle_multiplier, shiny_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
+            )
+            if radiant_gems is None:
+                await ctx.send("No bound items table found. Have you started or converted to the new bag system if needed?")
+                return
+            
+            gleam_limit, radiant_limit = await pconn.fetchrow(
+                "SELECT gleam_limit, radiant_limit FROM events_new WHERE u_id = $1",
+                ctx.author.id
+            )
+            if gleam_limit is None:
+                #Try to add user to table and then have them redo the command
+                await pconn.execute(
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+                )
+                await ctx.send("Please retry the command.")
+                return
+
+            self.purchaselock.append(ctx.author.id)
+
+            #Battle Multiplier
             if option == 1:
-                if holidayinv["snowflakes"] < 25:
-                    await ctx.send("You don't have enough snowflakes for that!")
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
+                    self.purchaselock.remove(ctx.author.id)
                     return
-                holidayinv["snowflakes"] -= 25
+                if battle_multiplier >= 50:
+                    await ctx.send("Your Battle Multiplier is already maxed out!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                credits -= 50000
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + 5, holidayinv = $1::json WHERE u_id = $2",
-                    holidayinv,
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
-                await ctx.send("You bought 5 Redeems.")
+                battle_multiplier = min(battle_multiplier + 2, 50)
+                await pconn.execute(
+                    "UPDATE account_bound SET battle_multiplier = $1 WHERE u_id = $2",
+                    battle_multiplier,
+                    ctx.author.id,
+                )
+                await ctx.send("You have successfully purchased 2x Battle Multiplier!")
+                self.purchaselock.remove(ctx.author.id)
+                return
+            
+            #Shiny Multiplier
             if option == 2:
-                if holidayinv["snowflakes"] < 50:
+                if credits < 50000:
                     await ctx.send("You don't have enough snowflakes for that!")
+                    self.purchaselock.remove(ctx.author.id)
                     return
-                holidayinv["snowflakes"] -= 50
-                inventory = await pconn.fetchval(
-                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                inventory["battle-multiplier"] = min(
-                    inventory.get("battle-multiplier", 0) + 2, 50
-                )
+                if shiny_multiplier >= 50:
+                    await ctx.send("Your Shiny Multiplier is already maxed out!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                credits -= 50000
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, holidayinv = $2::json WHERE u_id = $3",
-                    inventory,
-                    holidayinv,
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
-                await ctx.send(f"You bought 2x Battle Multipliers.")
+                shiny_multiplier = min(shiny_multiplier + 2, 50)
+                await pconn.execute(
+                    "UPDATE account_bound SET shiny_multiplier = $1 WHERE u_id = $2",
+                    shiny_multiplier,
+                    ctx.author.id,
+                )
+                await ctx.send("You have successfully purchased 2x Shiny Multiplier!")
+                self.purchaselock.remove(ctx.author.id)
+                return
+            
+            #Gleam Gems
             if option == 3:
-                if holidayinv["snowflakes"] < 50:
-                    await ctx.send("You don't have enough snowflakes for that!")
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
+                    self.purchaselock.remove(ctx.author.id)
                     return
-                holidayinv["snowflakes"] -= 50
-                inventory = await pconn.fetchval(
-                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                inventory["shiny-multiplier"] = min(
-                    inventory.get("shiny-multiplier", 0) + 2, 50
-                )
+                credits -= 50000
+                earned_gleams = random.randint(1, 25)
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, holidayinv = $2::json WHERE u_id = $3",
-                    inventory,
-                    holidayinv,
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
-                await ctx.send(f"You bought 2x Shiny Multipliers.")
+                await pconn.execute(
+                    "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
+                    earned_gleams,
+                    ctx.author.id
+                )
+                await ctx.send(f"You bought {earned_gleams}x Gleam Gems <a:radiantgem:774866137472827432>.")
+                self.purchaselock.remove(ctx.author.id)
+                return
+            
+            #Event Gleams
+            #Gives the skin for the Pokemon rather than the Pokemon
             if option == 4:
-                amount = random.randint(1, 25)
-                if holidayinv["snowflakes"] < 75:
-                    await ctx.send("You don't have enough snowflakes for that!")
+                if radiant_gems < 150:
+                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    self.purchaselock.remove(ctx.author.id)
                     return
-                holidayinv["snowflakes"] -= 75
-                inventory = await pconn.fetchval(
-                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                inventory["radiant gem"] = inventory.get("radiant gem", 0) + amount
-                await pconn.execute(
-                    "UPDATE users SET inventory = $1::json, holidayinv = $2::json WHERE u_id = $3",
-                    inventory,
-                    holidayinv,
-                    ctx.author.id,
-                )
-                await ctx.send(f"You bought 1x gleam gem.")
-            if option == 5:
-                if holidayinv["snowflakes"] < 100:
-                    await ctx.send("You don't have enough snowflakes for that!")
-                    return
-                holidayinv["snowflakes"] -= 100
-                await pconn.execute(
-                    "UPDATE users SET raffle = raffle + 1 WHERE u_id = $1",
-                    ctx.author.id,
-                )
-                await ctx.send(
-                    f"You were given an entry into the Christmas Raffle!\nThe raffle will be drawn in the Mewbot Official Server. `\invite`"
-                )
-            if option == 6:
-                if holidayinv["snowflakes"] < 150:
-                    await ctx.send("You don't have enough snowflakes for that!")
-                    return
-                holidayinv["snowflakes"] -= 150
+                radiant_gems -= 150
                 skins = await pconn.fetchval(
                     "SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id
                 )
-                pokemon = random.choice(list(self.CHRISTMAS_MOVES.keys())).lower()
+                pokemon = random.choice(self.EVENT_POKEMON).lower()
                 if pokemon not in skins:
                     skins[pokemon] = {}
-                if "xmas" not in skins[pokemon]:
-                    skins[pokemon]["xmas"] = 1
+                if "xmas2023" not in skins[pokemon]:
+                    skins[pokemon]["xmas2023"] = 1
                 else:
-                    skins[pokemon]["xmas"] += 1
+                    skins[pokemon]["xmas2023"] += 1
                 await pconn.execute(
-                    "UPDATE users SET skins = $1::json, holidayinv = $2::json WHERE u_id = $3",
+                    "UPDATE account_bound SET radiant_gem = $1 WHERE u_id = $2",
+                    radiant_gems,
+                    ctx.author.id,
+                )
+                await pconn.execute(
+                    "UPDATE users SET skins = $1::json WHERE u_id = $2",
                     skins,
-                    holidayinv,
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"You got a {pokemon} christmas skin! Apply it with `/skin apply`."
+                    f"You got a **{pokemon.title()} Christmas Skin**! Apply it with `/skin apply`."
                 )
+                self.purchaselock.remove(ctx.author.id)
+                return
 
-    # @christmas.command(name="inventory")
+            #Boosted Event Glems
+            #This gives Pokemon w/skin rather than just skin
+            if option == 5:
+                if radiant_gems < 300:
+                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                radiant_gems -= 300
+                pokemon = random.choice(self.EVENT_POKEMON).lower()
+                await pconn.execute(
+                    "UPDATE account_bound SET radiant_gem = $1 WHERE u_id = $2",
+                    radiant_gems,
+                    ctx.author.id,
+                )
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), boosted=True, skin='xmas2023')
+                await ctx.send(
+                    f"You got a **{pokemon.title()} Christmas Pokemon**!\nIt's been added to your list."
+                )
+                self.purchaselock.remove(ctx.author.id)
+                return
+
+            #Returning Gleams
+            if option == 6:
+                if radiant_gems < 300:
+                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                if gleam_limit >= 50:
+                    await ctx.send("You have hit the purchase limit for the event!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                radiant_gems -= 300
+                pokemon = random.choice(GLEAM_POKEMON).lower()
+                await pconn.execute(
+                    "UPDATE account_bound SET radiant_gem = $1 WHERE u_id = $2",
+                    radiant_gems,
+                    ctx.author.id,
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET gleam_limit = gleam_limit + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), skin='gleam')
+                await ctx.send(
+                    f"You got a **<:gleam:1010559151472115772> {pokemon.title()} **!\nIt's been added to your list."
+                )
+                self.purchaselock.remove(ctx.author.id)
+                return
+
+            #Returning Radiants
+            if option == 7:
+                if redeems < 200:
+                    await ctx.send("You don't have enough Redeems for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                if radiant_limit >= 20:
+                    await ctx.send("You have hit the purchase limit for the event!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                redeems -= 200
+                pokemon = random.choice(RADIANT_POKEMON).lower()
+                await pconn.execute(
+                    "UPDATE users SET redeems = $1 WHERE u_id = $2",
+                    redeems,
+                    ctx.author.id,
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET radiant_limit = radiant_limit + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), skin='radiant')
+                await ctx.send(
+                    f"You got a **<:radiant:1010558960027308052> {pokemon.title()} **!\nIt's been added to your list."
+                )
+                self.purchaselock.remove(ctx.author.id)
+                return
+
+    @christmas.command(name="inventory")
     async def christmas_inventory(self, ctx):
         """Check your christmas inventory."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
         async with self.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
+            inventory = await pconn.fetchrow(
+                "SELECT snowflakes, small_gift, large_gift, snowballs, times_hit, times_thrown FROM events_new WHERE u_id = $1", \
+                ctx.author.id
             )
         embed = discord.Embed(
-            title=f"{ctx.author.name}'s Christmas Inventory",
-            description=f"Use `/christmas shop` to see what snowflakes can be used for!",
+            title=f"{ctx.author.name.title()}'s Christmas Inventory",
+            description=f"These are all items that are related to the event.\nGet all of these items from RAIDS!",
             color=random.choice(RED_GREEN),
         )
-        if "snowflakes" in inventory:
-            embed.add_field(name="Snowflakes", value=f"{inventory['snowflakes']}x")
-        if "small gift" in inventory:
-            embed.add_field(name="Small Present", value=f"{inventory['small gift']}x")
-        if "large gift" in inventory:
-            embed.add_field(name="Large Present", value=f"{inventory['large gift']}x")
+        embed.add_field(
+            name="Snowballs <:snowballs:1184292806190182420>", 
+            value=f"**Available**: {inventory['snowballs']}x\n**Times Hit**: {inventory['times_hit']}\n**Times Thrown**: {inventory['times_thrown']}",
+            inline=False
+        )
+        embed.add_field(
+            name="Presents", 
+            value=(
+                f"**Small Present** 📦: {inventory['small_gift']}x\n"
+                f"**Large Present** 🎁: {inventory['large_gift']}x"
+            ),
+            inline=False
+        )
         # if "holiday cheer" in inventory:
         # embed.add_field(name="Holiday Cheer",
         # value=f"{inventory['holiday cheer']}x")
         embed.set_footer(text="Happy Holidays!")
         await ctx.send(embed=embed)
 
-    # @christmas.command(name="shop")
+    @christmas.command(name="shop")
     async def christmas_shop(self, ctx):
         """Check the christmas shop."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
+
+        event_data = await ctx.bot.db[0].fetchrow(
+            "SELECT radiant_limit, gleam_limit FROM events_new WHERE u_id = $1",
+            ctx.author.id
+        )
+        if event_data is None:
+            radiant_limit = 0
+            gleam_limit = 0
+        else:
+            radiant_limit = event_data['radiant_limit']
+            gleam_limit = event_data['gleam_limit']
+
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
-        desc = (
-            "**Option# | Price | Item**\n"
-            "**1** | 25 <:snowflake:1055702885041721374> | 5 Redeems\n"
-            "**2** | 50 <:snowflake:1055702885041721374> | 2x Battle Multi\n"
-            "**3** | 50 <:snowflake:1055702885041721374> | 2x Shiny Multi\n"
-            "**4** | 75 <:snowflake:1055702885041721374> | 1-25 Gleam Gems\n"
-            "**5** | 100 <:snowflake:1055702885041721374> | 1x Raffle Entry\n"
-            "**6** | 150 <:snowflake:1055702885041721374> | Random Christmas Skin\n"
-        )
+        
+        #This was the original event shop.
+        #desc = (
+            #"**Option# | Price | Item**\n"
+            #"**1** | 25 <:snowflake:1055702885041721374> | 1 Redeems\n"
+            #"**2** | 50 <:snowflake:1055702885041721374> | 2x Battle Multi\n"
+            #"**3** | 50 <:snowflake:1055702885041721374> | 2x Shiny Multi\n"
+            #"**4** | 75 <:snowflake:1055702885041721374> | 1-25 Gleam Gems\n"
+            #"**5** | 100 <:snowflake:1055702885041721374> | 1x Raffle Entry\n"
+            #"**6** | 150 <:snowflake:1055702885041721374> | Random Christmas Skin\n"
+           #""
+        #)
+
+        #2023 remake
         embed = discord.Embed(
             title="Christmas Shop",
-            description="Use leftover <:snowflake:1055702885041721374> Snowflakes to purchase items",
+            description="Make sure to join RAIDS to maximize your income during the event!\nJoin our Official Server and grab the role! `/invite`",
             color=random.choice(RED_GREEN),
         )
         embed.add_field(
-            name="Currency",
-            value="5 Redeems\n25 <:snowflake:1055702885041721374>\n1-25 Gleam Gems\n75 <:snowflake:1055702885041721374>",
-            inline=True,
+            name="Account Multipliers",
+            value=(
+                "`1.` __2x Battle Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+                "`2.` __2x Shiny Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+            ),
+            inline=False
         )
         embed.add_field(
-            name="Multipliers",
-            value="2x Battle Multi\n50 <:snowflake:1055702885041721374>\n2x Shiny Multi\n50 <:snowflake:1055702885041721374>",
-            inline=True,
+            name="Currencies",
+            value=(
+                "`3.` __1-25 Gleam Gems.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+            ),
+            inline=False
         )
         embed.add_field(
-            name="Misc",
-            value="1 Raffle Entry\n100 <:snowflake:1055702885041721374>\nRandom Christmas Skin\n150 <:snowflake:1055702885041721374>",
-            inline=True,
+            name="Gleams",
+            value=(
+                "`4.` __Event Skin__\n**Cost:** 150 <a:radiantgem:774866137472827432>\nThis is a skin that goes into inventory!\n"
+                "`5.` __Boosted Event Skin__\n**Cost:** 300 <a:radiantgem:774866137472827432>\nThis is a Pokemon already with the skin equipped!"
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Returning Gleams",
+            value=(
+                "`6.` __Returning Gleams__\n"
+                "**Cost:** 300 <a:radiantgem:774866137472827432>\n"
+                f"Purchase Limit: {gleam_limit} / 50\nGleams from 2023."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Returning Radiants",
+            value=(
+                "`7.` __Returning Radiants__\n"
+                "**Cost:** 200 <:redeem:1037942226132668417>\n"
+                f"Purchase Limit: {radiant_limit} / 20\n"
+                ""
+            ),
+            inline=False
         )
         embed.set_footer(
-            text="Use /christmas buy with an option number to buy that item!"
+            text="Use /christmas buy to buy an item!"
         )
         await ctx.send(embed=embed)
 
-    # @christmas.command(name="open_smallgift")
+    @christmas.command(name="smallgift")
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_smallgift(self, ctx):
         """Open a small christmas gift."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Sorry, this is not available yet")
+            #return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
+            small_gift = await pconn.fetchval(
+                "SELECT small_gift FROM events_new WHERE u_id = $1", ctx.author.id
             )
-            if inventory is None:
-                await ctx.send(f"You have not Started!\nStart with `/start` first!")
+            if small_gift is None:
+                await ctx.send(f"You have not Started or participated in the event yet!\nStart with `/start` first!")
                 return
-            if "small gift" not in inventory or inventory["small gift"] <= 0:
+            if small_gift <= 0:
                 await ctx.send("You do not have any small gifts!")
                 return
-            inventory["small gift"] = inventory.get("small gift", 0) - 1
+            small_gift -= 1
             await pconn.execute(
-                "UPDATE users SET holidayinv = $1::json where u_id = $2",
-                inventory,
+                "UPDATE events_new SET small_gift = $1 where u_id = $2",
+                small_gift,
                 ctx.author.id,
             )
         reward = random.choices(
-            ("skin", "snowflakes", "redeem", "energy", "shinyice"),
-            weights=(0.10, 0.30, 0.15, 0.30, 0.15),
+            ("normalice", "shinyice", "snowballs", "radiant_gems", "energy"),
+            weights=(0.10, 0.15, 0.35, 0.20, 0.20),
         )[0]
-        if reward == "skin":
-            async with ctx.bot.db[0].acquire() as pconn:
-                skins = await pconn.fetchval(
-                    "SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                pokemon = random.choice(list(self.CHRISTMAS_MOVES.keys())).lower()
-                if pokemon not in skins:
-                    skins[pokemon] = {}
-                if "xmas2022" not in skins[pokemon]:
-                    skins[pokemon]["xmas2022"] = 1
-                else:
-                    skins[pokemon]["xmas2022"] += 1
-                await pconn.execute(
-                    "UPDATE users SET skins = $1::json WHERE u_id = $2",
-                    skins,
-                    ctx.author.id,
-                )
-            msg = (
-                f"You opened the gift, and inside was a christmas skin for your {pokemon} to wear!\n"
-                "Use `/skin apply` to apply it to a pokemon.\n"
+
+        if reward == "normalice":
+            pool = pList + starterList
+            pokemon = random.choice(pool)
+            await ctx.bot.commondb.create_poke(
+                ctx.bot, ctx.author.id, pokemon
             )
-        elif reward == "snowflakes":
+            msg = f"Upon opening the gift...\nYou received a **{pokemon}**!"
+
+        elif reward == "shinyice":
+            pool = pList + starterList
+            pokemon = random.choice(pool)
+            await ctx.bot.commondb.create_poke(
+                ctx.bot, ctx.author.id, pokemon, shiny=True
+            )
+            msg = f"Upon opening the gift...\nYou received a **Shiny {pokemon}**!"
+
+        elif reward == "snowballs":
             async with ctx.bot.db[0].acquire() as pconn:
-                snowflakes = random.randint(1, 10)
-                inventory = await pconn.fetchval(
-                    "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                inventory["snowflakes"] = inventory.get("snowflakes", 0) + snowflakes
+                snowballs = random.randint(1, 5)
                 await pconn.execute(
-                    "UPDATE users SET holidayinv = $1::json WHERE u_id = $2",
-                    inventory,
+                    "UPDATE events_new SET snowballs = snowballs + $1 WHERE u_id = $2",
+                    snowballs,
                     ctx.author.id,
                 )
-            msg = f"You opened the gift, and inside was {snowflakes} Snowflakes!\n"
-        elif reward == "redeem":
+            msg = f"You opened the gift, and inside was {snowballs} <:snowballs:1184292806190182420> Snowballs !"
+
+        elif reward == "radiant_gems":
             amount = random.randint(1, 5)
             async with ctx.bot.db[0].acquire() as pconn:
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                    "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
                     amount,
                     ctx.author.id,
                 )
-            msg = f"You received {amount} Redeems!\n"
+            msg = f"You opened the gift, and inside was {amount} Gleam Gems!"
+
         elif reward == "energy":
             async with ctx.bot.db[0].acquire() as pconn:
                 await pconn.execute(
-                    "UPDATE users SET energy = energy + 2 WHERE u_id = $1",
+                    "UPDATE users SET npc_energy = npc_energy + 2 WHERE u_id = $1",
                     ctx.author.id,
                 )
             msg = (
-                "You stole some of Santa's cookies and milk! It restored some energy!\n"
+                "You stole some of Santa's cookies and milk! It restored some npc energy!\n"
             )
-        elif reward == "shinyice":
-            pokemon = random.choice(await self.get_ice())
-            await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, shiny=True
-            )
-            msg = f"You received a Shiny {pokemon}!\n"
         await ctx.send(msg)
 
-    # @christmas.command(name="open_largegift")
+    @christmas.command(name="largegift")
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_largegift(self, ctx):
         """Open a large christmas gift."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Sorry, this is not available yet")
+            #return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
+            large_gift = await pconn.fetchval(
+                "SELECT large_gift FROM events_new WHERE u_id = $1", ctx.author.id
             )
-            if inventory is None:
-                await ctx.send(f"You have not Started!\nStart with `/start` first!")
+            if large_gift is None:
+                await ctx.send(f"You have not Started or participated in the event yet!\nStart with `/start` first!")
                 return
-            if "large gift" not in inventory or inventory["large gift"] <= 0:
+            if large_gift <= 0:
                 await ctx.send("You do not have any large gifts!")
                 return
-            inventory["large gift"] = inventory.get("large gift", 0) - 1
+            large_gift -= 1
             await pconn.execute(
-                "UPDATE users SET holidayinv = $1::json where u_id = $2",
-                inventory,
+                "UPDATE events_new SET large_gift = $1 where u_id = $2",
+                large_gift,
                 ctx.author.id,
             )
         reward = random.choices(
-            ("skin", "redeem", "chest", "boostedice", "shinyice"),
+            ("radiant_gems", "credits", "chest", "boostedice", "shinyice"),
             weights=(0.20, 0.35, 0.15, 0.20, 0.10),
         )[0]
-        if reward == "skin":
-            async with ctx.bot.db[0].acquire() as pconn:
-                skins = await pconn.fetchval(
-                    "SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                pokemon = random.choice(list(self.CHRISTMAS_MOVES.keys())).lower()
-                if pokemon not in skins:
-                    skins[pokemon] = {}
-                if "xmas2022" not in skins[pokemon]:
-                    skins[pokemon]["xmas2022"] = 1
-                else:
-                    skins[pokemon]["xmas2022"] += 1
-                await pconn.execute(
-                    "UPDATE users SET skins = $1::json WHERE u_id = $2",
-                    skins,
-                    ctx.author.id,
-                )
-            msg = (
-                f"You opened the gift, and inside was a christmas skin for your {pokemon} to wear!\n"
-                "Use `/skin apply` to apply it to a pokemon.\n"
-            )
-        elif reward == "redeem":
-            amount = random.randint(5, 10)
+        
+        if reward == "radiant_gems":
+            amount = random.randint(1, 10)
             async with ctx.bot.db[0].acquire() as pconn:
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                    "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
                     amount,
                     ctx.author.id,
                 )
-            msg = f"You received {amount} Redeems!\n"
-        elif reward == "chest":
-            chest = random.choices(
-                ("rare", "mythic", "legend"),
-                weights=(0.60, 0.20, 0.10),
-            )[0]
+            msg = f"You received **{amount} Gleam Gems**!"
+
+        elif reward == "credits":
+            amount = random.randint(5000, 10000)
             async with ctx.bot.db[0].acquire() as pconn:
-                inventory = await pconn.fetchval(
-                    "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-                )
-                if chest == "rare":
-                    inventory["rare chest"] = inventory.get("rare chest", 0) + 1
-                    msg = "You received a Rare Chest!\n"
-                elif chest == "mythic":
-                    inventory["mythic chest"] = inventory.get("mythic chest", 0) + 1
-                    msg = "You received a Mythic Chest!\n"
-                elif chest == "legend":
-                    inventory["legend chest"] = inventory.get("legend chest", 0) + 1
-                    msg = "You received a Legend Chest!\n"
                 await pconn.execute(
-                    "UPDATE users SET inventory = $1::json where u_id = $2",
-                    inventory,
+                    "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                    amount,
                     ctx.author.id,
                 )
+            msg = f"Upon opening the gift...\nYou received **{amount:,} credits**!"
+
+        elif reward == "chest":
+            chest = random.choices(
+                ("common_chest", "rare_chest", "mythic_chest"),
+                weights=(0.60, 0.20, 0.10),
+            )[0]
+            await ctx.bot.commondb.add_bag_item(
+                ctx.author.id,
+                chest,
+                1,
+                True
+            )
+            chest_name = chest.replace("_", " ").title()
+            msg = f"Upon opening the gift...\nYou received a **{chest_name}**!"
+
         elif reward == "boostedice":
-            pokemon = random.choice(await self.get_ice())
-            pokedata = await ctx.bot.commondb.create_poke(
+            pool = pList + starterList
+            pokemon = random.choice(pool)
+            await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, boosted=True
             )
-            msg = f"You received a Boosted IV {pokedata.emoji}{pokemon}!\n"
+            msg = f"Upon opening the gift...\nYou received a **Boosted IV {pokemon}**!"
+
         elif reward == "shinyice":
-            pokemon = random.choice(await self.get_ice())
+            pool = pList + starterList
+            pokemon = random.choice(pool)
             await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, shiny=True
+                ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True
             )
-            msg = f"You received a shiny {pokemon}!\n"
-        # Large Gift gives Snowflakes
-        snowflakes = random.randint(1, 5)
+            msg = f"Upon opening the gift...\nYou received a **Shiny Boosted IV {pokemon}**!"
+
+        # Large Gift gives snowballs
+        snowballs = random.randint(1, 2)
         async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT holidayinv::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            inventory["snowflakes"] = inventory.get("snowflakes", 0) + snowflakes
             await pconn.execute(
-                "UPDATE users SET holidayinv = $1::json WHERE u_id = $2",
-                inventory,
+                "UPDATE events_new SET snowballs = snowballs + $1 WHERE u_id = $2",
+                snowballs,
                 ctx.author.id,
             )
-        msg += f"There was also {snowflakes} Snowflakes!\n"
+        msg += f"\nThere was also {snowballs} <:snowballs:1184292806190182420> Snowballs!\nUse `/christmas snowball` to throw it at a player!"
         await ctx.send(msg)
 
     # @christmas.command(name="gift")
@@ -2715,7 +3245,7 @@ class ChristmasSpawn(discord.ui.View):
         extra_msg = ""
         pokeurl = (
             "http://mewbot.xyz/sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="halloween2023")
+            + await get_file_name(self.poke, self.cog.bot, skin="xmas2023")
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -2723,7 +3253,7 @@ class ChristmasSpawn(discord.ui.View):
         else:
             small_images = guild["small_images"]
         self.embed = discord.Embed(
-            title="A Halloween Pokémon Appears!",
+            title="A Christmas Pokémon Appears!",
             description="Join the battle to take it down.",
             color=0x0084FD,
         )
@@ -2750,7 +3280,7 @@ class ChristmasSpawn(discord.ui.View):
 
         if not self.registered:
             embed = discord.Embed(
-                title="The Summer Pokémon ran away!",
+                title="The Christmas Pokémon ran away!",
                 color=0x0084FD,
             )
             if small_images:
@@ -2903,7 +3433,7 @@ class ChristmasSpawn(discord.ui.View):
 
         self.max_hp = int(len(self.registered) * 1.25)
         self.embed = discord.Embed(
-            title="A Halloween Pokémon has spawned, attack it with everything you've got!",
+            title="A Christmas Pokémon has spawned, attack it with everything you've got!",
             color=0x0084FD,
         )
         self.embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
@@ -2923,7 +3453,7 @@ class ChristmasSpawn(discord.ui.View):
         hp = max(self.max_hp - sum(self.attacked.values()), 0)
         if hp > 0:
             self.embed = discord.Embed(
-                title="The Halloween Pokémon got away!",
+                title="The Christmas Pokémon got away!",
                 color=0x0084FD,
             )
             hp = max(self.max_hp - sum(self.attacked.values()), 0)
@@ -2942,25 +3472,25 @@ class ChristmasSpawn(discord.ui.View):
                 )
                 if damage == 2:
                     await pconn.execute(
-                        "UPDATE events_new SET fleshy_chest = fleshy_chest + $1 WHERE u_id = $2",
+                        "UPDATE events_new SET large_gift = large_gift + $1 WHERE u_id = $2",
                         1,
                         attacker.id,
                     )
                 elif damage == 1:
                     await pconn.execute(
-                        "UPDATE events_new SET spooky_chest = spooky_chest + $1 WHERE u_id = $2",
+                        "UPDATE events_new SET small_gift = small_gift + $1 WHERE u_id = $2",
                         1,
                         attacker.id,
                     )
                 elif damage == 0:
                     await pconn.execute(
-                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
-                        random.randint(2, 5),
+                        "UPDATE events_new SET snowballs = snowballs + $1 WHERE u_id = $2",
+                        random.randint(1, 2),
                         attacker.id,
                     )
 
         self.embed = discord.Embed(
-            title=f"The Halloween Pokémon was defeated!\n Attackers have been awarded. {extra_msg}",
+            title=f"The Christmas Pokémon was defeated!\n Attackers have been awarded. {extra_msg}",
             color=0x0084FD,
         )
         if small_images:
@@ -2995,16 +3525,16 @@ class RaidMove(discord.ui.Button):
         if damage == 2:
             # self.effective = "It's super effective! You will get a Large Present if the poke is defeated."
             # self.effective = "It's super effective! You'll receive hearts if the poke is defeated!"
-            self.effective = f"It's Super Effective! You will get a Fleshy Chest if the Pokemon is defeated."
+            self.effective = f"It's Super Effective! You will get a Large Gift 🎁 if the Pokemon is defeated."
         elif damage == 1:
             # self.effective = "It's not very effective... You will get a Small Present if the poke is defeated."
             # self.effective = "It's not very effective... You'll receive hearts if the poke is defeated!"
-            self.effective = f"It's not Very Effective... You will get a Spooky Chest if the Pokemon is defeated."
+            self.effective = f"It's not Very Effective... You will get a Small Gift 📦 if the Pokemon is defeated."
         else:
             # self.effective = "It had no effect... You will only get Snowflakes if the poke is defeated."
             # self.effective = "It had no effect... You'll receive hearts if the poke is defeated!"
             self.effective = (
-                f"It had No Effect... You will get a 1-5 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
+                f"It had No Effect... You will get a 1-2 <:snowballs:1184292806190182420> Snowballs if the Pokemon is defeated."
             )
 
     async def callback(self, interaction):

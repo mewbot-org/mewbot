@@ -3168,6 +3168,9 @@ class DuelPokemon:
             pn = pn[:-5]
         # TODO: Meloetta, Shaymin
 
+        if pn == 'Eternatus-eternamax':
+            pn = 'Eternatus'
+
         form_info = await find_one(ctx, "forms", {"identifier": pn.lower()})
         # List of type ids
         type_ids = (await find_one(ctx, "ptypes", {"id": form_info["pokemon_id"]}))[

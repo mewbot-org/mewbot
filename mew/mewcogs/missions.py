@@ -100,14 +100,11 @@ class Missions(commands.Cog):
 
                     if reward == "chest":
                         chest_type = random.choice("common_chest", "rare_chest")
-                        chest_name = chest_type.replace("_", " ").title()
-                        await ctx.bot.commondb.add_bag_item(
-                            ctx.author.id,
-                            chest_type,
-                            1,
-                            True
+                        await pconn.execute(
+                            f"UPDATE account_bound SET {chest_type} = {chest_type} + 1 WHERE u_id = $1",
+                            ctx.author.id
                         )
-                        msg = f"You have claimed a {chest_name}!"
+                        msg = f"You have claimed a {chest_type}!"
                     elif reward == 'redeem':
                         count = random.randint(1, 3)
                         await pconn.execute(
@@ -119,7 +116,8 @@ class Missions(commands.Cog):
                     elif reward == 'credits':
                         count = random.randint(10000, 50000)
                         await pconn.execute(
-                            "UPDATE users SET mewcoins = mewcoins + 10000 WHERE u_id = $1",
+                            "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                            count,
                             ctx.author.id,
                         )
                         msg = f"You have claimed {count} credits!"

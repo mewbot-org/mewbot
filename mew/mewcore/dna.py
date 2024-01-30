@@ -571,7 +571,7 @@ class Mew(commands.AutoShardedBot):
             "cooldown",
             "duel",
             "dylee",
-            # "events",
+            "events",
             "essence",
             "evs",
             "extras",
@@ -605,7 +605,7 @@ class Mew(commands.AutoShardedBot):
             "profile",
             "bag",
             "farm",
-            "achieve"
+            "achieve",
         ]
         for cog in cogs:
             if "_" in cog:
@@ -695,8 +695,8 @@ class Mew(commands.AutoShardedBot):
                         "shop",
                         "profile",
                         "essence",
-                        "achieve"
-                        # "events",
+                        "achieve",
+                        "events",
                     ]
 
                 for cog in safe_to_load:

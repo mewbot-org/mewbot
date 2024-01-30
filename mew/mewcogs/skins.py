@@ -160,7 +160,7 @@ class Skins(commands.Cog):
                 )
         await ctx.send(f"Applied a {skin} skin to your {pokname}!")
 
-    @skin.command()
+    #@skin.command()
     async def list(self, ctx):
         """View all your owned Skins."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -192,12 +192,12 @@ class Skins(commands.Cog):
         pokemon="The Pokémon number you want to preview the skin on",
         skin="The name of the Skin to preview.",
     )
-    async def skin_preview(
+    async def preview(
         self,
         ctx,
         pokemon: str,
         skin: Literal[
-            "halloween", "xmas2022", "valentines2023", "easter2023", "summer2023", "halloween2023"
+            "halloween", "xmas2022", "xmas2023", "valentines2023", "easter2023", "summer2023", "halloween2023"
         ],
     ):
         """Preview a skin on a pokemon."""

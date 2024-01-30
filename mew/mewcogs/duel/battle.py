@@ -346,7 +346,7 @@ class Battle:
                     f"{self.trainer1.name} forfeited, {self.trainer2.name} wins!\n"
                 )
                 if self.type == self.RANKED:
-                    winner = [self.trainer2, True]
+                    winner = [self.trainer2, self.trainer1.id]
                 else:
                     winner = self.trainer2
                 break
@@ -355,7 +355,7 @@ class Battle:
                     f"{self.trainer2.name} forfeited, {self.trainer1.name} wins!\n"
                 )
                 if self.type == self.RANKED:
-                    winner = [self.trainer1, True]
+                    winner = [self.trainer1, self.trainer2.id]
                 else:
                     winner = self.trainer1
                 break

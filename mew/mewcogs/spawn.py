@@ -227,9 +227,12 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             )
 
         if not poke_spawn_check(str(self.name), pokemon):
-            return await interaction.followup.send(
+            await interaction.followup.send(
                 "Incorrect name! Try again :(", ephemeral=True
             )
+            await interaction.response.defer()
+            return
+            
 
         # Someone caught the poke, create it
         async with interaction.client.db[0].acquire() as pconn:
@@ -509,7 +512,7 @@ class Spawn(commands.Cog):
 
         while True:
             try:
-                msg = await self.bot.wait_for("message", check=check, timeout=370)
+                msg = await self.bot.wait_for("message", check=check, timeout=2000)
             except asyncio.TimeoutError:
                 return
             async with self.bot.db[0].acquire() as pconn:

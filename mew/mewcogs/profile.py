@@ -9,7 +9,23 @@ from mewcogs.market import (
     SILVER_PATREON_SLOT_BONUS,
     CRYSTAL_PATREON_SLOT_BONUS,
 )
-from mewutils.misc import get_pokemon_image
+from mewutils.misc import get_pokemon_image, ConfirmView
+from typing import Literal
+
+
+IMAGE_URLS = {
+    "xmas/Maleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_male.png",
+    "xmas/Femaleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_female.png",
+    "xmas/Pyrce": "https://mewbot.xyz/sprites/trainers/pyrce_trainer.png",
+    "staff/Artsquad": "https://mewbot.xyz/sprites/trainers/art_squad.png",
+    "halloween/Hexmaniac": "https://mewbot.xyz/sprites/trainers/hex_maniac_6.png",
+    "summer/Phoebe": "https://mewbot.xyz/sprites/trainers/phoebe.png",
+    "summer/Brycen": "http://mewbot.xyz/sprites/trainers/brycen.png",
+    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png",
+    "user/Youngster": "https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png",
+    "breeder/Breeder1": "https://mewbot.xyz/sprites/trainers/breeder1.png",
+    "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
+}
 
 
 def calculate_breeding_multiplier(level):
@@ -509,6 +525,7 @@ class ProfileView(discord.ui.View):
             staff_msg = f"\nMewbot Staff Member: **{is_staff.title()}**"
         else:
             staff_msg = f"\nMewbot User"
+        image_url = IMAGE_URLS.get(trainer_image)
         embed = discord.Embed(
             title=f"{self.ctx.author.name}'s Profile!",
             description=f"Trainer Nick: **{tnick}**{staff_msg}",
@@ -531,7 +548,7 @@ class ProfileView(discord.ui.View):
             ),
             inline=True,
         )
-        embed.set_thumbnail(url=trainer_image)
+        embed.set_thumbnail(url=image_url)
         embed.set_footer(text=f"{self.ctx.author.name}'s Profile | {hidden_text}")
 
         self.message = await self.ctx.send(embed=embed, view=self)
@@ -588,6 +605,60 @@ class Profile(commands.Cog):
                 "UPDATE users SET visible = NOT visible WHERE u_id = $1", ctx.author.id
             )
         await ctx.send("Toggled profile visibility!")
+
+    @profile.command(name="image")
+    async def profile_image(self, ctx, category:Literal['xmas', 'halloween', 'summer', 'user', 'breeder'], name:str):
+        """For managing profile images"""
+        name = name.capitalize()
+        async with ctx.bot.db[0].acquire() as pconn:
+            images_inv = await pconn.fetchval(
+                "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
+                ctx.author.id
+            )
+            if images_inv is None:
+                await ctx.send("You have not started!")
+                return
+            trainer_image = await pconn.fetchval(
+                "SELECT trainer_image FROM users WHERE u_id = $1", 
+                ctx.author.id
+            )
+            if trainer_image is None:
+                await ctx.send("You have not started!")
+                return
+            if images_inv.get(category, {}).get(name, 0) < 1:
+                await ctx.send(f"You do not have any {category} skins to display...")
+                return
+            confirm = (
+                f"Are you sure you want to apply your {name} skin to your profile?\n"
+            )
+            if not await ConfirmView(ctx, confirm).wait():
+                await ctx.send("Cancelling.")
+                return
+
+            #Add old one back to inventory
+            old_category, old_name = trainer_image.split("/")
+            new_skin_name = f"{category}/{name}"
+            if old_category not in images_inv:
+                images_inv[old_category] = {}
+            images_inv[old_category][old_name] = images_inv[old_category].get(old_name, 0) + 1
+            
+            #Then remove the new one
+            images_inv[category][name] -= 1
+            await pconn.execute(
+                "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
+                images_inv,
+                ctx.author.id
+            )
+            await pconn.execute(
+                "UPDATE users SET trainer_image = $1 WHERE u_id = $2",
+                new_skin_name,
+                ctx.author.id
+            )
+
+            await ctx.send(f"Successfully applied `{category}/{name}` skin to your profile page!")
+            return
+
+
 
 
 async def setup(bot):
