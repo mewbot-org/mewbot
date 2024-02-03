@@ -405,7 +405,7 @@ class Redeem(commands.Cog):
 
     @tradelock
     @redeem.command()
-    async def alpha(self, ctx):
+    async def alpha(self, ctx, boosted: Literal['Yes', 'No']):
         """Spend your credits for a random alpha."""
         e = discord.Embed(color=ctx.bot.get_random_color())
         pokemon = random.choice(self.bot.commondb.ALPHA_POKEMON)
@@ -416,7 +416,14 @@ class Redeem(commands.Cog):
             if credits is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
-            if credits < 845000:
+
+            if boosted == 'Yes':
+                price = 845000
+                boosted_poke = True
+            else:
+                price = 422500
+                boosted_poke = False
+            if credits < price:
                 await ctx.send("You don't have enough credits!")
                 return
 
@@ -487,7 +494,8 @@ class Redeem(commands.Cog):
                         return
 
             await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - 845000 WHERE u_id = $1",
+                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                price,
                 ctx.author.id,
             )
 
@@ -506,7 +514,7 @@ class Redeem(commands.Cog):
                     )
 
             pokedata = await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, skin="alpha"
+                ctx.bot, ctx.author.id, pokemon, skin="alpha", boosted=boosted_poke
             )
             ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
             await ctx.bot.get_partial_messageable(998341289164689459).send(

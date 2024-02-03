@@ -504,7 +504,7 @@ class Events(commands.Cog):
         self.HALLOWEEN_DROPS = False
         self.HALLOWEEN_COMMANDS = False
         self.CHRISTMAS_DROPS = False
-        self.CHRISTMAS_COMMANDS = True
+        self.CHRISTMAS_COMMANDS = False
         self.VALENTINE_DROPS = False
         self.VALENTINE_COMMANDS = False
         self.SUMMER_DROPS = False
@@ -1967,12 +1967,12 @@ class Events(commands.Cog):
                 f"You have successfully started a ghost detector, ghost spawn chances are greatly increased for the next hour!"
             )
 
-    @commands.hybrid_group()
+    #@commands.hybrid_group()
     async def christmas(self, ctx):
         """Christmas commands."""
         pass
 
-    @christmas.command(name="leaderboard")
+    #@christmas.command(name="leaderboard")
     async def leaderboard(self, ctx, board: Literal['Staff', 'User'], type:Literal['thrown', 'hit']):
         if type == 'thrown':
             async with ctx.bot.db[0].acquire() as pconn:
@@ -2055,7 +2055,7 @@ class Events(commands.Cog):
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
 
-    @christmas.command(name="snowball")
+    #@christmas.command(name="snowball")
     async def throw_snowball(self, ctx, player:discord.Member):
         if ctx.guild != ctx.bot.official_server:
             await ctx.send(
@@ -2218,7 +2218,7 @@ class Events(commands.Cog):
                 f"You have successfully spread holiday cheer! Christmas spirits will be attracted to this channel for 1 hour."
             )
 
-    @christmas.command(name="buy")
+    #@christmas.command(name="buy")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def christmas_buy(
         self, 
@@ -2462,7 +2462,7 @@ class Events(commands.Cog):
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-    @christmas.command(name="inventory")
+    #@christmas.command(name="inventory")
     async def christmas_inventory(self, ctx):
         """Check your christmas inventory."""
         #if ctx.author.id != 334155028170407949:
@@ -2500,7 +2500,7 @@ class Events(commands.Cog):
         embed.set_footer(text="Happy Holidays!")
         await ctx.send(embed=embed)
 
-    @christmas.command(name="shop")
+    #@christmas.command(name="shop")
     async def christmas_shop(self, ctx):
         """Check the christmas shop."""
         #if ctx.author.id != 334155028170407949:
@@ -2587,7 +2587,7 @@ class Events(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @christmas.command(name="smallgift")
+    #@christmas.command(name="smallgift")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_smallgift(self, ctx):
         """Open a small christmas gift."""
@@ -2665,7 +2665,7 @@ class Events(commands.Cog):
             )
         await ctx.send(msg)
 
-    @christmas.command(name="largegift")
+    #@christmas.command(name="largegift")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_largegift(self, ctx):
         """Open a large christmas gift."""

@@ -730,8 +730,8 @@ class Extras(commands.Cog):
             )
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                ctx.author.id,
-                credits
+                credits,
+                ctx.author.id,   
             )
         await ctx.send(
             f"You have received **{redeems}** redeems and **{credits}**.\nThank you for supporting Mewbot!"

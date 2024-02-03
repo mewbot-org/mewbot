@@ -433,7 +433,7 @@ class RedoBreedView(discord.ui.View):
         )
         await self.ctx.send([self.male, self.female])
         self.cog.auto_redo[self.ctx.author.id] = [self.male, self.female]
-        await asyncio.sleep(37)
+        # await asyncio.sleep(37)
         if self.cog.auto_redo[self.ctx.author.id] == [self.male, self.female]:
             await self.cog.breed.callback(
                 self.cog, self.ctx, self.male, females=str(self.female) + "auto"
@@ -802,7 +802,6 @@ class Breeding(commands.Cog):
                     view = RedoBreedView(ctx, self, male, female)
                 message = await ctx.send(embed=embed, view=view, ephemeral=True)
                 view.message = message
-                await asyncio.sleep(37)
                 
                 if ctx.command.cancel:
                     return
