@@ -23,7 +23,7 @@ class Chests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
-        self.CURRENTLY_ACTIVE = ['Ho-oh', 'Jangmo-o', 'Raikou', 'Zekrom', 'Hippopotas']
+        self.CURRENTLY_ACTIVE = ['Phanpy', 'Deino', 'Yanma', 'Foongus', 'Sizzlipede', 'Iron-thorns']
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
         # packs that can be bought with ;radiant, (("Pack Desc", <int - Price in radiant gems>))
@@ -539,10 +539,6 @@ class Chests(commands.Cog):
     ):
         """Spend your gleam gems to obtain gleam Pokemon."""
         packnum = int(pack[0])
-        DEFAULT_MAX = {
-            634179052512739340: 500,
-            455277032625012737: 7
-        }
         if packnum < 1 or packnum > len(self.PACKS):
             await ctx.send("That is not a valid pack number.")
             return
@@ -578,7 +574,7 @@ class Chests(commands.Cog):
                     "restock": int(info["restock"]),
                 }
 
-            max_packs = DEFAULT_MAX.get(ctx.author.id, 5)
+            max_packs = 10
             restock_time = 604800
 
             if info["restock"] <= int(time.time() // restock_time):

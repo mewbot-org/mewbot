@@ -590,7 +590,7 @@ class Minigames(commands.Cog):
 
             item_chance = random.choices(
                 ("radiant_gem", "item", "common_chest", "rare_chest"),
-                weights=(0.25, 0.50, 0.17, 0.03),
+                weights=(0.10, 0.55, 0.27, 0.03),
             )[0]
             if item_chance == "radiant_gem":
                 item = random.randint(2, 8)

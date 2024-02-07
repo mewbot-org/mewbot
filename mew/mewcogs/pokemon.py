@@ -792,8 +792,9 @@ class Pokemon(commands.Cog):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
-        gender_rate = pfile['gender_rate']
-        if pfile is not None:
+        
+        if pfile:
+            gender_rate = pfile['gender_rate']
             raw_evos = (
                 await ctx.bot.db[1]
                 .pfile.find({"evolution_chain_id": pfile["evolution_chain_id"]})
@@ -802,6 +803,8 @@ class Pokemon(commands.Cog):
             evo_line = await self.get_kids(raw_evos, None, "➥")
             evo_line = f"**Evolution Line**:\n{evo_line}"
             catch_rate = f"**Catch rate**: {pfile['capture_rate']}\n"
+        else:
+            gender_rate = 1
 
         # Weight
         weight = f'{form_info["weight"] / 10:.1f} kg'

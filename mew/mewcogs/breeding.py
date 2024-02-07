@@ -570,8 +570,29 @@ class Breeding(commands.Cog):
         if len(females_list) > limit:
             await ctx.send(f"You can not queue more than {limit} Female IDs.\nPatreon increases your limit, `/donate`")
             return
+        
+        breed_reset = (
+            await ctx.bot.redis_manager.redis.execute(
+                "HMGET", "breedcooldowns", str(ctx.author.id)
+            )
+        )[0]
 
-        for female in females_list:
+        if breed_reset is None:
+            breed_reset = 0
+        else:
+            breed_reset = float(breed_reset.decode("utf-8"))
+
+        if breed_reset > time.time():
+            reset_in = breed_reset - time.time()
+            cooldown = f"{round(reset_in)}s"
+            await ctx.send(f"Command on cooldown for {cooldown}")
+            return
+        await ctx.bot.redis_manager.redis.execute(
+            "HMSET", "breedcooldowns", str(ctx.author.id), str(time.time() + 35)
+        )
+        for idx, female in enumerate(females_list):
+            if idx > 0:
+                await asyncio.sleep(30)
             ctx.command.cancel = False
             # Remove this female from the list of females - "unorthodoxly"
             # females = females.replace(str(female), "")
@@ -585,25 +606,7 @@ class Breeding(commands.Cog):
             if male > 2147483647 or female > 2147483647:
                 await ctx.send("You do not have that many pokemon!")
                 return
-            breed_reset = (
-                await ctx.bot.redis_manager.redis.execute(
-                    "HMGET", "breedcooldowns", str(ctx.author.id)
-                )
-            )[0]
-
-            if breed_reset is None:
-                breed_reset = 0
-            else:
-                breed_reset = float(breed_reset.decode("utf-8"))
-
-            if breed_reset > time.time():
-                reset_in = breed_reset - time.time()
-                cooldown = f"{round(reset_in)}s"
-                await ctx.send(f"Command on cooldown for {cooldown}")
-                return
-            await ctx.bot.redis_manager.redis.execute(
-                "HMSET", "breedcooldowns", str(ctx.author.id), str(time.time() + 35)
-            )
+            
             if male == female:
                 await ctx.send("You can not breed the same Pokemon!")
                 await self.reset_cooldown(ctx.author.id)
@@ -794,7 +797,7 @@ class Breeding(commands.Cog):
             if not success:
                 embed = discord.Embed(
                     title=f"Breeding Attempt Failed!",
-                    description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: <t:{int(time.time()) + 36}:R>",
+                    description=f"Factors affecting this include Parent Catch Rate and IV %\n",
                 ).set_footer(text=chance_message)
                 if auto:
                     view = CancelRedoView(ctx, self)
@@ -808,7 +811,7 @@ class Breeding(commands.Cog):
                 
                 embed = discord.Embed(
                     title="Breeding Attempt Failed!",
-                    description=f"Factors affecting this include Parent Catch Rate and IV %\nYou can breed again: Now!",
+                    description=f"Factors affecting this include Parent Catch Rate and IV %\n",
                 ).set_footer(text=chance_message)
                 try:
                     await message.edit(embed=embed)
@@ -924,7 +927,7 @@ class Breeding(commands.Cog):
                 async def button1_callback(interaction: discord.Interaction):
                     if interaction.user == ctx.author:
                         ctx.command.cancel = True
-                        await interaction.message.edit(embed=make_embed(title=f"Auto Breeding Canceled"))
+                        await interaction.message.edit(embed=make_embed(title=f"Breeding Queue Canceled"))
                         return
 
                 button1 = discord.ui.Button(label="Cancel Next Breed", custom_id="button1")
@@ -946,7 +949,7 @@ class Breeding(commands.Cog):
                     interaction: discord.Interaction = await ctx.bot.wait_for(
                         "button_click",
                         check=lambda i: i.message.id == message.id and i.user.id == ctx.author.id,
-                        timeout=120
+                        timeout=10
                     )
                     await message.edit(view=None)
                 except:
