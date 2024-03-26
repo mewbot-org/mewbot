@@ -23,7 +23,7 @@ class Chests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
-        self.CURRENTLY_ACTIVE = ['Phanpy', 'Deino', 'Yanma', 'Foongus', 'Sizzlipede', 'Iron-thorns']
+        self.CURRENTLY_ACTIVE = ['Caterpie', 'Tangela', 'Iron-valiant', 'Pinsir', 'Mankey', 'Hoothoot', 'Falinks', 'Glastrier', 'Spectrier', 'Mewtwo']
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
         # packs that can be bought with ;radiant, (("Pack Desc", <int - Price in radiant gems>))
@@ -104,10 +104,18 @@ class Chests(commands.Cog):
             await self.bot.commondb.remove_bag_item(
                 ctx.author.id, "common_chest", 1, True
             )
+
+        #This is not working
+        #reward = random.choices(
+            #("chest", "ev", "poke", "redeem", "cred"),
+            #weights=(0.010, 0.1, 0.2, 0.25, 0.44),
+        #)[0]
+
         reward = random.choices(
-            ("chest", "ev", "poke", "redeem", "cred"),
-            weights=(0.010, 0.1, 0.2, 0.25, 0.44),
-        )[0]
+            ("gleam", "chest", "ev", "poke", "redeem", "cred"),
+            weights=(0.005, 0.015, 0.1, 0.2, 0.20, 0.48),
+        )[0]            
+
         if reward == "gleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
@@ -145,12 +153,13 @@ class Chests(commands.Cog):
                 )
             msg = f"You received {amount} credits!\n"
         elif reward == "poke":
-            pokemon = random.choice(pList)
+            pokemon_pool = pList + starterList
+            pokemon = random.choice(pokemon_pool)
             pokedata = await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon
             )
             msg = f"You received a {pokedata.emoji}{pokemon}!\n"
-        gems = random.randint(0, 2) # wind change
+        gems = 1
         if gems:
             await self.bot.commondb.add_bag_item(
                 ctx.author.id, "radiant_gem", gems, True
@@ -173,10 +182,18 @@ class Chests(commands.Cog):
                 await ctx.send("You do not have any Rare Chests!")
                 return
         await self.bot.commondb.remove_bag_item(ctx.author.id, "rare_chest", 1, True)
+        
+        #Not Working
+        #reward = random.choices(
+            #("radiant", "redeem", "mythicchest", "commonchest", "boostedshiny", "shiny", "shinystarter"),
+            #weights=(0.005, 0.050, 0.20, 0.245, 0.18, 0.300, 0.040),
+        #)[0]
+
         reward = random.choices(
-            ("radiant", "redeem", "mythicchest", "commonchest", "boostedshiny", "shiny", "shinystarter"),
-            weights=(0.150, 0.050, 0.20, 0.10, 0.18, 0.300, 0.040),
-        )[0]
+        ("radiant", "redeem", "chest", "boostedshiny", "shiny"),
+        weights=(0.300, 0.150, 0.150, 0.195, 0.255),
+        )[0]   
+
         # Radiant Reward
         if reward == "radiant":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
@@ -186,7 +203,7 @@ class Chests(commands.Cog):
             msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a gleam {pokemon}!**\n"
         # Redeem Reward
         elif reward == "redeem":
-            amount = random.randint(3, 5)
+            amount = random.randint(1, 3)
             async with ctx.bot.db[0].acquire() as pconn:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
@@ -195,20 +212,13 @@ class Chests(commands.Cog):
                 )
             msg = f"You received {amount} redeems!\n"
         # Chest Reward
-        elif reward == "mythicchest":
+        elif reward == "chest":
             await self.bot.commondb.add_bag_item(ctx.author.id, "mythic_chest", 1, True)
-            msg = "You received a Mythic Chest!\n"
-            
-        
-            
-        elif reward == "commonchest":
-            await self.bot.commondb.add_bag_item(ctx.author.id, "common_chest", 1, True)
-            msg = "You received a Common Chest!\n"
-            
-            
+            msg = "You received a Mythic Chest!\n"          
         # Shiny Reward
         elif reward == "shiny":
-            pokemon = random.choice(pList)
+            pokemon_pool = pList + starterList
+            pokemon = random.choice(pokemon_pool)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, shiny=True
             )
@@ -220,13 +230,7 @@ class Chests(commands.Cog):
                 ctx.bot, ctx.author.id, pokemon, shiny=True, boosted=True
             )
             msg = f"You received a shiny boosted IV {pokemon}!\n"
-        elif reward == "shinystarter":
-            pokemon = random.choice(starterList)
-            await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, shiny=True
-            )
-            msg = f"You received a shiny {pokemon}!\n"
-        gems = random.randint(2, 5)
+        gems = random.randint(2, 3)
         await self.bot.commondb.add_bag_item(ctx.author.id, "radiant_gem", gems, True)
         msg += (
             f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
@@ -250,9 +254,16 @@ class Chests(commands.Cog):
             await self.bot.commondb.remove_bag_item(
                 ctx.author.id, "mythic_chest", 1, True
             )
+        
+        #Not Working
+        #reward = random.choices(
+            #("gleam", "redeem", "legendchest", "rarechest", "shiny", "boostedshiny"),
+            #weights=(0.10, 0.075, 0.10, 0.285, 0.20, 0.24),
+        #)[0]
+
         reward = random.choices(
-            ("gleam", "redeem", "legendchest", "rarechest", "shiny", "boostedshiny"),
-            weights=(0.19, 0.075, 0.17, 0.125, 0.20, 0.24),
+            ("radiant", "boostedleg", "redeem", "chest", "shiny", "boostedshiny"),
+            weights=(0.20, 0.27, 0.04, 0.12, 0.22, 0.15),
         )[0]
 
         if reward == "redeem":
@@ -265,48 +276,46 @@ class Chests(commands.Cog):
                 )
             msg = f"You received {amount} redeems!\n"
 
-        elif reward == "legendchest":
+        #Legend Chest
+        elif reward == "chest":
             await self.bot.commondb.add_bag_item(ctx.author.id, "legend_chest", 1, True)
             msg = "You received a Legend Chest!\n"
-            
-        elif reward == "rarechest":
-            await self.bot.commondb.add_bag_item(ctx.author.id, "rare_chest", 1, True)
-            msg = "You received a Rare Chest!\n"
-
+        #Boosted Legendary
         elif reward == "boostedleg":
             pokemon = random.choice(LegendList)
             pokedata = await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, boosted=True
             )
-            msg = f"You received a boosted IV {pokedata.emoji}{pokemon}!\n"
-
-        elif reward == "gleam":
+            msg = f"You received a Boosted IV {pokedata.emoji}{pokemon}!\n"
+        #Boosted Gleam
+        elif reward == "radiant":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, skin="gleam"
+                ctx.bot, ctx.author.id, pokemon, skin="gleam", boosted=True
             )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Gleam {pokemon}!**\n"
+            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Boosted Gleam {pokemon}!**\n"
 
         elif reward == "shiny":
-            pokemon = random.choice(pList)
+            pokemon_pool = pList + starterList
+            pokemon = random.choice(pokemon_pool)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, shiny=True
             )
-            msg = f"You received a shiny {pokemon}!\n"
+            msg = f"You received a Shiny {pokemon}!\n"
 
         elif reward == "boostedshiny":
             pokemon = random.choice(pList)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, shiny=True, boosted=True
             )
-            msg = f"You received a shiny boosted IV {pokemon}!\n"
+            msg = f"You received a Shiny Boosted IV {pokemon}!\n"
 
         gems = random.randint(8, 11)
         await self.bot.commondb.add_bag_item(ctx.author.id, "radiant_gem", gems, True)
         msg += (
             f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         )
-        msg += await self._maybe_spawn_event(ctx, 0.25)
+        #msg += await self._maybe_spawn_event(ctx, 0.25)
         await ctx.send(msg)
 
     @chest.command()
@@ -324,35 +333,45 @@ class Chests(commands.Cog):
             return
         await self.bot.commondb.remove_bag_item(ctx.author.id, "legend_chest", 1, True)
 
-        if ctx.author.id == 334155028170407949:
-            reward = random.choices(
-                ("redeem", "gleam", "boostedgleam", "boostedshiny", "exalted"),
-                weights=(0.35, 0.175, 0.196, 0.300, 0.002),
-            )[0]
-        else:
-            reward = random.choices(
-                ("redeem", "mythicchest", "boostedgleam", "boostedshiny", "exalted"),
-                weights=(0.070, 0.130, 0.150, 0.648, 0.002),
-            )[0]
+        # Not Working
+        #reward = random.choices(
+            #("mythicchest", "redeem", "mythicchest", "boostedgleam", "boostedshiny", "exalted"),
+            #weights=(0.35, 0.070, 0.130, 0.050, 0.448, 0.002),
+        #)[0]
 
+        reward = random.choices(
+            ("boostedshiny", "redeem", "voucher", "boostedgleam"),
+            weights=(0.358, 0.20, 0.001, 0.44),
+        )[0]     
+
+        #Boosted Shiny
         if reward == "boostedshiny":
-            pokemon = random.choice(totalList)
+            pokemon_pool = totalList + starterList + pseudoList
+            pokemon = random.choice(pokemon_pool)
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, boosted=True, shiny=True
             )
             msg = f"You received a shiny boosted IV {pokemon}!\n"
-        elif reward == "exalted":
-            await self.bot.commondb.add_bag_item(
-                ctx.author.id, "exalted_chest", 1, True
+        #Voucher
+        elif reward == "voucher":
+            async with ctx.bot.db[0].acquire () as pconn:
+                await pconn.execute(
+                    "UPDATE account_bound SET vouchers = vouchers + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
+            #Need to log this
+            await ctx.bot.get_partial_messageable(1214302673093005323).send(
+                f"__**Voucher Summoned from Abyss**__\n\N{SMALL BLUE DIAMOND}-**{ctx.author.name}** - ``{ctx.author.id}`` has unlocked a voucher within **{ctx.guild.name}** - ``{ctx.guild.id}``\n"
             )
-            msg = f"🎊 You received an Exalted Chest!! 🎊\n"
-            
-        elif reward == "mythicchest":
-            await self.bot.commondb.add_bag_item(ctx.author.id, "mythic_chest", 1, True)
-            msg = "Not so lucky, You received a Mythic Chest!\n"
-            
+            msg = (
+                f"🎊 You received a Voucher!! 🎊\n"
+                "This means you can submit your own artwork for any unreleased Gleam Pokemon!\n"
+                "It will then be added to the following months lineup for everyone to obtain!\n"
+                "Message Foreboding (334155028170407949) in Mewbot's Official Server for more information!\n"
+            )
+        #Redeem            
         elif reward == "redeem":
-            amount = random.randint(15, 25)
+            amount = random.randint(15, 20)
             async with ctx.bot.db[0].acquire() as pconn:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
@@ -360,12 +379,7 @@ class Chests(commands.Cog):
                     ctx.author.id,
                 )
             msg = f"You received {amount} redeems!\n"
-        elif reward == "gleam":
-            pokemon = random.choice(self.CURRENTLY_ACTIVE)
-            await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon, skin="gleam"
-            )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a Gleam {pokemon}!**\n"
+        #Boosted Gleam
         elif reward == "boostedgleam":
             pokemon = random.choice(self.CURRENTLY_ACTIVE)
             await ctx.bot.commondb.create_poke(
@@ -377,7 +391,7 @@ class Chests(commands.Cog):
         msg += (
             f"You also received {gems} Gleam Gems <a:radiantgem:774866137472827432>!\n"
         )
-        msg += await self._maybe_spawn_event(ctx, 0.33)
+        #msg += await self._maybe_spawn_event(ctx, 0.33)
         await ctx.send(msg)
 
     @chest.command()

@@ -1526,6 +1526,20 @@ starterList = [
 
 # legendary pokemon
 LegendList = [
+    "Dipplin",
+    "Poltchageist",
+    "Sinistcha",
+    "Okidogi",
+    "Munkidori",
+    "Fezandipiti",
+    "Archaludon",
+    "Hydrapple",
+    "Gouging Fire",
+    "Raging Bolt",
+    "Iron Boulder",
+    "Iron Crown",
+    "Terapagos", # Note: Consider handling forms separately
+    "Ogerpon",
     "Chien-pao",
     "Chi-yu",
     "Ting-lu",
@@ -1659,6 +1673,7 @@ ubList = [
 
 # TOTAL LIST SHOULD CONTAIN EACH POKEMON ONCE
 totalList = pList + pseudoList + LegendList + ubList + starterList
+nonBreedable = LegendList + ubList
 
 emotes = [
     "<a:mimi:773455788105662464>",

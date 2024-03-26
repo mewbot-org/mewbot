@@ -900,7 +900,7 @@ class MewBotAdmin(commands.Cog):
     @check_mod()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def combine(self, ctx, user1: str, user2: str):
+    async def combine(self, ctx, user1: str, user2: str, tradelock:Literal['True', 'False']):
         """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
         u_id1, u_id2 = int(user1), int(user2)
         # def check(m):
@@ -937,6 +937,10 @@ class MewBotAdmin(commands.Cog):
                 )
                 user1.extend(user2)
                 user2 = []
+                if tradelock == 'True':
+                    await pconn.execute(
+                        "UPDATE pokes SET tradable = False WHERE id IN $1", u_id2
+                    )
                 await pconn.execute(
                     "UPDATE users SET pokes = $2 WHERE u_id = $1", u_id1, user1
                 )

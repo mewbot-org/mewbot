@@ -1099,7 +1099,11 @@ class Trade(commands.Cog):
     @discord.app_commands.describe(user="The User to begin the trade with.")
     async def user(self, ctx, user: discord.Member):
         """Begin a trade with another user!"""
-        # SETUP
+        if ctx.bot.botbanned(ctx.author.id):
+            return
+        if ctx.bot.botbanned(user.id):
+            await ctx.send("That user is bot banned!")
+            return
         if ctx.author.id == user.id:
             await ctx.send("You cannot trade with yourself!")
             return

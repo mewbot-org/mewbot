@@ -402,6 +402,7 @@ class ProfileView(discord.ui.View):
         battle_mult = self.bound_data["battle_multiplier"]
         nature_caps = self.bound_data["nature_capsules"]
         honey = self.bound_data["honey"]
+        vouchers = self.bound_data["vouchers"]
         patreon_status = await interaction.client.patreon_tier(interaction.user.id)
         if patreon_status in ("Crystal Tier", "Sapphire Tier"):
             marketlimitbonus = CRYSTAL_PATREON_SLOT_BONUS
@@ -430,6 +431,7 @@ class ProfileView(discord.ui.View):
                 f"**Daycare Slots**: {daycared}/{dlimit}\n"
                 f"**Nature Capsules**: {nature_caps}\n"
                 f"**Honey**: {honey}\n"
+                f"**Vouchers**: {vouchers}\n"
                 f"**Terastal Essence**:\n`X: {essence['x']}/25 | Y: {essence['y']}/50`"
             ),
             inline=True,

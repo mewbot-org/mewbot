@@ -678,6 +678,15 @@ class Breeding(commands.Cog):
                     await ctx.send("You cannot breed two dittos!")
                     await self.reset_cooldown(ctx.author.id)
                     return
+                
+                # Hard filter out legendary pokemon
+                if (
+                    mother_details["pokname"] in nonBreedable
+                    or father_details["pokname"] in nonBreedable
+                ):
+                    await ctx.send("You cannot breed Legendary or Ultra Beast Pokemon!")
+                    await self.reset_cooldown(ctx.author.id)
+                    return
 
                 # Ditto is always the father, since the mother passes the pokname, and ditto cannot pass the pokname
                 if mother_details["pokname"] == "Ditto":

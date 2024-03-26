@@ -105,6 +105,10 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
 
     form_info = await ctx.bot.db[1].forms.find_one({"identifier": pn.lower()})
     if pn.lower() != "egg":
+        raw_pfile = await ctx.bot.mongo_pokemon_db.pfile.find_one(
+            {"identifier": pn.lower()}
+        )
+        gender_rate = raw_pfile['gender_rate'] if (raw_pfile['gender_rate']) else -1
         type_ids = (
             await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         )["types"]
@@ -207,6 +211,7 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
         egg_groups = "?"
+        gender_rate = 0
 
     emoji = get_emoji(
         shiny=shiny,
@@ -236,7 +241,7 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         )
     )
     gender = (
-        "Genderless" if pn.split("-")[0] in LegendList + ubList + ["Ditto"] else gender
+        "Genderless" if gender_rate == -1 else gender
     )
     if info_type == "market":
         price = records["pokeprice"]
@@ -345,6 +350,13 @@ async def get_pokemon_info(ctx, records, info_type=None):
 
     form_info = await ctx.bot.db[1].forms.find_one({"identifier": pn.lower()})
     if pn.lower() != "egg":
+        raw_pfile = await ctx.bot.mongo_pokemon_db.pfile.find_one(
+            {"identifier": pn.lower()}
+        )
+        if raw_pfile and (raw_pfile['gender_rate']):
+            gender_rate = raw_pfile['gender_rate'] 
+        else:
+            gender_rate = -1
         type_ids = (
             await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         )["types"]
@@ -492,6 +504,7 @@ async def get_pokemon_info(ctx, records, info_type=None):
         ivs = "?"
         txt = f" | Will hatch in {counter} Messages"
         hidden_power = "?"
+        gender_rate = 0
 
     gender = ctx.bot.misc.get_gender_emote(gender)
     pnick = "" if not pnick or pnick.lower() == "none" else f"'{pnick}'"

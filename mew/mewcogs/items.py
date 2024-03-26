@@ -934,11 +934,6 @@ class Items(commands.Cog):
                         f"You do not have the {price} credits you need to buy a {ct} chest!"
                     )
                     return
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    ctx.bot.misc.get_vat_price(price),
-                    ctx.author.id,
-                )
 
                 await pconn.execute(
                     "INSERT INTO cheststore VALUES ($1, 0, 0, 0, 0) ON CONFLICT DO NOTHING",
@@ -975,6 +970,12 @@ class Items(commands.Cog):
                         f"You can't buy more than {max_chests} per week using credits!  You've already bought {info[ct]}."
                     )
                     return
+                
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                    ctx.bot.misc.get_vat_price(price),
+                    ctx.author.id,
+                )
                 if ct == "rare":
                     await pconn.execute(
                         "UPDATE cheststore SET rare = rare + 1 WHERE u_id = $1",

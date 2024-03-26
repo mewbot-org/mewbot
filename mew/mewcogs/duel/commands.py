@@ -1000,6 +1000,12 @@ class Duel(commands.Cog):
         # Grant credits & xp
         creds = random.randint(600, 1000)
         creds *= min(battle_multi, 50)
+        # Staff benefits instead of Patreon rewards
+        if ctx.author.id in (
+            805365425184571414, #Kyla
+            330111417200017418  #SkiesGrey
+        ):
+            creds = (creds * .50) + creds
         desc = f"You received {creds} credits for winning the duel!\n\n"
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(

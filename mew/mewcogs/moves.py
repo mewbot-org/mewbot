@@ -135,6 +135,12 @@ class Moves(commands.Cog):
                 await ctx.send("You do not have that Pokemon!")
                 return
             poke = dets["pokname"]
+            alpha_status = dets["skin"]
+
+            if alpha_status == 'alpha' and slot == 1:
+                await ctx.send("You can not change the first move slot on a Alpha Pokemon!")
+                return
+            
             moves = await get_moves(ctx, poke.lower())
             if moves is None:
                 await ctx.send(
