@@ -46,7 +46,57 @@ class MewBotAdmin(commands.Cog):
         for parameter in params.keys():
             msg += f"<{parameter}> "
         return msg
-
+    
+    @commands.hybrid_group()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def dev(self, ctx):
+        ...
+        
+    @dev.command()
+    async def upload_pfile(self, ctx, pokemon_name: str, pre_evolution: str = None, gender_rate = 1):
+        template = {"id": 2,
+            "identifier": pokemon_name.lower(),
+            "generation_id": 9,
+            "evolves_from_species_id": 1,
+            "evolution_chain_id": 1,
+            "color_id": 5,
+            "shape_id": 8,
+            "habitat_id": 3,
+            "gender_rate": gender_rate,
+            "capture_rate": 45,
+            "base_happiness": 70,
+            "is_baby": 0,
+            "hatch_counter": 20,
+            "has_gender_differences": 0,
+            "growth_rate_id": 4,
+            "forms_switchable": 0,
+            "order": 2,
+            "conquest_order": ""
+        }
+        await ctx.send(f"Uploading Pokemon File for {pokemon_name}")
+        poke_info = await ctx.bot.mongo_find(
+                "forms",
+                {"identifier": pokemon_name},
+            )
+        if pre_evolution:
+            pre_evo = await ctx.bot.mongo_find(
+                    "forms",
+                    {"identifier": pre_evolution},
+                )
+            
+            if not pre_evo:
+                await ctx.send("Invalid Pre Evolution.")
+                return
+            
+            try:
+                template["evolution_chain_id"] = (await ctx.bot.mongo_find("pfile", {"identifier": pre_evo['identifier']}))["evolution_chain_id"]
+            except:
+                ...
+                
+            template["evolves_from_species_id"] = pre_evo["pokemon_id"]
+            template["id"] = poke_info["pokemon_id"]
+        await ctx.send(template)
+        
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def admin(self, ctx):

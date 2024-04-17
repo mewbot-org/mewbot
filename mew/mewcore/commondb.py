@@ -37,12 +37,12 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Kyogre",
-            "Regigigas",
-            "Azumarill",
-            "Leafeon",
-            "Electivire",
-            "Magmortar"
+            "Necrozma",
+            "Dialga",
+            "Lokix",
+            "Manectric",
+            "Absol",
+            "Camerupt"
         ]
 
         self.ALL_ALPHA_POKEMON = [
@@ -95,6 +95,7 @@ class CommonDB:
             "Heatran",
             "Latios",
             "Solgaleo",
+            
         ]
         self.ALPHA_MOVESETS = {
             "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],

@@ -664,7 +664,7 @@ class Extras(commands.Cog):
             last = await pconn.fetchval(
                 "SELECT lastdate FROM patreonstore WHERE u_id = $1", ctx.author.id
             )
-        if staff not in ('User', 'Art Squad'):
+        if staff not in ('User', 'Art Squad') and ctx.author.id not in (366319068476866570,334155028170407949):
             await ctx.send("Not part of benefits.")
             return
         if last == date:

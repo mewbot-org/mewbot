@@ -327,7 +327,7 @@ def get_insert_query(ctx, poke, counter, mother, is_shadow):
         0,
         False,
         poke.ability_id,
-        counter,
+        counter, # // 1.25, # Remove after the spring
         poke.name,
         poke.gender,
         ctx.author.id,

@@ -19,9 +19,11 @@ from mewutils.misc import (
 )
 from mewcogs.json_files import make_embed
 from mewcogs.fishing import is_key
+from mewcogs.breeding import get_child, get_insert_query, get_parent
 from mewcogs.pokemon_list import _
 from collections import defaultdict
 
+EASTER_CACHE = []
 
 def despawn_embed(e, status):
     e.title = "Despawned!" if status == "despawn" else "Caught!"
@@ -58,7 +60,7 @@ class PokeGuess:
 
 
 async def add_spawn(
-    *, bot, user_id, guild_id, pokemon, shiny, inventory
+    *, bot, user_id, guild_id, pokemon, shiny, inventory, event_chance=False
 ) -> SpawnResult:
     """Spawn handler"""
     pokemon = pokemon.capitalize()
@@ -134,6 +136,8 @@ async def add_spawn(
         teext += f"It also dropped a Common Chest!\n"
     if credits:
         teext += f"You also found {credits} credits!\n"
+    if event_chance:
+        teext += "This Spawned Pokemon has also dropped an Easter Egg, use `/easterclaim` in this same channel to claim the Egg!\n"
 
     return SpawnResult(teext)
 
@@ -149,6 +153,7 @@ class SpawnView(discord.ui.View):
         ubchance: int,
         shiny: bool,
         poke_guess: PokeGuess,
+        event_chance: bool
     ):
         self.modal = SpawnModal(
             pokemon,
@@ -160,6 +165,7 @@ class SpawnView(discord.ui.View):
             shiny,
             self,
             poke_guess,
+            event_chance
         )
         super().__init__(timeout=360)
         self.msg = None
@@ -191,6 +197,7 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         shiny: bool,
         view: discord.ui.View,
         poke_guess: PokeGuess,
+        event_chance: bool,
     ):
         self.pokemon = pokemon
         self.guessed = False
@@ -202,6 +209,7 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         self.shiny = shiny
         self.view = view
         self.poke_guess = poke_guess
+        self.event_chance = event_chance
         super().__init__()
 
     name = discord.ui.TextInput(
@@ -209,6 +217,7 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
+        global EASTER_CACHE
         self.embedmsg = interaction.message
 
         await interaction.response.defer()
@@ -260,12 +269,16 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             pokemon=pokemon,
             shiny=self.shiny,
             inventory=iv_multiplier,
+            event_chance=self.event_chance
         )
 
         await interaction.followup.send(
             embed=(make_embed(title="", description=res.text))
         )
+        if self.event_chance:
+            EASTER_CACHE.append(interaction.message.channel.id)
         try:
+            
             if self.delspawn:
                 await self.embedmsg.delete()
             else:
@@ -297,7 +310,64 @@ class Spawn(commands.Cog):
             int
         )  # This doesn't need to be put in Redis, because it's a cache of Guild ID's, which aren't cross-cluster
         self.always_spawn = False
+        
+        
+    # @commands.hybrid_command(name="easterclaim")
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def easterclaim(self, ctx):
+        """Claim Easter Eggs previously dropped in a channel."""
+        embed = make_embed(footer="Checking this channel for any Easter egg drops...", icon_url="https://mewbot.xyz/eastereggs.png", title="", description="")
+        msg = await ctx.send(embed=embed)
+        async with ctx.bot.db[0].acquire() as pconn:
+            if ctx.channel.id in EASTER_CACHE:
+                EASTER_CACHE.remove(ctx.channel.id)
+            else:
+                embed = make_embed(footer=f"Oops! There are currently no Easter Eggs in this channel!", icon_url="https://mewbot.xyz/eastereggs.png", title="", description="")
+                await msg.edit(embed=embed)
+                return
+            mother_name = random.choice(totalList)
+            father_details = await pconn.fetchrow(
+                "SELECT * FROM pokes WHERE pokname = 'Ditto'",
+                )
+            mother_details = await pconn.fetchrow(
+                "SELECT * FROM pokes WHERE pokname = $1",
+                mother_name
+                )
+            father = await get_parent(ctx, father_details)
+            mother = await get_parent(ctx, mother_details)
+            
+            multipliers = await pconn.fetchrow(
+                "SELECT shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
+            )
+            if multipliers is None:
+                shiny_multiplier = 0
+                breedmulti = 0
+            else:
+                shiny_multiplier = multipliers["shiny_multiplier"]
+                breedmulti = multipliers["breeding_multiplier"]
 
+            is_shiny = random.random() < (25/100 if ctx.author.id != 518952790849224729 else 40/100)
+            child, counter = await get_child(ctx, father, mother, is_shiny)
+            min_iv = 12
+            max_iv = 31
+            child.hp = random.randint(min_iv, max_iv)
+            child.attack = random.randint(min_iv, max_iv)
+            child.defense = random.randint(min_iv, max_iv)
+            child.spatk = random.randint(min_iv, max_iv)
+            child.spdef = random.randint(min_iv, max_iv)
+            child.speed = random.randint(min_iv, max_iv)
+            
+            query, args = get_insert_query(ctx, child, counter, mother, False)
+            pokeid = await pconn.fetchval(query, *args)
+            await pconn.execute(
+                "UPDATE users SET pokes = array_append(pokes, $1) WHERE u_id = $2",
+                pokeid,
+                ctx.author.id,
+            )
+            embed = make_embed(description=f"You have claimed a {':star2: ' if is_shiny else ' '}{mother_name} Easter Egg!\nBegin hatching quickly!", icon_url="https://mewbot.xyz/eastereggs.png", footer="...", title="")
+            await msg.edit(embed=embed)
+                
     @check_owner()
     @commands.hybrid_command(name="lop")
     @discord.app_commands.guilds(STAFFSERVER)
@@ -480,6 +550,7 @@ class Spawn(commands.Cog):
         poke_guess = PokeGuess()
 
         try:
+            event_chance = False # random.random() < 1/2.5 and message.guild.id in (STAFFSERVER, 828102878115135519)
             view = SpawnView(
                 pokemon=pokemon,
                 delspawn=delspawn,
@@ -489,12 +560,18 @@ class Spawn(commands.Cog):
                 ubchance=ubchance,
                 shiny=shiny,
                 poke_guess=poke_guess,
+                event_chance=event_chance
             )
             cmsg = await spawn_channel.send(embeds=[embed], view=view)
 
             view.set_message(cmsg)
+                
         except:
             self.bot.logger.error(traceback.format_exc())
+            
+        # embed = make_embed(footer=, icon_url="https://mewbot.xyz/eastereggs.png", title="", description="")
+        # if event_chance:
+        #     await spawn_channel.send(embed = embed)
 
         def check(m):
             return (
@@ -540,9 +617,13 @@ class Spawn(commands.Cog):
             pokemon=pokemon,
             shiny=shiny,
             inventory=iv_multiplier,
+            event_chance=event_chance
         )
 
         await spawn_channel.send(embed=(make_embed(title="", description=res.text)))
+        if event_chance:
+            EASTER_CACHE.append(spawn_channel.id)
+            
         try:
             if delspawn:
                 await cmsg.delete()

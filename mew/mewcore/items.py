@@ -234,6 +234,18 @@ ADD_BAG_ITEM = {
     "psychic_seed": "UPDATE bag SET psychic_seed = psychic_seed + $1 WHERE u_id = $2",
     "power_herb": "UPDATE bag SET power_herb = power_herb + $1 WHERE u_id = $2",
     "primal_orb": "UPDATE bag SET primal_orb = primal_orb + $1 WHERE u_id = $2",
+    "shed_shell": "UPDATE bag SET shed_shell = shed_shell + $1 WHERE u_id = $2",
+    "luminous_moss": "UPDATE bag SET luminous_moss = luminous_moss + $1 WHERE u_id = $2",
+    "mental_herb": "UPDATE bag SET mental_herb = mental_herb + $1 WHERE u_id = $2",
+    "red_card": "UPDATE bag SET red_card = red_card + $1 WHERE u_id = $2",
+    "room_service": "UPDATE bag SET room_service = room_service + $1 WHERE u_id = $2",
+    "sharp_beak": "UPDATE bag SET sharp_beak = sharp_beak + $1 WHERE u_id = $2",
+    "lucky_punch": "UPDATE bag SET lucky_punch = lucky_punch + $1 WHERE u_id = $2",
+    "loaded_dice": "UPDATE bag SET loaded_dice = loaded_dice + $1 WHERE u_id = $2",
+    "eject_pack": "UPDATE bag SET eject_pack = eject_pack + $1 WHERE u_id = $2",
+    "absorb_bulb": "UPDATE bag SET absorb_bulb = absorb_bulb + $1 WHERE u_id = $2",
+    "booster_energy": "UPDATE bag SET booster_energy = booster_energy + $1 WHERE u_id = $2",
+    "covert_cloak": "UPDATE bag SET covert_cloak = covert_cloak + $1 WHERE u_id = $2",
 }
 
 ADD_BOUND_ITEM = {
@@ -491,6 +503,18 @@ REMOVE_BAG_ITEM = {
     "psychic_seed": "UPDATE bag SET psychic_seed = psychic_seed - $1 WHERE u_id = $2",
     "power_herb": "UPDATE bag SET power_herb = power_herb - $1 WHERE u_id = $2",
     "primal_orb": "UPDATE bag SET primal_orb = primal_orb - $1 WHERE u_id = $2",
+    "shed_shell": "UPDATE bag SET shed_shell = shed_shell - $1 WHERE u_id = $2",
+    "luminous_moss": "UPDATE bag SET luminous_moss = luminous_moss - $1 WHERE u_id = $2",
+    "mental_herb": "UPDATE bag SET mental_herb = mental_herb - $1 WHERE u_id = $2",
+    "red_card": "UPDATE bag SET red_card = red_card - $1 WHERE u_id = $2",
+    "room_service": "UPDATE bag SET room_service = room_service - $1 WHERE u_id = $2",
+    "sharp_beak": "UPDATE bag SET sharp_beak = sharp_beak - $1 WHERE u_id = $2",
+    "lucky_punch": "UPDATE bag SET lucky_punch = lucky_punch - $1 WHERE u_id = $2",
+    "loaded_dice": "UPDATE bag SET loaded_dice = loaded_dice - $1 WHERE u_id = $2",
+    "eject_pack": "UPDATE bag SET eject_pack = eject_pack - $1 WHERE u_id = $2",
+    "absorb_bulb": "UPDATE bag SET absorb_bulb = absorb_bulb - $1 WHERE u_id = $2",
+    "booster_energy": "UPDATE bag SET booster_energy = booster_energy - $1 WHERE u_id = $2",
+    "covert_cloak": "UPDATE bag SET covert_cloak = covert_cloak - $1 WHERE u_id = $2",
 }
 
 REMOVE_BOUND_ITEM = {

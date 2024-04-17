@@ -49,7 +49,7 @@ PKIDS = PFILE
 T_IDS = PTYPES
 
 
-def make_embed(title, description=None):
+def make_embed(title, description=None, footer=None, icon_url=None):
     e = discord.Embed(
         title=title,
         description=(description if description else ""),
@@ -57,4 +57,6 @@ def make_embed(title, description=None):
             (16711888, 0xFFB6C1, 0xFF69B4, 0xFFC0CB, 0xC71585, 0xDB7093)
         ),
     )
+    if footer:
+        e.set_footer(text=footer, icon_url=icon_url)
     return e

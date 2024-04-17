@@ -1,7 +1,7 @@
 import discord
 from discord.ext import tasks, commands
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 
@@ -18,6 +18,37 @@ class Mother(commands.Cog):
             self.mother.start()
             self.energy.start()
             self.berries.start()
+
+    @tasks.loop(seconds=10)  # Runs every week
+    async def deduct_market_fees(self):
+        current_date = datetime.now()
+        one_week_ago = current_date - timedelta(days=7)
+
+        try:
+            async with self.bot.db[0].acquire() as conn:
+                # Fetch listings older than a week
+                sql = """
+                    SELECT poke, owner, price
+                    FROM market
+                    WHERE listed_date < $1;
+                """
+                rows = await conn.fetch(sql, one_week_ago)
+
+            # Deduct fees for each retrieved slot
+            for poke, owner, price in rows:
+                fee = price * 0.01
+                try:
+                # Update user's credits
+                    sql = "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2"
+                    await conn.execute(sql, fee, owner)
+                    print(f"Deducted market fee of {fee} credits from {owner} (Market ID: {poke}).")
+                except Exception as e:
+                    print(f"Error deducting fee for slot {poke}: {e}")
+
+        except Exception as e:
+            print(f"Error checking and deducting fees: {e}")
+
+
 
     @tasks.loop(seconds=1440)
     async def energy(self):

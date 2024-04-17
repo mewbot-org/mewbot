@@ -124,7 +124,8 @@ class Market(commands.Cog):
                 ctx,
                 (
                     f"Are you sure you want to list your level {pokelevel} {pokename} to the market for {price} credits?\n"
-                    f"Listing it will require a {deposit} deposit, which you will only get back if it is sold."
+                    f"Listing it will require a {deposit} deposit, which you will only get back if it is sold.\n"
+                    f"1% of the listing price, {round(1/100 * price)} credits, will be deducted automatically from your balance after the first week this Pokemon stays in the market.\n"
                 ),
             ).wait():
                 await ctx.send("Cancelling.")

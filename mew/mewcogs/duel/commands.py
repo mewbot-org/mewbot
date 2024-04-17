@@ -235,10 +235,10 @@ class Duel(commands.Cog):
             pages = paginate(stack)
             for idx, page in enumerate(pages):
                 if idx == 0:
-                    page = f"Exception ID {battle.ctx._interaction.id}\n\n" + page
-                await self.bot.get_partial_messageable(998290393709944842).send(
-                    f"```py\n{page}\n```"
-                )
+                    page = f"Exception ID {battle.ctx.interaction.id}\n\n" + page
+            await self.bot.get_partial_messageable(998290948863836160).send(
+                f"```py\n{page}\n```"
+            )
             self.games[int(battle.ctx._interaction.id)] = battle
 
         if battle.trainer1.is_human() and battle.trainer2.is_human():
@@ -967,7 +967,7 @@ class Duel(commands.Cog):
         p1_current = await DuelPokemon.create(ctx, challenger1)
         p2_current = await DuelPokemon.create(ctx, challenger2)
         owner1 = MemberTrainer(ctx.author, [p1_current])
-        owner2 = NPCTrainer(ctx.bot, [p2_current])
+        owner2 = NPCTrainer([p2_current])
 
         battle = Battle(ctx, Battle.NPC, owner1, owner2)
         winner = await self.wrapped_run(battle)

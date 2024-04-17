@@ -213,6 +213,10 @@ class Party(commands.Cog):
                 party_name,
                 ctx.author.id,
             )
+            pokes = await pconn.fetchval(
+                "SELECT pokes FROM users WHERE u_id = $1",
+                ctx.author.id
+            )
 
             if party_data is None:
                 await ctx.send("You don't have a party registered with that name.")
@@ -225,8 +229,12 @@ class Party(commands.Cog):
 
             # Override current party with the new IDs.
             for i in range(6):
-                new_id = party_data[i]
-                ids[i] = new_id
+                poke_id = party_data[i]
+                if poke_id not in pokes and poke_id != 0:
+                    await ctx.send("You do not own the Pokemon that is being loaded!")
+                    return
+                else:
+                    ids[i] = poke_id
 
             await pconn.execute(
                 "UPDATE users SET party = $1 WHERE u_id = $2", ids[:6], ctx.author.id

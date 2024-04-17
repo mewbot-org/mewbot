@@ -820,6 +820,30 @@ def get_battle_emoji(*, item_name: str):
         emoji = "<:smooth_rock:1103331093580624022>"
     elif item_name == "power_herb":
         emoji = "<:power_herb:1105263111600087110>"
+    elif item_name == "shed_shell":
+        emoji = "<:shed_shell:1222313561284677782>"
+    elif item_name == "luminous_moss":
+        emoji = "<:luminous_moss:1222313648660283565>"
+    elif item_name == "mental_herb":
+        emoji = "<:mental_herb:1222313565910864004>"
+    elif item_name == "red_card":
+        emoji = "<:red_card:1222313564400910337>"
+    elif item_name == "room_service":
+        emoji = "<:room_service:1222313562907611291>"
+    elif item_name == "sharp_beak":
+        emoji = "<:sharp_beak:1222313562387513444>"
+    elif item_name == "lucky_punch":
+        emoji = "<:lucky_punch:1222313567097720975>"
+    elif item_name == "loaded_dice":
+        emoji = "<:loaded_dice:1222313571090825347>"
+    elif item_name == "eject_pack":
+        emoji = "<:eject_pack:1222313617945530408>"
+    elif item_name == "absorb_bulb":
+        emoji = "<:absorb_bulb:1222313574735675563>"
+    elif item_name == "booster_energy":
+        emoji = "<:booster_energy:1222313560206737460>"
+    elif item_name == "covert_cloak":
+        emoji = "<:covert_cloak:1222313689227726848>"    
     else:
         emoji = "‼️"  # Means emoji is missing
     return emoji
