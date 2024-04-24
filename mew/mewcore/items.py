@@ -246,6 +246,8 @@ ADD_BAG_ITEM = {
     "absorb_bulb": "UPDATE bag SET absorb_bulb = absorb_bulb + $1 WHERE u_id = $2",
     "booster_energy": "UPDATE bag SET booster_energy = booster_energy + $1 WHERE u_id = $2",
     "covert_cloak": "UPDATE bag SET covert_cloak = covert_cloak + $1 WHERE u_id = $2",
+    "syrupy_apple": "UPDATE bag SET syrupy_apple = syrupy_apple + $1 WHERE u_id = $2",
+    "metal_alloy": "UPDATE bag SET metal_alloy = metal_alloy + $1 WHERE u_id = $2",
 }
 
 ADD_BOUND_ITEM = {
@@ -515,6 +517,8 @@ REMOVE_BAG_ITEM = {
     "absorb_bulb": "UPDATE bag SET absorb_bulb = absorb_bulb - $1 WHERE u_id = $2",
     "booster_energy": "UPDATE bag SET booster_energy = booster_energy - $1 WHERE u_id = $2",
     "covert_cloak": "UPDATE bag SET covert_cloak = covert_cloak - $1 WHERE u_id = $2",
+    "syrupy_apple": "UPDATE bag SET syrupy_apple = syrupy_apple - $1 WHERE u_id = $2",
+    "metal_alloy": "UPDATE bag SET metal_alloy = metal_alloy - $1 WHERE u_id = $2",
 }
 
 REMOVE_BOUND_ITEM = {

@@ -9,12 +9,37 @@ from datetime import datetime, timedelta
 
 
 from mewcogs.json_files import *
-from mewcogs.pokemon_list import is_formed, activeItemList, berryList
+from mewcogs.pokemon_list import is_formed, berryList
 from pokemon_utils.utils import evolve
 from mewcogs.market import MAX_MARKET_SLOTS
 from mewutils.misc import ConfirmView
 from typing import Literal
 
+#Only placed used so moved from pokemon_list
+activeItemList = (
+    "tart_apple",
+    "sweet_apple",
+    "syrupy_apple"
+    "sun_stone",
+    "dusk_stone",
+    "thunder_stone",
+    "fire_stone",
+    "ice_stone",
+    "water_stone",
+    "dawn_stone",
+    "leaf_stone",
+    "moon_stone",
+    "shiny_stone",
+    "evo_stone",
+    "cracked_pot",
+    "chipped_pot",
+    "meltan_candy",
+    "galarica_wreath",
+    "galarica_cuff",
+    "black_augurite",
+    "peat_block",
+    "metal_alloy"
+)
 
 bagItemList = (
     "aguav_seed",

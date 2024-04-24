@@ -1398,6 +1398,396 @@
     "is_main_series": 1
   },
   {
+    "id": 234,
+    "identifier": "libero",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 235,
+    "identifier": "mirror-armor",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 236,
+    "identifier": "cotton-down",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 237,
+    "identifier": "ball-fetch",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 238,
+    "identifier": "steam-engine",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 239,
+    "identifier": "ripen",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 240,
+    "identifier": "sand-spit",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 241,
+    "identifier": "gulp-missile",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 242,
+    "identifier": "propeller-tail",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 243,
+    "identifier": "punk-rock",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 244,
+    "identifier": "steely-spirit",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 245,
+    "identifier": "perish-body",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 246,
+    "identifier": "screen-cleaner",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 247,
+    "identifier": "wandering-spirit",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 248,
+    "identifier": "neutralizing-gas",
+    "generation_id": 8,
+    "is_main_series": 1
+  },
+  {
+    "id": 249,
+    "identifier": "ice-scales",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 250,
+    "identifier": "power-spot",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 251,
+    "identifier": "ice-face",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 252,
+    "identifier": "hunger-switch",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 253,
+    "identifier": "stalwart",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 254,
+    "identifier": "intrepid-sword",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 255,
+    "identifier": "dauntless-shield",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 256,
+    "identifier": "pastel-veil",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 257,
+    "identifier": "gorilla-tactics",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 258,
+    "identifier": "quick-draw",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 259,
+    "identifier": "mimicry",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 260,
+    "identifier": "transistor",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 261,
+    "identifier": "dragons-maw",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 262,
+    "identifier": "chilling-neigh",
+    "is_main_series": 0
+  },
+  {
+    "generation_id": 8,
+    "id": 263,
+    "identifier": "grim-neigh",
+    "is_main_series": 0
+  },
+  {
+    "id": 264,
+    "identifier": "as-one-shadow",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 265,
+    "identifier": "as-one-ice",
+    "generation_id": 8,
+    "is_main_series": 0
+  },
+  {
+    "id": 266,
+    "identifier": "curious-medicine",
+    "generation_id": 8,
+    "is_main_series": 1
+  },
+  {
+    "id": 267,
+    "identifier": "unseen-fist",
+    "generation_id": 8,
+    "is_main_series": 1
+  },
+  {
+    "id": 268,
+    "identifier": "lingering-aroma",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 269,
+    "identifier": "seed-sower",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 270,
+    "identifier": "thermal-exchange",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 271,
+    "identifier": "anger-shell",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 272,
+    "identifier": "purifying-salt",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 273,
+    "identifier": "well-baked-body",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 274,
+    "identifier": "wind-rider",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 275,
+    "identifier": "guard-dog",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 276,
+    "identifier": "rocky-payload",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 277,
+    "identifier": "wind-power",
+    "generation_id": 3,
+    "is_main_series": 1
+  },
+  {
+    "id": 278,
+    "identifier": "zero-to-hero",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 279,
+    "identifier": "commander",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 280,
+    "identifier": "electromorphosis",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 281,
+    "identifier": "protosynthesis",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 282,
+    "identifier": "quark-drive",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 283,
+    "identifier": "good-as-gold",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 284,
+    "identifier": "vessel-of-ruin",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 285,
+    "identifier": "sword-of-ruin",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 286,
+    "identifier": "tablets of ruin",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 287,
+    "identifier": "beads-of-ruin",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 288,
+    "identifier": "orichalcum-pulse",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 289,
+    "identifier": "hadron-engine",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 290,
+    "identifier": "opportunist",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 291,
+    "identifier": "cud-chew",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 292,
+    "identifier": "sharpness",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 293,
+    "identifier": "supreme-overlord",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 294,
+    "identifier": "costar",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 295,
+    "identifier": "toxic-debris",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 296,
+    "identifier": "armor-tail",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 297,
+    "identifier": "earth-eater",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 298,
+    "identifier": "mycelium-might",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
     "id": 10001,
     "identifier": "mountaineer",
     "generation_id": 5,
@@ -1756,5 +2146,35 @@
     "identifier": "shield",
     "generation_id": 5,
     "is_main_series": 0
+  },
+  {
+    "id": 10061,
+    "identifier": "hospitality",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 10062,
+    "identifier": "supersweet-syrup",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 10063,
+    "identifier": "toxic-chain",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 10064,
+    "identifier": "poison-puppeteer",
+    "generation_id": 9,
+    "is_main_series": 1
+  },
+  {
+    "id": 10065,
+    "identifier": "tera-shift",
+    "generation_id": 9,
+    "is_main_series": 1
   }
 ]

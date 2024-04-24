@@ -537,6 +537,7 @@ class Pokemon(commands.Cog):
         """Gets a string formatted to be used to display evolution requirements for a particular pokemon."""
         reqs = []
         evoreq = await self.bot.db[1].evofile.find_one({"evolved_species_id": poke})
+        print(f"\nUSING THIS EVOREQ FILE: {evoreq}\n")
         if evoreq["trigger_item_id"]:
             item = await self.bot.db[1].items.find_one(
                 {"id": evoreq["trigger_item_id"]}
@@ -573,6 +574,7 @@ class Pokemon(commands.Cog):
             if poke["evolves_from_species_id"] == species_id:
                 reqs = ""
                 if species_id:
+                    print(f"THIS IS THE ID: {poke['id']}")
                     reqs = await self.get_reqs(poke["id"])
                 result += f"{prefix}├─{poke['identifier'].capitalize()} {reqs}\n"
                 result += await self.get_kids(raw, poke["id"], f"{prefix}│")
@@ -791,7 +793,9 @@ class Pokemon(commands.Cog):
         if form_suffix in ("alola", "galar", "hisui", "paldea"):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
+        print(base_name)
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
+        print(pfile)
         
         if pfile:
             gender_rate = pfile['gender_rate']

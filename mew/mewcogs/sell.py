@@ -9,7 +9,7 @@ import locale
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-from mewcogs.pokemon_list import activeItemList, berryList
+from mewcogs.pokemon_list import berryList
 from mewutils.misc import ConfirmView
 from mewutils.checks import tradelock
 

@@ -26,7 +26,7 @@ from mewutils.checks import (
 )
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER, get_file_name
 import datetime
-
+import pokebase as pb
 
 def round_speed(speed):
     try:
@@ -51,6 +51,17 @@ class MewBotAdmin(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def dev(self, ctx):
         ...
+        
+    @dev.command()
+    async def upload_ms(self, ctx, pokemon_name: str):
+        """Upload Moveset"""
+        p = pb.pokemon(pokemon_name)
+        movelist = [move.move.name for move in p.moves]
+        await ctx.send(f"Registering {movelist} to {pokemon_name}")
+        await ctx.bot.mongo_update('pokemon_moves',
+                                   {'pokemon': pokemon_name.lower()},
+                                   {'moves': movelist})
+        
         
     @dev.command()
     async def upload_pfile(self, ctx, pokemon_name: str, pre_evolution: str = None, gender_rate = 1):

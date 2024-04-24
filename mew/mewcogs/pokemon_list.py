@@ -88,6 +88,7 @@ bagItemList = (
 activeItemList = (
     "tart_apple",
     "sweet_apple",
+    "syrupy_apple"
     "sun_stone",
     "dusk_stone",
     "thunder_stone",
@@ -106,6 +107,7 @@ activeItemList = (
     "galarica_cuff",
     "black_augurite",
     "peat_block",
+    "metal_alloy"
 )
 
 battle_items = [

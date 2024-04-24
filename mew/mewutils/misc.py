@@ -888,6 +888,10 @@ def get_trade_emoji(*, item_name: str):
         emoji = "<:ovalstone:671571987461570570>"
     elif item_name == "air_balloon":
         emoji = "<:air_balloon:1092675918985703476>"
+    elif item_name == 'syrupy_apple':
+        emoji = "<:syrupyapple:1230637993908240484>"
+    elif item_name == 'metal_alloy':
+        emoji = "<:metal_alloy:1230640666590056479>"
     else:
         emoji = "‼️"  # Means emoji is missing
     return emoji
