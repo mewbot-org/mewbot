@@ -53,14 +53,16 @@ class MewBotAdmin(commands.Cog):
         ...
         
     @dev.command()
-    async def upload_ms(self, ctx, pokemon_name: str):
+    async def upload_ms(self, ctx):
         """Upload Moveset"""
-        p = pb.pokemon(pokemon_name)
-        movelist = [move.move.name for move in p.moves]
-        await ctx.send(f"Registering {movelist} to {pokemon_name}")
-        await ctx.bot.mongo_update('pokemon_moves',
-                                   {'pokemon': pokemon_name.lower()},
-                                   {'moves': movelist})
+        names = ['pecharunt', 'polteageist', 'fezandipiti', 'dipplin', 'hydrapple', 'iron-crown']
+        for pokemon_name in names:
+            p = pb.pokemon(pokemon_name)
+            movelist = [move.move.name for move in p.moves]
+            await ctx.send(f"Registering movelist to {pokemon_name}")
+            await ctx.bot.mongo_update('pokemon_moves',
+                                    {'pokemon': pokemon_name.lower()},
+                                    {'moves': movelist})
         
         
     @dev.command()
@@ -564,6 +566,9 @@ class MewBotAdmin(commands.Cog):
         globalid: int,
     ):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
+            return
+        #Locking Gomp out of commands for right now
+        if ctx.author.id == 195938951188578304:
             return
         async with ctx.bot.db[0].acquire() as pconn:
             if essence == "True":

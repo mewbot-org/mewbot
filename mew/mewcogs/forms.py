@@ -313,6 +313,10 @@ class Forms(commands.Cog):
             if pokename is None:
                 await ctx.send("You have no Pokemon Selected")
                 return
+            form_data = await ctx.bot.db[1].forms.find_one({'identifier': pokename.lower()})
+            if form_data['form_identifier'] == "":
+                await ctx.send("This Pokemon is not a form!")
+                return
             if not is_formed(pokename) or pokename.endswith("-alola"):
                 await ctx.send("This Pokemon is not a form!")
                 return

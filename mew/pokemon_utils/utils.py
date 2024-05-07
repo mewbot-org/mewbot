@@ -108,7 +108,10 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         raw_pfile = await ctx.bot.mongo_pokemon_db.pfile.find_one(
             {"identifier": pn.lower()}
         )
-        gender_rate = raw_pfile['gender_rate'] if (raw_pfile['gender_rate']) else -1
+        if raw_pfile and (raw_pfile['gender_rate']):
+            gender_rate = raw_pfile['gender_rate'] 
+        else:
+            gender_rate = -1
         type_ids = (
             await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         )["types"]
@@ -211,7 +214,7 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
         egg_groups = "?"
-        gender_rate = 0
+        #gender_rate = 0
 
     emoji = get_emoji(
         shiny=shiny,
@@ -231,18 +234,21 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         if (pn.lower() == "egg" and counter > 0)
         else "",
     )
-    gender = (
-        "<:male:998336034519654534>"
-        if gender == "-m"
-        else (
-            "<:female:998336077943279747>"
-            if gender == "-f"
-            else "<:genderless:1029425375589187634>"
+    if pn != "Egg":
+        gender = (
+            "<:male:998336034519654534>"
+            if gender == "-m"
+            else (
+                "<:female:998336077943279747>"
+                if gender == "-f"
+                else "<:genderless:1029425375589187634>"
+            )
         )
-    )
-    gender = (
-        "Genderless" if gender_rate == -1 else gender
-    )
+        gender = (
+            "Genderless" if gender_rate == -1 else gender
+        )
+    else:
+        gender = "`??`"
     if info_type == "market":
         price = records["pokeprice"]
         mid = records["mid"]

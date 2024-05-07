@@ -1434,6 +1434,11 @@ pseudoList = [
     "Frigibax",
     "Arctibax",
     "Baxcalibur",
+    "Hydrapple",
+    "Dipplin",
+    "Poltchageist",
+    "Sinistcha",
+    "Archaludon",
 ]
 
 # starter pokemon
@@ -1528,20 +1533,16 @@ starterList = [
 
 # legendary pokemon
 LegendList = [
-    "Dipplin",
-    "Poltchageist",
-    "Sinistcha",
     "Okidogi",
     "Munkidori",
     "Fezandipiti",
-    "Archaludon",
-    "Hydrapple",
-    "Gouging Fire",
-    "Raging Bolt",
-    "Iron Boulder",
-    "Iron Crown",
+    "Gouging-fire",
+    "Raging-bolt",
+    "Iron-boulder",
+    "Iron-crown",
     "Terapagos", # Note: Consider handling forms separately
     "Ogerpon",
+    "Pecharunt",
     "Chien-pao",
     "Chi-yu",
     "Ting-lu",

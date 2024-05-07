@@ -19,12 +19,9 @@ from typing import Literal
 activeItemList = (
     "tart_apple",
     "sweet_apple",
-    "syrupy_apple"
-    "sun_stone",
     "dusk_stone",
     "thunder_stone",
     "fire_stone",
-    "ice_stone",
     "water_stone",
     "dawn_stone",
     "leaf_stone",
@@ -38,7 +35,10 @@ activeItemList = (
     "galarica_cuff",
     "black_augurite",
     "peat_block",
-    "metal_alloy"
+    "metal_alloy",
+    "sun_stone",
+    "syrupy_apple",
+    "ice_stone",
 )
 
 bagItemList = (
@@ -631,7 +631,7 @@ class Items(commands.Cog):
                     "You have successfully reset the Effort Values (EVs) of your selected Pokemon!"
                 )
                 return
-            if is_formed(pokename):
+            if is_formed(pokename) and pokename != 'Gouging-fire':
                 await ctx.send(
                     "You can not buy an item for a Form. Use `/deform` to de-form your Pokemon!"
                 )

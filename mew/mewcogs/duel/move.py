@@ -168,10 +168,24 @@ class Move():
             # 2 turn moves
             # During sun, this move does not need to charge
             if self.effect == 152 and battle.weather.get() not in ("sun", "h-sun"):
-                attacker.locked_move = LockedMove(self, 2)
+                if attacker.held_item == "power-herb":
+                    attacker.held_item.user()
+                    msg += f"{attacker.name}'s Power Herb charged the move!\n"
+                else:
+                    attacker.locked_move = LockedMove(self, 2)
             if self.effect in (40, 76, 81, 146, 156, 256, 257, 264, 273, 332, 333, 366, 451):
-                attacker.locked_move = LockedMove(self, 2)
-            # 3 turn moves
+                if attacker.held_item == "power-herb":
+                    # These are all effects that trigger even with power herb
+                    if self.effect == 146:
+                        msg += attacker.append_defense(1, attacker=attacker, move=self)
+                    elif self.effect == 451:
+                        msg += attacker.append_spatk(1, attacker=attacker, move=self)
+                    # Don't remove item so it can be checked in shadow force
+                    if self.effect != 273:
+                        attacker.held_item.use()
+                    msg += f"{attacker.name}'s Power Herb charged the move!\n"
+                else:
+                    attacker.locked_move = LockedMove(self, 2)            # 3 turn moves
             if self.effect == 27:
                 attacker.locked_move = LockedMove(self, 3)
                 attacker.bide = 0
@@ -201,8 +215,11 @@ class Move():
             if self.effect in (156, 264):
                 attacker.fly = True
             if self.effect == 273:
-                attacker.shadow_force = True
-        
+                if attacker.held_item == "power-herb":
+                    attacker.held_item.use()
+                else:
+                    attacker.shadow_force = True
+                            
         # Early exits for moves that hit a certain turn when it is not that turn
         # Turn 1 hit moves
         if self.effect == 81 and attacker.locked_move:
@@ -523,11 +540,39 @@ class Move():
             msg += defender.damage(defender.hp // 2, battle, move=self, move_type=current_type, attacker=attacker)
             numhits = 1
         elif self.effect == 42:
-            msg += defender.damage(40, battle, move=self, move_type=current_type, attacker=attacker)
-            numhits = 1
+            # Parental Bond should trigger this twice
+            if attacker.ability() == Ability.PARENTAL_BOND:
+                for i in range(2):
+                    msg += defender.damage(
+                        40, battle, move=self, move_type=current_type, attacker=attacker
+                    )
+                    numhits = 2
+            else:
+                msg += defender.damage(
+                    40, battle, move=self, move_type=current_type, attacker=attacker
+                )
+                numhits = 1        
         elif self.effect == 88:
-            msg += defender.damage(attacker.level, battle, move=self, move_type=current_type, attacker=attacker)
-            numhits = 1
+            # Parental Bond should trigger this twice
+            if attacker.ability() == Ability.PARENTAL_BOND:
+                for i in range(2):
+                    msg += defender.damage(
+                        attacker.level,
+                        battle,
+                        move=self,
+                        move_type=current_type,
+                        attacker=attacker,
+                    )
+                    numhits = 2
+            else:
+                msg += defender.damage(
+                    attacker.level,
+                    battle,
+                    move=self,
+                    move_type=current_type,
+                    attacker=attacker,
+                )
+                numhits = 1        
         elif self.effect == 89:
             # 0.5-1.5, increments of .1
             scale = (random.randint(0, 10) / 10.0) + .5
@@ -787,8 +832,13 @@ class Move():
             if random.randint(1, 100) <= effect_chance:
                 msg += defender.append_defense(-1, attacker=attacker, move=self)
         if self.effect in (21, 71, 477):
-            if random.randint(1, 100) <= effect_chance:
-                msg += defender.append_speed(-1, attacker=attacker, move=self)
+            if self.name in ('rock-tomb', 'bulldoze') and attacker.ability() == Ability.PARENTAL_BOND:
+                for i in range(2):
+                    if random.randint(1, 100) <= effect_chance:
+                        msg += defender.append_speed(-1, attacker=attacker, move=self)
+            else:
+                if random.randint(1, 100) <= effect_chance:
+                    msg += defender.append_speed(-1, attacker=attacker, move=self)
         if self.effect == 72:
             if random.randint(1, 100) <= effect_chance:
                 msg += defender.append_spatk(-1, attacker=attacker, move=self)
