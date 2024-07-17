@@ -347,15 +347,21 @@ class Battle:
                 )
                 if self.type == self.RANKED:
                     winner = [self.trainer2, self.trainer1.id]
+                elif self.type == self.NPC and self.turn < 5:
+                    #Didn't hit 5 turn minimum
+                    winner = "forfeit"
                 else:
                     winner = self.trainer2
-                break
+                break 
             if self.trainer2.selected_action is None:
                 self.msg += (
                     f"{self.trainer2.name} forfeited, {self.trainer1.name} wins!\n"
                 )
                 if self.type == self.RANKED:
                     winner = [self.trainer1, self.trainer2.id]
+                elif self.type == self.NPC and self.turn < 5:
+                    #Didn't hit 5 turn minimum
+                    winner = "forfeit"
                 else:
                     winner = self.trainer1
                 break

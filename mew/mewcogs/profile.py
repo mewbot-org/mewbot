@@ -3,15 +3,20 @@ import time
 import asyncio
 
 from discord.ext import commands
+from typing import Literal
 from mewcogs.market import (
     PATREON_SLOT_BONUS,
     YELLOW_PATREON_SLOT_BONUS,
     SILVER_PATREON_SLOT_BONUS,
     CRYSTAL_PATREON_SLOT_BONUS,
 )
-from mewutils.misc import get_pokemon_image, ConfirmView
-from typing import Literal
-
+from mewutils.misc import (
+    get_pokemon_image, 
+    get_badge_emoji,
+    badge_pagify,
+    ConfirmView,
+    SlashMenuView
+)
 
 IMAGE_URLS = {
     "xmas/Maleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_male.png",
@@ -27,17 +32,29 @@ IMAGE_URLS = {
     "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
 }
 
+REGIONS = [
+    "kanto", 
+    "johto", 
+    "hoenn", 
+    "sinnoh", 
+    "unova", 
+    "kalos", 
+    "alola", 
+    "galar", 
+    "paldea",
+    "hisui"
+]
 
 def calculate_breeding_multiplier(level):
     difference = 0.02
     return f"{round((1 + (level) * difference), 2)}x"
-
 
 def calculate_iv_multiplier(level):
     difference = 0.5
     return f"{round((level * difference), 1)}%"
 
     # This is commented out but here for future proofing. Dropdown select.
+    # TODO: Update to match current profile layout and buttons
     # class DropdownSelect(discord.ui.Select):
     def __init__(self, bound_data, bag_data, player_data):
         options = [
@@ -304,12 +321,13 @@ def calculate_iv_multiplier(level):
 class ProfileView(discord.ui.View):
     """View that creates profile embed and displays buttons"""
 
-    def __init__(self, ctx, bound_data, bag_data, player_data):
+    def __init__(self, ctx, bound_data, bag_data, player_data, badge_data):
         super().__init__(timeout=20)
         self.ctx = ctx
         self.bag_data = bag_data
         self.bound_data = bound_data
         self.player_data = player_data
+        self.badge_data = badge_data
         self.event = asyncio.Event()
         self.embed = ""
 
@@ -317,7 +335,7 @@ class ProfileView(discord.ui.View):
     # async def refresh(self, interaction, button):
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Chests", emoji="🎁", row=1
+        style=discord.ButtonStyle.primary, label="Chests", emoji="<:legend_chest:1103389711424294942>", row=1
     )
     async def chests(self, interaction, button):
         await interaction.response.defer()
@@ -372,11 +390,11 @@ class ProfileView(discord.ui.View):
                 value=f"Rare: {rare_count}/5\nMythic: {mythic_count}/5\nLegend: {legend_count}/5",
                 inline=True,
             )
-        embed.set_footer(text=f"{interaction.user.name}'s Profile")
+        embed.set_footer(text=f"{interaction.user.name}'s Profile | Exalted chest are no longer available.")
         await interaction.followup.send(embed=embed, ephemeral=disabled)
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Bound Items", emoji="🔑", row=1
+        style=discord.ButtonStyle.primary, label="Bound", emoji="🔑", row=1
     )
     async def bound(self, interaction, button):
         await interaction.response.defer()
@@ -450,10 +468,7 @@ class ProfileView(discord.ui.View):
         await interaction.followup.send(embed=embed, ephemeral=disabled)
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary,
-        label="Shadow Hunts",
-        emoji="<:shadow:1010559067590246410>",
-        row=1,
+        style=discord.ButtonStyle.primary, label="Shadow Hunts", emoji="<:shadow:1010559067590246410>", row=1,
     )
     async def shadow(self, interaction, button):
         await interaction.response.defer()
@@ -489,6 +504,53 @@ class ProfileView(discord.ui.View):
             text=f"{interaction.user.name}'s Profile | We are constantly uploading new Shadows!"
         )
         await interaction.followup.send(embed=embed, ephemeral=disabled)
+
+    @discord.ui.button(
+        style=discord.ButtonStyle.primary, label="Badges", emoji="<:volcano:1146142634918817813>", row=1
+    )
+    async def badges(self, interaction, button):
+        patreon = await interaction.client.patreon_tier(interaction.user.id)
+        if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") and interaction.guild.id == 998128574898896906:
+            await interaction.response.send_message("Coming soon!")
+            return
+        GYM_LEADERS = await interaction.client.db[1].gym_leaders.find({}).to_list(None)
+        leader_names = [t["identifier"] for t in GYM_LEADERS]
+        column_names = [t["column"] for t in GYM_LEADERS]
+        region_names = [t["region"] for t in GYM_LEADERS]
+        badge_data = dict(self.badge_data)
+        desc = ""
+        count = 1
+        for idx, name in enumerate(leader_names):
+            # Index Region First
+            region_name = region_names[idx]
+            # Do Region Achievement First
+            if count in [1, 9, 17, 25, 33, 41]:
+                if badge_data[region_name] == True:
+                    desc += f"🗺️ **{region_name.capitalize()}** Region Defeated: `True`\n\n"
+                else:
+                    desc += f"🗺️ **{region_name.capitalize()}** Region Defeated: `False`\n\n"
+
+            # First pull badge name and emoji                    
+            emoji, badge_name = get_badge_emoji(leader_name=column_names[idx])
+            name = name.replace("_", " ").title()
+
+            # Then format message depending on msg count
+            if badge_data[column_names[idx]] is False:
+                second_emoji = "`Locked` 🔒"
+            else:
+                second_emoji = "`Unlocked` 🔓"
+            #if count in [8, 18]:
+                #desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n\n"
+            #else:
+                #desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n"
+            desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n"
+            count += 1
+        footer_text = "Reach a 2 Win Streak in NPC Duels to challenge!"
+        embed = discord.Embed(
+            title="Gym Leader Badges!", color=3553600)
+        pages = badge_pagify(desc, base_embed=embed, footer=footer_text)
+        await SlashMenuView(interaction, pages).start()
+
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
@@ -585,6 +647,10 @@ class Profile(commands.Cog):
             bound_data = await pconn.fetchrow(
                 "SELECT * FROM account_bound WHERE u_id = $1", ctx.author.id
             )
+            badge_data = await pconn.fetchrow(
+                "SELECT * FROM achievements WHERE u_id = $1",
+                ctx.author.id
+            )
         if bag_data is None:
             await ctx.send(
                 "Have you converted to the new bag system?\nUse `/bag convert` if you haven't!"
@@ -596,7 +662,7 @@ class Profile(commands.Cog):
             )
             return
         await ProfileView(
-            ctx, bound_data=bound_data, bag_data=bag_data, player_data=player_data
+            ctx, bound_data=bound_data, bag_data=bag_data, player_data=player_data, badge_data=badge_data
         ).wait()
 
     @profile.command(name="visible")

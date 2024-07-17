@@ -682,6 +682,10 @@ class Minigames(commands.Cog):
             mining_players = await tconn.fetch(
                 f"SELECT u_id, mining_points FROM users WHERE mining_points != 0 ORDER BY mining_points DESC"
             )
+            achievement_data = await tconn.fetchrow(
+                "SELECT ai_single_wins, ai_party_wins FROM achievements WHERE u_id = $1",
+                ctx.author.id
+            )
             fishing_ids = [record["u_id"] for record in fishing_players]
             mining_ids = [record["u_id"] for record in mining_players]
 
@@ -721,6 +725,7 @@ class Minigames(commands.Cog):
             value=(
                 f"__**Fishing Stats**__ 🐟\n`Level`: {fishing_level} - `Exp`: {fishing_exp}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}\n"
                 f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {mining_exp}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}"
+                f"__**NPC Duel Stats**__ ⚔️\n`Win Streak`: {details['win_streak']}\n`Single Wins`: {achievement_data['ai_single_wins']}\n`Party Wins`: {achievement_data['ai_party_wins']}\n"
             ),
         )
 

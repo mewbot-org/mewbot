@@ -132,11 +132,11 @@ class Redeem(commands.Cog):
             inline=False,
         )
         # e.add_field(name="Redeem multiple!", value="Redeem any Amount of Pokemon with `{}redeemmultiple <amount> <pokemon_name>` or redeem multiple credits using `{ctx.prefix}redeemmultiple credits <amount_of_redeem_to_use>`")
-        e.add_field(
-            name="Credits | 1 Redeem = 50,000 Credits",
-            value=f"`/redeem credits | Redeem 50,000 credits`",
-            inline=False,
-        )
+        #e.add_field(
+            #name="Credits | 1 Redeem = 50,000 Credits",
+            #value=f"`/redeem credits | Redeem 50,000 credits`",
+            #inline=False,
+        #)
         e.add_field(
             name="Nature capsules | 1 Redeem = 5 Nature Capsules",
             value=f"`/redeem nature capsules | Use nature capsules to edit Pokemon nature.`",

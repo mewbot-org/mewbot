@@ -99,21 +99,22 @@ class MewMisc:
     def get_egg_emote(self, egg_group):
         egg_group = egg_group.lower()
         egg_groups = {
-            "monster": "<:monsteregg:764298668161105961> `monster`",
-            "bug": "<:bugegg:764297919728713729> `bug`",
-            "flying": "<:flyingegg:764297946396098560> `flying`",
-            "field": "<:fieldegg:764298329675923456> `field`",
-            "fairy": "<:fairyegg:764298417215635477> `fairy`",
-            "grass": "<:grassegg:764297886644699197> `grass`",
-            "humanlike": "<:humanlikeegg:764300101497389066> `humanlike`",
-            "mineral": "<:mineralegg:764298485494710272> `mineral`",
-            "amorphous": "<:amorphousegg:764603483667562587> `amorphous`",
-            "water1": "<:water1egg:764298234381860904> `water1`",
-            "water2": "<:water2egg:764297822144430100> `water2`",
-            "water3": "<:water3egg:764297852650258452> `water3`",
-            "dragon": "<:dragonegg:764298849900298252> `dragon`",
-            "ditto": "`ditto`",
-            "undiscovered": "`undiscovered`",
+            "monster":      "<:monster:1116458614664744994> `Monster`",
+            "bug":          "<:bug:1116458618624155728> `Bug`",
+            "flying":       "<:flying:1116459495644737708> `Flying`",
+            "field":        "<:field:1116458620612268134> `Field`",
+            "fairy":        "<:fairy:1116459475893764170> `Fairy`",
+            "grass":        "<:grass:1116458678984388718> `Grass`",
+            "humanlike":    "<:humanlike:1116458614123667608> `Humanlike`",
+            "mineral":      "<:mineral:1116458623804125184> `Mineral`",
+            "amorphous":    "<:amorphous:1116458617114214441> `Amorphous`",
+            "water1":       "<:water1:1116458616166301717> `Water1`",
+            "water2":       "<:water2:1116458787503608029> `Water2`",
+            "water3":       "<:water3:1116458665088655512> `Water3`",
+            "dragon":       "<:dragonegg:1116458619739836516> `Dragon`",
+            "ditto":        "<:ditto:1116458611997155368> `Ditto`",
+            "undiscovered": "<:undiscovered:1116477713960669195> `Undiscovered`",
+            "special": "<:special_egg:1222219380251955202> `Special`",
         }
         if egg_group not in egg_groups:
             return None

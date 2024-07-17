@@ -1394,6 +1394,7 @@ pList = [
     "Kleavor",
     "Overqwil",
     "Basculegion",
+    "Rotom",
 ]
 
 # pseudo legendary pokemon
@@ -1585,7 +1586,6 @@ LegendList = [
     "Lugia",
     "Ho-oh",
     "Celebi",
-    "Rotom",
     "Uxie",
     "Mesprit",
     "Azelf",

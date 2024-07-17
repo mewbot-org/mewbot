@@ -1,6 +1,17 @@
 import discord
 from discord.ext import commands
 from discord import Embed
+import aiohttp
+import asyncio
+import cpuinfo
+import os
+import psutil
+import random
+import subprocess
+import time
+import ujson
+import re
+import ast
 
 from mewcogs.pokemon_list import *
 from mewcogs.json_files import *
@@ -14,20 +25,21 @@ from mewutils.misc import get_pokemon_image, pagify, MenuView, ConfirmView
 from mewutils.checks import tradelock
 from pokemon_utils.utils import evolve
 from typing import Literal
-import aiohttp
-import asyncio
-import cpuinfo
-import os
-import psutil
-import random
-import subprocess
-import time
-import ujson
+from resources.banned_words import banned_words
 from math import floor
 from datetime import datetime, timedelta
-import re
-import ast
 
+REGIONS = [
+    "Kanto", 
+    "Johto", 
+    "Hoenn", 
+    "Sinnoh", 
+    "Unova", 
+    "Kalos", 
+    "Alola", 
+    "Galar", 
+    "Paldea"
+]
 
 def do_health(maxHealth, health, healthDashes=10):
     dashConvert = int(
@@ -64,6 +76,12 @@ def calculate_iv_multiplier(level):
     difference = 0.5
     return f"{round((level * difference), 1)}%"
 
+def spec_char_check(string):
+    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:].')
+    if(regex.search(string) == None):
+        return True  
+    else:
+        return False
 
 class Extras(commands.Cog):
     def __init__(self, bot):
@@ -741,36 +759,32 @@ class Extras(commands.Cog):
     @discord.app_commands.describe(nick="The new nickname for your Pokemon")
     async def nick(self, ctx, nick: str = "None"):
         """Set or reset your selected pokemon's nickname."""
-        if len(nick) > 150:
-            await ctx.send("Nickname is too long!")
+        new_nick = nick.lower()
+        if len(new_nick) > 50:
+            await ctx.send("Nickname is too long, maximum of 50 characters!")
             return
-        if any(
-            word in nick
-            for word in (
-                "@here",
-                "@everyone",
-                "http",
-                "nigger",
-                "nigga",
-                "gay",
-                "fag",
-                "kike",
-                "jew",
-                "faggot",
-            )
-        ):
-            await ctx.send("Nope.")
+        
+        #Check if word is directly within the banned word list or carries special characters
+        if new_nick in banned_words or spec_char_check(new_nick) is False:
+            await ctx.send("There are words that are banned or it contained special characters.")
             return
+        
+        #Check if banned_words are in the new nick
+        for word in banned_words:
+            if word in new_nick:
+                await ctx.send("There are words that are banned or it contained special characters.")
+                return
+    
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE pokes SET poknick = $1 WHERE id = (SELECT selected FROM users WHERE u_id = $2)",
-                nick,
+                new_nick,
                 ctx.author.id,
             )
-        if nick == "None":
+        if new_nick == "None":
             await ctx.send("Successfully reset Pokemon nickname.")
             return
-        await ctx.send(f"Successfully changed Pokemon nickname to {nick}.")
+        await ctx.send(f"Successfully changed Pokemon nickname to {new_nick}.")
 
     # @commands.hybrid_command()
     async def stats(self, ctx):
@@ -1056,17 +1070,21 @@ class Extras(commands.Cog):
 
     @commands.hybrid_command()
     async def region(
-        self, ctx, reg: Literal["original", "alola", "galar", "hisui", "paldea"]
+        self, ctx, reg: Literal[
+            "Kanto", 
+            "Johto", 
+            "Hoenn", 
+            "Sinnoh", 
+            "Unova", 
+            "Kalos", 
+            "Alola", 
+            "Galar", 
+            "Paldea",
+            "Hisui"
+        ]
     ):
         """Change your region to allow your Pokémon evolve into regional forms."""
-        if reg not in ("original", "alola", "galar", "hisui"):
-            if reg == "paldea":
-                await ctx.send("Coming... Join the Official Server for more info!")
-                return
-            await ctx.send(
-                "That isn't a valid region! Select one of `original`, `alola`, `galar`, `hisui`, `paldea`."
-            )
-            return
+        reg = reg.lower()
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE users SET region = $1 WHERE u_id = $2", reg, ctx.author.id

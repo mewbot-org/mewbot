@@ -4,6 +4,7 @@ import random
 from .enums import Ability, DamageClass, ElementType
 from .misc import ExpiringEffect, ExpiringWish, ExpiringItem
 from .move import Move
+from .npc import trainers
 
 
 class Trainer():
@@ -211,11 +212,12 @@ class MemberTrainer(Trainer):
     """
     Represents a pokemon trainer that is a discord.Member.
     """
-    def __init__(self, member: discord.Member, party):
-        super().__init__(member.name, party)
+    def __init__(self, member: discord.Member, party, badge_level:int=0):
         self.id = member.id
         self.member = member
-    
+        self.badge_level = badge_level
+        super().__init__(member.name, party)
+
     def is_human(self):
         """Returns True if this trainer is a human player, False if it is an AI."""
         return True
@@ -224,8 +226,11 @@ class NPCTrainer(Trainer):
     """
     Represents a pokemon trainer that is a NPC.
     """
-    def __init__(self, party):
-        super().__init__("Trainer John", party)
+    def __init__(self, bot, party, badge_level:int=0):
+        self.bot = bot
+        self.trainer_name = random.choice(trainers)
+        self.badge_level = badge_level
+        super().__init__(self.bot, party,)
     
     def move(self, defender, battle):
         """Request a normal move from this trainer AI."""

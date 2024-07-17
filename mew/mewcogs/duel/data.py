@@ -83,9 +83,12 @@ async def generate_main_battle_message(battle):
         title=f"Battle between {battle.trainer1.name} and {battle.trainer2.name}",
         color=0xFFB6C1,
     )
-    e.set_footer(text="Who Wins!?")
-    e.set_image(url="attachment://battle.png")
+    if not battle.trainer2.is_human():
+        e.set_footer(text=f"Enemy ID: {battle.trainer2.current_pokemon.id} | Use buttons to see move info!")
+    else:
+        e.set_footer(text="Who Wins!?")
 
+    e.set_image(url="attachment://battle.png")
     URL = "http://178.28.0.11:5864/build"
     p1_data = {
         "substitute": battle.trainer1.current_pokemon.substitute,

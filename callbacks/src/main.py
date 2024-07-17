@@ -16,6 +16,7 @@ import secrets
 import random
 import json
 import os
+import urllib
 
 # import stripe
 import time
@@ -353,7 +354,6 @@ class FatesVote(BaseModel):
 class DBLVote(BaseModel):
     id: str
 
-
 def is_donation(data):
     return (
         "payment_status" in data
@@ -462,8 +462,16 @@ async def shutdown():
 @app.post("/paypal/")
 @app.post("/paypal")
 async def paypalhook(request: Request):
-    data = await request.json()
-    pprint.pprint(data)
+    body = await request.body()
+    
+    body = (urllib.parse.parse_qsl(body.decode()))
+    data = {}
+
+    pprint.pprint(body)
+
+    for k, v in body:
+        data[k] = v
+    
     print("Requester - ", request.client.host)
     if is_donation(data):
         data = {k: v for k, v in data.items()}

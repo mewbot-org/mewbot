@@ -55,7 +55,14 @@ class MewBotAdmin(commands.Cog):
     @dev.command()
     async def upload_ms(self, ctx):
         """Upload Moveset"""
-        names = ['pecharunt', 'polteageist', 'fezandipiti', 'dipplin', 'hydrapple', 'iron-crown']
+        names  = [
+    "basculegion-male",
+    "walking-wake",
+    "iron-leaves",
+    "eternatus",
+    "eternamax"
+]
+
         for pokemon_name in names:
             p = pb.pokemon(pokemon_name)
             movelist = [move.move.name for move in p.moves]
@@ -566,9 +573,6 @@ class MewBotAdmin(commands.Cog):
         globalid: int,
     ):
         if not iv in ["hpiv", "atkiv", "defiv", "spatkiv", "spdefiv", "speediv"]:
-            return
-        #Locking Gomp out of commands for right now
-        if ctx.author.id == 195938951188578304:
             return
         async with ctx.bot.db[0].acquire() as pconn:
             if essence == "True":

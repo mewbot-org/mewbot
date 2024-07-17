@@ -1,18 +1,18 @@
 import math
 import discord
-from discord.ext import commands
-
 import random
 import asyncpg
 import subprocess
 import asyncio
 import sys
+import time
+import aiohttp
+
+from discord import Webhook
+from discord.ext import commands
 from io import BytesIO
 from datetime import datetime, timedelta
 from typing import Literal
-import time
-
-
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
 from mewutils.misc import (
@@ -240,9 +240,17 @@ class Pokemon(commands.Cog):
         await ctx.send(
             f"You have successfully released your {', '.join(pokenames).capitalize()}"
         )
-        await self.bot.get_partial_messageable(998563289082626049).send(
-            f"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
-        )
+        #await self.bot.get_partial_messageable(998563289082626049).send(
+            #"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
+        #)
+        #Send out log message - Webhook
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url('https://discord.com/api/webhooks/1240305225315782747/j3MWAffsGIOnHF9JYMA0cy5YJ4yDU8abAjkBYtBxeGaTb5QRzJUqiLyrxnefNP8ioAEp', session=session)
+            embed = discord.Embed(
+                title=f"{ctx.author} released some Pokemon",
+                description=f"ID: ``{ctx.author.id}``\n**{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
+            )
+            await webhook.send(embed=embed)
 
     # @commands.hybrid_command()
     async def cooldowns(self, ctx):

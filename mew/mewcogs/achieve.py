@@ -143,13 +143,14 @@ class Achievements(commands.Cog):
 
     @achievements.command(name="breeding")
     async def achievements_breeding(self, ctx):
+        """Breeding achievement thresholds and their rewards"""
         #if ctx.author.id != 334155028170407949:
             #await ctx.send("Coming soon")
             #return
         achievement_list = ["breed_titan", "breed_penta", "breed_success"]
         async with ctx.bot.db[0].acquire() as pconn:
             achievement_data = await pconn.fetchrow(
-                "SELECT breed_titan, breed_penta, breed_success FROM achievements WHERE u_id = $1",
+                "SELECT breed_titan, breed_penta, breed_success, breed_final_reward FROM achievements WHERE u_id = $1",
                 ctx.author.id
             )
             if achievement_data is None:
@@ -169,17 +170,40 @@ class Achievements(commands.Cog):
                 current_threshold = achievement_data[achieve_name]
                 thresold, msg, level_up = threshold_check(new_count=current_threshold, current_count=current_threshold)
                 achievement_msg = achieve_name.replace("_", " ").title()
+                if achieve_name == 'breed_success':
+                    if current_threshold >= 1000:
+                        if achievement_data['breed_final_reward']:
+                            reward_msg = "10 Legend Chest <:legend_chest:1103389711424294942>! [Claimed]"
+                        else:
+                            reward_msg = "10 Legend Chest <:legend_chest:1103389711424294942>! [Not Claimed]"
+                    elif current_threshold >= 500:
+                        reward_msg = "Increased Breeding Queue to 15!"
+                    else:
+                        reward_msg = "Trainer Image for Profile!"
+
+                    embed.add_field(
+                        name=f"{achievement_msg}",
+                        value=(
+                            f"`Count`: {achievement_data[achieve_name]} / {thresold}\n`Rank:`{msg}\n"
+                            f"`Reward`: {reward_msg}"
+                        ),
+                        inline=False
+                    )
                     
-                embed.add_field(
-                    name=f"{achievement_msg}",
-                    value=f"`Count`: {achievement_data[achieve_name]} / {thresold}\n`Rank:`{msg}",
-                    inline=False
-                )
-            
+                else:
+                    embed.add_field(
+                        name=f"{achievement_msg}",
+                        value=(
+                            f"`Count`: {achievement_data[achieve_name]} / {thresold}\n`Rank:`{msg}\n"
+                            f"`Reward`: TBA"
+                        ),
+                        inline=False
+                    )
             await ctx.send(embed=embed)
                     
     @achievements.command(name="claim")
     async def achievements_claim(self, ctx, category: Literal['Breeding']):
+        """Claim rewards from the various Achievement Categories"""
         #if ctx.author.id != 334155028170407949:
             #await ctx.send("Currently under maintenance")
             #return
@@ -192,10 +216,29 @@ class Achievements(commands.Cog):
                     "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
                     ctx.author.id
                 )
-                breed_success = await pconn.fetchval(
-                    "SELECT breed_success FROM achievements WHERE u_id = $1",
+                breed_success_data = await pconn.fetchrow(
+                    "SELECT breed_success, breed_final_reward FROM achievements WHERE u_id = $1",
                     ctx.author.id
                 )
+                breed_success = breed_success_data['breed_success']
+                final_reward = breed_success_data['breed_final_reward']
+                if breed_success >= 1000:
+                    if final_reward:
+                        await ctx.send(
+                            "You have already redeemed the 10 Legend Chest reward."
+                        )
+                        return
+                    await pconn.execute(
+                        "UPDATE account_bound SET legend_chest = legend_chest + 10 WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    await pconn.execute(
+                        "UPDATE achievements SET breed_final_reward = True WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    await ctx.send("You have successfully redeemed 10 Legend Chest <:legend_chest:1103389711424294942>!")
+                    return
+
             #For the time being we only offer a reward on the "successful breeds"
             if breed_success >= 250:
                 if "breeder" in trainer_images:

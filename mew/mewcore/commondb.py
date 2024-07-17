@@ -4,6 +4,8 @@ import discord
 from mewcogs.pokemon_list import natlist
 from mewutils.misc import get_emoji
 from mewcore.items import *
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 
 class UserNotStartedError(Exception):
@@ -13,7 +15,6 @@ class UserNotStartedError(Exception):
     """
 
     pass
-
 
 class Pokemon:
     """Dataclass to hold information about a created pokemon."""
@@ -37,12 +38,12 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Necrozma",
-            "Dialga",
-            "Lokix",
-            "Manectric",
-            "Absol",
-            "Camerupt"
+            "Beedrill",
+            "Braviary-hisui",
+            "Aegislash",
+            "Gallade",
+            "Raikou",
+            "Zacian"
         ]
 
         self.ALL_ALPHA_POKEMON = [
@@ -95,7 +96,24 @@ class CommonDB:
             "Heatran",
             "Latios",
             "Solgaleo",
-            
+            "Beedrill",
+            "Heracross",
+            "Manaphy",
+            "Pidgeot",
+            "Salamence",
+            "Gallade",
+            "Gogoat",
+            "Pyroar",
+            "Aegislash",
+            "Braviary-hisui",
+            "Druddigon",
+            "Raikou",
+            "Zacian",
+            "Celebi", 
+            "Lugia",
+            "Bellossom",
+            "Vileplume",
+            "Cobalion"           
         ]
         self.ALPHA_MOVESETS = {
             "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],
@@ -144,7 +162,7 @@ class CommonDB:
             "Magmortar": ["blue-flare", "tackle", "tackle", "tackle"],
             "Rhyperior": ["strength-sap", "tackle", "tackle", "tackle"],
             "Kyogre": ["hurricane", "tackle", "tackle", "tackle"],
-            "Cobalion": ["glare", "tackle", "tackle", "tackle"],
+            "Cobalion": ["clangorous-soul", "tackle", "tackle", "tackle"],
             "Camerupt": ["magma-storm", "tackle", "tackle", "tackle"],
             "Absol": ["victory-dance", "tackle", "tackle", "tackle"],
             "Guzzlord": ["fillet-away", "tackle", "tackle", "tackle"],
@@ -155,8 +173,36 @@ class CommonDB:
             "Lokix": ["fell-stinger", "tackle", "tackle", "tackle"],
             "Koraidon": ["dragon-dance", "tackle", "tackle", "tackle"],
             "Dialga": ["hydro-pump", "tackle", "tackle", "tackle"],
-            "Necrozma": ["secret-sword", "tackle", "tackle", "tackle"]
+            "Necrozma": ["secret-sword", "tackle", "tackle", "tackle"],
+            "Beedrill": ["megahorn", "tackle", "tackle", "tackle"],
+            "Heracross": ["u-turn", "tackle", "tackle", "tackle"],
+            "Manaphy": ["stored-power", "tackle", "tackle", "tackle"],
+            "Pidgeot": ["earth-power", "tackle", "tackle", "tackle"],
+            "Salamence": ["crush-grip", "tackle", "tackle", "tackle"],
+            "Gallade": ["no-retreat", "tackle", "tackle", "tackle"],
+            "Gogoat": ["wood-hammer", "tackle", "tackle", "tackle"],
+            "Pyroar": ["thunder", "tackle", "tackle", "tackle"],
+            "Aegislash": ["behemoth-blade", "tackle", "tackle", "tackle"],
+            "Braviary-hisui": ["aeroblast", "tackle", "tackle", "tackle"],
+            "Druddigon": ["diamond-storm", "tackle", "tackle", "tackle"],
+            "Raikou": ["geomancy", "tackle", "tackle", "tackle"],
+            "Zacian": ["flying-press", "tackle", "tackle", "tackle"],
+            "Celebi": ["quiver-dance", "tackle", "tackle", "tackle"], 
+            "Lugia": ["oblivian-wing", "tackle", "tackle", "tackle"],
+            "Bellossom": ["powder", "tackle", "tackle", "tackle"],
+            "Vileplume": ["toxic-thread", "tackle", "tackle", "tackle"],
         }
+
+    async def get_time(self):
+        now = datetime.now()
+        now = now.astimezone(ZoneInfo("EST"))
+        now_time = now.time()
+        display_time = now.strftime("%m/%d/%Y, %I:%M:%S %p")
+        if now_time >= time(6,00) and now_time <= time(17,59):
+            night = False
+        else:
+            night = True
+        return night, display_time
 
     async def remove_poke(self, user_id: int, poke_id: int, delete: bool = False):
         """
@@ -215,6 +261,38 @@ class CommonDB:
                     "UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id
                 )
         return make_shadow
+
+    # Incase we ever add it
+    # Would need separate 'hunt' and 'chain' columns within the user table
+    async def shiny_hunt_check(self, user_id: int, pokemon: str):
+        """
+        Checks hunt status to determine
+        Whether Pokemon should/should not be Shiny.
+
+        This actually returns True or False for shiny determination
+        """
+        make_shiny = False
+        threshold = 4096
+        async with self.bot.db[0].acquire() as pconn:
+            # Pull data for check
+            data = await pconn.fetchrow(
+                "SELECT hunt, chain FROM users WHERE u_id = $1", 
+                user_id
+            )
+            if data is None:
+                return False
+            hunt, chain = data
+            # First to see if current chain results in shiny
+            if hunt != pokemon.capitalize(): # Spawn does not match hunt
+                make_shiny = random.choice([False for i in range(threshold)] + [True])
+            else:
+                make_shiny = random.choice([False for i in range(threshold - chain)] + [True])
+                # Either reset chain or increase depending on results
+                if make_shiny:
+                    await pconn.execute("UPDATE users SET chain = 0 WHERE u_id = $1", user_id)
+                else:
+                    await pconn.execute("UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id)
+        return make_shiny
 
     async def create_poke(
         self,

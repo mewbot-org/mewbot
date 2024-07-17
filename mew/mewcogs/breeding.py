@@ -3,7 +3,9 @@ import math
 import asyncpg
 import random
 import time
+import aiohttp
 
+from discord import Webhook
 from discord.ext import commands
 from typing import List, Union
 from datetime import datetime, timedelta
@@ -535,6 +537,7 @@ class Breeding(commands.Cog):
         self.auto_redo[id_] = None
 
     @commands.hybrid_command()
+    @commands.cooldown(1, 10, commands.BucketType.default)
     @discord.app_commands.describe(
         male="The Male Pokémon to be bred.",
         females="The list of Female Pokémon to be bred.",
