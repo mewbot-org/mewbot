@@ -686,6 +686,10 @@ class Minigames(commands.Cog):
                 "SELECT ai_single_wins, ai_party_wins FROM achievements WHERE u_id = $1",
                 ctx.author.id
             )
+            if not achievement_data:
+                achievement_data = {}
+                achievement_data['ai_single_wins'] = 0
+                achievement_data['ai_party_wins'] = 0
             fishing_ids = [record["u_id"] for record in fishing_players]
             mining_ids = [record["u_id"] for record in mining_players]
 

@@ -988,7 +988,10 @@ class Duel(commands.Cog):
             patreon = await ctx.bot.patreon_tier(ctx.author.id)
             if patreon in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") or ctx.guild.id != 998128574898896906:
                 poke_data = await ctx.bot.db[1].pfile.find_one({"identifier": p1_current._name.lower()})
-                generation_id = poke_data['generation_id']
+                try:
+                    generation_id = poke_data['generation_id']
+                except TypeError:
+                    generation_id = random.randint(1, 9)
                 if random.randint(1, 100) <= 50:
                     npc_choices = await ctx.bot.db[1].pfile.find({"$and": [{"generation_id": generation_id}, {"evolved_from_species_id": {"$ne": 'null'}}]}).to_list(None)
                 else:
@@ -999,7 +1002,7 @@ class Duel(commands.Cog):
                 if npc_name == 'ditto':
                     npc_data = random.choice(npc_choices)
                     npc_name = npc_data['identifier'].lower()
-                challenger2 = await generate_pokemon(ctx, npc_name, challenger1["pokname"].lower(), challenger1["pokelevel"])
+                challenger2 = await generate_pokemon(ctx, npc_name, challenger1["pokname"], challenger1["pokelevel"])
             else:
                 npc_pokemon = await pconn.fetch(
                     (

@@ -55,7 +55,7 @@ async def move_generator(self, npc_pokemon:str, user_pokemon:str):
     #First we have to pull Pokemon's moveset to verify move is usable
     move_pool = await get_moves(self, npc_pokemon)
 
-    form_info = await self.bot.db[1].forms.find_one({"identifier": user_pokemon})
+    form_info = await self.bot.db[1].forms.find_one({"identifier": user_pokemon.lower()})
     type_ids = (await self.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]}))["types"]
     type_effectiveness = {}
     for te in await self.bot.db[1].type_effectiveness.find({}).to_list(None):
@@ -207,13 +207,15 @@ async def generate_pokemon(self, npc_pokemon, user_pokemon, user_pokemon_level, 
         user_pokemon = "Silvally"
     if user_pokemon == "Palafin-hero":
         user_pokemon = "Palafin"
+    if user_pokemon in ("Calyrex-shadow-rider", "Calyrex-ice-rider"):
+        user_pokemon = "Calyrex"
     if user_pokemon.endswith("-mega-x") or user_pokemon.endswith("-mega-y"):
         user_pokemon = user_pokemon[:-7]
     if user_pokemon.endswith("-mega"):
         user_pokemon = user_pokemon[:-5]
     #TODO: Meloetta, Shaymin
 
-    form_info = await self.bot.db[1].forms.find_one({"identifier": user_pokemon})
+    form_info = await self.bot.db[1].forms.find_one({"identifier": user_pokemon.lower()})
     pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
 
     #Basic Information
