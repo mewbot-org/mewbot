@@ -656,7 +656,7 @@ class Extras(commands.Cog):
         )
         
         embed.set_footer(
-            text = "Need redeems quicker? Get 1 Redeem + 2,000 credits for every USD donated. See `/donate`",
+            text = "Need redeems quicker? Get 5 Redeems + 2,000 credits for every USD donated. See `/donate`",
             icon_url = "https://mewbot.xyz/eastereggs.png"
         )
 

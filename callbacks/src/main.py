@@ -24,18 +24,14 @@ import traceback
 from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
 
-REDEEMS_PER_DOLLAR = 1
+REDEEMS_PER_DOLLAR = 5
 CREDITS_PER_DOLLAR = 2000
 
 app = FastAPI()
 
 home = str(Path.home())
-os.chdir(f"/home/dyroot/mewbot/callbacks/src")
-load_dotenv("../../env/bot.env")
-load_dotenv("../../env/mongo.env")
-load_dotenv("../../env/postgres.env")
-load_dotenv("../../env/voting.env")
-load_dotenv("../../env/discord.env")
+
+load_dotenv('/home/dyroot/mewbot/env')
 
 TOKEN = os.environ["MTOKEN"]
 DATABASE = os.environ["DATABASE_URL"]
@@ -140,7 +136,7 @@ class AppUtils:
             with open("/code/shop.json", "r") as f:
                 self.SHOP = json.load(f)
         except FileNotFoundError:
-            with open("shop.json", "r") as f:
+            with open("/home/dyroot/mewbot/callbacks/src/shop.json", "r") as f:
                 self.SHOP = json.load(f)
         self.berryList = {
             "aguav_seed",

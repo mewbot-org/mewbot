@@ -252,17 +252,21 @@ class ListSelectChristmas(discord.ui.Select):
     def __init__(self):
         options = [
             discord.SelectOption(
-                label="Maleskier",
-                emoji="<:skier_trainer_male:1184275356606267472>"
+                label="Swimmerm",
+                emoji="<:swimmerm:1273436007794212874>"
             ),
             discord.SelectOption(
-                label="Femaleskier",
-                emoji="<:skier_trainer_female:1184275354324582420>"
+                label="Swimmerf",
+                emoji="<:swimmerf:1273436006678401105>"
             ),
             discord.SelectOption(
-                label="Pyrce",
-                emoji="<:pyrce_trainer:1184275351749283850>"
-            )
+                label="Cyclist",
+                emoji="<:cyclist:1273436027649921096>"
+            ),
+            discord.SelectOption(
+                label="Dancer",
+                emoji="<:dancer:1273436026680905812>"
+            ),
         ]
         super().__init__(
             options=options
@@ -545,16 +549,17 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Pheromosa",
-            "Stakataka",
-            "Celesteela",
-            "Guzzlord",
-            "Poipole",
-            "Kartana",
+            "Bounsweet",
+            "Feebas",
+            "Sandygast",
+            "Solrock",
+            "Snorlax",
+            "Xerneas",
+            "Ditto",
+            "Corsola",
+            "Goldeen",
             "Nihilego",
-            "Blacephalon",
-            "Xurkitree",
-            "Buzzwole",
+            "Happiny"
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -1011,254 +1016,326 @@ class Events(commands.Cog):
             )
             await ctx.send("Successful")
 
-    #@commands.hybrid_group()
+    @commands.hybrid_group()
     async def summer(self, ctx: commands.Context):
         ...
 
-    #@summer.command(name="shop")
-    async def summer_shop(self, ctx):
-        """Check the summer shop."""
-        if not self.SUMMER_COMMANDS:
-            await ctx.send("This command can only be used during the Summer Season!")
-            return
-        async with ctx.bot.db[0].acquire() as pconn:
-            try:
-                event_data = await pconn.fetchrow(
-                    "SELECT milk, event_limit FROM events_new WHERE u_id = $1",
-                    ctx.author.id,
-                )
-                raffle_count = await pconn.fetchval(
-                    "SELECT raffle FROM users WHERE u_id = $1", ctx.author.id
-                )
-                milk_count = event_data["milk"]
-                event_limit = event_data["event_limit"]
-            except:
-                milk_count = 0
-                event_limit = 0
-                raffle_count = 0
-
-            if event_limit >= 100:
-                event_limit = 100
-
+    @summer.command(name="info")
+    async def summer_info(self, ctx):
+        "Details about our Summer Event 2024."
         embed = discord.Embed(
-            title="Summer Shop",
-            description=(
-                f"Use Cups of Milk 🥛 gained from Raids to purchase items."
-                f"\nYou have **{milk_count:,}** 🥛"
-            ),
-            color=0xFFFFFF,
+            title="Mewbot Summer Event 2024",
+            description="More details on the event and how things are working!",
+            color=0x00FF00,
         )
         embed.add_field(
-            name="Currency",
-            value=(
-                f"`1.` 2-3 Redeems <:redeem:1037942226132668417>\n**Cost**: 50 🥛 - **Limit**: {event_limit}/100"
-                "\n`2.` 1-25 Gleam Gems <a:radiantgem:774866137472827432>\n**Cost**: 75 🥛"
-            ),
+            name="Raids",
+            value="Raids have arrived across Discord. They drop seashells 🐚 and can be used in the summer shop.",
             inline=False,
         )
         embed.add_field(
-            name="Multipliers",
-            value=(
-                "`3.` 2x Battle Multi ⏫\n**Cost**: 50 🥛"
-                "\n`4.` 2x Shiny Multi ⏫\n**Cost**: 50 🥛"
-            ),
+            name="Event Shop",
+            value="Using various bot currency, you can unlock the event skins and different bot benefits. There are boosted versions of the skins available too",
             inline=False,
         )
         embed.add_field(
-            name="Misc",
-            value=(
-                f"`5.` 1 Raffle Entry\n**Cost**: 100 🥛 - **Entries**: {raffle_count}"
-                "\n`6.` Random Summer Skin\n**Cost**: 100 🥛"
-            ),
-            inline=False,
+            name="Throwing Water Balloons",
+            value="Earned by Breeding, Fishing, Mining, and Catching Spawns! You can hit other players with your earned water balloons <:waterballoon:1273431369749495930>! There is a slight chance you'll miss though.",
+            inline=False
+        )
+        embed.add_field(
+            name="Water Ballon Rewards",
+            value="There will be several rewards for water balloons. At 100 thrown you get the <@&1273432534239285288> and at 250 thrown you'll get the choice of trainer image! We also plan on a bot wide reward that changes the more water balloons thrown!!"
         )
         embed.set_thumbnail(
-            url="https://archives.bulbagarden.net/media/upload/thumb/9/91/Moomoo_Milk_anime.png/800px-Moomoo_Milk_anime.png"
+            url="https://cdn.discordapp.com/attachments/998291646443704320/1273461543543242816/Screenshot_2024-08-14_220100-removebg-preview.png?ex=66beb2fb&is=66bd617b&hm=2a01e545b315c1589a6ed0bceff6716e51812bccc5f78af126b23fb9f86d1287&"
         )
-        embed.set_footer(text="Use /summer buy with an option number to buy that item!")
+        embed.set_image(
+            url="https://cdn.discordapp.com/attachments/998291646443704320/1273460655109832755/Untitled_1.png?ex=66beb227&is=66bd60a7&hm=ed17029fbcc7f073f48e5647f0e5752fd6ce033bbd1c2435f7febd7472aa2555&"
+        )
         await ctx.send(embed=embed)
 
-    #@summer.command(name="buy")
-    async def summer_buy(self, ctx, option: int):
-        """Buy an item from the summer event shop"""
+    @summer.command(name="items")
+    async def summer_items(self, ctx):
+        """Check your summer inventory."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
         if not self.SUMMER_COMMANDS:
             await ctx.send("This command can only be used during the summer season!")
             return
-        # User can't participate in event
-        # if ctx.author.id == 1075429458271547523:
-        # return
-        if option < 1 or option > 6:
-            await ctx.send(
-                "That isn't a valid option. Select a valid option from `/summer shop`."
+        async with self.bot.db[0].acquire() as pconn:
+            inventory = await pconn.fetchrow(
+                "SELECT snowballs, seashells FROM events_new WHERE u_id = $1",
+                ctx.author.id
             )
+        embed = discord.Embed(
+            title=f"{ctx.author.name.title()}'s Summer Items",
+            description=f"These are all items that are related to the event.\nGet these items from Raids, Catching, Breeding, Fishing and Mining!",
+            color=0x0084FD,
+        )
+        embed.add_field(
+            name="Items", 
+            value=(
+                f"**Water Balloons**: {inventory['snowballs']}x <:waterballoon:1273431369749495930>\n"
+                f"**Seashells**: {inventory['seashells']}x 🐚"
+            ),
+            inline=False
+        )
+        embed.set_footer(text="Remember, touch grass!")
+        await ctx.send(embed=embed)
+
+    @summer.command(name="shop")
+    async def summer_shop(self, ctx):
+        """Check the summer shop."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
+        if not self.SUMMER_COMMANDS:
+            await ctx.send("This command can only be used during the summer season!")
+            return
+
+        embed = discord.Embed(
+            title="Summer Event Shop",
+            description="Make sure to fish, mine, and catch Pokemon to maximize Water Balloons <:waterballoon:1273431369749495930>!\nJoin our Official Server and grab the role! `/invite`",
+            color=0x0084FD,
+        )
+        embed.add_field(
+            name="Account Multipliers",
+            value=(
+                "`1.` __2x Battle Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+                "`2.` __2x Shiny Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+                "`3.` __2x Breeding Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Currencies",
+            value=(
+                "`4.` __1-25 Gleam Gems.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\nLimited to 1000 daily."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Gleams",
+            value=(
+                "`5.` __Event Skin__\n**Cost:** 150 <a:radiantgem:774866137472827432>\nThis is a skin that goes into inventory.\n"
+                "`6.` __Boosted Event Skin__\n**Cost:** 300 <a:radiantgem:774866137472827432>\nThis is a Pokemon already with the skin equipped."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name="Seashells 🐚",
+            value=(
+                "`7.` __NPC Energy__\n**Cost:** 50 🐚\nIs applied right away. Can't have more than 50 energy stored.\n"
+                "`8.` __Random Chest__\n**Cost:** 150 🐚\nCommon, Rare, or Mythic. Limited to 20 daily.\n"
+                "`9.` __Shadow Streak__\n**Cost:** 300 🐚\nIncreases <:shadow:1010559067590246410> by 50. Limited to 10 daily.\n"
+            ),
+        )
+        embed.set_footer(
+            text="Use /summer buy to buy an item!"
+        )
+        await ctx.send(embed=embed)
+
+    @summer.command(name="buy")
+    async def summer_buy(
+        self, 
+        ctx, 
+        pack: Literal[
+            "1. 2x Battle Multi.",
+            "2. 2x Shiny Multi.",
+            "3. 2x Breeding Multi.",
+            "4. 1-25 Gleam Gems",
+            "5. Event Gleam",
+            "6. Boosted Event Gleam",
+            "7. NPC Energy",
+            "8. Random Chest",
+            "9. Shadow Streak",
+        ],
+    ):
+        """Buy something from the summer shop."""
+        #if ctx.author.id != 334155028170407949:
+            #await ctx.send("Not available at the moment!")
+            #return
+        if not self.SUMMER_COMMANDS:
+            await ctx.send("This command can only be used during the summer season!")
+            return
+        option = int(pack[0])
+        if option < 1 or option > 9:
+            await ctx.send("That is not a valid option number.")
             return
         if ctx.author.id in self.purchaselock:
-            await ctx.send("Sorry, finish any pending purchases first.")
+            await ctx.send("Please finish any pending purchases!")
             return
-        self.purchaselock.append(ctx.author.id)
 
         async with self.bot.db[0].acquire() as pconn:
-            event_data = await pconn.fetchrow(
-                "SELECT milk, event_limit FROM events_new WHERE u_id = $1",
-                ctx.author.id,
+            credits, redeems, npc_energy = await pconn.fetchrow(
+                "SELECT mewcoins, redeems, npc_energy FROM users WHERE u_id = $1", ctx.author.id
             )
-            milk = event_data["milk"]
-            limit = event_data["event_limit"]
-
-            if milk == 0:
-                await ctx.send("You haven't gotten any 🥛 yet!")
+            if credits is None:
+                await ctx.send("You haven't started! Please use `/start` to start your adventure!")
+                return
+            
+            radiant_gems, battle_multiplier, shiny_multiplier, breeding_multiplier = await pconn.fetchrow(
+                "SELECT radiant_gem, battle_multiplier, shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
+            )
+            if radiant_gems is None:
+                await ctx.send("No bound items table found. Have you started or converted to the new bag system if needed?")
                 return
 
+            gleam_limit = await pconn.fetchrow(
+                "SELECT seashells, event_limit, radiant_limit, gleam_limit FROM events_new WHERE u_id = $1",
+                ctx.author.id
+            )
+            if gleam_limit is None:
+                #Try to add user to table and then have them redo the command
+                await pconn.execute(
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+                )
+                await ctx.send("Please retry the command.")
+                return
+
+            seashells = gleam_limit['seashells']
+            event_limit = gleam_limit['event_limit']
+            radiant_limit = gleam_limit['radiant_limit']
+            gleam_limit = gleam_limit['gleam_limit']
+            
+            self.purchaselock.append(ctx.author.id)
+
+            #Battle Multiplier
             if option == 1:
-                if limit >= 100:
-                    await ctx.send("You've reached the daily purchase limit.")
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-
-                if milk < 50:
-                    await ctx.send("You don't have enough 🥛 for that!")
+                if battle_multiplier >= 50:
+                    await ctx.send("Your Battle Multiplier is already maxed out!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-
-                milk -= 50
-                redeem_amount = random.randint(2, 3)
+                credits -= 50000
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
-                    redeem_amount,
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
-                await pconn.execute(
-                    "UPDATE events_new SET milk = $1, event_limit = event_limit + $2 WHERE u_id = $3",
-                    milk,
-                    redeem_amount,
-                    ctx.author.id,
-                )
-                await ctx.send(f"You bought {redeem_amount} Redeems.")
-                self.purchaselock.remove(ctx.author.id)
-
-            if option == 2:
-                amount = random.randint(1, 25)
-                if milk < 75:
-                    await ctx.send("You don't have enough 🥛 for that!")
-                    self.purchaselock.remove(ctx.author.id)
-                    return
-                milk -= 75
-                await pconn.execute(
-                    "UPDATE events_new SET milk = $1 WHERE u_id = $2",
-                    milk,
-                    ctx.author.id,
-                )
-                await ctx.bot.commondb.add_bag_item(
-                    ctx.author.id, "radiant_gem", amount, True
-                )
-                await ctx.send(f"You bought {amount}x gleam gems.")
-                self.purchaselock.remove(ctx.author.id)
-                return
-
-            if option == 3:
-                if milk < 50:
-                    await ctx.send("You don't have enough 🥛 for that!")
-                    self.purchaselock.remove(ctx.author.id)
-                    return
-                milk -= 50
-                inventory = await pconn.fetchrow(
-                    "SELECT u_id, battle_multiplier FROM users WHERE u_id = $1",
-                    ctx.author.id,
-                )
-                inventory = dict(inventory)
-
-                if inventory["battle_multiplier"] >= 50:
-                    await ctx.send("You're maxed out.")
-                    self.purchaselock.remove(ctx.author.id)
-                    return
-
-                new_amount = min(inventory.get("battle_multiplier", 0) + 2, 50)
-                await pconn.execute(
-                    "UPDATE events_new SET milk = $1 WHERE u_id = $2",
-                    milk,
-                    ctx.author.id,
-                )
+                battle_multiplier = min(battle_multiplier + 2, 50)
                 await pconn.execute(
                     "UPDATE account_bound SET battle_multiplier = $1 WHERE u_id = $2",
-                    new_amount,
+                    battle_multiplier,
                     ctx.author.id,
                 )
-                await ctx.send(f"You bought 2x Battle Multipliers.")
+                await ctx.send("You have successfully purchased 2x Battle Multiplier!")
                 self.purchaselock.remove(ctx.author.id)
                 return
-
-            if option == 4:
-                if milk < 50:
-                    await ctx.send("You don't have enough 🥛 for that!")
+            
+            #Shiny Multiplier
+            if option == 2:
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-                milk -= 50
-                inventory = await pconn.fetchrow(
-                    "SELECT u_id, shiny_multiplier FROM account_bound WHERE u_id = $1",
-                    ctx.author.id,
-                )
-                inventory = dict(inventory)
-
-                if inventory["shiny_multiplier"] >= 50:
-                    await ctx.send("You're maxed out.")
+                if shiny_multiplier >= 50:
+                    await ctx.send("Your Shiny Multiplier is already maxed out!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-
-                new_amount = min(inventory.get("shiny_multiplier", 0) + 2, 50)
+                credits -= 50000
                 await pconn.execute(
-                    "UPDATE events_new SET milk = $1 WHERE u_id = $2",
-                    milk,
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
+                shiny_multiplier = min(shiny_multiplier + 2, 50)
                 await pconn.execute(
                     "UPDATE account_bound SET shiny_multiplier = $1 WHERE u_id = $2",
-                    new_amount,
+                    shiny_multiplier,
                     ctx.author.id,
                 )
-                await ctx.send(f"You bought 2x Shiny Multipliers.")
+                await ctx.send("You have successfully purchased 2x Shiny Multiplier!")
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            if option == 5:
-                if milk < 100:
-                    await ctx.send("You don't have enough 🥛 for that!")
+            #Breeding Multiplier
+            if option == 3:
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-                milk -= 100
+                if breeding_multiplier >= 50:
+                    await ctx.send("Your Breeding Multiplier is already maxed out!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                credits -= 50000
                 await pconn.execute(
-                    "UPDATE users SET raffle = raffle + 1 WHERE u_id = $1",
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
+                    ctx.author.id,
+                )
+                breeding_multiplier = min(breeding_multiplier + 2, 50)
+                await pconn.execute(
+                    "UPDATE account_bound SET breeding_multiplier = $1 WHERE u_id = $2",
+                    breeding_multiplier,
+                    ctx.author.id,
+                )
+                await ctx.send("You have successfully purchased 2x Breeding Multiplier!")
+                self.purchaselock.remove(ctx.author.id)
+                return
+       
+            #Gleam Gems
+            if option == 4:
+                if gleam_limit >= 1000:
+                    await ctx.send("You have hit the daily purchase limit!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                if credits < 50000:
+                    await ctx.send("You don't have enough credits for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                credits -= 50000
+                earned_gleams = random.randint(1, 25)
+                new_limit = gleam_limit + earned_gleams
+                await pconn.execute(
+                    "UPDATE users SET mewcoins = $1 WHERE u_id = $2",
+                    credits,
                     ctx.author.id,
                 )
                 await pconn.execute(
-                    "UPDATE events_new SET milk = $1 WHERE u_id = $2",
-                    milk,
-                    ctx.author.id,
+                    "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
+                    earned_gleams,
+                    ctx.author.id
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET gleam_limit = $1 WHERE u_id = $2",
+                    new_limit,
+                    ctx.author.id
                 )
                 await ctx.send(
-                    f"You were given an entry into the Summer Raffle!\nThe raffle will be drawn in the Mewbot Official Server. `\invite`"
+                    f"You bought {earned_gleams}x Gleam Gems <a:radiantgem:774866137472827432>.\n"
+                    f"You have purchased {new_limit}, the limit is 1000 per day."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
-
-            if option == 6:
-                if milk < 100:
-                    await ctx.send("You don't have enough 🥛 for that!")
+            
+            #Event Gleams
+            #Gives the skin for the Pokemon rather than the Pokemon
+            if option == 5:
+                if radiant_gems < 150:
+                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
                     self.purchaselock.remove(ctx.author.id)
                     return
-                milk -= 100
+                radiant_gems -= 150
                 skins = await pconn.fetchval(
                     "SELECT skins::json FROM users WHERE u_id = $1", ctx.author.id
                 )
                 pokemon = random.choice(self.EVENT_POKEMON).lower()
                 if pokemon not in skins:
                     skins[pokemon] = {}
-                if "summer2023" not in skins[pokemon]:
-                    skins[pokemon]["summer2023"] = 1
+                if "summer2024" not in skins[pokemon]:
+                    skins[pokemon]["summer2024"] = 1
                 else:
-                    skins[pokemon]["summer2023"] += 1
+                    skins[pokemon]["summer2024"] += 1
                 await pconn.execute(
-                    "UPDATE events_new SET milk = $1 WHERE u_id = $2",
-                    milk,
+                    "UPDATE account_bound SET radiant_gem = $1 WHERE u_id = $2",
+                    radiant_gems,
                     ctx.author.id,
                 )
                 await pconn.execute(
@@ -1267,10 +1344,250 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"You got a {pokemon} summer skin! Apply it with `/skin apply`."
+                    f"You got a **{pokemon.title()} Summer Skin**! Apply it with `/skin apply`."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
+
+            #Boosted Event Glems
+            #This gives Pokemon w/skin rather than just skin
+            if option == 6:
+                if radiant_gems < 300:
+                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                radiant_gems -= 300
+                pokemon = random.choice(self.EVENT_POKEMON).lower()
+                await pconn.execute(
+                    "UPDATE account_bound SET radiant_gem = $1 WHERE u_id = $2",
+                    radiant_gems,
+                    ctx.author.id,
+                )
+                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), boosted=True, skin='summer2024')
+                await ctx.send(
+                    f"You got a **{pokemon.title()} Summer Pokemon**!\nIt's been added to your list."
+                )
+                self.purchaselock.remove(ctx.author.id)
+                return
+
+            #NPC Energy
+            if option == 7:
+                if npc_energy >= 50:
+                    await ctx.send("Go spend some energy first!")
+                    return
+                if seashells < 50:
+                    await ctx.send("You don't have enough seashells 🐚 for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                seashells -= 50
+                await pconn.execute(
+                    "UPDATE events_new SET seashells = $1 WHERE u_id = $2",
+                    seashells,
+                    ctx.author.id
+                )            
+                await pconn.execute(
+                    "UPDATE users SET npc_energy = npc_energy + 2 WHERE u_id = $1",
+                    ctx.author.id,
+                )
+                self.purchaselock.remove(ctx.author.id)
+                await ctx.send(
+                    f"You received some **NPC Energy**!\nIt's been added to your current amount."
+                )
+            
+            #Random Chest
+            if option == 8:
+                if event_limit >= 20:
+                    await ctx.send("You have hit the daily purchase limit!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                if seashells < 150:
+                    await ctx.send("You don't have enough seashells 🐚 for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                seashells -= 150
+                new_limit = event_limit + 1
+                chest_choice = random.choices(
+                    ("mythic_chest", "rare_chest", "common_chest"),
+                    weights=(0.40, 0.40, 0.20),
+                )[0]
+                await ctx.bot.commondb.add_bag_item(
+                    ctx.author.id, chest_choice, 1, True
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET seashells = $1, event_limit = event_limit + 1 WHERE u_id = $2",
+                    seashells,
+                    ctx.author.id
+                )
+                fancy_name = chest_choice.replace("_", " ").title()
+                self.purchaselock.remove(ctx.author.id)
+                await ctx.send(
+                    f"You received a {fancy_name}!\n"
+                    f"You have purchased {new_limit} chests, the limit is 20 per day."
+                )
+
+            #Shadow Streak
+            if option == 9:
+                if radiant_limit >= 10:
+                    await ctx.send("You have hit the daily purchase limit!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                if seashells < 300:
+                    await ctx.send("You don't have enough seashells 🐚 for that!")
+                    self.purchaselock.remove(ctx.author.id)
+                    return
+                seashells -= 300
+                new_limit = radiant_limit + 1
+                await pconn.execute(
+                    "UPDATE users SET chain = chain + 50 WHERE u_id = $1",
+                    ctx.author.id
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET seashells = $1, radiant_limit = radiant_limit + 1 WHERE u_id = $2",
+                    seashells,
+                    ctx.author.id
+                )
+                self.purchaselock.remove(ctx.author.id)
+                await ctx.send(
+                    f"You received x50 Shadow Streak <:shadow:1010559067590246410>!\n"
+                    f"You have purchased {new_limit} <:shadow:1010559067590246410>, the limit is 10 per day."
+                )
+
+    @summer.command(name="wb")
+    async def water_balloon(self, ctx, amount:int, player:discord.Member):
+        "Throw a water balloon at another member."
+        if not self.SUMMER_COMMANDS:
+            await ctx.send("This command can only be used during the summer season!")
+            return
+        if ctx.author.id == player.id:
+            await ctx.send(
+                "Why hit yourself? Hit a friend... or enemy!"
+            )
+            return
+        async with ctx.bot.db[0].acquire() as pconn:
+            msg = ""
+            snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed = await pconn.fetchrow(
+                "SELECT snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed FROM events_new WHERE u_id = $1",
+                ctx.author.id
+            )
+            if snowballs is None:
+                await ctx.send("You have not started the event!")
+                return
+            elif snowballs < 1:
+                await ctx.send("You have to get some water balloons! <:waterballoon:1273431369749495930>!")
+                return
+            attacked_times_hit = await pconn.fetchval(
+                "SELECT times_hit FROM events_new WHERE u_id = $1",
+                player.id
+            )
+            if attacked_times_hit is None:
+                #Meaning player hit hasn't started event
+                await pconn.execute(
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", player.id
+                )
+                await ctx.send("Please try this command again shortly...")
+                return
+            snowballs -= amount
+            if snowballs < 0:
+                await ctx.send(
+                    "You don't have enough waterballoons for that throw!"
+                )
+                return
+            successful_hits = 0
+            unsuccessful_hits = 0
+            for i in range(amount):
+                if random.randint(1, 100) <= 35:
+                    unsuccessful_hits += 1
+                else:
+                    successful_hits += 1
+                times_thrown += 1
+
+            #Process hits
+            await pconn.execute(
+                "UPDATE events_new SET snowballs = $1, times_thrown = $2 WHERE u_id = $3",
+                snowballs,
+                times_thrown,
+                ctx.author.id
+            )
+            #Let's hit player
+            await pconn.execute(
+                "UPDATE events_new SET times_hit = times_hit + $1 WHERE u_id = $2",
+                successful_hits,
+                player.id
+            )
+            #Process rewards, role only in Official.
+            if ctx.guild.id == 998128574898896906:
+                if times_thrown >= 100 and role_redeemed is False:
+                    event_role = ctx.guild.get_role(1273432534239285288)
+                    await ctx.author.add_roles(
+                        event_role, reason=f"Event threshold reward - {ctx.author}"
+                    )
+                    await pconn.execute(
+                        "UPDATE events_new SET role_redeemed = True WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    msg += "You've received the Summer Event '24 Official Server Role!"
+            if times_thrown >= 250:
+                if trainer_redeemed:
+                    pass
+                else:
+                    choice = await ListSelectView(
+                        ctx, "Please choose a trainer image!"
+                    ).wait()
+                    if choice is None:
+                        await ctx.send("You did not select in time, cancelling.")
+                        self.purchaselock.remove(ctx.author.id)
+                        return
+                    trainer_images = await pconn.fetchval(
+                        "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    choice = str(choice)
+                    category = "summer"
+                    if category not in trainer_images:
+                        trainer_images[category] = {}
+                    if choice not in trainer_images[category]:
+                        trainer_images[category][choice] = 1
+                    else:
+                        trainer_images[category][choice] += 1
+                    await pconn.execute(
+                        "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
+                        trainer_images,
+                        ctx.author.id
+                    )
+                    await pconn.execute(
+                        "UPDATE events_new SET trainer_redeemed = True WHERE u_id = $1",
+                        ctx.author.id
+                    )
+                    msg += f"You've successfully redeemed {choice} as your trainer image!\nIt's been added to your trainer image inventory."
+
+        embed = discord.Embed(
+            title="Mewbot Summer 2024",
+            description=f"You've throw a water balloon <:waterballoon:1273431369749495930>\nDid you hit your mark?!",
+            color=0x0084FD
+        )
+        embed.add_field(
+            name="Victim",
+            value=(
+                f"You've hit **{player.name} {successful_hits} times**!\n"
+                f"You missed {unsuccessful_hits} times though..."
+            ),
+            inline=False
+        )
+        embed.add_field(
+            name=f"{ctx.author.name}'s Stats",
+            value=f"You've been hit __{times_hit} times__.\nYou've thrown __{times_thrown}__ water balloons!",
+            inline=False
+        )
+        if msg != "":
+            embed.add_field(
+                name="Rewards",
+                value=f"{msg}",
+                inline=False
+            )
+        embed.set_footer(
+            text=f"You have {snowballs} water balloons remaining."
+        )
+        await ctx.send(embed=embed)
 
     # @commands.hybrid_group()
     async def valentine(self, ctx):
@@ -2117,6 +2434,7 @@ class Events(commands.Cog):
                 )
                 msg += "You've received the Xmas2023 Official Server Role!"
             elif times_thrown >= 250 and trainer_redeemed is False:
+                #TODO: For xmas2024 this needs to be updated with new trainer imgs
                 choice = await ListSelectView(
                     ctx, "Please choose a trainer image!"
                 ).wait()
@@ -2521,20 +2839,7 @@ class Events(commands.Cog):
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
-        
-        #This was the original event shop.
-        #desc = (
-            #"**Option# | Price | Item**\n"
-            #"**1** | 25 <:snowflake:1055702885041721374> | 1 Redeems\n"
-            #"**2** | 50 <:snowflake:1055702885041721374> | 2x Battle Multi\n"
-            #"**3** | 50 <:snowflake:1055702885041721374> | 2x Shiny Multi\n"
-            #"**4** | 75 <:snowflake:1055702885041721374> | 1-25 Gleam Gems\n"
-            #"**5** | 100 <:snowflake:1055702885041721374> | 1x Raffle Entry\n"
-            #"**6** | 150 <:snowflake:1055702885041721374> | Random Christmas Skin\n"
-           #""
-        #)
 
-        #2023 remake
         embed = discord.Embed(
             title="Christmas Shop",
             description="Make sure to join RAIDS to maximize your income during the event!\nJoin our Official Server and grab the role! `/invite`",
@@ -2909,6 +3214,26 @@ class Events(commands.Cog):
         await self.update_unown()
         await ctx.send("Event started!")
 
+    async def give_balloons(self, channel, user):
+        """Gives some balloons to the provided user."""
+        carrots = random.randint(1, 3)
+        async with self.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                user.id,
+            )
+            await pconn.execute(
+                f"UPDATE events_new SET snowballs = snowballs + $1 WHERE u_id = $2",
+                carrots,
+                user.id,
+            )
+            embed = discord.Embed(
+                title="Summer Event!",
+                description=f"The Pokemon was holding {carrots}x <:waterballoon:1273431369749495930>s!\nUse command `/summer wb` to use them!",
+                color=0x0084FD,
+            )
+        await channel.send(embed=embed)
+
     async def give_egg(self, channel, user):
         """Gives some carrots to the provided user."""
         carrots = random.randint(5, 10)
@@ -3135,7 +3460,10 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_poke_spawn(self, channel, user):
         return
-        if self.bot.botbanned(user.id) or channel.guild.id != 998128574898896906:
+        # For limiting raids to Official only
+        #if self.bot.botbanned(user.id) or channel.guild.id != 998128574898896906:
+            #return
+        if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS:
             if not random.randrange(10):
@@ -3157,8 +3485,11 @@ class Events(commands.Cog):
                 await self.maybe_spawn_christmas(channel)
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
+                await self.give_balloons(channel, user)
+            if not random.randrange(5) or user.id == 334155028170407949:
                 await self.maybe_spawn_christmas(channel)
 
+        # Dumb unown event stuff
         # if not random.randrange(10):
         # await self.maybe_spawn_unown(channel)
 
@@ -3169,6 +3500,9 @@ class Events(commands.Cog):
             return
         if self.EASTER_DROPS and not random.randrange(5):
             await self.give_egg(channel, user)
+        if self.SUMMER_DROPS:
+            if not random.randrange(5) or user.id == 334155028170407949:
+                await self.give_balloons(channel, user)
         if self.HALLOWEEN_DROPS:
             if not random.randrange(100):
                 await self.give_scary_mask(channel, user)
@@ -3187,6 +3521,9 @@ class Events(commands.Cog):
         if self.EASTER_DROPS:
             if not random.randrange(10):
                 await self.give_egg(channel, user)
+        if self.SUMMER_DROPS:
+            if not random.randrange(5) or user.id == 334155028170407949:
+                await self.give_balloons(channel, user)
         if self.HALLOWEEN_DROPS:
             if not random.randrange(200):
                 await self.give_scary_mask(channel, user)
@@ -3206,6 +3543,7 @@ class ChristmasSpawn(discord.ui.View):
         self.cog = cog
         self.channel = channel
         self.poke = poke
+        self.servercache = []
         self.registered = []
         self.attacked = {}
         self.state = "registering"
@@ -3242,10 +3580,18 @@ class ChristmasSpawn(discord.ui.View):
             return False
 
     async def start(self):
+        # This should stop from more than one raid appearing
+        # in any server that's not Official
+        if self.channel.guild.id in self.servercache:
+            return
+        else:
+            if self.channel.guild.id != 998128574898896906:
+                self.servercache.append(self.channel.guild.id)
+
         extra_msg = ""
         pokeurl = (
             "http://mewbot.xyz/sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="xmas2023")
+            + await get_file_name(self.poke, self.cog.bot, skin="summer2024")
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -3253,8 +3599,8 @@ class ChristmasSpawn(discord.ui.View):
         else:
             small_images = guild["small_images"]
         self.embed = discord.Embed(
-            title="A Christmas Pokémon Appears!",
-            description="Join the battle to take it down.",
+            title="A Summer Pokémon Appears! 🏝️",
+            description="Join the battle to take it down.\nThe more damage you do the more seashells 🐚 you earn!",
             color=0x0084FD,
         )
         self.embed.add_field(name="Take Action", value="Click the Button to join!")
@@ -3280,7 +3626,7 @@ class ChristmasSpawn(discord.ui.View):
 
         if not self.registered:
             embed = discord.Embed(
-                title="The Christmas Pokémon ran away!",
+                title="The Summer Pokémon ran away!",
                 color=0x0084FD,
             )
             if small_images:
@@ -3433,7 +3779,8 @@ class ChristmasSpawn(discord.ui.View):
 
         self.max_hp = int(len(self.registered) * 1.25)
         self.embed = discord.Embed(
-            title="A Christmas Pokémon has spawned, attack it with everything you've got!",
+            title="A Summer Pokémon has spawned! 🏝️",
+            description="Attack it with everything you've got!",
             color=0x0084FD,
         )
         self.embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
@@ -3453,44 +3800,58 @@ class ChristmasSpawn(discord.ui.View):
         hp = max(self.max_hp - sum(self.attacked.values()), 0)
         if hp > 0:
             self.embed = discord.Embed(
-                title="The Christmas Pokémon got away!",
+                title="The Summer Pokémon got away! 🏝️",
+                description="Catch more Pokémon to spawn another one.",
                 color=0x0084FD,
             )
             hp = max(self.max_hp - sum(self.attacked.values()), 0)
-            self.embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
+            self.embed.add_field(name="Status", value=f"HP = {hp}/{self.max_hp}")
             if small_images:
                 self.embed.set_thumbnail(url=pokeurl)
             else:
                 self.embed.set_image(url=pokeurl)
             await self.message.edit(embed=self.embed, view=None)
             return
+        
+        #Remove server from lock
+        if self.channel.guild.id != 998128574898896906:
+            self.servercache.remove(self.channel.guild.id)
+
         async with self.cog.bot.db[0].acquire() as pconn:
+            total_seashells = 0
             for attacker, damage in self.attacked.items():
                 await pconn.execute(
                     "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
                     attacker.id,
                 )
                 if damage == 2:
+                    amount = random.randint(9, 15)
+                    total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET large_gift = large_gift + $1 WHERE u_id = $2",
-                        1,
+                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        amount,
                         attacker.id,
                     )
                 elif damage == 1:
+                    amount = random.randint(2, 8)
+                    total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET small_gift = small_gift + $1 WHERE u_id = $2",
-                        1,
+                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        amount,
                         attacker.id,
                     )
                 elif damage == 0:
+                    amount = 1
+                    total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET snowballs = snowballs + $1 WHERE u_id = $2",
-                        random.randint(1, 2),
+                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        1,
                         attacker.id,
                     )
 
         self.embed = discord.Embed(
-            title=f"The Christmas Pokémon was defeated!\n Attackers have been awarded. {extra_msg}",
+            title=f"The Summer Pokémon was defeated! 🏝️",
+            description=f"Attackers have been awarded. A total of {total_seashells} 🐚 was earned!",
             color=0x0084FD,
         )
         if small_images:
@@ -3523,18 +3884,22 @@ class RaidMove(discord.ui.Button):
         self.emote = emote
 
         if damage == 2:
-            # self.effective = "It's super effective! You will get a Large Present if the poke is defeated."
-            # self.effective = "It's super effective! You'll receive hearts if the poke is defeated!"
-            self.effective = f"It's Super Effective! You will get a Large Gift 🎁 if the Pokemon is defeated."
-        elif damage == 1:
-            # self.effective = "It's not very effective... You will get a Small Present if the poke is defeated."
-            # self.effective = "It's not very effective... You'll receive hearts if the poke is defeated!"
-            self.effective = f"It's not Very Effective... You will get a Small Gift 📦 if the Pokemon is defeated."
-        else:
-            # self.effective = "It had no effect... You will only get Snowflakes if the poke is defeated."
-            # self.effective = "It had no effect... You'll receive hearts if the poke is defeated!"
+            # "It's super effective! You will get a Large Present if the poke is defeated."
+            # "It's super effective! You'll receive hearts if the poke is defeated!"
             self.effective = (
-                f"It had No Effect... You will get a 1-2 <:snowballs:1184292806190182420> Snowballs if the Pokemon is defeated."
+                f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
+            )
+        elif damage == 1:
+            # "It's not very effective... You will get a Small Present if the poke is defeated."
+            # "It's not very effective... You'll receive hearts if the poke is defeated!"
+            self.effective = (
+                f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
+            )
+        else:
+            # "It had no effect... You will only get Snowflakes if the poke is defeated."
+            # "It had no effect... You'll receive hearts if the poke is defeated!"
+            self.effective = (
+                f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
             )
 
     async def callback(self, interaction):

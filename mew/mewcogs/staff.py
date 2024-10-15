@@ -1060,7 +1060,7 @@ class MewBotAdmin(commands.Cog):
         fishing_exp = info["fishing_exp"]
         fishing_level = info["fishing_level"]
         party = info["party"]
-        luck = info["luck"]
+        #luck = info["luck"]
         selected = info["selected"]
         visible = info["visible"]
         voted = info["voted"]
@@ -1096,7 +1096,7 @@ class MewBotAdmin(commands.Cog):
         desc += f"\n\n**Energy**: `{energy}`"
         desc += f"\n**Fishing Exp**: `{fishing_exp}`"
         desc += f"\n**Fishing Level**: `{fishing_level}`"
-        desc += f"\n**Luck**: `{luck}`"
+        #desc += f"\n**Luck**: `{luck}`"
         desc += f"\n\n**Visible Balance?**: `{visible}`"
         desc += f"\n**Voted?**: `{voted}`"
         desc += f"\n**Tradebanned?**: `{tradelock}`"

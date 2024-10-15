@@ -974,7 +974,7 @@ class Breeding(commands.Cog):
                     
                 # Dispatches an event that a poke was bred.
                 # on_poke_breed(self, channel, user)
-                # self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
+                self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
 
                 # embed = discord.Embed(
                 #     title=f"{ctx.author.name}'s {emoji}{name.capitalize()} ({ivpercent}% IV) Egg!",

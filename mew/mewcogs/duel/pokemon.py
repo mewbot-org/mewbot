@@ -1,4 +1,3 @@
-
 import random
 from .data import find, find_one
 from .enums import Ability, DamageClass, ElementType
@@ -33,23 +32,12 @@ class DuelPokemon():
         self.spatk = self.base_stats[self._name][3]
         self.spdef = self.base_stats[self._name][4]
         self.speed = self.base_stats[self._name][5]
-
-        # Allowing for use of broken IVs in Official
-        self.hpiv = kwargs["hpiv"]
-        self.atkiv = kwargs["atkiv"]
-        self.defiv = kwargs["defiv"]
-        self.spatkiv = kwargs["spatkiv"]
-        self.spdefiv = kwargs["spdefiv"]
-        self.speediv = kwargs["speediv"]
-
-        # This was here originally, removed to use broken IVs in Official
-        # self.hpiv = min(31, kwargs['hpiv'])
-        # self.atkiv = min(31, kwargs['atkiv'])
-        # self.defiv = min(31, kwargs['defiv'])
-        # self.spatkiv = min(31, kwargs['spatkiv'])
-        # self.spdefiv = min(31, kwargs['spdefiv'])
-        # self.speediv = min(31, kwargs['speediv'])
-
+        self.hpiv = min(31, kwargs['hpiv'])
+        self.atkiv = min(31, kwargs['atkiv'])
+        self.defiv = min(31, kwargs['defiv'])
+        self.spatkiv = min(31, kwargs['spatkiv'])
+        self.spdefiv = min(31, kwargs['spdefiv'])
+        self.speediv = min(31, kwargs['speediv'])
         self.hpev = kwargs['hpev']
         self.atkev = kwargs['atkev']
         self.defev = kwargs['defev']
@@ -236,7 +224,7 @@ class DuelPokemon():
         #Boolean - stores whether this poke is protected by silk trap this turn.
         self.silk_trap = False
         #Boolean - stores whether this poke is protected by burning bulwark this turn.
-        self.burning_bulwark = False        
+        self.burning_bulwark = False
         #ExpiringEffect - stores whether this poke will always crit due to laser focus.
         self.laser_focus = ExpiringEffect(0)
         #Boolean - stores whether this poke is coated with powder and will explode if it uses a fire type move.
@@ -287,10 +275,6 @@ class DuelPokemon():
         self.defense_split = None
         #Optional[Int] - stores the raw special defense value this poke's special defense is split with.
         self.spdef_split = None
-        #ExpiringEffect - stores the number of turns splinters are active on this pokemon.
-        self.splinters = ExpiringEffect(0)
-        #Boolean - stores whether this poke has used victory dance since entering the field.
-        self.victory_dance = False
         #Int - stores the number of times autotomize has been used since switching out.
         self.autotomize = 0
         #Boolean - stores whether or not this pokemon's critical hit ratio is increased from eating a lansat berry.
@@ -315,6 +299,8 @@ class DuelPokemon():
         self.last_berry = None
         #ExpiringEffect - stores the number of turns until this pokemon attempts to recover & eat their last eaten berry.
         self.cud_chew = ExpiringEffect(0)
+        #Boolean - stores whether booster_energy has been consumed this send out to activate the effects of Protosynthesis / Quark Drive.
+        self.booster_energy = False
 
     def send_out(self, otherpoke, battle):
         """
@@ -348,7 +334,6 @@ class DuelPokemon():
             otherpoke.trapping = False
             otherpoke.octolock = False
             otherpoke.bind.set_turns(0)
-            otherpoke.splinters.set_turns(0)
         
         #Baton Pass
         if self.owner.baton_pass is not None:
@@ -858,6 +843,7 @@ class DuelPokemon():
         self.flash_fire = False
         self.truant_turn = 0
         self.cud_chew = ExpiringEffect(0)
+        self.booster_energy = False
         self.stat_increased = False
         self.stat_decreased = False
         self.roost = False
@@ -866,8 +852,6 @@ class DuelPokemon():
         self.spatk_split = None
         self.defense_split = None
         self.spdef_split = None
-        self.splinters = ExpiringEffect(0)
-        self.victory_dance = False
         self.tar_shot = False
         self.syrup_bomb = ExpiringEffect(0)
         self.held_item.ever_had_item = self.held_item.item is not None
@@ -933,6 +917,7 @@ class DuelPokemon():
         self.stat_increased = False
         self.stat_decreased = False
         self.roost = False
+        self.syrup_bomb.next_turn()
         
         msg += self.nv.next_turn(battle)
         
@@ -957,7 +942,7 @@ class DuelPokemon():
         if self.embargo.next_turn():
             msg += f"{self.name}'s embargo was lifted!\n"
         if self.yawn.next_turn():
-            msg += self.nv.apply_status("sleep", battle, source="drowsiness")
+            msg += self.nv.apply_status("sleep", battle, attacker=self, source="drowsiness")
         if self.encore.next_turn():
             msg += f"{self.name}'s encore is over!\n"
         if self.perish_song.next_turn():
@@ -1222,11 +1207,6 @@ class DuelPokemon():
         #Grassy Terrain
         if battle.terrain.item == "grassy" and self.grounded(battle) and not self.heal_block.active():
             msg += self.heal(self.starting_hp // 16, source="grassy terrain")
-        #Splinters
-        if self.splinters.next_turn():
-            msg += f"{self.name}'s splinters wore off!\n"
-        elif self.splinters.active() and otherpoke is not None:
-            msg += self.damage(self.starting_hp // 8, battle, source=f"{otherpoke.name}'s splinters")
         
         #Goes at the end so everything in this func that checks it handles it correctly
         self.swapped_in = False
@@ -1511,16 +1491,16 @@ class DuelPokemon():
             # Affects ATTACKER
             if attacker.held_item != "protective-pads":
                 if self.beak_blast:
-                    msg += attacker.nv.apply_status("burn", battle, attacker=self, source=f"{self.name}'s charging beak blast")
+                    msg += attacker.nv.apply_status("burn", battle, attacker=attacker, source=f"{self.name}'s charging beak blast")
                 if self.ability() == Ability.STATIC:
                     if random.randint(1, 100) <= 30:
-                        msg += attacker.nv.apply_status("paralysis", battle, attacker=self, source=f"{self.name}'s static")
+                        msg += attacker.nv.apply_status("paralysis", battle, attacker=attacker, source=f"{self.name}'s static")
                 if self.ability() == Ability.POISON_POINT:
                     if random.randint(1, 100) <= 30:
-                        msg += attacker.nv.apply_status("poison", battle, attacker=self, source=f"{self.name}'s poison point")
+                        msg += attacker.nv.apply_status("poison", battle, attacker=attacker, source=f"{self.name}'s poison point")
                 if self.ability() == Ability.FLAME_BODY:
                     if random.randint(1, 100) <= 30:
-                        msg += attacker.nv.apply_status("burn", battle, attacker=self, source=f"{self.name}'s flame body")
+                        msg += attacker.nv.apply_status("burn", battle, attacker=attacker, source=f"{self.name}'s flame body")
                 if self.ability() == Ability.ROUGH_SKIN and self.owner.has_alive_pokemon():
                     msg += attacker.damage(attacker.starting_hp // 8, battle, source=f"{self.name}'s rough skin")
                 if self.ability() == Ability.IRON_BARBS and self.owner.has_alive_pokemon():
@@ -1533,7 +1513,7 @@ class DuelPokemon():
                         and random.randint(1, 100) <= 30
                     ):
                         status = random.choice(["paralysis", "poison", "sleep"])
-                        msg += attacker.nv.apply_status(status, battle, attacker=self)
+                        msg += attacker.nv.apply_status(status, battle, attacker=attacker)
                 if self.ability() == Ability.CUTE_CHARM and random.randint(1, 100) <= 30:
                     msg += attacker.infatuate(self, source=f"{self.name}'s cute charm")
                 if self.ability() == Ability.MUMMY and attacker.ability() != Ability.MUMMY and attacker.ability_changeable():
@@ -1614,7 +1594,7 @@ class DuelPokemon():
         
         Returns a formatted message.
         """ 
-        if self.substitute:
+        if self.substitute and (move is None or move.is_affected_by_substitute()):
             return ""
         if self.confusion.active():
             return ""
@@ -1635,7 +1615,7 @@ class DuelPokemon():
         Returns a formatted message.
         """
         msg = ""
-        if self.substitute:
+        if self.substitute and (move is None or move.is_affected_by_substitute()):
             return ""
         if self.ability(move=move, attacker=attacker) == Ability.INNER_FOCUS:
             return f"{self.name} resisted the urge to flinch with its inner focus!\n"
@@ -1776,14 +1756,17 @@ class DuelPokemon():
         for poke in (battle.trainer1.current_pokemon, battle.trainer2.current_pokemon):
             if poke is not None and poke is not self and poke.ability() == Ability.TABLETS_OF_RUIN:
                 attack *= .75
-        if (
-            (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.held_item == "booster-energy"))
-            or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.held_item == "booster-energy"))
-        ):
-            #Remove booster energy from Pokemon
-            self.held_item.use()
-            if all(self.get_raw_attack() >= x for x in (self.get_raw_defense(), self.get_raw_spatk(), self.get_raw_spdef(), self.get_raw_speed())):
+        if all(self.get_raw_attack() >= x for x in (self.get_raw_defense(), self.get_raw_spatk(), self.get_raw_spdef(), self.get_raw_speed())):
+            if (
+                (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.booster_energy))
+                or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.booster_energy))
+            ):
                 attack *= 1.3
+            elif self.ability() in (Ability.PROTOSYNTHESIS, Ability.QUARK_DRIVE) and self.held_item == "booster-energy":
+                self.held_item.use()
+                self.booster_energy = True
+                attack *= 1.3
+
         return attack
     
     def get_defense(self, battle, *, critical=False, ignore_stages=False, attacker=None, move=None):
@@ -1806,13 +1789,17 @@ class DuelPokemon():
             if poke is not None and poke is not self and poke.ability() == Ability.SWORD_OF_RUIN:
                 defense *= .75
         if (
-            (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.held_item == "booster-energy"))
-            or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.held_item == "booster-energy"))
+            self.get_raw_defense() > self.get_raw_attack()
+            and all(self.get_raw_defense() >= x for x in (self.get_raw_spatk(), self.get_raw_spdef(), self.get_raw_speed()))
         ):
             if (
-                self.get_raw_defense() > self.get_raw_attack()
-                and all(self.get_raw_defense() >= x for x in (self.get_raw_spatk(), self.get_raw_spdef(), self.get_raw_speed()))
+                (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.booster_energy))
+                or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.booster_energy))
             ):
+                defense *= 1.3
+            elif self.ability() in (Ability.PROTOSYNTHESIS, Ability.QUARK_DRIVE) and self.held_item == "booster-energy":
+                self.held_item.use()
+                self.booster_energy = True
                 defense *= 1.3
         return defense
     
@@ -1837,13 +1824,17 @@ class DuelPokemon():
             if poke is not None and poke is not self and poke.ability() == Ability.VESSEL_OF_RUIN:
                 spatk *= .75
         if (
-            (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.held_item == "booster-energy"))
-            or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.held_item == "booster-energy"))
+            all(self.get_raw_spatk() >= x for x in (self.get_raw_spdef(), self.get_raw_speed()))
+            and all(self.get_raw_spatk() > x for x in (self.get_raw_attack(), self.get_raw_defense()))
         ):
             if (
-                all(self.get_raw_spatk() >= x for x in (self.get_raw_spdef(), self.get_raw_speed()))
-                and all(self.get_raw_spatk() > x for x in (self.get_raw_attack(), self.get_raw_defense()))
+                (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.booster_energy))
+                or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.booster_energy))
             ):
+                spatk *= 1.3
+            elif self.ability() in (Ability.PROTOSYNTHESIS, Ability.QUARK_DRIVE) and self.held_item == "booster-energy":
+                self.held_item.use()
+                self.booster_energy = True
                 spatk *= 1.3
         return spatk
     
@@ -1869,13 +1860,17 @@ class DuelPokemon():
             if poke is not None and poke is not self and poke.ability() == Ability.BEADS_OF_RUIN:
                 spdef *= .75
         if (
-            (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.held_item == "booster-energy"))
-            or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.held_item == "booster-energy"))
+            self.get_raw_spdef() >= self.get_raw_speed()
+            and all(self.get_raw_spdef() > x for x in (self.get_raw_attack(), self.get_raw_defense(), self.get_raw_spatk()))
         ):
             if (
-                self.get_raw_spdef() >= self.get_raw_speed()
-                and all(self.get_raw_spdef() > x for x in (self.get_raw_attack(), self.get_raw_defense(), self.get_raw_spatk()))
+                (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.booster_energy))
+                or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.booster_energy))
             ):
+                spdef *= 1.3
+            elif self.ability() in (Ability.PROTOSYNTHESIS, Ability.QUARK_DRIVE) and self.held_item == "booster-energy":
+                self.held_item.use()
+                self.booster_energy = True
                 spdef *= 1.3
         return spdef
     
@@ -1907,11 +1902,15 @@ class DuelPokemon():
             speed *= 2
         if self.held_item == "choice-scarf":
             speed *= 1.5
-        if (
-            (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.held_item == "booster-energy"))
-            or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.held_item == "booster-energy"))
-        ):
-            if all(self.get_raw_speed() > x for x in (self.get_raw_attack(), self.get_raw_defense(), self.get_raw_spatk(), self.get_raw_spdef())):
+        if all(self.get_raw_speed() > x for x in (self.get_raw_attack(), self.get_raw_defense(), self.get_raw_spatk(), self.get_raw_spdef())):
+            if (
+                (self.ability() == Ability.PROTOSYNTHESIS and (battle.weather.get() in ("sun", "h-sun") or self.booster_energy))
+                or (self.ability() == Ability.QUARK_DRIVE and (battle.terrain.item == "electric" or self.booster_energy))
+            ):
+                speed *= 1.5
+            elif self.ability() in (Ability.PROTOSYNTHESIS, Ability.QUARK_DRIVE) and self.held_item == "booster-energy":
+                self.held_item.use()
+                self.booster_energy = True
                 speed *= 1.5
         return speed
     
@@ -1958,7 +1957,7 @@ class DuelPokemon():
         Returns a formatted string describing the stat change.
         """
         msg = ""
-        if self.substitute and attacker is not self and attacker is not None:
+        if self.substitute and attacker is not self and attacker is not None and (move is None or move.is_affected_by_substitute()):
             return ""
         if source:
             source = f" from {source}"
@@ -2298,46 +2297,28 @@ class DuelPokemon():
         return random.choice(moves)
     
     @classmethod
-    async def create(cls, ctx, raw_data: dict, npc: bool=False):
+    async def create(cls, ctx, raw_data: dict):
         """Creates a new DuelPokemon object using the raw data provided."""
         pn = raw_data["pokname"]
         nick = raw_data["poknick"]
-
-        # Shit should only happen in Official
-        if ctx.guild.id == 998128574898896906:
-            hpiv = raw_data["hpiv"]
-            atkiv = raw_data["atkiv"]
-            defiv = raw_data["defiv"]
-            spatkiv = raw_data["spatkiv"]
-            spdefiv = raw_data["spdefiv"]
-            speediv = raw_data["speediv"]
-        else:
-            hpiv = min(31, raw_data["hpiv"])
-            atkiv = min(31, raw_data["atkiv"])
-            defiv = min(31, raw_data["defiv"])
-            spatkiv = min(31, raw_data["spatkiv"])
-            spdefiv = min(31, raw_data["spdefiv"])
-            speediv = min(31, raw_data["speediv"])
-
-        # Rest of stats are normal throughout Discord
+        hpiv = min(31, raw_data["hpiv"])
+        atkiv = min(31, raw_data["atkiv"])
+        defiv = min(31, raw_data["defiv"])
+        spatkiv = min(31, raw_data["spatkiv"])
+        spdefiv = min(31, raw_data["spdefiv"])
+        speediv = min(31, raw_data["speediv"])
         hpev = raw_data["hpev"]
         atkev = raw_data["atkev"]
         defev = raw_data["defev"]
         spaev = raw_data["spatkev"]
         spdev = raw_data["spdefev"]
         speedev = raw_data["speedev"]
-
-        # This is for Level 50 Rule
-        if npc:
-            plevel = 50
-        else:
-            plevel = raw_data["pokelevel"] 
-        
+        plevel = raw_data["pokelevel"]
         shiny = raw_data["shiny"]
         radiant = raw_data["radiant"]
         skin = raw_data["skin"]
         id = raw_data["id"]
-        hitem = raw_data["hitem"].replace("_", "-")
+        hitem = raw_data["hitem"]
         happiness = raw_data["happiness"]
         moves = raw_data["moves"]
         ab_index = raw_data["ability_index"]
@@ -2568,35 +2549,32 @@ class DuelPokemon():
         except IndexError:
             ab_id = ab_ids[0]
 
-        if pn != 'Gouging-fire':
-            if any(
-                pn.endswith(suffix)
-                for suffix in [
-                    "-bug","-summer","-marine","-elegant","-poison","-average","-altered","-winter","-trash","-incarnate",
-                    "-baile","-rainy","-steel","-star","-ash","-diamond","-pop-star","-fan","-school","-therian","-pau",
-                    "-river","-poke-ball","-kabuki","-electric","-heat","-unbound","-chill","-archipelago","-zen","-normal",
-                    "-mega-y","-resolute","-blade","-speed","-indigo","-dusk","-sky","-west","-sun","-dandy","-solo","-high-plains",
-                    "-la-reine","-50","-unova-cap","-burn","-mega-x","-monsoon","-primal","-red-striped","-blue-striped",
-                    "-white-striped","-ground","-super","-yellow","-polar","-cosplay","-ultra","-heart","-snowy","-sensu",
-                    "-eternal","-douse","-defense","-sunshine","-psychic","-modern","-natural","-tundra","-flying","-pharaoh",
-                    "-libre","-sunny","-autumn","-10","-orange","-standard","-land","-partner","-dragon","-plant","-pirouette",
-                    "-male","-hoenn-cap","-violet","-spring","-fighting","-sandstorm","-original-cap","-neutral","-fire",
-                    "-fairy","-attack","-black","-shock","-shield","-shadow","-grass","-continental","-overcast","-disguised",
-                    "-exclamation","-origin","-garden","-blue","-matron","-red-meteor","-small","-rock-star","-belle",
-                    "-alola-cap","-green","-active","-red","-mow","-icy-snow","-debutante","-east","-midday","-jungle","-frost",
-                    "-midnight","-rock","-fancy","-busted","-ordinary","-water","-phd","-ice","-spiky-eared","-savanna","-original",
-                    "-ghost","-meadow","-dawn","-question","-pom-pom","-female","-kalos-cap","-confined","-sinnoh-cap","-aria",
-                    "-dark","-ocean","-wash","-white","-mega","-sandy","-complete","-large","-crowned","-ice-rider","-shadow-rider",
-                    "-zen-galar","-rapid-strike","-noice","-hangry",
-                ]
-            ):
-                name = pn.lower().split("-")[0]
-                pid = (await find_one(ctx, "forms", {"identifier": name}))["pokemon_id"]
-            else:
-                pid = form_info["pokemon_id"]
+        if any(
+            pn.endswith(suffix)
+            for suffix in [
+                "-bug","-summer","-marine","-elegant","-poison","-average","-altered","-winter","-trash","-incarnate",
+                "-baile","-rainy","-steel","-star","-ash","-diamond","-pop-star","-fan","-school","-therian","-pau",
+                "-river","-poke-ball","-kabuki","-electric","-heat","-unbound","-chill","-archipelago","-zen","-normal",
+                "-mega-y","-resolute","-blade","-speed","-indigo","-dusk","-sky","-west","-sun","-dandy","-solo","-high-plains",
+                "-la-reine","-50","-unova-cap","-burn","-mega-x","-monsoon","-primal","-red-striped","-blue-striped",
+                "-white-striped","-ground","-super","-yellow","-polar","-cosplay","-ultra","-heart","-snowy","-sensu",
+                "-eternal","-douse","-defense","-sunshine","-psychic","-modern","-natural","-tundra","-flying","-pharaoh",
+                "-libre","-sunny","-autumn","-10","-orange","-standard","-land","-partner","-dragon","-plant","-pirouette",
+                "-male","-hoenn-cap","-violet","-spring","-fighting","-sandstorm","-original-cap","-neutral","-fire",
+                "-fairy","-attack","-black","-shock","-shield","-shadow","-grass","-continental","-overcast","-disguised",
+                "-exclamation","-origin","-garden","-blue","-matron","-red-meteor","-small","-rock-star","-belle",
+                "-alola-cap","-green","-active","-red","-mow","-icy-snow","-debutante","-east","-midday","-jungle","-frost",
+                "-midnight","-rock","-fancy","-busted","-ordinary","-water","-phd","-ice","-spiky-eared","-savanna","-original",
+                "-ghost","-meadow","-dawn","-question","-pom-pom","-female","-kalos-cap","-confined","-sinnoh-cap","-aria",
+                "-dark","-ocean","-wash","-white","-mega","-sandy","-complete","-large","-crowned","-ice-rider","-shadow-rider",
+                "-zen-galar","-rapid-strike","-noice","-hangry",
+            ]
+        ):
+            name = pn.lower().split("-")[0]
+            pid = (await find_one(ctx, "forms", {"identifier": name}))["pokemon_id"]
         else:
             pid = form_info["pokemon_id"]
-            
+
         #True if any possible future evo exists
         can_still_evolve = bool(await find_one(ctx, "pfile", {"evolves_from_species_id": pid}))
         #Unreleased pokemon that is treated like a form in the bot, monkeypatch fix.

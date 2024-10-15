@@ -19,17 +19,22 @@ from mewutils.misc import (
 )
 
 IMAGE_URLS = {
-    "xmas/Maleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_male.png",
-    "xmas/Femaleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_female.png",
-    "xmas/Pyrce": "https://mewbot.xyz/sprites/trainers/pyrce_trainer.png",
-    "staff/Artsquad": "https://mewbot.xyz/sprites/trainers/art_squad.png",
-    "halloween/Hexmaniac": "https://mewbot.xyz/sprites/trainers/hex_maniac_6.png",
-    "summer/Phoebe": "https://mewbot.xyz/sprites/trainers/phoebe.png",
-    "summer/Brycen": "http://mewbot.xyz/sprites/trainers/brycen.png",
-    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png",
+    "xmas/Maleskier": "https://lforebodingl.github.io/Kohaku-Images/trainers/skier_trainer_male.png",
+    "xmas/Femaleskier": "https://lforebodingl.github.io/Kohaku-Images/trainers/skier_trainer_female.png",
+    "xmas/Pyrce": "https://lforebodingl.github.io/Kohaku-Images/trainers/pyrce_trainer.png",
+    "staff/Artsquad": "https://lforebodingl.github.io/Kohaku-Images/trainers/art_squad.png",
+    "halloween/Hexmaniac": "https://lforebodingl.github.io/Kohaku-Images/trainers/hex_maniac_6.png",
+    "summer/Phoebe": "https://lforebodingl.github.io/Kohaku-Images/trainers/phoebe.png",
+    "summer/Brycen": "https://lforebodingl.github.io/Kohaku-Images/trainers/brycen.png",
+    "halloween/Allister": "https://lforebodingl.github.io/Kohaku-Images/trainers/allister.png",
     "user/Youngster": "https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png",
-    "breeder/Breeder1": "https://mewbot.xyz/sprites/trainers/breeder1.png",
-    "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
+    "breeder/Breeder1": "https://lforebodingl.github.io/Kohaku-Images/trainers/breeder1.png",
+    "breeder/Breeder2": "https://lforebodingl.github.io/Kohaku-Images/trainers/breeder2.png",
+    "summer/Swimmerf": "https://lforebodingl.github.io/Kohaku-Images/trainers/swimmerf.png",
+    "summer/Swimmerm": "https://lforebodingl.github.io/Kohaku-Images/trainers/swimmerm.png",
+    "summer/Cyclist": "https://lforebodingl.github.io/Kohaku-Images/trainers/cyclist.png",
+    "summer/Dancer": "https://lforebodingl.github.io/Kohaku-Images/trainers/dancer.png",
+    "dev/Ghetsis": "https://lforebodingl.github.io/Kohaku-Images/trainers/ghetsis.png"
 }
 
 REGIONS = [
@@ -428,7 +433,7 @@ class ProfileView(discord.ui.View):
             marketlimitbonus = SILVER_PATREON_SLOT_BONUS
         elif patreon_status == "Yellow Tier":
             marketlimitbonus = YELLOW_PATREON_SLOT_BONUS
-        elif patreon_status == "Red Tier":
+        elif patreon_status == "Red Tier": 
             marketlimitbonus = PATREON_SLOT_BONUS
         else:
             marketlimitbonus = 0
@@ -509,10 +514,10 @@ class ProfileView(discord.ui.View):
         style=discord.ButtonStyle.primary, label="Badges", emoji="<:volcano:1146142634918817813>", row=1
     )
     async def badges(self, interaction, button):
-        patreon = await interaction.client.patreon_tier(interaction.user.id)
-        if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") and interaction.guild.id == 998128574898896906:
-            await interaction.response.send_message("Coming soon!")
-            return
+        #patreon = await interaction.client.patreon_tier(interaction.user.id)
+        #if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") and interaction.guild.id == 998128574898896906:
+            #await interaction.response.send_message("Coming soon!")
+            #return
         GYM_LEADERS = await interaction.client.db[1].gym_leaders.find({}).to_list(None)
         leader_names = [t["identifier"] for t in GYM_LEADERS]
         column_names = [t["column"] for t in GYM_LEADERS]

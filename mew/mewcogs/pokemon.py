@@ -801,9 +801,7 @@ class Pokemon(commands.Cog):
         if form_suffix in ("alola", "galar", "hisui", "paldea"):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
-        print(base_name)
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
-        print(pfile)
         
         if pfile:
             gender_rate = pfile['gender_rate']

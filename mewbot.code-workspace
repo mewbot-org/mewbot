@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../var/www/mewbot.xyz/html"
+		},
+		{
+			"path": "../../dylee/ImageModel"
 		}
 	]
 }

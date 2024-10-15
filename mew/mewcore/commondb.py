@@ -38,12 +38,13 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Beedrill",
-            "Braviary-hisui",
-            "Aegislash",
-            "Gallade",
-            "Raikou",
-            "Zacian"
+            "Poliwrath",
+            "Meloetta",
+            "Bibarel",
+            "Blaziken",
+            "Blastoise",
+            "Drapion",
+            "Jirachi",
         ]
 
         self.ALL_ALPHA_POKEMON = [
@@ -99,7 +100,6 @@ class CommonDB:
             "Beedrill",
             "Heracross",
             "Manaphy",
-            "Pidgeot",
             "Salamence",
             "Gallade",
             "Gogoat",
@@ -113,7 +113,21 @@ class CommonDB:
             "Lugia",
             "Bellossom",
             "Vileplume",
-            "Cobalion"           
+            "Cobalion",
+            "Pidgeot",
+            "Corviknight",
+            "Slaking",
+            "Ceruledge",
+            "Breloom",
+            "Cloyster",
+            "Cinderace",
+            "Poliwrath",
+            "Meloetta",
+            "Bibarel",
+            "Blaziken",
+            "Blastoise",
+            "Drapion",
+            "Jirachi",
         ]
         self.ALPHA_MOVESETS = {
             "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],
@@ -150,7 +164,7 @@ class CommonDB:
             "Regidrago": ["flamethrower", "tackle", "tackle", "tackle"],
             "Scovillain": ["sleep-powder", "tackle", "tackle", "tackle"],
             "Tinkaton": ["tidy-up", "tackle", "tackle", "tackle"],
-            "Jirachi": ["teleport", "tackle", "tackle", "tackle"],
+            "Jirachi": ["tri-attack", "tackle", "tackle", "tackle"],
             "Gardevoir": ["boomburst", "tackle", "tackle", "tackle"],
             "Rayquaza": ["collision-course", "tackle", "tackle", "tackle"],
             "Leafeon": ["jungle-healing", "tackle", "tackle", "tackle"],
@@ -177,7 +191,7 @@ class CommonDB:
             "Beedrill": ["megahorn", "tackle", "tackle", "tackle"],
             "Heracross": ["u-turn", "tackle", "tackle", "tackle"],
             "Manaphy": ["stored-power", "tackle", "tackle", "tackle"],
-            "Pidgeot": ["earth-power", "tackle", "tackle", "tackle"],
+            "Pidgeot": ["focus-blast", "tackle", "tackle", "tackle"],
             "Salamence": ["crush-grip", "tackle", "tackle", "tackle"],
             "Gallade": ["no-retreat", "tackle", "tackle", "tackle"],
             "Gogoat": ["wood-hammer", "tackle", "tackle", "tackle"],
@@ -191,6 +205,20 @@ class CommonDB:
             "Lugia": ["oblivian-wing", "tackle", "tackle", "tackle"],
             "Bellossom": ["powder", "tackle", "tackle", "tackle"],
             "Vileplume": ["toxic-thread", "tackle", "tackle", "tackle"],
+            "Corviknight": ["anchor-shot", "tackle", "tackle", "tackle"],
+            "Slaking": ["skill-swap", "tackle", "tackle", "tackle"],
+            "Ceruledge": ["leaf-blade", "tackle", "tackle", "tackle"],
+            "Breloom": ["triple-axel", "tackle", "tackle", "tackle"],
+            "Cloyster": ["water-shuriken", "tackle", "tackle", "tackle"],
+            "Cinderace": ["trop-kick", "tackle", "tackle", "tackle"],
+            "Poliwrath": ["jet-punch", "tackle", "tackle", "tackle"],
+            "Meloetta": ["iron-head", "tackle", "tackle", "tackle"],
+            "Bibarel": ["clangorous-soul", "tackle", "tackle", "tackle"],
+            "Blaziken": ["fake-out", "tackle", "tackle", "tackle"],
+            "Blastoise": ["origin-pulse", "tackle", "tackle", "tackle"],
+            "Drapion": ["wicked-blow", "tackle", "tackle", "tackle"],
+
+
         }
 
     async def get_time(self):

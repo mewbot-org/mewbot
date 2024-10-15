@@ -63,6 +63,8 @@ KEYS = {
     "cd": "cooldown",
     "hidden-power": "hidden-power",
     "hp": "hidden-power",
+    "gen": "gen",
+    "generation": "gen",
     #'fossil':   'fossil', TODO
     "price": "price",  # FILTER AND ORDER
     "iv": "iv",  # ORDER
@@ -289,6 +291,14 @@ class Filter(commands.Cog):
                     postfix.append(f"pokname = ANY(${len(sql_data)})")
                 elif key == "legend":
                     names = set(LegendList)
+                    names = await self._expand_forms(ctx, names)
+                    sql_data.append(list(names))
+                    postfix.append(f"pokname = ANY(${len(sql_data)})")
+                elif key == "gen":
+                    gennum = int(data[0])
+                    gen_pokes = await ctx.bot.db[1].pfile.find({"generation_id":  gennum}).to_list(None)
+                    gen_pokes = [t['identifier'].capitalize() for t in gen_pokes]
+                    names = set(gen_pokes)
                     names = await self._expand_forms(ctx, names)
                     sql_data.append(list(names))
                     postfix.append(f"pokname = ANY(${len(sql_data)})")

@@ -136,6 +136,8 @@ async def generate_pokemon(self, npc_pokemon, user_pokemon, user_pokemon_level, 
         "gender": "None",
     }
 
+    self.bot.logger.info(f"POKE'S NAME: {user_pokemon}")
+
     #Deform pokes that are formed into battle forms that they should not start off in
     if user_pokemon == "Mimikyu-busted":
         user_pokemon = "Mimikyu"
@@ -216,7 +218,7 @@ async def generate_pokemon(self, npc_pokemon, user_pokemon, user_pokemon_level, 
     #TODO: Meloetta, Shaymin
 
     form_info = await self.bot.db[1].forms.find_one({"identifier": user_pokemon.lower()})
-    pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
+    pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["base_id"]})
 
     #Basic Information
     pokemon['pokname'] = npc_pokemon.lower()
@@ -250,7 +252,14 @@ async def generate_pokemon(self, npc_pokemon, user_pokemon, user_pokemon_level, 
     ab_ids = [doc["ability_id"] for doc in ab_ids]
 
     #Gender
-    gender_rate = pokemon_info["gender_rate"]
+    try:
+        gender_rate = pokemon_info["gender_rate"]
+    except TypeError:
+        #TODO: Eventually will need exceptions for Pokemon like Urshifu which
+        #Are treated as a separate pokemon rather than a form that's deformed.
+        if user_pokemon == 'Urshifu-rapid-strike':
+            gender_rate = 0
+
     if "idoran-" in pokemon:
         pokemon['gender'] = pokemon[-2:]
     elif pokemon['pokname'].lower() == "illumise":
@@ -263,7 +272,7 @@ async def generate_pokemon(self, npc_pokemon, user_pokemon, user_pokemon_level, 
     # 0 = male only, 8 = female only, in between means mix at that ratio.
     # 0 < 0 = False, so the poke will always be male
     # 7 < 8 = True, so the poke will always be female
-    elif random.randrange(8) < pokemon_info['gender_rate']:
+    elif random.randrange(8) < gender_rate:
         pokemon['gender'] = "-f"
     else:
         pokemon['gender'] = "-m"

@@ -179,6 +179,7 @@ class SpawnView(discord.ui.View):
             embed = self.msg.embeds[0]
             embed.title = f"Timed out! Better luck next time!\nThis Pokemon's name is: {self.pokemon}"
             await self.msg.edit(embed=embed, view=None)
+            return
 
     @discord.ui.button(label="Catch This Pokemon!", style=discord.ButtonStyle.blurple)
     async def click_here(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -210,11 +211,14 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
         self.view = view
         self.poke_guess = poke_guess
         self.event_chance = event_chance
-        super().__init__()
+        super().__init__(timeout=360)
 
     name = discord.ui.TextInput(
         label="Pokemon Name", placeholder="What do you think this pokemon is named?"
     )
+
+    async def on_timeout(self):
+        return
 
     async def on_submit(self, interaction: discord.Interaction):
         global EASTER_CACHE

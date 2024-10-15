@@ -208,7 +208,10 @@ class Lookup(commands.Cog):
         # Build the embed of pokemon
         desc = ""
         for pokemon in data["pokemon"]:
-            desc += pokemon["pokemon"]["name"].title() + "\n"
+            if pokemon["pokemon"]["name"].title() in desc:
+                pass
+            else:
+                desc += pokemon["pokemon"]["name"].title() + "\n"
         poke_embed = discord.Embed(
             title="Pokemon with " + ability.title().replace("-", " "),
             color=0xF699CD,

@@ -5,6 +5,7 @@ aiohttp
 asyncpg
 python-multipart
 motor
+python-dotenv
 orjson
 pydantic
 aioredis

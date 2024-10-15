@@ -28,6 +28,7 @@ services:
       mewbot_network:
         ipv4_address: 178.28.0.17
     env_file:
+      - ./env/discord.env
       - ./env/bot.env
       - ./env/donations.env
       - ./env/mongo.env
@@ -87,3 +88,5 @@ networks:
     ipam:
       config:
         - subnet: 178.28.0.0/24
+
+

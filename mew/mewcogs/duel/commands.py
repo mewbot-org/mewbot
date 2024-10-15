@@ -640,15 +640,15 @@ class Duel(commands.Cog):
         await self.run_party_duel(ctx, opponent, inverse_battle=True)
 
     @duel.command()
-    @discord.app_commands.guilds(STAFFSERVER)
+    #@discord.app_commands.guilds(STAFFSERVER)
     async def ranked(self, ctx, opponent: discord.Member):
         """A 6v6 ranked duel with another user's party."""
         #if ctx.author.id != 334155028170407949:
             #await ctx.send("Coming Soon")
             #return
-        if ctx.guild != ctx.bot.official_server:
+        if ctx.guild.id != 1271229684998475807:
             await ctx.send(
-                "You can only use this command in the Mewbot Official Server."
+                "You can only use this command in the Trainer District Server."
             )
             return
         await self.run_ranked_duel(ctx, opponent)
@@ -1030,6 +1030,10 @@ class Duel(commands.Cog):
         won = True
 
         if winner == 'forfeit':
+            await ctx.bot.db[0].execute(
+                "UPDATE users SET win_streak = 0 WHERE u_id = $1",
+                ctx.author.id
+            )
             embed = discord.Embed(
                 title="You Lost!",
                 description=(
@@ -1077,8 +1081,8 @@ class Duel(commands.Cog):
         creds *= min(battle_multi, 50)
         # Staff benefits instead of Patreon rewards
         if ctx.author.id in (
-            805365425184571414, #Kyla
-            330111417200017418  #SkiesGrey
+            330111417200017418,  #Kyla
+            366319068476866570,  #Cgrubb
         ): 
             creds = (creds * .50) + creds
 
@@ -1089,6 +1093,10 @@ class Duel(commands.Cog):
                     "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                     creds,
                     ctx.author.id,
+                )
+                await pconn.execute(
+                    "UPDATE users SET win_streak = 0 WHERE u_id = $1",
+                    ctx.author.id
                 )
                 party_msg = ""
             else:
@@ -1121,14 +1129,14 @@ class Duel(commands.Cog):
                         exp,
                         poke.id,
                     )
-                    await pconn.execute(
-                        "UPDATE users SET win_streak = win_streak + 1 WHERE u_id = $1",
-                        ctx.author.id
-                    )
-                    await pconn.execute(
-                        f"UPDATE achievements SET ai_single_wins = ai_single_wins + 1 WHERE u_id = $1",
-                        ctx.author.id
-                    )
+                await pconn.execute(
+                    "UPDATE users SET win_streak = win_streak + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
+                await pconn.execute(
+                    f"UPDATE achievements SET ai_single_wins = ai_single_wins + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
 
         embed.add_field(
             name="Rewards",
@@ -1150,16 +1158,18 @@ class Duel(commands.Cog):
     #Player VS NPC Party Duel
     async def run_npc_party(self, ctx, npc, user_data):
         """Creates and runs a party duel."""
-        battle_type = "party duel"
-        patreon = await ctx.bot.patreon_tier(ctx.author.id) 
-        if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") or ctx.guild.id != 998128574898896906:
-            await ctx.send("Coming soon!")
-            return
+        #patreon = await ctx.bot.patreon_tier(ctx.author.id) 
+        # patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") or ctx.guild.id != 998128574898896906:
+            #await ctx.send("Coming soon!")
+            #return
 
         async with ctx.bot.db[0].acquire() as pconn:
             user_data = await pconn.fetchrow(
                 "SELECT region, win_streak, party, exp_share FROM users WHERE u_id = $1",
                 ctx.author.id,
+            )
+            battle_multi = await pconn.fetchval(
+                "SELECT battle_multiplier FROM account_bound"
             )
             if user_data is None:
                 await ctx.send(
@@ -1220,9 +1230,12 @@ class Duel(commands.Cog):
                 #Pull data from MongoDB
                 form_info = await self.bot.db[1].forms.find_one({"identifier": pname})
                 pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
-                if pokemon_info['generation_id'] > leader_data['generation']:
-                    await ctx.send(f"Sorry Trainer, your {pname.title()} doesn't match the generation of this Gym Leader!")
-                    return
+                try:
+                    if pokemon_info['generation_id'] > leader_data['generation']:
+                        await ctx.send(f"Sorry Trainer, your {pname.title()} doesn't match the generation of this Gym Leader!")
+                        return
+                except TypeError:
+                    ctx.bot.logger.info(f"POKE ERRORED: {pokemon_info}")
 
             raw1 = list(filter(lambda e: e["pokname"] != "Egg", raw1))
             raw1.sort(key=lambda e: party1.index(e["id"]))
@@ -1266,22 +1279,34 @@ class Duel(commands.Cog):
         #preview_view.stop()
 
         winner = await self.wrapped_run(battle)
-
-        if not winner.is_human():
-            #Player lost, set win streak to 0
-            async with ctx.bot.db[0].acquire() as pconn:
+       
+        # Grant credits & xp
+        creds = random.randint(500, 2500)
+        creds *= min(battle_multi, 50)
+        creds_msg = f"You received **{creds} credits** for winning the duel!\n\n"
+        desc = ""
+        async with ctx.bot.db[0].acquire() as pconn:
+            #Win Streak
+            if not winner.is_human():
                 await pconn.execute(
                     "UPDATE users SET win_streak = 0 WHERE u_id = $1",
                     ctx.author.id
                 )
-            return
-        
-        # Grant credits & xp
-        creds = random.randint(500, 2500)
-        #creds *= min(battle_multi, 50)
-        creds_msg = f"You received **{creds} credits** for winning the duel!\n\n"
-        desc = ""
-        async with ctx.bot.db[0].acquire() as pconn:
+                embed = discord.Embed(
+                    title="You Lost!",
+                    description=(
+                        "Your win streak has been reset!\n"
+                        "No credit gain due to not hitting the 5 turn minimum!"
+                    ),
+                )
+                await ctx.send(embed=embed)
+                return
+            else:
+                await pconn.execute(
+                    "UPDATE users SET win_streak = win_streak + 1 WHERE u_id = $1",
+                    ctx.author.id
+                )
+
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1, win_streak = win_streak + 1 WHERE u_id = $2",
                 creds,

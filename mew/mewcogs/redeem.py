@@ -610,9 +610,6 @@ class Redeem(commands.Cog):
     async def capsules(self, ctx):
         """Redeem 5 nature capsules"""
         async with ctx.bot.db[0].acquire() as pconn:
-            await self.bot.commondb.add_bag_item(
-                ctx.author.id, "nature_capsules", 5, True
-            )
             try:
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems - 1 WHERE u_id = $1",
@@ -621,6 +618,9 @@ class Redeem(commands.Cog):
             except:
                 await ctx.send("You do not have enough redeems")
                 return
+            await self.bot.commondb.add_bag_item(
+                ctx.author.id, "nature_capsules", 5, True
+            )
             await ctx.send("You have Successfully purchased 5 Nature Capsules")
 
     @tradelock

@@ -722,12 +722,12 @@ class TradeMainView(discord.ui.View):
                 return
 
             # Begin the trade
-            
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                 self.credits.p2, # Credits p2 is giving to p1
                 self.p1,
             )
+            receiver_credits = self.credits.p2
 
             # Remove credits from p2
             await pconn.execute(
@@ -741,6 +741,7 @@ class TradeMainView(discord.ui.View):
                 self.credits.p1,  # Credits p1 is giving to p2
                 self.p2,
             )
+            sender_credits = self.credits.p1
 
             # Remove credits from p1
             await pconn.execute(
@@ -750,6 +751,7 @@ class TradeMainView(discord.ui.View):
             )
 
             # Pokemon
+            sender_pokemon = []
             for poke in TradeList(self.pokes).iter(self.p1):
                 # Remove pokemon from player 1 and give to player 2
                 await pconn.execute(
@@ -766,7 +768,9 @@ class TradeMainView(discord.ui.View):
                     "UPDATE pokes SET market_enlist = false WHERE id = $1",
                     poke.poke_id,
                 )
+                sender_pokemon.append(poke.poke_id)
 
+            receiver_pokemon = []
             for poke in TradeList(self.pokes).iter(self.p2):
                 # Remove pokemon from player 2 and give to player 1
                 await pconn.execute(
@@ -783,6 +787,23 @@ class TradeMainView(discord.ui.View):
                     "UPDATE pokes SET market_enlist = false WHERE id = $1",
                     poke.poke_id,
                 )
+                receiver_pokemon.append(poke.poke_id)
+
+            #Log tradebefore closing database
+            #await interaction.client.get_partial_messageable(998559833873711204).send(
+                #f"__**Gift Credits Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {interaction.user.name} - ``{interaction.user.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n"
+            #)
+            await pconn.execute(
+                "INSERT INTO trade_logs (sender, receiver, sender_credits, receiver_credits, sender_pokes, receiver_pokes, command, time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ",
+                self.p1,
+                self.p2,
+                sender_credits,
+                receiver_credits,
+                sender_pokemon,
+                receiver_pokemon,
+                "trade",
+                datetime.now(),
+            )
 
             # Just in case
             await self.unlock_trade()
@@ -883,7 +904,7 @@ class Trade(commands.Cog):
             await ctx.send("You don't have that many redeems!")
             return
         if not await ConfirmView(
-            ctx, f"Are you sure you want to give {val} redeems to {user.name}?"
+            ctx, f"Are you sure you want to give `{val}` redeems to {user.mention}?"
         ).wait():
             await ctx.send("Trade Canceled")
             return
@@ -905,7 +926,7 @@ class Trade(commands.Cog):
                 val,
                 user.id,
             )
-            await ctx.send(f"{ctx.author.name} has given {user.name} {val} redeems.")
+            await ctx.send(f"{ctx.author.name} has given {user.name} `{val}` redeems.")
             await ctx.bot.get_partial_messageable(998559833873711204).send(
                 f"__**Gift Redeem Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has given \n{user.name} - `{user.id}`\n```{val} redeems```\n"
             )
@@ -966,7 +987,7 @@ class Trade(commands.Cog):
             await ctx.send("You don't have that many credits!")
             return
         if not await ConfirmView(
-            ctx, f"Are you sure you want to give {val} credits to {user.name}?"
+            ctx, f"Are you sure you want to give `{val}` credits to {user.mention}?"
         ).wait():
             await ctx.send("Trade Canceled")
             return
@@ -988,7 +1009,7 @@ class Trade(commands.Cog):
                 val,
                 user.id,
             )
-            await ctx.send(f"{ctx.author.name} has given {user.name} {val} credits.")
+            await ctx.send(f"{ctx.author.name} has given {user.name} `{val}` credits.")
             await ctx.bot.get_partial_messageable(998559833873711204).send(
                 f"__**Gift Credits Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {ctx.author.name} - ``{ctx.author.id}`` has gifted \n{user.name} - `{user.id}`\n```{val} credits```\n"
             )
@@ -1066,7 +1087,7 @@ class Trade(commands.Cog):
             return
 
         if not await ConfirmView(
-            ctx, f"Are you sure you want to give a {name} to {user.name}?"
+            ctx, f"Are you sure you want to give a {name} to {user.mention}?"
         ).wait():
             await ctx.send("Trade Canceled")
             return

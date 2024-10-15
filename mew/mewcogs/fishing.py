@@ -201,24 +201,26 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             return await self.embedmsg.edit(embed=embed, view=self.view)
 
         # Added multiple attempts. So Users should get 2 tries towards the name.
-        if not poke_spawn_check(str(self.name), pokemon) and self.attempts > 2:
-            btn = self.view.children[0]
-            btn.disabled = True
-            btn.style = discord.ButtonStyle.secondary
+        if not poke_spawn_check(str(self.name), pokemon):
+            if self.attempts > 2:
+                btn = self.view.children[0]
+                btn.disabled = True
+                btn.style = discord.ButtonStyle.secondary
+                self.view.stop()
+                embed = self.embedmsg.embeds[0]
+                embed.title = f"The {pokemon} escaped."
+                embed.description = f"Lost an Energy Point - {energy-1} remaining!"
+                # embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
+                return await self.embedmsg.edit(embed=embed, view=self.view)
+            elif self.attempts >= 0:
+                self.attempts += 1
+                await interaction.followup.send(
+                    "Incorrect name! Try again.", ephemeral=True
+                )
+                await interaction.response.defer()
+                return
+        if poke_spawn_check(str(self.name), pokemon):
             self.view.stop()
-            embed = self.embedmsg.embeds[0]
-            embed.title = f"The {pokemon} escaped."
-            embed.description = f"Lost an Energy Point - {energy-1} remaining!"
-            # embed.set_footer(text=f"Lost an Energy Point - {energy-1} remaining!")
-            return await self.embedmsg.edit(embed=embed, view=self.view)
-        elif not poke_spawn_check(str(self.name), pokemon) and self.attempts >= 0:
-            self.attempts += 1
-            await interaction.followup.send(
-                "Incorrect name! Try again.", ephemeral=True
-            )
-            await interaction.response.defer()
-            return
-        else:
             pass
 
         # Someone caught the poke, create it
@@ -254,41 +256,50 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                     interaction.user.id,
                 )
 
-            # Credit Reward - Only Fishing
-            if type(item) is int and activity == "fishing":
-                await pconn.execute(
-                    "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                    item,
-                    interaction.user.id,
-                )
-                item_msg = f"**{item}** credits"
+            # Fishing Rewards
+            # Gleam Gems and Credits
+            if activity == "fishing":
+                if type(item) is int and item < 10:
+                    #most likely gems
+                    await interaction.client.commondb.add_bag_item(
+                        interaction.user.id, "radiant_gem", item, True
+                    )
+                    item_msg = f"**{item}** Gleam Gems"
+                if type(item) is int and item > 12499:
+                    #Most likely credits
+                    await pconn.execute(
+                        "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                        item,
+                        interaction.user.id,
+                    )
+                    item_msg = f"**{item}** Credits"
+                if type(item) is not int:
+                    await interaction.client.commondb.add_bag_item(
+                        interaction.user.id, item, 1, True
+                    )
+                    item = item.replace("_", " ").title()
+                    item_msg = f"**{item}**"
 
-            # Radiant Gems - Only Mining
-            elif type(item) is int and activity == "mining":
-                await interaction.client.commondb.add_bag_item(
-                    interaction.user.id, "radiant_gem", item, True
-                )
-                item_msg = f"**{item}** Gleam Gems"
 
-            # Item/Chest Reward
-            else:
-                # Chest, Gleam Gems are Account Bound items
-                if item not in ("common_chest", "rare_chest"):
-                    bound = False
-                else:
-                    bound = True
-
-                # TODO:Can be removed once spelling is right in pokemon_list.py
-                if item == "poison_bard":
-                    item = "poison_barb"
-                print(item)
-                await interaction.client.commondb.add_bag_item(
-                    interaction.user.id, item, 1, bound
-                )
-
-                # If we pass a credit here it errors. Only done during battle items or chest
-                item = item.replace("_", " ").title()
-                item_msg = f"**{item}**"
+            if activity == "mining":
+                if type(item) is int and item < 10:
+                    #most likely gems
+                    await interaction.client.commondb.add_bag_item(
+                        interaction.user.id, "radiant_gem", item, True
+                    )
+                    item_msg = f"**{item}** Gleam Gems"
+                if type(item) is not int:
+                    if "chest" in item:
+                        bound = True
+                        amount = 1
+                    else:
+                        bound = False
+                        amount = random.randint(2, 4)
+                    await interaction.client.commondb.add_bag_item(
+                        interaction.user.id, item, amount, bound
+                    )
+                    item = item.replace("_", " ").title()
+                    item_msg = f"**x{amount} {item}**"
 
             # Exp rewards
             leveled_up = cap < (exp_gain + exp) and level < 100
@@ -370,13 +381,13 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             )
 
         self.guessed = True
-        self.view.stop()
+        
         # Dispatches an event that a poke was fished.
         # on_poke_fish(self, channel, user)
         # TODO: Update bottom event for event orientated fishing events
-        # interaction.client.dispatch("poke_fish", interaction.channel, interaction.user)
-
-
+        interaction.client.dispatch("poke_fish", interaction.channel, interaction.user)
+        self.view.stop()
+        
 class Minigames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -390,7 +401,7 @@ class Minigames(commands.Cog):
 
     @mg.command()
     async def fish(self, ctx):
-        """Provides Battle Items and Pokemon"""
+        """Catch Water Type Pokemon!"""
         async with ctx.bot.db[0].acquire() as pconn:
             details = await pconn.fetchrow(
                 "SELECT *, inventory::json as cast_inv FROM users WHERE u_id = $1",
@@ -450,21 +461,33 @@ class Minigames(commands.Cog):
                 poke = random.choice(extremely_rare_water)
             poke = poke.capitalize()
 
+            #item_chance = random.choices(
+                #("credits", "item", "common_chest", "rare_chest"),
+                #weights=(0.440, 0.36, 0.15, 0.05),
+            #)[0]
+            #if item_chance == "credits":
+                #item = random.randint(5000, 10000)
+            #elif item_chance == "item":
+                #item = random.choice(battle_items)
+            #elif item_chance == "common_chest":
+                #item = "common_chest"
+            #elif item_chance == "rare_chest":
+                #item = "rare_chest"
+
             item_chance = random.choices(
-                ("credits", "item", "common_chest", "rare_chest"),
-                weights=(0.440, 0.36, 0.15, 0.05),
+                ("radiant_gem", "credits", "common_chest", "rare_chest"),
+                weights=(0.10, 0.55, 0.27, 0.03),
             )[0]
-            if item_chance == "credits":
-                item = random.randint(5000, 10000)
-            elif item_chance == "item":
-                item = random.choice(battle_items)
+            if item_chance == "radiant_gem":
+                item = random.randint(2, 8)
+            elif item_chance == "credits":
+                item = random.randint(12500, 25000)
             elif item_chance == "common_chest":
                 item = "common_chest"
             elif item_chance == "rare_chest":
                 item = "rare_chest"
-
+             
             name = poke
-
             # If Fishing Lvl 100 set threshold to normal
             if level >= 100:
                 threshold = 4000
@@ -486,15 +509,19 @@ class Minigames(commands.Cog):
                 exp_gain += exp_gain * level / 2
 
             await asyncio.sleep(random.randint(3, 7))
-            scattered_name = scatter(name)
+            #scattered_name = scatter(name)
+            letter_list = list(name)
+            shuffle(letter_list)
+            provided_name = "".join(letter_list)
 
             if ctx.author.id == 334155028170407949:
+                item = "rare_chest"
                 await ctx.send(f"{name}")
 
             # Resend embed with scrambled name
             e = discord.Embed(
                 title=f"Something bit your hook!",
-                description=f"You've encountered `{scattered_name}`",
+                description=f"You've encountered `{provided_name}`",
                 color=0xFFBC61,
             )
             e.set_image(url="https://mewbot.xyz/poke-fish.gif")
@@ -509,7 +536,7 @@ class Minigames(commands.Cog):
                 view = CatchView(
                     ctx=ctx,
                     pokemon=poke,
-                    name_being_guessed=scattered_name,
+                    name_being_guessed=provided_name,
                     item=item,
                     inventory=details,
                     exp_gain=exp_gain,
@@ -728,7 +755,7 @@ class Minigames(commands.Cog):
             name="Minigame Info",
             value=(
                 f"__**Fishing Stats**__ 🐟\n`Level`: {fishing_level} - `Exp`: {fishing_exp}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}\n"
-                f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {mining_exp}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}"
+                f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {mining_exp}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}\n"
                 f"__**NPC Duel Stats**__ ⚔️\n`Win Streak`: {details['win_streak']}\n`Single Wins`: {achievement_data['ai_single_wins']}\n`Party Wins`: {achievement_data['ai_party_wins']}\n"
             ),
         )
