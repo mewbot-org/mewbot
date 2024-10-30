@@ -549,17 +549,20 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Bounsweet",
-            "Feebas",
-            "Sandygast",
-            "Solrock",
-            "Snorlax",
-            "Xerneas",
+            "Mew",
             "Ditto",
-            "Corsola",
-            "Goldeen",
-            "Nihilego",
-            "Happiny"
+            "Absol", "Absol-mega",
+            "Snivy", "Servine", "Serperior",
+            "Fennekin", "Braixen", "Delphox",
+            "Lotad", "Lombre", "Ludicolo",
+            "Spinda", "Lunatone",
+            "Luvdisc",
+            "Pidove", "Tranquill", "Unfezant",
+            "Comfey",
+            "Buzzwole", 
+            "Pineco", "Forretress",
+            "Azurill", "Marill", "Azumarill",
+            "Heracross", "Heracross-mega"
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -3287,6 +3290,20 @@ class Events(commands.Cog):
             f"The pokemon dropped some potions!\nUse command `/halloween inventory` to view what you have collected."
         )
     
+    
+    def rand_pumpkin_title(self):
+        return random.choice(
+            [
+                "🎃 A wild pumpkin has appeared! Grab it before it disappears!", "Look! A spooky pumpkin awaits... Will you bag it for later?", "👻 A mysterious pumpkin appears in the shadows... Bag it now or miss out!"
+            ]
+        )
+    
+    def rand_bag_text(self):
+        return random.choice(
+            [
+                "You bagged the pumpkin! 🎃 Wonder what’s inside…", "The pumpkin is safely stowed away for later. Who knows what awaits inside?", "🎃 Pumpkin bagged! You can open it when you’re ready for a treat... or trick!"
+            ]
+        )
     async def spawn_pumpkin(self, channel, user):
         # Possible rewards and trick message
         PUMPKIN_REWARDS = ["a Rare Candy 🍬", "a Ghost-type Pokémon encounter 👻", "some Stardust ✨", "a Mystery Box 🎁"]
@@ -3296,7 +3313,7 @@ class Events(commands.Cog):
 
         # Embed message for the pumpkin challenge
         e = discord.Embed(
-            title="🎃 A Mysterious Pumpkin Appears!",
+            title=self.rand_pumpkin_title(),,
             description="Press the right button quick! You only have a couple seconds to receive a massive treat!",
             color=discord.Color.orange()
         )
@@ -3310,7 +3327,8 @@ class Events(commands.Cog):
             if index == correct_button_index:
                 reward = random.choice(PUMPKIN_REWARDS)
                 e.title = "🎉 You found the treat!"
-                e.description = f"Inside the pumpkin, you found {reward}!"
+                e.description = self.rand_bag_text()
+                await self.give_pumpkin(interaction.user, 1)
                 await interaction.response.edit_message(embed=e, view=None)
             else:
                 e.title = "🎃 Wrong pumpkin!"
@@ -3321,7 +3339,7 @@ class Events(commands.Cog):
         for i in range(9):
             # Use 🎃 or 👻 emoji for each button
             button = discord.ui.Button(label="", emoji="🎃" if i % 2 == 0 else "👻", style=discord.ButtonStyle.secondary if i % 2 == 0 else discord.ButtonStyle.primary)
-            button.callback = lambda interaction, idx=i: asyncio.create_task(button_callback(interaction, idx))
+            button.callback = lambda interaction, idx=i: button_callback(interaction, idx)
             view.add_item(button)
             # Send the initial message with pumpkin challenge
         msg = await channel.send(embed=e, view=view)
@@ -3329,32 +3347,26 @@ class Events(commands.Cog):
         interaction: discord.Interaction = await self.bot.wait_for(
                 "button_click",
                 check=lambda i: i.message.id == msg.id,
+                timeout=5
             )
-
-
-        # Wait for 2 seconds; if timeout occurs, show the "trick" message
-        await view.wait()
         
         if not view.is_finished():
             e.title = "🎃 Time's up!"
             e.description = TRICK_MESSAGE
             await msg.edit(embed=e, view=None)
 
-    async def give_scary_mask(self, channel, user):
-        """Gives jack-o-laterns to the provided user."""
+    async def give_pumpkin(self, user, amount):
+        """Gives pumpkins to the provided user."""
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "INSERT INTO halloween (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
                 user.id,
             )
             await pconn.execute(
-                "UPDATE halloween SET pumpkin = pumpkin + $1 WHERE u_id = $2",
-                random.randint(1, 2),
+                "UPDATE events_new SET pumpkin = pumpkin + $1 WHERE u_id = $2",
+                amount,
                 user.id,
             )
-        await channel.send(
-            f"The pokemon dropped a scary mask!\nUse command `/halloween inventory` to view what you have collected."
-        )
 
     async def get_ghosts(self):
         data = await self.bot.db[1].ptypes.find({"types": 8}).to_list(None)
@@ -3558,9 +3570,9 @@ class Events(commands.Cog):
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
         if self.HALLOWEEN_DROPS:
-            if not random.randrange(100):
-                await self.give_scary_mask(channel, user)
-            elif not random.randrange(15):
+            # if not random.randrange(100):
+            #     await self.give_scary_mask(channel, user)
+            if not random.randrange(15):
                 await self.give_bone(channel, user)
             elif not random.randrange(4):
                 await self.give_candy(channel, user)
@@ -3631,7 +3643,12 @@ class ChristmasSpawn(discord.ui.View):
                 content="This battle has already ended!", ephemeral=True
             )
             return False
-
+    def rand_spawn_title(self):
+        return random.choice(
+            [
+                f"👻 A ghostly aura fills the air... a wild {self.poke} has appeared!", f"🎃 Under the eerie moonlight, you encounter a spooky {self.poke} lurking in the shadows!", f"A chilling wind blows, and suddenly, {self.poke} emerges from the darkness!", f"✨ The Halloween spirit is strong... a mysterious {self.poke} is here for a limited time!", f"You feel an icy chill as {self.poke}] appears! Will you be brave enough to catch it?"
+            ]
+        )
     async def start(self):
         # This should stop from more than one raid appearing
         # in any server that's not Official
@@ -3652,8 +3669,8 @@ class ChristmasSpawn(discord.ui.View):
         else:
             small_images = guild["small_images"]
         self.embed = discord.Embed(
-            title="A Spooky Pokémon Appears! 🧟 👻",
-            description="Join the battle to take it down.\nThe more damage you do the more seashells 🐚 you earn!",
+            title=self.rand_spawn_title(),
+            description="Join the battle to take it down.\nThe more damage you do the more <:mewbot_candy:1036332371038982264> you earn!",
             color=0x0084FD,
         )
         self.embed.add_field(name="Take Action", value="Click the Button to join!")
@@ -3832,7 +3849,7 @@ class ChristmasSpawn(discord.ui.View):
 
         self.max_hp = int(len(self.registered) * 1.25)
         self.embed = discord.Embed(
-            title="A Spooky Pokémon has spawned!🧟👻",
+            title=self.rand_spawn_title(),
             description="Attack it with everything you've got!",
             color=0x0084FD,
         )
@@ -3904,7 +3921,7 @@ class ChristmasSpawn(discord.ui.View):
 
         self.embed = discord.Embed(
             title=f"The Spooky Pokémon was defeated!🧟👻",
-            description=f"Attackers have been awarded. A total of {total_seashells} 🐚 was earned!",
+            description=f"Attackers have been awarded. A total of {total_seashells} <:mewbot_candy:1036332371038982264> was earned!",
             color=0x0084FD,
         )
         if small_images:
