@@ -172,12 +172,27 @@ class Move():
             # During rain, this move does not need to charge
             if self.effect == 502:
                 if battle.weather.get() not in ("rain", "h-rain"):
-                    attacker.locked_move = LockedMove(self, 2)
+                    if attacker.held_item == "power-herb":
+                        attacker.held_item.use()
+                        msg += f"{attacker.name}'s Power Herb charged the move!\n"
+                    else:
+                        attacker.locked_move = LockedMove(self, 2)
                 else:
                     # If this move isn't charging, the spatk increase has to happen manually
                     msg += attacker.append_spatk(1, attacker=attacker, move=self)
             if self.effect in (40, 76, 81, 146, 156, 256, 257, 264, 273, 332, 333, 366, 451):
-                attacker.locked_move = LockedMove(self, 2)
+                if attacker.held_item == "power-herb":
+                    # These are all effects that trigger even with power herb
+                    if self.effect == 146:
+                        msg += attacker.append_defense(1, attacker=attacker, move=self)
+                    elif self.effect == 451:
+                        msg += attacker.append_spatk(1, attacker=attacker, move=self)
+                    # Don't remove item so it can be checked in shadow force
+                    if self.effect != 273:
+                        attacker.held_item.use()
+                    msg += f"{attacker.name}'s Power Herb charged the move!\n"
+                else:
+                    attacker.locked_move = LockedMove(self, 2)
             # 3 turn moves
             if self.effect == 27:
                 attacker.locked_move = LockedMove(self, 3)
@@ -208,7 +223,10 @@ class Move():
             if self.effect in (156, 264):
                 attacker.fly = True
             if self.effect == 273:
-                attacker.shadow_force = True
+                if attacker.held_item == "power-herb":
+                    attacker.held_item.use()
+                else:
+                    attacker.shadow_force = True
         
         # Early exits for moves that hit a certain turn when it is not that turn
         # Turn 1 hit moves

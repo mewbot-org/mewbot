@@ -2297,7 +2297,7 @@ class DuelPokemon():
         return random.choice(moves)
     
     @classmethod
-    async def create(cls, ctx, raw_data: dict):
+    async def create(cls, ctx, raw_data: dict, npc: bool = False):
         """Creates a new DuelPokemon object using the raw data provided."""
         pn = raw_data["pokname"]
         nick = raw_data["poknick"]
@@ -2313,12 +2313,15 @@ class DuelPokemon():
         spaev = raw_data["spatkev"]
         spdev = raw_data["spdefev"]
         speedev = raw_data["speedev"]
-        plevel = raw_data["pokelevel"]
+        if npc:
+            plevel = 50
+        else:
+            plevel = raw_data["pokelevel"]
         shiny = raw_data["shiny"]
         radiant = raw_data["radiant"]
         skin = raw_data["skin"]
         id = raw_data["id"]
-        hitem = raw_data["hitem"]
+        hitem = raw_data["hitem"].replace("_", "-")
         happiness = raw_data["happiness"]
         moves = raw_data["moves"]
         ab_index = raw_data["ability_index"]

@@ -30,6 +30,7 @@ YELLOW = "\N{LARGE YELLOW CIRCLE}"
 RED = "\N{LARGE RED CIRCLE}"
 
 
+
 class EvalContext:
     def __init__(self, interaction):
         self.interaction = interaction

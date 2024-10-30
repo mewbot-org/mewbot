@@ -1020,7 +1020,7 @@ class Events(commands.Cog):
     async def summer(self, ctx: commands.Context):
         ...
 
-    @summer.command(name="info")
+    # @summer.command(name="info")
     async def summer_info(self, ctx):
         "Details about our Summer Event 2024."
         embed = discord.Embed(
@@ -1055,7 +1055,7 @@ class Events(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @summer.command(name="items")
+    # @summer.command(name="items")
     async def summer_items(self, ctx):
         """Check your summer inventory."""
         #if ctx.author.id != 334155028170407949:
@@ -1085,7 +1085,7 @@ class Events(commands.Cog):
         embed.set_footer(text="Remember, touch grass!")
         await ctx.send(embed=embed)
 
-    @summer.command(name="shop")
+    # @summer.command(name="shop")
     async def summer_shop(self, ctx):
         """Check the summer shop."""
         #if ctx.author.id != 334155028170407949:
@@ -1137,7 +1137,7 @@ class Events(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @summer.command(name="buy")
+    # @summer.command(name="buy")
     async def summer_buy(
         self, 
         ctx, 
@@ -1452,7 +1452,7 @@ class Events(commands.Cog):
                     f"You have purchased {new_limit} <:shadow:1010559067590246410>, the limit is 10 per day."
                 )
 
-    @summer.command(name="wb")
+    # @summer.command(name="wb")
     async def water_balloon(self, ctx, amount:int, player:discord.Member):
         "Throw a water balloon at another member."
         if not self.SUMMER_COMMANDS:
@@ -1788,12 +1788,12 @@ class Events(commands.Cog):
                     f"You got a {pokemon} valentine skin! Apply it with `/skin apply`."
                 )
 
-    #@commands.hybrid_group()
+    @commands.hybrid_group()
     async def halloween(self, ctx):
         """Halloween commands."""
         pass
 
-    #@halloween.command(name="buy")
+    @halloween.command(name="buy")
     async def halloween_buy(self, ctx, option: int):
         if not self.HALLOWEEN_COMMANDS:
             await ctx.send("This command can only be used during the halloween season!")
@@ -1860,7 +1860,7 @@ class Events(commands.Cog):
                 return
             # Everything from this point below uses Potions as currency
             # Checks balance per price as below.
-            price = [100, 8, 5, 25, 80][option - 2]
+            price = [200, 8, 5, 25, 80][option - 2]
             if bal["potion"] < price:
                 await ctx.send(
                     "You don't have enough <:mewbot_potion:1036332369076043776> for that!"
@@ -1878,7 +1878,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"Successfully bought 1 Scary for {price} <:mewbot_potion:1036332369076043776>."
+                    f"Successfully bought 1 <:mewbot_mask:1036332369818431580> for {price} <:mewbot_potion:1036332369076043776>."
                 )
             # Spooky Chest
             if option == 4:
@@ -1911,7 +1911,7 @@ class Events(commands.Cog):
                     f"Successfully bought a Horrific Chest for {price} <:mewbot_potion:1036332369076043776>."
                 )
 
-    #@halloween.command(name="inventory")
+    @halloween.command(name="inventory")
     async def halloween_inventory(self, ctx):
         """Check your halloween inventory."""
         if not self.HALLOWEEN_COMMANDS:
@@ -1954,7 +1954,7 @@ class Events(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@halloween.command(name="shop")
+    @halloween.command(name="shop")
     async def halloween_shop(self, ctx):
         """Check the halloween shop."""
         if not self.HALLOWEEN_COMMANDS:
@@ -2018,8 +2018,9 @@ class Events(commands.Cog):
         # )
         embed.set_footer(text="Use /halloween inventory to check your stash!")
         await ctx.send(embed=embed)
-
-   # @halloween.command(name="open_spooky")
+        
+    
+    @halloween.command(name="open_spooky")
     async def open_spooky(self, ctx):
         """Open a spooky chest."""
         if not self.HALLOWEEN_COMMANDS:
@@ -2094,7 +2095,7 @@ class Events(commands.Cog):
         msg += f"You also received {candy} <:mewbot_candy:1036332371038982264>!\n"
         await ctx.send(msg)
 
-    #@halloween.command(name="open_fleshy")
+    @halloween.command(name="open_fleshy")
     async def open_fleshy(self, ctx):
         """Open a fleshy chest."""
         if not self.HALLOWEEN_COMMANDS:
@@ -2165,7 +2166,7 @@ class Events(commands.Cog):
         msg += f"You also received {potions} <:mewbot_potion:1036332369076043776>!\n"
         await ctx.send(msg)
 
-    #@halloween.command(name="open_horrific")
+    @halloween.command(name="open_horrific")
     async def open_horrific(self, ctx):
         """Open a horrific chest."""
         if not self.HALLOWEEN_COMMANDS:
@@ -2217,7 +2218,7 @@ class Events(commands.Cog):
                     pokemon = random.choice(self.HALLOWEEN_RADIANT)
                     boosted = True
                     msg = f"**Treat!** You received a Boosted Halloween **{pokemon}**!\n"
-                    skin = "halloween2023"
+                    skin = "halloween2024"
 
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin=skin, boosted=boosted
@@ -3285,6 +3286,59 @@ class Events(commands.Cog):
         await channel.send(
             f"The pokemon dropped some potions!\nUse command `/halloween inventory` to view what you have collected."
         )
+    
+    async def spawn_pumpkin(self, channel, user):
+        # Possible rewards and trick message
+        PUMPKIN_REWARDS = ["a Rare Candy 🍬", "a Ghost-type Pokémon encounter 👻", "some Stardust ✨", "a Mystery Box 🎁"]
+        TRICK_MESSAGE = "👻 You've been tricked! Better luck next time."
+        # Create a random position for the "correct" button
+        correct_button_index = random.randint(0, 8)
+
+        # Embed message for the pumpkin challenge
+        e = discord.Embed(
+            title="🎃 A Mysterious Pumpkin Appears!",
+            description="Press the right button quick! You only have a couple seconds to receive a massive treat!",
+            color=discord.Color.orange()
+        )
+        e.set_image(url="https://mewbot.xyz/img/pumpkin.jpg")  # Replace with Halloween image URL
+
+
+        view = discord.ui.View(timeout=5)
+        
+        # Callback function for each button
+        async def button_callback(interaction: discord.Interaction, index: int):
+            if index == correct_button_index:
+                reward = random.choice(PUMPKIN_REWARDS)
+                e.title = "🎉 You found the treat!"
+                e.description = f"Inside the pumpkin, you found {reward}!"
+                await interaction.response.edit_message(embed=e, view=None)
+            else:
+                e.title = "🎃 Wrong pumpkin!"
+                e.description = TRICK_MESSAGE
+                await interaction.response.edit_message(embed=e, view=None)
+
+        # Add buttons to the view
+        for i in range(9):
+            # Use 🎃 or 👻 emoji for each button
+            button = discord.ui.Button(label="", emoji="🎃" if i % 2 == 0 else "👻", style=discord.ButtonStyle.secondary if i % 2 == 0 else discord.ButtonStyle.primary)
+            button.callback = lambda interaction, idx=i: asyncio.create_task(button_callback(interaction, idx))
+            view.add_item(button)
+            # Send the initial message with pumpkin challenge
+        msg = await channel.send(embed=e, view=view)
+        
+        interaction: discord.Interaction = await self.bot.wait_for(
+                "button_click",
+                check=lambda i: i.message.id == msg.id,
+            )
+
+
+        # Wait for 2 seconds; if timeout occurs, show the "trick" message
+        await view.wait()
+        
+        if not view.is_finished():
+            e.title = "🎃 Time's up!"
+            e.description = TRICK_MESSAGE
+            await msg.edit(embed=e, view=None)
 
     async def give_scary_mask(self, channel, user):
         """Gives jack-o-laterns to the provided user."""
@@ -3533,8 +3587,7 @@ class Events(commands.Cog):
                 await self.give_candy(channel, user)
         # if not random.randrange(7):
         # await self.maybe_spawn_unown(channel)
-
-
+    
 class ChristmasSpawn(discord.ui.View):
     """A spawn embed for a christmas spawn."""
 
@@ -3591,7 +3644,7 @@ class ChristmasSpawn(discord.ui.View):
         extra_msg = ""
         pokeurl = (
             "http://mewbot.xyz/sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="summer2024")
+            + await get_file_name(self.poke, self.cog.bot, skin="halloween")
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -3599,7 +3652,7 @@ class ChristmasSpawn(discord.ui.View):
         else:
             small_images = guild["small_images"]
         self.embed = discord.Embed(
-            title="A Summer Pokémon Appears! 🏝️",
+            title="A Spooky Pokémon Appears! 🧟 👻",
             description="Join the battle to take it down.\nThe more damage you do the more seashells 🐚 you earn!",
             color=0x0084FD,
         )
@@ -3626,7 +3679,7 @@ class ChristmasSpawn(discord.ui.View):
 
         if not self.registered:
             embed = discord.Embed(
-                title="The Summer Pokémon ran away!",
+                title="The Spooky Pokémon ran away!",
                 color=0x0084FD,
             )
             if small_images:
@@ -3779,7 +3832,7 @@ class ChristmasSpawn(discord.ui.View):
 
         self.max_hp = int(len(self.registered) * 1.25)
         self.embed = discord.Embed(
-            title="A Summer Pokémon has spawned! 🏝️",
+            title="A Spooky Pokémon has spawned!🧟👻",
             description="Attack it with everything you've got!",
             color=0x0084FD,
         )
@@ -3800,7 +3853,7 @@ class ChristmasSpawn(discord.ui.View):
         hp = max(self.max_hp - sum(self.attacked.values()), 0)
         if hp > 0:
             self.embed = discord.Embed(
-                title="The Summer Pokémon got away! 🏝️",
+                title="The Spooky Pokémon tricked you and got away!🧟👻",
                 description="Catch more Pokémon to spawn another one.",
                 color=0x0084FD,
             )
@@ -3825,18 +3878,18 @@ class ChristmasSpawn(discord.ui.View):
                     attacker.id,
                 )
                 if damage == 2:
-                    amount = random.randint(9, 15)
+                    amount = 10
                     total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
                         amount,
                         attacker.id,
                     )
                 elif damage == 1:
-                    amount = random.randint(2, 8)
+                    amount = 5
                     total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
                         amount,
                         attacker.id,
                     )
@@ -3844,13 +3897,13 @@ class ChristmasSpawn(discord.ui.View):
                     amount = 1
                     total_seashells += amount
                     await pconn.execute(
-                        "UPDATE events_new SET seashells = seashells + $1 WHERE u_id = $2",
+                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
                         1,
                         attacker.id,
                     )
 
         self.embed = discord.Embed(
-            title=f"The Summer Pokémon was defeated! 🏝️",
+            title=f"The Spooky Pokémon was defeated!🧟👻",
             description=f"Attackers have been awarded. A total of {total_seashells} 🐚 was earned!",
             color=0x0084FD,
         )
@@ -3886,20 +3939,28 @@ class RaidMove(discord.ui.Button):
         if damage == 2:
             # "It's super effective! You will get a Large Present if the poke is defeated."
             # "It's super effective! You'll receive hearts if the poke is defeated!"
-            self.effective = (
-                f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
-            )
+            # self.effective = (
+                
+            #     f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
+            # )
+            self.effective = "It's Super Effective! You will get 10 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
+            
         elif damage == 1:
             # "It's not very effective... You will get a Small Present if the poke is defeated."
             # "It's not very effective... You'll receive hearts if the poke is defeated!"
-            self.effective = (
-                f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
-            )
+            # self.effective = (
+            #     f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
+            # )
+            self.effective = "It's not Very Effective... You will 5 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
+            
         else:
             # "It had no effect... You will only get Snowflakes if the poke is defeated."
             # "It had no effect... You'll receive hearts if the poke is defeated!"
+            # self.effective = (
+            #     f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
+            # )
             self.effective = (
-                f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
+                "It had No Effect... You will get a 1 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
             )
 
     async def callback(self, interaction):
