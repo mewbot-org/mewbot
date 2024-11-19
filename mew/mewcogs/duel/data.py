@@ -84,7 +84,9 @@ async def generate_main_battle_message(battle):
         color=0xFFB6C1,
     )
     if not battle.trainer2.is_human():
-        e.set_footer(text=f"Enemy ID: {battle.trainer2.current_pokemon.id} | Use buttons to see move info!")
+        e.set_footer(
+            text=f"Enemy ID: {battle.trainer2.current_pokemon.id} | Use buttons to see move info!"
+        )
     else:
         e.set_footer(text="Who Wins!?")
 

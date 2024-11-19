@@ -271,11 +271,13 @@ class Misc(commands.Cog):
         if self.bot.user.id == 519850436899897346:
             await self.bot.db[1].guilds.delete_one({"id": guild.id})
             owner = await self.bot.fetch_user(guild.owner_id)
-            await self.bot.owner.send(f'''
+            await self.bot.owner.send(
+                f"""
                              {
                                  owner.mention
                              } kicked mewbot
-                             ''')
+                             """
+            )
 
     @commands.hybrid_command()
     async def donate(self, ctx):
@@ -287,7 +289,7 @@ class Misc(commands.Cog):
             )
             return
         name = ctx.author.name
-        if " " in name: 
+        if " " in name:
             name = name.replace(" ", "")
         e = discord.Embed(title="Donate to the Bot Here!", color=0xFFB6C1)
         donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&notify_url=https://api.mewbot.xyz/paypal&business=idkusernames125@gmail.com&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&currency_code=USD&custom={ctx.author.id}"
@@ -299,7 +301,7 @@ class Misc(commands.Cog):
         e.add_field(name="Donation Link", value=f"[Donate Here!]({donation_url})\n")
         e.add_field(
             name="Patreon",
-            value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotos?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.",
+            value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotxyz?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.",
             inline=False,
         )
         e.set_footer(

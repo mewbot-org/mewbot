@@ -11,11 +11,11 @@ from mewcogs.market import (
     CRYSTAL_PATREON_SLOT_BONUS,
 )
 from mewutils.misc import (
-    get_pokemon_image, 
+    get_pokemon_image,
     get_badge_emoji,
     badge_pagify,
     ConfirmView,
-    SlashMenuView
+    SlashMenuView,
 )
 
 IMAGE_URLS = {
@@ -34,25 +34,27 @@ IMAGE_URLS = {
     "summer/Swimmerm": "https://lforebodingl.github.io/Kohaku-Images/trainers/swimmerm.png",
     "summer/Cyclist": "https://lforebodingl.github.io/Kohaku-Images/trainers/cyclist.png",
     "summer/Dancer": "https://lforebodingl.github.io/Kohaku-Images/trainers/dancer.png",
-    "dev/Ghetsis": "https://lforebodingl.github.io/Kohaku-Images/trainers/ghetsis.png"
+    "dev/Ghetsis": "https://lforebodingl.github.io/Kohaku-Images/trainers/ghetsis.png",
 }
 
 REGIONS = [
-    "kanto", 
-    "johto", 
-    "hoenn", 
-    "sinnoh", 
-    "unova", 
-    "kalos", 
-    "alola", 
-    "galar", 
+    "kanto",
+    "johto",
+    "hoenn",
+    "sinnoh",
+    "unova",
+    "kalos",
+    "alola",
+    "galar",
     "paldea",
-    "hisui"
+    "hisui",
 ]
+
 
 def calculate_breeding_multiplier(level):
     difference = 0.02
     return f"{round((1 + (level) * difference), 2)}x"
+
 
 def calculate_iv_multiplier(level):
     difference = 0.5
@@ -340,7 +342,10 @@ class ProfileView(discord.ui.View):
     # async def refresh(self, interaction, button):
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Chests", emoji="<:legend_chest:1103389711424294942>", row=1
+        style=discord.ButtonStyle.primary,
+        label="Chests",
+        emoji="<:legend_chest:1103389711424294942>",
+        row=1,
     )
     async def chests(self, interaction, button):
         await interaction.response.defer()
@@ -360,6 +365,7 @@ class ProfileView(discord.ui.View):
         legend = self.bound_data["legend_chest"]
         exalted = self.bound_data["exalted_chest"]
         art = self.bound_data["art_chest"]
+        pats = self.bound_data["pat_chest"]
         embed = discord.Embed(
             title=f"{interaction.user}'s Chests",
             description="Chests hold various rewards! From credits to Pokemon.",
@@ -378,7 +384,8 @@ class ProfileView(discord.ui.View):
         embed.add_field(
             name="Special Chests",
             value=(
-                f"<:exalted_chest:1103389973614436484> **Exalted**\nCount: `{exalted}`\n"
+                # f"<:exalted_chest:1103389973614436484> **Exalted**\nCount: `{exalted}`\n"
+                f"<:exalted_chest:1103389973614436484> **Pat**\nCount: `{pats}`\n"
                 f"<:art_chest:1103389240949215384> **Art**\nCount: `{art}`"
             ),
             inline=True,
@@ -395,7 +402,9 @@ class ProfileView(discord.ui.View):
                 value=f"Rare: {rare_count}/5\nMythic: {mythic_count}/5\nLegend: {legend_count}/5",
                 inline=True,
             )
-        embed.set_footer(text=f"{interaction.user.name}'s Profile | Exalted chest are no longer available.")
+        embed.set_footer(
+            text=f"{interaction.user.name}'s Profile | Exalted chest are no longer available."
+        )
         await interaction.followup.send(embed=embed, ephemeral=disabled)
 
     @discord.ui.button(
@@ -433,7 +442,7 @@ class ProfileView(discord.ui.View):
             marketlimitbonus = SILVER_PATREON_SLOT_BONUS
         elif patreon_status == "Yellow Tier":
             marketlimitbonus = YELLOW_PATREON_SLOT_BONUS
-        elif patreon_status == "Red Tier": 
+        elif patreon_status == "Red Tier":
             marketlimitbonus = PATREON_SLOT_BONUS
         else:
             marketlimitbonus = 0
@@ -473,7 +482,10 @@ class ProfileView(discord.ui.View):
         await interaction.followup.send(embed=embed, ephemeral=disabled)
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Shadow Hunts", emoji="<:shadow:1010559067590246410>", row=1,
+        style=discord.ButtonStyle.primary,
+        label="Shadow Hunts",
+        emoji="<:shadow:1010559067590246410>",
+        row=1,
     )
     async def shadow(self, interaction, button):
         await interaction.response.defer()
@@ -511,13 +523,16 @@ class ProfileView(discord.ui.View):
         await interaction.followup.send(embed=embed, ephemeral=disabled)
 
     @discord.ui.button(
-        style=discord.ButtonStyle.primary, label="Badges", emoji="<:volcano:1146142634918817813>", row=1
+        style=discord.ButtonStyle.primary,
+        label="Badges",
+        emoji="<:volcano:1146142634918817813>",
+        row=1,
     )
     async def badges(self, interaction, button):
-        #patreon = await interaction.client.patreon_tier(interaction.user.id)
-        #if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") and interaction.guild.id == 998128574898896906:
-            #await interaction.response.send_message("Coming soon!")
-            #return
+        # patreon = await interaction.client.patreon_tier(interaction.user.id)
+        # if patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") and interaction.guild.id == 998128574898896906:
+        # await interaction.response.send_message("Coming soon!")
+        # return
         GYM_LEADERS = await interaction.client.db[1].gym_leaders.find({}).to_list(None)
         leader_names = [t["identifier"] for t in GYM_LEADERS]
         column_names = [t["column"] for t in GYM_LEADERS]
@@ -531,11 +546,13 @@ class ProfileView(discord.ui.View):
             # Do Region Achievement First
             if count in [1, 9, 17, 25, 33, 41]:
                 if badge_data[region_name] == True:
-                    desc += f"🗺️ **{region_name.capitalize()}** Region Defeated: `True`\n\n"
+                    desc += (
+                        f"🗺️ **{region_name.capitalize()}** Region Defeated: `True`\n\n"
+                    )
                 else:
                     desc += f"🗺️ **{region_name.capitalize()}** Region Defeated: `False`\n\n"
 
-            # First pull badge name and emoji                    
+            # First pull badge name and emoji
             emoji, badge_name = get_badge_emoji(leader_name=column_names[idx])
             name = name.replace("_", " ").title()
 
@@ -544,18 +561,16 @@ class ProfileView(discord.ui.View):
                 second_emoji = "`Locked` 🔒"
             else:
                 second_emoji = "`Unlocked` 🔓"
-            #if count in [8, 18]:
-                #desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n\n"
-            #else:
-                #desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n"
+            # if count in [8, 18]:
+            # desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n\n"
+            # else:
+            # desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n"
             desc += f"**{name}**: {emoji} {badge_name.capitalize()} Badge  - {second_emoji}\n"
             count += 1
         footer_text = "Reach a 2 Win Streak in NPC Duels to challenge!"
-        embed = discord.Embed(
-            title="Gym Leader Badges!", color=3553600)
+        embed = discord.Embed(title="Gym Leader Badges!", color=3553600)
         pages = badge_pagify(desc, base_embed=embed, footer=footer_text)
         await SlashMenuView(interaction, pages).start()
-
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
@@ -653,8 +668,7 @@ class Profile(commands.Cog):
                 "SELECT * FROM account_bound WHERE u_id = $1", ctx.author.id
             )
             badge_data = await pconn.fetchrow(
-                "SELECT * FROM achievements WHERE u_id = $1",
-                ctx.author.id
+                "SELECT * FROM achievements WHERE u_id = $1", ctx.author.id
             )
         if bag_data is None:
             await ctx.send(
@@ -667,7 +681,11 @@ class Profile(commands.Cog):
             )
             return
         await ProfileView(
-            ctx, bound_data=bound_data, bag_data=bag_data, player_data=player_data, badge_data=badge_data
+            ctx,
+            bound_data=bound_data,
+            bag_data=bag_data,
+            player_data=player_data,
+            badge_data=badge_data,
         ).wait()
 
     @profile.command(name="visible")
@@ -680,20 +698,24 @@ class Profile(commands.Cog):
         await ctx.send("Toggled profile visibility!")
 
     @profile.command(name="image")
-    async def profile_image(self, ctx, category:Literal['xmas', 'halloween', 'summer', 'user', 'breeder'], name:str):
+    async def profile_image(
+        self,
+        ctx,
+        category: Literal["xmas", "halloween", "summer", "user", "breeder"],
+        name: str,
+    ):
         """For managing profile images"""
         name = name.capitalize()
         async with ctx.bot.db[0].acquire() as pconn:
             images_inv = await pconn.fetchval(
                 "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if images_inv is None:
                 await ctx.send("You have not started!")
                 return
             trainer_image = await pconn.fetchval(
-                "SELECT trainer_image FROM users WHERE u_id = $1", 
-                ctx.author.id
+                "SELECT trainer_image FROM users WHERE u_id = $1", ctx.author.id
             )
             if trainer_image is None:
                 await ctx.send("You have not started!")
@@ -708,30 +730,32 @@ class Profile(commands.Cog):
                 await ctx.send("Cancelling.")
                 return
 
-            #Add old one back to inventory
+            # Add old one back to inventory
             old_category, old_name = trainer_image.split("/")
             new_skin_name = f"{category}/{name}"
             if old_category not in images_inv:
                 images_inv[old_category] = {}
-            images_inv[old_category][old_name] = images_inv[old_category].get(old_name, 0) + 1
-            
-            #Then remove the new one
+            images_inv[old_category][old_name] = (
+                images_inv[old_category].get(old_name, 0) + 1
+            )
+
+            # Then remove the new one
             images_inv[category][name] -= 1
             await pconn.execute(
                 "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
                 images_inv,
-                ctx.author.id
+                ctx.author.id,
             )
             await pconn.execute(
                 "UPDATE users SET trainer_image = $1 WHERE u_id = $2",
                 new_skin_name,
-                ctx.author.id
+                ctx.author.id,
             )
 
-            await ctx.send(f"Successfully applied `{category}/{name}` skin to your profile page!")
+            await ctx.send(
+                f"Successfully applied `{category}/{name}` skin to your profile page!"
+            )
             return
-
-
 
 
 async def setup(bot):

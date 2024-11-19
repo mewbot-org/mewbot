@@ -657,7 +657,8 @@ class Bag(commands.Cog):
         "View trainer skins for profile"
         async with ctx.bot.db[0].acquire() as pconn:
             skins = await pconn.fetchval(
-                "SELECT trainer_images::json FROM account_bound WHERE u_id = $1", ctx.author.id
+                "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
             )
         if skins is None:
             await ctx.send("You have not started!\nStart with `/start` first.")
@@ -676,6 +677,7 @@ class Bag(commands.Cog):
         )
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bag(bot))

@@ -28,6 +28,7 @@ from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER, get_file_n
 import datetime
 import pokebase as pb
 
+
 def round_speed(speed):
     try:
         s = f"{speed:.0f}"
@@ -46,35 +47,37 @@ class MewBotAdmin(commands.Cog):
         for parameter in params.keys():
             msg += f"<{parameter}> "
         return msg
-    
+
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def dev(self, ctx):
         ...
-        
+
     @dev.command()
     async def upload_ms(self, ctx):
         """Upload Moveset"""
-        names  = [
-    "basculegion-male",
-    "walking-wake",
-    "iron-leaves",
-    "eternatus",
-    "eternamax"
-]
+        names = [
+            "basculegion-male",
+            "walking-wake",
+            "iron-leaves",
+            "eternatus",
+            "eternamax",
+        ]
 
         for pokemon_name in names:
             p = pb.pokemon(pokemon_name)
             movelist = [move.move.name for move in p.moves]
             await ctx.send(f"Registering movelist to {pokemon_name}")
-            await ctx.bot.mongo_update('pokemon_moves',
-                                    {'pokemon': pokemon_name.lower()},
-                                    {'moves': movelist})
-        
-        
+            await ctx.bot.mongo_update(
+                "pokemon_moves", {"pokemon": pokemon_name.lower()}, {"moves": movelist}
+            )
+
     @dev.command()
-    async def upload_pfile(self, ctx, pokemon_name: str, pre_evolution: str = None, gender_rate = 1):
-        template = {"id": 2,
+    async def upload_pfile(
+        self, ctx, pokemon_name: str, pre_evolution: str = None, gender_rate=1
+    ):
+        template = {
+            "id": 2,
             "identifier": pokemon_name.lower(),
             "generation_id": 9,
             "evolves_from_species_id": 1,
@@ -91,32 +94,36 @@ class MewBotAdmin(commands.Cog):
             "growth_rate_id": 4,
             "forms_switchable": 0,
             "order": 2,
-            "conquest_order": ""
+            "conquest_order": "",
         }
         await ctx.send(f"Uploading Pokemon File for {pokemon_name}")
         poke_info = await ctx.bot.mongo_find(
-                "forms",
-                {"identifier": pokemon_name},
-            )
+            "forms",
+            {"identifier": pokemon_name},
+        )
         if pre_evolution:
             pre_evo = await ctx.bot.mongo_find(
-                    "forms",
-                    {"identifier": pre_evolution},
-                )
-            
+                "forms",
+                {"identifier": pre_evolution},
+            )
+
             if not pre_evo:
                 await ctx.send("Invalid Pre Evolution.")
                 return
-            
+
             try:
-                template["evolution_chain_id"] = (await ctx.bot.mongo_find("pfile", {"identifier": pre_evo['identifier']}))["evolution_chain_id"]
+                template["evolution_chain_id"] = (
+                    await ctx.bot.mongo_find(
+                        "pfile", {"identifier": pre_evo["identifier"]}
+                    )
+                )["evolution_chain_id"]
             except:
                 ...
-                
+
             template["evolves_from_species_id"] = pre_evo["pokemon_id"]
             template["id"] = poke_info["pokemon_id"]
         await ctx.send(template)
-        
+
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
     async def admin(self, ctx):
@@ -407,13 +414,43 @@ class MewBotAdmin(commands.Cog):
                 "UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id
             )
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
-        
-        
+
+    async def upload_to_disk(self, name, bot, shiny, skin, image_url):
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.head(image_url) as response:
+                    if response.status != 200:
+                        raise ConnectionError
+            except Exception as e:
+                raise e
+
+        # Define the destination folder
+        destination_folder = "/home/dyroot/mewbot/shared/duel/sprites/"
+
+        # Create a new filename based on the parameters
+        # filename = f"{name}_{skin}_{'shiny' if shiny else 'normal'}.png"
+        filename = await get_file_name(name, bot, shiny=shiny, skin=skin)
+        full_destination_path = os.path.join(destination_folder, filename)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(image_url) as response:
+                if response.status == 200:
+                    with open(full_destination_path, "wb") as f:
+                        f.write(await response.read())
+                    return True
+                else:
+                    raise ConnectionError("Could not open image")
+
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def create_image(self, ctx, name: str, shiny: bool, *, skin: str = None, image_url: str):
+    async def create_image(
+        self, ctx, name: str, shiny: bool, *, skin: str = None, image_url: str
+    ):
         # Check if the URL is valid
+        await self.upload_to_disk(name, ctx.bot, shiny, skin, image_url)
+        await ctx.send(f"Uploaded... {skin} ... {name}")
+        return
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.head(image_url) as response:
@@ -425,14 +462,16 @@ class MewBotAdmin(commands.Cog):
                 return
 
         # Define the destination folder
-        destination_folder = '/home/dyroot/mewbot/shared/duel/sprites/'
+        destination_folder = "/home/dyroot/mewbot/shared/duel/sprites/"
 
         # Create a new filename based on the parameters
         # filename = f"{name}_{skin}_{'shiny' if shiny else 'normal'}.png"
         try:
-            filename = await get_file_name(name, ctx.bot, shiny = shiny, skin = skin)
+            filename = await get_file_name(name, ctx.bot, shiny=shiny, skin=skin)
         except:
-            await ctx.send(f"Invalid name ({name}) passed to mew/utils/misc.py get_file_name.")
+            await ctx.send(
+                f"Invalid name ({name}) passed to mew/utils/misc.py get_file_name."
+            )
 
         # Build the full destination path
         full_destination_path = os.path.join(destination_folder, filename)
@@ -442,47 +481,41 @@ class MewBotAdmin(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 async with session.get(image_url) as response:
                     if response.status == 200:
-                        with open(full_destination_path, 'wb') as f:
+                        with open(full_destination_path, "wb") as f:
                             f.write(await response.read())
-                        await ctx.send(f"Image '{filename}' has been successfully created and stored.")
+                        await ctx.send(
+                            f"Image '{filename}' has been successfully created and stored."
+                        )
                     else:
-                        await ctx.send(f"Failed to download the image: HTTP status {response.status}")
+                        await ctx.send(
+                            f"Failed to download the image: HTTP status {response.status}"
+                        )
         except Exception as e:
-            await ctx.send(f"An error occurred while downloading and saving the image: {e}")
+            await ctx.send(
+                f"An error occurred while downloading and saving the image: {e}"
+            )
 
-        
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def forcelearn(
-        self,
-        ctx,
-        *,
-        global_id: int,
-        slot: Literal[1, 2, 3, 4],
-        new_move: str
+        self, ctx, *, global_id: int, slot: Literal[1, 2, 3, 4], new_move: str
     ):
         """Force a move on a Pokemon"""
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE pokes SET moves[$1] = $2 WHERE id = $3",
                 slot,
-                new_move.lower().replace(' ', '-'),
-                global_id
+                new_move.lower().replace(" ", "-"),
+                global_id,
             )
             await ctx.send(":white_check_mark:")
+
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def createpoke(
-        self,
-        ctx,
-        *,
-        pokemon: str,
-        shiny: bool,
-        skin: str,
-        boosted: bool,
-        u_id: str
+        self, ctx, *, pokemon: str, shiny: bool, skin: str, boosted: bool, u_id: str
     ):
         """Creates a new poke and gives it to the author."""
         extras = ""
@@ -497,7 +530,7 @@ class MewBotAdmin(commands.Cog):
         else:
             u_id = int(u_id)
         pokemon = pokemon.replace(" ", "-").capitalize()
-        if skin == 'none':
+        if skin == "none":
             pokedata = await ctx.bot.commondb.create_poke(
                 ctx.bot, u_id, pokemon, shiny=shiny, boosted=boosted
             )
@@ -970,7 +1003,9 @@ class MewBotAdmin(commands.Cog):
     @check_mod()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def combine(self, ctx, user1: str, user2: str, tradelock:Literal['True', 'False']):
+    async def combine(
+        self, ctx, user1: str, user2: str, tradelock: Literal["True", "False"]
+    ):
         """ADMIN: Add two users pokes together, leaving user1 with all, and user2 with none."""
         u_id1, u_id2 = int(user1), int(user2)
         # def check(m):
@@ -1007,7 +1042,7 @@ class MewBotAdmin(commands.Cog):
                 )
                 user1.extend(user2)
                 user2 = []
-                if tradelock == 'True':
+                if tradelock == "True":
                     await pconn.execute(
                         "UPDATE pokes SET tradable = False WHERE id IN $1", u_id2
                     )
@@ -1060,7 +1095,7 @@ class MewBotAdmin(commands.Cog):
         fishing_exp = info["fishing_exp"]
         fishing_level = info["fishing_level"]
         party = info["party"]
-        #luck = info["luck"]
+        # luck = info["luck"]
         selected = info["selected"]
         visible = info["visible"]
         voted = info["voted"]
@@ -1096,7 +1131,7 @@ class MewBotAdmin(commands.Cog):
         desc += f"\n\n**Energy**: `{energy}`"
         desc += f"\n**Fishing Exp**: `{fishing_exp}`"
         desc += f"\n**Fishing Level**: `{fishing_level}`"
-        #desc += f"\n**Luck**: `{luck}`"
+        # desc += f"\n**Luck**: `{luck}`"
         desc += f"\n\n**Visible Balance?**: `{visible}`"
         desc += f"\n**Voted?**: `{voted}`"
         desc += f"\n**Tradebanned?**: `{tradelock}`"

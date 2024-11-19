@@ -15,7 +15,7 @@ from mewcogs.market import MAX_MARKET_SLOTS
 from mewutils.misc import ConfirmView
 from typing import Literal
 
-#Only placed used so moved from pokemon_list
+# Only placed used so moved from pokemon_list
 activeItemList = (
     "tart_apple",
     "sweet_apple",
@@ -479,7 +479,7 @@ class Items(commands.Cog):
             if current_creds < price:
                 await ctx.send(f"You don't have {price:,}ℳ")
                 return
-            
+
             vat_price = ctx.bot.misc.get_vat_price(price)
 
             # Market spaces
@@ -631,7 +631,7 @@ class Items(commands.Cog):
                     "You have successfully reset the Effort Values (EVs) of your selected Pokemon!"
                 )
                 return
-            if is_formed(pokename) and pokename != 'Gouging-fire':
+            if is_formed(pokename) and pokename != "Gouging-fire":
                 await ctx.send(
                     "You can not buy an item for a Form. Use `/deform` to de-form your Pokemon!"
                 )
@@ -995,7 +995,7 @@ class Items(commands.Cog):
                         f"You can't buy more than {max_chests} per week using credits!  You've already bought {info[ct]}."
                     )
                     return
-                
+
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
                     ctx.bot.misc.get_vat_price(price),

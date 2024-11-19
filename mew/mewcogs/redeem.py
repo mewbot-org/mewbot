@@ -132,11 +132,11 @@ class Redeem(commands.Cog):
             inline=False,
         )
         # e.add_field(name="Redeem multiple!", value="Redeem any Amount of Pokemon with `{}redeemmultiple <amount> <pokemon_name>` or redeem multiple credits using `{ctx.prefix}redeemmultiple credits <amount_of_redeem_to_use>`")
-        #e.add_field(
-            #name="Credits | 1 Redeem = 50,000 Credits",
-            #value=f"`/redeem credits | Redeem 50,000 credits`",
-            #inline=False,
-        #)
+        # e.add_field(
+        # name="Credits | 1 Redeem = 50,000 Credits",
+        # value=f"`/redeem credits | Redeem 50,000 credits`",
+        # inline=False,
+        # )
         e.add_field(
             name="Nature capsules | 1 Redeem = 5 Nature Capsules",
             value=f"`/redeem nature capsules | Use nature capsules to edit Pokemon nature.`",
@@ -405,7 +405,7 @@ class Redeem(commands.Cog):
 
     @tradelock
     @redeem.command()
-    async def alpha(self, ctx, boosted: Literal['Yes', 'No']):
+    async def alpha(self, ctx, boosted: Literal["Yes", "No"]):
         """Spend your credits for a random alpha."""
         e = discord.Embed(color=ctx.bot.get_random_color())
         pokemon = random.choice(self.bot.commondb.ALPHA_POKEMON)
@@ -417,7 +417,7 @@ class Redeem(commands.Cog):
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
 
-            if boosted == 'Yes':
+            if boosted == "Yes":
                 price = 845000
                 boosted_poke = True
             else:
@@ -570,8 +570,7 @@ class Redeem(commands.Cog):
         """Spend your redeems and get honey | Can be spread on a channel to attract rare & shiny Pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
             redeems = await pconn.fetchval(
-                "SELECT redeems FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT redeems FROM users WHERE u_id = $1", ctx.author.id
             )
             if redeems - 5 < 0:
                 await ctx.send("You do not have enough redeems")

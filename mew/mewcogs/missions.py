@@ -95,25 +95,25 @@ class Missions(commands.Cog):
                 else:
                     reward = random.choices(
                         ("chest", "credits", "redeem"),
-                        weights=(.25, .50, .25),
+                        weights=(0.25, 0.50, 0.25),
                     )[0]
 
                     if reward == "chest":
                         chest_type = random.choice("common_chest", "rare_chest")
                         await pconn.execute(
                             f"UPDATE account_bound SET {chest_type} = {chest_type} + 1 WHERE u_id = $1",
-                            ctx.author.id
+                            ctx.author.id,
                         )
                         msg = f"You have claimed a {chest_type}!"
-                    elif reward == 'redeem':
+                    elif reward == "redeem":
                         count = random.randint(1, 3)
                         await pconn.execute(
                             "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
                             count,
-                            ctx.author.id
+                            ctx.author.id,
                         )
                         msg = f"You have claimed {count} redeems!"
-                    elif reward == 'credits':
+                    elif reward == "credits":
                         count = random.randint(10000, 50000)
                         await pconn.execute(
                             "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
@@ -125,11 +125,7 @@ class Missions(commands.Cog):
                     await ctx.bot.mongo_update(
                         "users", {"user": ctx.author.id}, {"progress": progress}
                     )
-                    await ctx.send(
-                        embed=make_embed(
-                            title=f"Congratulations!\n{msg}"
-                        )
-                    )
+                    await ctx.send(embed=make_embed(title=f"Congratulations!\n{msg}"))
         else:
             await ctx.send("Today's missions have not been completed!")
 

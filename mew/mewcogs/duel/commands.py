@@ -73,16 +73,22 @@ class Duel(commands.Cog):
                 self.duel_reset_time.decode("utf-8"), DATE_FORMAT
             )
 
-    #This is for duel achievements.
-    async def check_duel_requirements(self, new_count:int, current_count:int=0, achievement:str=None, channel:int=None):
-        #Checks threshold and rewards appropriate achievement
+    # This is for duel achievements.
+    async def check_duel_requirements(
+        self,
+        new_count: int,
+        current_count: int = 0,
+        achievement: str = None,
+        channel: int = None,
+    ):
+        # Checks threshold and rewards appropriate achievement
         achieve_lvl, msg, level_up = threshold_check(new_count, current_count)
         if level_up:
             achievement_msg = achievement.replace("_", " ").title()
             embed = discord.Embed(
                 title="⭐ Achievement Complete!",
                 description=f"Congrats! {msg} in the {achievement_msg} Achievement. 🎊",
-                color=0x0084FD
+                color=0x0084FD,
             )
             await channel.send(embed=embed)
             return
@@ -131,6 +137,7 @@ class Duel(commands.Cog):
         # TODO: This seems to only check that ctx.author hasn't dueled 50 times,
         #      should it also check opponent?
         perms = ctx.channel.permissions_for(ctx.guild.me)
+        patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
         if not all((perms.send_messages, perms.embed_links, perms.attach_files)):
             try:
                 await ctx.send(
@@ -157,7 +164,14 @@ class Duel(commands.Cog):
                 await ctx.channel.send(f"Command on cooldown for {cooldown}")
                 return
             await self.bot.redis_manager.redis.execute(
-                "HMSET", "duelcooldowns", str(ctx.author.id), str(time.time() + 10)
+                "HMSET",
+                "duelcooldowns",
+                str(ctx.author.id),
+                str(
+                    time.time()
+                    + 15
+                    - (15 * 0.5 if patreon_status == "Ace Trainer" else 0)
+                ),
             )
             return True
         except Exception as e:
@@ -285,7 +299,9 @@ class Duel(commands.Cog):
 
         return winner
 
-    async def update_ranks(self, ctx, winner: discord.Member, loser: discord.Member, forfeit:bool):
+    async def update_ranks(
+        self, ctx, winner: discord.Member, loser: discord.Member, forfeit: bool
+    ):
         """
         Updates the ranks between two members, based on the result of the match.
 
@@ -305,7 +321,7 @@ class Duel(commands.Cog):
         # R2 = self.ranks.get(loser.id, 1000)
 
         # Have to pull ranks from database for both players
-        # Value should have a default of 1000 in database     
+        # Value should have a default of 1000 in database
         async with ctx.bot.db[0].acquire() as pconn:
             R1 = await pconn.fetchval(
                 "SELECT rank FROM users WHERE u_id = $1", winner.id
@@ -319,16 +335,16 @@ class Duel(commands.Cog):
             E2 = 1 / (1 + (10 ** ((R1 - R2) / 400)))
 
             # If tieing is added, this needs to be the score of each player
-            # 12/8/23 - Was not added so we will these this as is. 
+            # 12/8/23 - Was not added so we will these this as is.
             S1 = 1
             S2 = 0
 
-            newR1 = round(R1 + winner_K * (S1 - E1))    
+            newR1 = round(R1 + winner_K * (S1 - E1))
             newR2 = round(R2 + loser_K * (S2 - E2))
 
             # This was here for reference, moved to db code below
-            #self.ranks[winner.id] = newR1
-            #self.ranks[loser.id] = newR2
+            # self.ranks[winner.id] = newR1
+            # self.ranks[loser.id] = newR2
 
             # Update rankings in the database
             if newR1 < 0:
@@ -640,12 +656,12 @@ class Duel(commands.Cog):
         await self.run_party_duel(ctx, opponent, inverse_battle=True)
 
     @duel.command()
-    #@discord.app_commands.guilds(STAFFSERVER)
+    # @discord.app_commands.guilds(STAFFSERVER)
     async def ranked(self, ctx, opponent: discord.Member):
         """A 6v6 ranked duel with another user's party."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Coming Soon")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Coming Soon")
+        # return
         if ctx.guild.id != 1271229684998475807:
             await ctx.send(
                 "You can only use this command in the Trainer District Server."
@@ -781,8 +797,8 @@ class Duel(commands.Cog):
         """Creates and runs a ranked duel."""
         battle_type = "party duel"
         # At the moment ranked does not support inverse battles
-        #if inverse_battle:
-            #battle_type += " in the **inverse battle ruleset**"
+        # if inverse_battle:
+        # battle_type += " in the **inverse battle ruleset**"
         if not await self._get_opponent(ctx, opponent, battle_type):
             return
 
@@ -895,16 +911,9 @@ class Duel(commands.Cog):
                     exp,
                     poke.id,
                 )
-        embed = discord.Embed(
-            title="Duel Over",
-            color=0xFFB6C1
-        )
+        embed = discord.Embed(title="Duel Over", color=0xFFB6C1)
         if desc:
-            embed.add_field(
-                name="Pokemon Details",
-                value=f"{desc}",
-                inline=False
-            )
+            embed.add_field(name="Pokemon Details", value=f"{desc}", inline=False)
         # Prepare loser
         # If winner issued challenged
         if winner.id == ctx.author.id:
@@ -912,16 +921,12 @@ class Duel(commands.Cog):
         else:
             loser = ctx.author
         msg = await self.update_ranks(ctx, winner, loser, forfeit)
-        embed.add_field(
-            name="Rank Adjustments",
-            value=f"{msg}",
-            inline=False
-        )
+        embed.add_field(name="Rank Adjustments", value=f"{msg}", inline=False)
         await ctx.send(embed=embed)
 
-#Everything from here below is for NPC Duels
+    # Everything from here below is for NPC Duels
     @duel.command()
-    async def npc(self, ctx, leader:str=None):
+    async def npc(self, ctx, leader: str = None):
         """Duel a NPC Pokemon or Gym Leader"""
         # TODO: remove this
         ENERGY_IMMUNE = False
@@ -937,8 +942,8 @@ class Duel(commands.Cog):
             if user_data is None:
                 await ctx.send(f"You have not Started!\nStart with `/start` first!")
                 return
-            
-            if user_data['npc_energy'] <= 0:
+
+            if user_data["npc_energy"] <= 0:
                 await ctx.send("You don't have energy left!")
                 cog = ctx.bot.get_cog("Extras")
                 await cog.vote.callback(cog, ctx)
@@ -946,24 +951,27 @@ class Duel(commands.Cog):
             elif ctx.channel.id == 998291646443704320:
                 ENERGY_IMMUNE = True
             else:
-                await pconn.execute(
-                    "UPDATE users SET npc_energy = npc_energy - 1 WHERE u_id = $1",
-                    ctx.author.id,
-                )
+                patreon = await ctx.bot.patreon_tier(ctx.author.id)
+                if patreon == "Ace Trainer" and random.random() < 0.5:
+                    pass
+                else:
+                    await pconn.execute(
+                        "UPDATE users SET npc_energy = npc_energy - 1 WHERE u_id = $1",
+                        ctx.author.id,
+                    )
 
-        #Now that things are checked for energy
-        #Use the correct duel type
+        # Now that things are checked for energy
+        # Use the correct duel type
         if leader is None:
             await self.run_npc_single(ctx, user_data)
         else:
             await self.run_npc_party(ctx, leader, user_data)
 
-
-    #Player vs NPC Single Duel
+    # Player vs NPC Single Duel
     async def run_npc_single(self, ctx, user_data):
         async with ctx.bot.db[0].acquire() as pconn:
-            region = user_data['region']
-            selected = user_data['selected']
+            region = user_data["region"]
+            selected = user_data["selected"]
 
             challenger1 = await pconn.fetchrow(
                 "SELECT * FROM pokes WHERE id = (SELECT selected FROM users WHERE u_id = $1)",
@@ -986,23 +994,61 @@ class Duel(commands.Cog):
             p1_current = await DuelPokemon.create(ctx, challenger1)
 
             patreon = await ctx.bot.patreon_tier(ctx.author.id)
-            if patreon in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") or ctx.guild.id != 998128574898896906:
-                poke_data = await ctx.bot.db[1].pfile.find_one({"identifier": p1_current._name.lower()})
+            if (
+                patreon
+                in (
+                    "Ace Trainer",
+                    "Elite Collector",
+                    "Rarity Hunter",
+                    "Crystal Tier",
+                    "Silver Tier",
+                    "Yellow Tier",
+                    "Red Tier",
+                )
+                or ctx.guild.id != 998128574898896906
+            ):
+                poke_data = await ctx.bot.db[1].pfile.find_one(
+                    {"identifier": p1_current._name.lower()}
+                )
                 try:
-                    generation_id = poke_data['generation_id']
+                    generation_id = poke_data["generation_id"]
                 except TypeError:
                     generation_id = random.randint(1, 9)
                 if random.randint(1, 100) <= 50:
-                    npc_choices = await ctx.bot.db[1].pfile.find({"$and": [{"generation_id": generation_id}, {"evolved_from_species_id": {"$ne": 'null'}}]}).to_list(None)
+                    npc_choices = (
+                        await ctx.bot.db[1]
+                        .pfile.find(
+                            {
+                                "$and": [
+                                    {"generation_id": generation_id},
+                                    {"evolved_from_species_id": {"$ne": "null"}},
+                                ]
+                            }
+                        )
+                        .to_list(None)
+                    )
                 else:
-                    npc_choices = await ctx.bot.db[1].pfile.find({"$and": [{"generation_id": generation_id}, {"evolved_from_species_id": None}]}).to_list(None)
+                    npc_choices = (
+                        await ctx.bot.db[1]
+                        .pfile.find(
+                            {
+                                "$and": [
+                                    {"generation_id": generation_id},
+                                    {"evolved_from_species_id": None},
+                                ]
+                            }
+                        )
+                        .to_list(None)
+                    )
                 pokemon = random.choice(npc_choices)
-                npc_name = pokemon['identifier'].lower()
-                #If ditto pick a new Pokemon
-                if npc_name == 'ditto':
+                npc_name = pokemon["identifier"].lower()
+                # If ditto pick a new Pokemon
+                if npc_name == "ditto":
                     npc_data = random.choice(npc_choices)
-                    npc_name = npc_data['identifier'].lower()
-                challenger2 = await generate_pokemon(ctx, npc_name, challenger1["pokname"], challenger1["pokelevel"])
+                    npc_name = npc_data["identifier"].lower()
+                challenger2 = await generate_pokemon(
+                    ctx, npc_name, challenger1["pokname"], challenger1["pokelevel"]
+                )
             else:
                 npc_pokemon = await pconn.fetch(
                     (
@@ -1029,10 +1075,9 @@ class Duel(commands.Cog):
         winner = await self.wrapped_run(battle)
         won = True
 
-        if winner == 'forfeit':
+        if winner == "forfeit":
             await ctx.bot.db[0].execute(
-                "UPDATE users SET win_streak = 0 WHERE u_id = $1",
-                ctx.author.id
+                "UPDATE users SET win_streak = 0 WHERE u_id = $1", ctx.author.id
             )
             embed = discord.Embed(
                 title="You Lost!",
@@ -1043,16 +1088,14 @@ class Duel(commands.Cog):
             )
             await ctx.send(embed=embed)
             return
-        elif winner is not owner1:    
+        elif winner is not owner1:
             won = False
             embed = discord.Embed(
-                title="You Lost!",
-                description="Your win streak has been reset!"
+                title="You Lost!", description="Your win streak has been reset!"
             )
         else:
             embed = discord.Embed(
-                title="You Won!",
-                description="Your win streak has been increased by 1!"
+                title="You Won!", description="Your win streak has been increased by 1!"
             )
 
         async with ctx.bot.db[0].acquire() as pconn:
@@ -1081,22 +1124,21 @@ class Duel(commands.Cog):
         creds *= min(battle_multi, 50)
         # Staff benefits instead of Patreon rewards
         if ctx.author.id in (
-            330111417200017418,  #Kyla
-            366319068476866570,  #Cgrubb
-        ): 
-            creds = (creds * .50) + creds
+            330111417200017418,  # Kyla
+            366319068476866570,  # Cgrubb
+        ):
+            creds = (creds * 0.50) + creds
 
         async with ctx.bot.db[0].acquire() as pconn:
             if won == False:
-                creds = creds * .50
+                creds = creds * 0.50
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                     creds,
                     ctx.author.id,
                 )
                 await pconn.execute(
-                    "UPDATE users SET win_streak = 0 WHERE u_id = $1",
-                    ctx.author.id
+                    "UPDATE users SET win_streak = 0 WHERE u_id = $1", ctx.author.id
                 )
                 party_msg = ""
             else:
@@ -1113,7 +1155,7 @@ class Duel(commands.Cog):
                     )
                     held_item = data["hitem"].lower()
                     current_exp = data["exp"]
-                    poke_name = data['pokname'].capitalize()
+                    poke_name = data["pokname"].capitalize()
                     happiness = random.randint(1, 3)
                     exp = 0
                     if held_item != "xp_block":
@@ -1131,37 +1173,31 @@ class Duel(commands.Cog):
                     )
                 await pconn.execute(
                     "UPDATE users SET win_streak = win_streak + 1 WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 await pconn.execute(
                     f"UPDATE achievements SET ai_single_wins = ai_single_wins + 1 WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
 
         embed.add_field(
-            name="Rewards",
-            value=f"You've gained **{creds}** credits!",
-            inline=False
+            name="Rewards", value=f"You've gained **{creds}** credits!", inline=False
         )
-        embed.add_field(
-            name="Pokemon Party",
-            value=f"{party_msg}",
-            inline=False
-        )
+        embed.add_field(name="Pokemon Party", value=f"{party_msg}", inline=False)
         embed.set_footer(
             text=f"Losing causes credit loss and streak reset!\nConsider joining the Mewbot Official for player run gyms!"
         )
         await ctx.send(embed=embed)
-        #desc += f"\nConsider joining the [Official Mewbot Server]({'https://discord.gg/mewbot'}) if you are a fan of pokemon duels!\n"
-        #await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
+        # desc += f"\nConsider joining the [Official Mewbot Server]({'https://discord.gg/mewbot'}) if you are a fan of pokemon duels!\n"
+        # await ctx.send(embed=discord.Embed(description=desc, color=0xFFB6C1))
 
-    #Player VS NPC Party Duel
+    # Player VS NPC Party Duel
     async def run_npc_party(self, ctx, npc, user_data):
         """Creates and runs a party duel."""
-        #patreon = await ctx.bot.patreon_tier(ctx.author.id) 
+        # patreon = await ctx.bot.patreon_tier(ctx.author.id)
         # patreon not in ("Crystal Tier", "Silver Tier", "Yellow Tier", "Red Tier") or ctx.guild.id != 998128574898896906:
-            #await ctx.send("Coming soon!")
-            #return
+        # await ctx.send("Coming soon!")
+        # return
 
         async with ctx.bot.db[0].acquire() as pconn:
             user_data = await pconn.fetchrow(
@@ -1176,34 +1212,35 @@ class Duel(commands.Cog):
                     f"{ctx.author.name} has not Started!\nChoose your starter with `/start` first!"
                 )
                 return
-            region = user_data['region']
-            win_streak = user_data['win_streak']
-            party1 = user_data['party']
-            exp_share = user_data['exp_share']
+            region = user_data["region"]
+            win_streak = user_data["win_streak"]
+            party1 = user_data["party"]
+            exp_share = user_data["exp_share"]
 
-            #Grab badge data
+            # Grab badge data
             badge_data = await pconn.fetchrow(
-                "SELECT * FROM achievements WHERE u_id = $1",
-                ctx.author.id
+                "SELECT * FROM achievements WHERE u_id = $1", ctx.author.id
             )
             badge_data = dict(badge_data)
 
-            #TODO: Decide whether we're doing Badge Levels OR Level 50 Rule
-            #As of 11/7 server wants to do Level 50 Rule.
-            #badge_level = get_badge_level(badge_data, region)
+            # TODO: Decide whether we're doing Badge Levels OR Level 50 Rule
+            # As of 11/7 server wants to do Level 50 Rule.
+            # badge_level = get_badge_level(badge_data, region)
 
-            #Here we ensure leader exists and then check player can challenge 
-            leader_data = await ctx.bot.db[1].gym_leaders.find_one({"$and": [{"identifier": npc.lower()}, {"region": region}]})
-            party2 = leader_data['party']
-            streak_requirement = leader_data['requirement']
+            # Here we ensure leader exists and then check player can challenge
+            leader_data = await ctx.bot.db[1].gym_leaders.find_one(
+                {"$and": [{"identifier": npc.lower()}, {"region": region}]}
+            )
+            party2 = leader_data["party"]
+            streak_requirement = leader_data["requirement"]
 
-            #Check Gym Leader Party exists
+            # Check Gym Leader Party exists
             if party2 is None:
                 await ctx.send(
                     f"Couldn't pull data for that Gym Leader, please report in Onixian Official."
                 )
                 return
-            #Reject if Win Streak isn't hit
+            # Reject if Win Streak isn't hit
             if win_streak < streak_requirement:
                 if ctx.author.id == 334155028170407949:
                     pass
@@ -1212,27 +1249,31 @@ class Duel(commands.Cog):
                         f"Sorry you need a win streak of {streak_requirement} to challenge Gym Leader {npc.capitalize()}"
                     )
                     return
-            
-            #Format Player's Data
+
+            # Format Player's Data
             party1 = [x for x in party1 if x != 0]
             raw1 = await pconn.fetch("SELECT * FROM pokes WHERE id = any($1)", party1)
 
-            #Adding Generation Check
-            #If Pokemon's Gen doesn't match Leader , denies Pokemon
+            # Adding Generation Check
+            # If Pokemon's Gen doesn't match Leader , denies Pokemon
             for pokemon in raw1:
-                #Un-Mega Pokemon
-                pname = pokemon['pokname'].lower()
+                # Un-Mega Pokemon
+                pname = pokemon["pokname"].lower()
                 if pname.endswith("-mega-x") or pname.endswith("-mega-y"):
                     pname = pname[:-7]
                 if pname.endswith("-mega"):
                     pname = pname[:-5]
 
-                #Pull data from MongoDB
+                # Pull data from MongoDB
                 form_info = await self.bot.db[1].forms.find_one({"identifier": pname})
-                pokemon_info = await self.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
+                pokemon_info = await self.bot.db[1].pfile.find_one(
+                    {"id": form_info["pokemon_id"]}
+                )
                 try:
-                    if pokemon_info['generation_id'] > leader_data['generation']:
-                        await ctx.send(f"Sorry Trainer, your {pname.title()} doesn't match the generation of this Gym Leader!")
+                    if pokemon_info["generation_id"] > leader_data["generation"]:
+                        await ctx.send(
+                            f"Sorry Trainer, your {pname.title()} doesn't match the generation of this Gym Leader!"
+                        )
                         return
                 except TypeError:
                     ctx.bot.logger.info(f"POKE ERRORED: {pokemon_info}")
@@ -1240,9 +1281,11 @@ class Duel(commands.Cog):
             raw1 = list(filter(lambda e: e["pokname"] != "Egg", raw1))
             raw1.sort(key=lambda e: party1.index(e["id"]))
 
-            #Format NPC's Data
+            # Format NPC's Data
             party2 = [x for x in party2 if x != 0]
-            raw2 = await pconn.fetch("SELECT * FROM leader_pokemon WHERE id = any($1)", party2)
+            raw2 = await pconn.fetch(
+                "SELECT * FROM leader_pokemon WHERE id = any($1)", party2
+            )
             raw2 = list(filter(lambda e: e["pokname"] != "Egg", raw2))
             raw2.sort(key=lambda e: party2.index(e["id"]))
 
@@ -1267,30 +1310,27 @@ class Duel(commands.Cog):
         leader_name = f"Gym Leader {leader_data['identifier'].capitalize()}"
         owner2 = NPCTrainer(leader_name, pokes2)
 
-        battle = Battle(
-            ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=False
-        )
+        battle = Battle(ctx, Battle.PARTY_DUEL, owner1, owner2, inverse_battle=False)
 
         battle.trainer1.event.clear()
         battle.trainer2.event.clear()
-        #preview_view = await generate_team_preview(battle)
-        #await battle.trainer1.event.wait()
-        #await battle.trainer2.event.wait()
-        #preview_view.stop()
+        # preview_view = await generate_team_preview(battle)
+        # await battle.trainer1.event.wait()
+        # await battle.trainer2.event.wait()
+        # preview_view.stop()
 
         winner = await self.wrapped_run(battle)
-       
+
         # Grant credits & xp
         creds = random.randint(500, 2500)
         creds *= min(battle_multi, 50)
         creds_msg = f"You received **{creds} credits** for winning the duel!\n\n"
         desc = ""
         async with ctx.bot.db[0].acquire() as pconn:
-            #Win Streak
+            # Win Streak
             if not winner.is_human():
                 await pconn.execute(
-                    "UPDATE users SET win_streak = 0 WHERE u_id = $1",
-                    ctx.author.id
+                    "UPDATE users SET win_streak = 0 WHERE u_id = $1", ctx.author.id
                 )
                 embed = discord.Embed(
                     title="You Lost!",
@@ -1304,7 +1344,7 @@ class Duel(commands.Cog):
             else:
                 await pconn.execute(
                     "UPDATE users SET win_streak = win_streak + 1 WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
 
             await pconn.execute(
@@ -1313,29 +1353,30 @@ class Duel(commands.Cog):
                 winner.id,
             )
             if exp_share is True:
-                #They have an exp share , apply to whole party
+                # They have an exp share , apply to whole party
                 for poke in winner.party:
                     if poke.hp == 0 or not poke.ever_sent_out:
                         continue
                     # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
                     data = await pconn.fetchrow(
-                        "SELECT pokname, hitem, exp, pokelevel, happiness FROM pokes WHERE id = $1", poke.id
+                        "SELECT pokname, hitem, exp, pokelevel, happiness FROM pokes WHERE id = $1",
+                        poke.id,
                     )
                     held_item = data["hitem"].lower()
                     current_exp = data["exp"]
-                    level = data['pokelevel']
-                    current_happiness = data['happiness']
-                    name = data['pokname'].title()
+                    level = data["pokelevel"]
+                    current_happiness = data["happiness"]
+                    name = data["pokname"].title()
                     exp = 0
                     happiness = random.randint(1, 5)
                     if held_item != "xp_block":
                         exp = (200 * level) / 7
                         if held_item == "lucky_egg":
                             exp *= 1.5
-                        if held_item == 'soothe_bell':
-                            happiness *= .5
+                        if held_item == "soothe_bell":
+                            happiness *= 0.5
                         if (current_happiness + happiness) <= 255:
-                            current_happiness += happiness                                
+                            current_happiness += happiness
                         # Max int for the exp col
                         exp = min(int(exp), 2147483647 - current_exp)
                         desc += f"`{name}` got **{exp} exp** and gained **{happiness} happiness**.\n"
@@ -1346,7 +1387,7 @@ class Duel(commands.Cog):
                             poke.id,
                         )
             else:
-                #Giving exp just to first party pokemon
+                # Giving exp just to first party pokemon
                 poke = winner.party[0]
                 # We do a fetch here instead of using poke.held_item as that item *could* be changed over the course of the duel.
                 data = await pconn.fetchrow(
@@ -1354,17 +1395,17 @@ class Duel(commands.Cog):
                 )
                 held_item = data["hitem"].lower()
                 current_exp = data["exp"]
-                current_happiness = data['happiness']
+                current_happiness = data["happiness"]
                 exp = 0
                 happiness = random.randint(1, 5)
                 if held_item != "xp_block":
                     exp = (150 * poke.level) / 7
                     if held_item == "lucky_egg":
                         exp *= 1.5
-                    if held_item == 'soothe_bell':
-                        happiness *= .5
+                    if held_item == "soothe_bell":
+                        happiness *= 0.5
                     if (current_happiness + happiness) <= 255:
-                        current_happiness += happiness                                
+                        current_happiness += happiness
                     # Max int for the exp col
                     exp = min(int(exp), 2147483647 - current_exp)
                     desc += f"{poke._starting_name} got {exp} exp from winning.\n"
@@ -1378,65 +1419,58 @@ class Duel(commands.Cog):
         embed = discord.Embed(
             title="You've Won!",
             description="Here are your rewards...",
-        )    
+        )
 
-        #Give achievement credit
+        # Give achievement credit
         async with ctx.bot.db[0].acquire() as pconn:
-            leaders = await ctx.bot.db[1].gym_leaders.find({'region': region}).to_list(None)
-            leaders = [t['column'] for t in leaders]
+            leaders = (
+                await ctx.bot.db[1].gym_leaders.find({"region": region}).to_list(None)
+            )
+            leaders = [t["column"] for t in leaders]
 
             # Final Achievement Checks
-            if badge_data[leader_data['column']] != True:
-                badge_data[leader_data['column']] = True
-                query = leader_data['query']
+            if badge_data[leader_data["column"]] != True:
+                badge_data[leader_data["column"]] = True
+                query = leader_data["query"]
                 await pconn.execute(query, ctx.author.id)
-                emoji, badge_name = get_badge_emoji(leader_name=leader_data['column'])
+                emoji, badge_name = get_badge_emoji(leader_name=leader_data["column"])
                 achieve_msg = f"Congrats! You have received the {badge_name.capitalize()} Badge {emoji}!"
             else:
                 achieve_msg = None
 
-            #Region complete achievement check
+            # Region complete achievement check
             if badge_data[region] == False:
                 checks = []
                 for leader in leaders:
                     if badge_data[f"{leader}"] == False:
-                        checks.append('False')
+                        checks.append("False")
 
-                if 'False' not in checks:
+                if "False" not in checks:
                     await pconn.execute(
                         f"UPDATE achievements SET {region} = True WHERE u_id = $1",
-                        winner.id
+                        winner.id,
                     )
                     embed.add_field(
                         name="Achievement Unlocked ⭐",
                         value=f"You have beat the {region.title()}!",
-                        inline=False
+                        inline=False,
                     )
 
-            #Achievements for AI Party Wins
-            current_count = badge_data['ai_party_wins']
+            # Achievements for AI Party Wins
+            current_count = badge_data["ai_party_wins"]
             new_count = current_count + 1
             await pconn.execute(
                 f"UPDATE achievements SET ai_party_wins = $1 WHERE u_id = $2",
                 new_count,
-                winner.id
+                winner.id,
             )
-            await self.check_duel_requirements(new_count, current_count, 'ai_party_wins', ctx.channel)\
-            
+            await self.check_duel_requirements(
+                new_count, current_count, "ai_party_wins", ctx.channel
+            )
         if achieve_msg:
             embed.add_field(
-                name="Badge Unlocked!",
-                value=f"{achieve_msg}",
-                inline=False
+                name="Badge Unlocked!", value=f"{achieve_msg}", inline=False
             )
-        embed.add_field(
-            name="Items",
-            value=f"{creds_msg}",
-            inline=False
-        )
-        embed.add_field(
-            name="Pokemon",
-            value=f"{desc}",
-            inline=False
-        )
+        embed.add_field(name="Items", value=f"{creds_msg}", inline=False)
+        embed.add_field(name="Pokemon", value=f"{desc}", inline=False)
         await ctx.send(embed=embed)

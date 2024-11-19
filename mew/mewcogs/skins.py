@@ -160,7 +160,7 @@ class Skins(commands.Cog):
                 )
         await ctx.send(f"Applied a {skin} skin to your {pokname}!")
 
-    #@skin.command()
+    # @skin.command()
     async def list(self, ctx):
         """View all your owned Skins."""
         async with ctx.bot.db[0].acquire() as pconn:
@@ -197,7 +197,14 @@ class Skins(commands.Cog):
         ctx,
         pokemon: str,
         skin: Literal[
-            "halloween", "xmas2022", "xmas2023", "valentines2023", "easter2023", "summer2023", "summer2024", "halloween2023"
+            "halloween",
+            "xmas2022",
+            "xmas2023",
+            "valentines2023",
+            "easter2023",
+            "summer2023",
+            "summer2024",
+            "halloween2023",
         ],
     ):
         """Preview a skin on a pokemon."""
@@ -210,6 +217,8 @@ class Skins(commands.Cog):
             return
         poke = pokemon.lower().replace(" ", "-")
         skin = skin.lower()
+        if skin == "halloween":
+            skin = "halloween2024"
         if skin in BUYABLE_SKINS:
             # This can be removed once shop is redone
             await ctx.send("That skin is not a valid option!")
@@ -451,9 +460,8 @@ class RaidSpawn(discord.ui.View):
             return False
 
     async def start(self):
-        pokeurl = (
-            "https://mewbot.xyz/sprites/"
-            + await get_file_name(self.poke, self.bot, skin=self.skin)
+        pokeurl = "https://mewbot.xyz/sprites/" + await get_file_name(
+            self.poke, self.bot, skin=self.skin
         )
         guild = await self.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:

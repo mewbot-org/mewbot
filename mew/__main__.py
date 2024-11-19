@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     try:
         with SIGINTController(client, logger):
-            
+
             if sys.version_info >= (3, 11):
                 with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
                     runner.run(main())

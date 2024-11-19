@@ -38,17 +38,17 @@ class Mother(commands.Cog):
             for poke, owner, price in rows:
                 fee = price * 0.01
                 try:
-                # Update user's credits
+                    # Update user's credits
                     sql = "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2"
                     await conn.execute(sql, fee, owner)
-                    print(f"Deducted market fee of {fee} credits from {owner} (Market ID: {poke}).")
+                    print(
+                        f"Deducted market fee of {fee} credits from {owner} (Market ID: {poke})."
+                    )
                 except Exception as e:
                     print(f"Error deducting fee for slot {poke}: {e}")
 
         except Exception as e:
             print(f"Error checking and deducting fees: {e}")
-
-
 
     @tasks.loop(seconds=1440)
     async def energy(self):

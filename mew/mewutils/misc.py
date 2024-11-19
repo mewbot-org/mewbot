@@ -17,6 +17,24 @@ from io import BytesIO
 
 STAFFSERVER = int(os.environ["OFFICIAL_SERVER"])
 
+OLD_SKIN_LIST = [
+    "easter2023",
+    "halloween",
+    "halloween2023",
+    "halloween2024",
+    "radiant",
+    "oldrad",
+    "rad",
+    "rad2",
+    "rad3",
+    "summer2023",
+    "summer2024",
+    "valentines2023",
+    "xmas2022",
+    "xmas2023",
+    "xmas_special",
+]
+
 # TODO: figure out how to remove this w/o breaking the entire bot
 FORMS = [
     "-bug",
@@ -491,6 +509,11 @@ async def get_pokemon_image(name, bot, shiny=None, *, radiant=False, skin=None):
     )
 
 
+async def reverse_id(pokemon_id, bot):
+    identifier = await bot.db[1].forms.find_one({"pokemon_id": pokemon_id})
+    return identifier["identifier"]
+
+
 async def get_file_name(name, bot, shiny=False, *, radiant=False, skin=None):
     name = name.lower()
     identifier = await bot.db[1].forms.find_one({"identifier": name})
@@ -588,19 +611,19 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
         skin = skin.lower()
         emoji = ":question:"
         if skin == "staff":
-            emoji = "<:staff_custom:1184571383393554623>" 
+            emoji = "<:staff_custom:1184571383393554623>"
         elif skin == "custom":
-            emoji = "<:custom:867904645447548929>" # Not used atm
+            emoji = "<:custom:867904645447548929>"  # Not used atm
         elif skin == "patreon":
-            emoji = "<:patreon:1184571762705432679>" 
+            emoji = "<:patreon:1184571762705432679>"
         elif skin in ("vote", "vote2", "vote3"):
             emoji = "<a:votestreak:998338987070603354>"  # Can Use
         elif skin in ("xmas", "xmas2022", "xmas2023"):
-            emoji = "<:xmas:1184562262137114715>" 
+            emoji = "<:xmas:1184562262137114715>"
         elif skin == "xmas_special":
-            emoji = "<:xmas_special:1184562294156439572>" 
+            emoji = "<:xmas_special:1184562294156439572>"
         elif skin == "tourney":
-            emoji = "<:tourney:927669898715471893>" # Needs emote
+            emoji = "<:tourney:927669898715471893>"  # Needs emote
         elif skin == "shadow":
             emoji = "<:shadow:1010559067590246410>"
         elif skin == "oldrad":
@@ -611,9 +634,9 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
             emoji = "<:gleam:1010559151472115772>"
         elif skin == "alpha":
             emoji = "<:alphapoke2:1145814445239574538>"
-        elif skin in ('valentines2023'):
+        elif skin in ("valentines2023"):
             emoji = "<:heart:1184895213399982140>"
-        elif skin in ('easter2023'):
+        elif skin in ("easter2023"):
             emoji = "<:easter:1184895215060914277>"
         else:
             emoji = "<:skin:1010890087074123777>"
@@ -623,30 +646,32 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
         emoji = ":star2:"
     return emoji
 
+
 def get_generation(region_name):
-    if region_name == 'kanto':
+    if region_name == "kanto":
         generation = 1
-    elif region_name == 'johto':
+    elif region_name == "johto":
         generation = 2
-    elif region_name == 'hoenn':
+    elif region_name == "hoenn":
         generation = 3
-    elif region_name == 'sinnoh':
+    elif region_name == "sinnoh":
         generation = 4
-    elif region_name == 'unova':
+    elif region_name == "unova":
         generation = 5
-    elif region_name == 'kalos':
+    elif region_name == "kalos":
         generation = 6
-    elif region_name == 'alola':
+    elif region_name == "alola":
         generation = 7
-    elif region_name == 'hisui':
+    elif region_name == "hisui":
         genertaion = 8
-    elif region_name == 'paldea':
+    elif region_name == "paldea":
         generation = 9
     else:
         generation = 0
     return generation
 
-def get_achieve_emotes(*, blank="", level:int=0):
+
+def get_achieve_emotes(*, blank="", level: int = 0):
     """Gets emote for particular achievement level"""
     emoji = blank
     if level == 3:
@@ -659,134 +684,136 @@ def get_achieve_emotes(*, blank="", level:int=0):
         emoji = "‼️"
     return emoji
 
+
 def get_badge_emoji(*, leader_name="", alternative=False):
-    #This is going to use database format for names
-    #Meaning they will have underscores when passed
+    # This is going to use database format for names
+    # Meaning they will have underscores when passed
     emoji = leader_name
-    if leader_name == 'brock':
+    if leader_name == "brock":
         emoji = "<:boulder:1146142647380090900>"
         name = "boulder"
-    elif leader_name == 'misty':
+    elif leader_name == "misty":
         emoji = "<:cascade:1146142646373470411>"
         name = "cascade"
-    elif leader_name == 'lt_surge':
+    elif leader_name == "lt_surge":
         emoji = "<:thunder:1146142644838351031>"
         name = "thunder"
-    elif leader_name == 'erika': 
+    elif leader_name == "erika":
         emoji = "<:rainbox:1146142642594390156>"
         name = "rainbox"
-    elif leader_name == 'sabrina': 
+    elif leader_name == "sabrina":
         emoji = "<:marsh:1146142638056145017>"
         name = "marsh"
-    elif leader_name == 'koga':
+    elif leader_name == "koga":
         emoji = "<:soul:1146142640031678515>"
         name = "soul"
-    elif leader_name == 'blaine':
+    elif leader_name == "blaine":
         emoji = "<:volcano:1146142634918817813>"
         name = "volcano"
-    elif leader_name == 'don_giovanni':
+    elif leader_name == "don_giovanni":
         emoji = "<:earth:1146142633853460612>"
         name = "earth"
-    elif leader_name == 'falkner':
-        emoji = '<:zephyr:1176638172344614993>'
+    elif leader_name == "falkner":
+        emoji = "<:zephyr:1176638172344614993>"
         name = "zephyr"
-    elif leader_name == 'bugsy':
-        emoji = '<:hive:1176638337998651483>'
+    elif leader_name == "bugsy":
+        emoji = "<:hive:1176638337998651483>"
         name = "hive"
-    elif leader_name == 'whitney':
-        emoji = '<:plain:1176636287625732188>'
+    elif leader_name == "whitney":
+        emoji = "<:plain:1176636287625732188>"
         name = "plain"
-    elif leader_name == 'morty':
-        emoji = '<:fog:1176636288909185217>'
+    elif leader_name == "morty":
+        emoji = "<:fog:1176636288909185217>"
         name = "fog"
-    elif leader_name == 'chuck':
-        emoji = '<:storm:1176636289781608468>'
+    elif leader_name == "chuck":
+        emoji = "<:storm:1176636289781608468>"
         name = "storm"
-    elif leader_name == 'jasmine':
-        emoji = '<:mineral:1176636291874570292>'
+    elif leader_name == "jasmine":
+        emoji = "<:mineral:1176636291874570292>"
         name = "mineral"
-    elif leader_name == 'pryce':
-        emoji = '<:glacier:1176636285436309595>'
+    elif leader_name == "pryce":
+        emoji = "<:glacier:1176636285436309595>"
         name = "glacier"
-    elif leader_name == 'clair':
-        emoji = '<:rising:1176636293241913504>'
+    elif leader_name == "clair":
+        emoji = "<:rising:1176636293241913504>"
         name = "rising"
-    elif leader_name == 'roxanne':
-        emoji = '<:stone:1195072287708287126>'
+    elif leader_name == "roxanne":
+        emoji = "<:stone:1195072287708287126>"
         name = "stone"
-    elif leader_name == 'brawly':
-        emoji = '<:knuckle:1195072285992833065>'
+    elif leader_name == "brawly":
+        emoji = "<:knuckle:1195072285992833065>"
         name = "knuckle"
-    elif leader_name == 'wattson':
-        emoji = '<:dynamo:1195072284482863214>'
+    elif leader_name == "wattson":
+        emoji = "<:dynamo:1195072284482863214>"
         name = "dynamo"
-    elif leader_name == 'flannery':
-        emoji = '<:heat:1195072283493027860>'
+    elif leader_name == "flannery":
+        emoji = "<:heat:1195072283493027860>"
         name = "heat"
-    elif leader_name == 'norman':
-        emoji = '<:balance:1195072282041794620>'
+    elif leader_name == "norman":
+        emoji = "<:balance:1195072282041794620>"
         name = "balance"
-    elif leader_name == 'winona':
-        emoji = '<:feather:1195072280653467731>'
+    elif leader_name == "winona":
+        emoji = "<:feather:1195072280653467731>"
         name = "fortree"
-    elif leader_name == 'tate':
-        emoji = '<:mind:1195072278296272998>'
+    elif leader_name == "tate":
+        emoji = "<:mind:1195072278296272998>"
         name = "mind"
-    elif leader_name == 'wallace':
-        emoji = '<:rain:1195072277637771324>'
+    elif leader_name == "wallace":
+        emoji = "<:rain:1195072277637771324>"
         name = "rain"
-    elif leader_name == 'roark':
-        emoji = '<:coal:1195077686150832269>'
+    elif leader_name == "roark":
+        emoji = "<:coal:1195077686150832269>"
         name = "coal"
-    elif leader_name == 'gardenia':
-        emoji = '<:forest:1195077684129177630>'
+    elif leader_name == "gardenia":
+        emoji = "<:forest:1195077684129177630>"
         name = "forest"
-    elif leader_name == 'maylene':
-        emoji = '<:cobble:1195077682426302564>'
+    elif leader_name == "maylene":
+        emoji = "<:cobble:1195077682426302564>"
         name = "cobble"
-    elif leader_name == 'crasher_wake':
-        emoji = '<:fen:1195077681209946183>'
+    elif leader_name == "crasher_wake":
+        emoji = "<:fen:1195077681209946183>"
         name = "fen"
-    elif leader_name == 'fantina':
-        emoji = '<:relic:1195077679809052793>'
+    elif leader_name == "fantina":
+        emoji = "<:relic:1195077679809052793>"
         name = "relic"
-    elif leader_name == 'byron':
-        emoji = '<:mine:1195077679020519434>'
+    elif leader_name == "byron":
+        emoji = "<:mine:1195077679020519434>"
         name = "mine"
-    elif leader_name == 'candice':
-        emoji = '<:icicle:1195077688612888597>'
+    elif leader_name == "candice":
+        emoji = "<:icicle:1195077688612888597>"
         name = "icicle"
-    elif leader_name == 'volkner':
-        emoji = '<:beacon:1195077687698538607>'
+    elif leader_name == "volkner":
+        emoji = "<:beacon:1195077687698538607>"
         name = "beacon"
-    elif leader_name == 'cheren':
-        emoji = '<:basic:1206669600310296616>'
+    elif leader_name == "cheren":
+        emoji = "<:basic:1206669600310296616>"
         name = "basic"
-    elif leader_name == 'roxie':
-        emoji = '<:toxic:1206669598871789590>'
+    elif leader_name == "roxie":
+        emoji = "<:toxic:1206669598871789590>"
         name = "toxic"
-    elif leader_name == 'burgh':
-        emoji = '<:insect:1206669597122629693>'
+    elif leader_name == "burgh":
+        emoji = "<:insect:1206669597122629693>"
         name = "insect"
-    elif leader_name == 'elesa':
-        emoji = '<:bolt:1206669596283764776>'
+    elif leader_name == "elesa":
+        emoji = "<:bolt:1206669596283764776>"
         name = "bolt"
-    elif leader_name == 'clay':
-        emoji = '<:quake:1206669595071741982>'
+    elif leader_name == "clay":
+        emoji = "<:quake:1206669595071741982>"
         name = "quake"
-    elif leader_name == 'skyla':
-        emoji = '<:jet:1206669593842819072>'
+    elif leader_name == "skyla":
+        emoji = "<:jet:1206669593842819072>"
         name = "jet"
-    elif leader_name == 'drayden':
-        emoji = '<:legend:1206669592672346152>'
+    elif leader_name == "drayden":
+        emoji = "<:legend:1206669592672346152>"
         name = "legend"
-    elif leader_name == 'marlon':
-        emoji = '<:wave:1206669591363981373>'
-        name = "wave" 
+    elif leader_name == "marlon":
+        emoji = "<:wave:1206669591363981373>"
+        name = "wave"
     else:
-        emoji = "‼️" #Means emoji is missing
+        emoji = "‼️"  # Means emoji is missing
         name = f"{leader_name}"
     return emoji, name
+
 
 def get_farm_thumbnail(*, interval: int = None, name: str):
     # Aguav
@@ -1007,7 +1034,7 @@ def get_battle_emoji(*, item_name: str):
     elif item_name == "booster_energy":
         emoji = "<:booster_energy:1222313560206737460>"
     elif item_name == "covert_cloak":
-        emoji = "<:covert_cloak:1222313689227726848>"    
+        emoji = "<:covert_cloak:1222313689227726848>"
     else:
         emoji = "‼️"  # Means emoji is missing
     return emoji
@@ -1052,9 +1079,9 @@ def get_trade_emoji(*, item_name: str):
         emoji = "<:ovalstone:671571987461570570>"
     elif item_name == "air_balloon":
         emoji = "<:air_balloon:1092675918985703476>"
-    elif item_name == 'syrupy_apple':
+    elif item_name == "syrupy_apple":
         emoji = "<:syrupyapple:1230637993908240484>"
-    elif item_name == 'metal_alloy':
+    elif item_name == "metal_alloy":
         emoji = "<:metal_alloy:1230640666590056479>"
     else:
         emoji = "‼️"  # Means emoji is missing
@@ -1176,14 +1203,22 @@ def pagify(text: str, *, per_page: int = 15, sep: str = "\n", base_embed=None):
             page = ""
     return pages
 
-#These are for badges in the profile page
-def badge_pagify(text: str, *, per_page: int=10, sep: str="\n", base_embed=None, footer:str=None):
+
+# These are for badges in the profile page
+def badge_pagify(
+    text: str,
+    *,
+    per_page: int = 10,
+    sep: str = "\n",
+    base_embed=None,
+    footer: str = None,
+):
     """
     Splits the provided `text` into pages.
-    
+
     The text is split by `sep`, then `per_page` are recombined into a "page".
     This does not validate page length restrictions.
-    
+
     If `base_embed` is provided, it will be used as a template. The description
     field will be filled with the pages, and the footer will show the page number.
     Returns List[str], or List[discord.Embed] if `base_embed` is provided.
@@ -1196,19 +1231,22 @@ def badge_pagify(text: str, *, per_page: int=10, sep: str="\n", base_embed=None,
         page += part + sep
         if idx % per_page == per_page - 1 or idx == len(raw) - 1:
             # Strip out the last sep
-            page = page[:-len(sep)]
+            page = page[: -len(sep)]
             if base_embed is not None:
                 embed = base_embed.copy()
                 embed.description = page
                 if footer is None:
                     embed.set_footer(text=f"Page {(idx // per_page) + 1}/{total_pages}")
                 else:
-                    embed.set_footer(text=f"Page {(idx // per_page) + 1}/{total_pages} | {footer}")
+                    embed.set_footer(
+                        text=f"Page {(idx // per_page) + 1}/{total_pages} | {footer}"
+                    )
                 pages.append(embed)
             else:
                 pages.append(page)
             page = ""
     return pages
+
 
 class FirstPageButton(discord.ui.Button):
     """Button which moves the menu to the first page."""
@@ -1564,7 +1602,10 @@ class ListSelectView(discord.ui.View):
 
     async def wait(self):
         """Returns the user's choice, or None if they did not choose in time."""
-        self.message = await self.ctx.send(self.confirm_content, view=self)
+        if type(self.confirm_content) == str:
+            self.message = await self.ctx.send(self.confirm_content, view=self)
+        else:
+            self.message = await self.ctx.send(embed=self.confirm_content, view=self)
         await self.event.wait()
         return self.choice
 
@@ -1638,21 +1679,23 @@ def poke_spawn_check(inputted_name: str, pokemon: str) -> bool:
         return False
     return True
 
+
 # Everything from this point below will be for slash only commands
 #
 #
 class SlashDropdownSelectMenu(discord.ui.Select):
-    def __init__(self, options:list):
+    def __init__(self, options: list):
         super().__init__(
-            placeholder='Make your selection', 
-            min_values=1, 
-            max_values=1, 
-            options=[discord.SelectOption(label=x) for x in options]
+            placeholder="Make your selection",
+            min_values=1,
+            max_values=1,
+            options=[discord.SelectOption(label=x) for x in options],
         )
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.choice = interaction.data['values'][0]
+        self.view.choice = interaction.data["values"][0]
         self.view.event.set()
+
 
 class SlashDropdownSelectView(discord.ui.View):
     def __init__(self, interaction, confirm_content, options: list):
@@ -1662,13 +1705,16 @@ class SlashDropdownSelectView(discord.ui.View):
         self.event = asyncio.Event()
         self.confirm_content = confirm_content
         self.add_item(SlashDropdownSelectMenu(options))
-    
+
     async def interaction_check(self, interaction):
         if interaction.user.id != self.interaction.user.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.message.edit(view=None)
@@ -1681,28 +1727,38 @@ class SlashDropdownSelectView(discord.ui.View):
 
     async def wait(self):
         """Returns the user's choice, or None if they did not choose in time."""
-        #If str send w/o embed
+        # If str send w/o embed
         if type(self.confirm_content) is str:
             try:
-                self.message = await self.interaction.response.send_message(self.confirm_content, view=self)
+                self.message = await self.interaction.response.send_message(
+                    self.confirm_content, view=self
+                )
             except:
-                self.message = await self.interaction.followup.send(self.confirm_content, view=self)
+                self.message = await self.interaction.followup.send(
+                    self.confirm_content, view=self
+                )
         else:
             try:
-                self.message = await self.interaction.response.send_message(embed=self.confirm_content, view=self)
+                self.message = await self.interaction.response.send_message(
+                    embed=self.confirm_content, view=self
+                )
             except:
-                self.message = await self.interaction.followup.send(embed=self.confirm_content, view=self)
+                self.message = await self.interaction.followup.send(
+                    embed=self.confirm_content, view=self
+                )
         await self.event.wait()
-        return self.choice        
+        return self.choice
+
 
 class SlashConfirmView(discord.ui.View):
     """View to confirm or cancel an action."""
+
     def __init__(
         self,
         interaction,
-        confirm_content, 
-        allowed_interactors: List[int] = None, 
-        on_confirm: Callable[[], Awaitable] = None, 
+        confirm_content,
+        allowed_interactors: List[int] = None,
+        on_confirm: Callable[[], Awaitable] = None,
         on_timeout: Callable[[], Awaitable] = None,
     ):
         super().__init__(timeout=120)
@@ -1717,14 +1773,20 @@ class SlashConfirmView(discord.ui.View):
         self.on_confirm = on_confirm
         self._on_timeout = on_timeout
         self.interacted = []
-    
+
     @discord.ui.button(style=discord.ButtonStyle.green, label="Confirm")
     async def confirm(self, interaction, button):
         if len(self.allowed_interactors) > 1:
             if os.environ.get("DEBUG_MSGS"):
-                await interaction.response.send_message(content=f"Confirmed your intent, waiting for other player {self.interacted=}", ephemeral=True)
+                await interaction.response.send_message(
+                    content=f"Confirmed your intent, waiting for other player {self.interacted=}",
+                    ephemeral=True,
+                )
             else:
-                await interaction.response.send_message(content="Confirmed your intent, waiting for other player(s)", ephemeral=True)
+                await interaction.response.send_message(
+                    content="Confirmed your intent, waiting for other player(s)",
+                    ephemeral=True,
+                )
         self.confirm = True
         self.event.set()
 
@@ -1735,22 +1797,39 @@ class SlashConfirmView(discord.ui.View):
         self.event.set()
 
     async def interaction_check(self, interaction):
-        if self.allowed_interactors and interaction.user.id not in self.allowed_interactors:
+        if (
+            self.allowed_interactors
+            and interaction.user.id not in self.allowed_interactors
+        ):
             if os.environ.get("DEBUG_MSGS"):
-                await interaction.response.send_message(content=f"You are not allowed to interact with this button as you are not in {self.allowed_interactors=}.", ephemeral=True)
+                await interaction.response.send_message(
+                    content=f"You are not allowed to interact with this button as you are not in {self.allowed_interactors=}.",
+                    ephemeral=True,
+                )
             else:
-                await interaction.response.send_message(content="You are not allowed to interact with this button as you are not in allowed_interactors.", ephemeral=True)
+                await interaction.response.send_message(
+                    content="You are not allowed to interact with this button as you are not in allowed_interactors.",
+                    ephemeral=True,
+                )
             return False
-        elif not self.allowed_interactors and interaction.user.id != self.interaction.user.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+        elif (
+            not self.allowed_interactors
+            and interaction.user.id != self.interaction.user.id
+        ):
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
 
         if len(self.allowed_interactors) == len(self.interacted):
-            self.event.set() # IDK why this is needed, but it is
+            self.event.set()  # IDK why this is needed, but it is
             return True
-        
+
         if interaction.user.id in self.interacted:
-            await interaction.response.send_message(content="You have already interacted with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You have already interacted with this button.", ephemeral=True
+            )
             return False
 
         self.interacted.append(interaction.user.id)
@@ -1759,7 +1838,7 @@ class SlashConfirmView(discord.ui.View):
             await self.on_confirm(interaction, self.message)
 
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.message.edit(view=None)
@@ -1767,26 +1846,32 @@ class SlashConfirmView(discord.ui.View):
             pass
 
         if self._on_timeout:
-            await self._on_timeout(self.ctx, self.message)    
-        
+            await self._on_timeout(self.ctx, self.message)
+
         self.event.set()
-    
+
     async def on_error(self, error, item, interaction):
         await self.interaction.client.misc.log_error(self.ctx, error)
 
     async def wait(self):
         """Returns True if the action was confirmed, False otherwise."""
         if type(self.confirm_content) is str:
-            self.message = await self.interaction.followup.send(self.confirm_content, view=self)
+            self.message = await self.interaction.followup.send(
+                self.confirm_content, view=self
+            )
         else:
-            self.message = await self.interaction.followup.send(embed=self.confirm_content, view=self)
+            self.message = await self.interaction.followup.send(
+                embed=self.confirm_content, view=self
+            )
         await self.event.wait()
 
         if self.cancelled:
             await self.message.edit(view=None)
             return False
 
-        if self.allowed_interactors and len(self.interacted) != len(self.allowed_interactors):
+        if self.allowed_interactors and len(self.interacted) != len(
+            self.allowed_interactors
+        ):
             self.event.clear()
             await self.event.wait()
 
@@ -1796,16 +1881,19 @@ class SlashConfirmView(discord.ui.View):
             return False
 
         return self.confirm
-    
+
+
 class SlashConfirmViewInitial(discord.ui.View):
     """View to confirm or cancel an action."""
+
     """This is for when it's used at the beginning of a command."""
+
     def __init__(
         self,
         interaction,
-        confirm_content, 
-        allowed_interactors: List[int] = None, 
-        on_confirm: Callable[[], Awaitable] = None, 
+        confirm_content,
+        allowed_interactors: List[int] = None,
+        on_confirm: Callable[[], Awaitable] = None,
         on_timeout: Callable[[], Awaitable] = None,
     ):
         super().__init__(timeout=120)
@@ -1821,14 +1909,20 @@ class SlashConfirmViewInitial(discord.ui.View):
         self._on_timeout = on_timeout
         self.interacted = []
         self.message = None
-    
+
     @discord.ui.button(style=discord.ButtonStyle.green, label="Confirm")
     async def confirm(self, interaction, button):
         if len(self.allowed_interactors) > 1:
             if os.environ.get("DEBUG_MSGS"):
-                self.message = await interaction.response.send_message(content=f"Confirmed your intent, waiting for other player {self.interacted=}", ephemeral=True)
+                self.message = await interaction.response.send_message(
+                    content=f"Confirmed your intent, waiting for other player {self.interacted=}",
+                    ephemeral=True,
+                )
             else:
-                self.message = await interaction.response.send_message(content="Confirmed your intent, waiting for other player(s)", ephemeral=True)
+                self.message = await interaction.response.send_message(
+                    content="Confirmed your intent, waiting for other player(s)",
+                    ephemeral=True,
+                )
         self.confirm = True
         self.event.set()
 
@@ -1839,22 +1933,39 @@ class SlashConfirmViewInitial(discord.ui.View):
         self.event.set()
 
     async def interaction_check(self, interaction):
-        if self.allowed_interactors and interaction.user.id not in self.allowed_interactors:
+        if (
+            self.allowed_interactors
+            and interaction.user.id not in self.allowed_interactors
+        ):
             if os.environ.get("DEBUG_MSGS"):
-                await interaction.response.send_message(content=f"You are not allowed to interact with this button as you are not in {self.allowed_interactors=}.", ephemeral=True)
+                await interaction.response.send_message(
+                    content=f"You are not allowed to interact with this button as you are not in {self.allowed_interactors=}.",
+                    ephemeral=True,
+                )
             else:
-                await interaction.response.send_message(content="You are not allowed to interact with this button as you are not in allowed_interactors.", ephemeral=True)
+                await interaction.response.send_message(
+                    content="You are not allowed to interact with this button as you are not in allowed_interactors.",
+                    ephemeral=True,
+                )
             return False
-        elif not self.allowed_interactors and interaction.user.id != self.interaction.user.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+        elif (
+            not self.allowed_interactors
+            and interaction.user.id != self.interaction.user.id
+        ):
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
 
         if len(self.allowed_interactors) == len(self.interacted):
-            self.event.set() # IDK why this is needed, but it is
+            self.event.set()  # IDK why this is needed, but it is
             return True
-        
+
         if interaction.user.id in self.interacted:
-            await interaction.response.send_message(content="You have already interacted with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You have already interacted with this button.", ephemeral=True
+            )
             return False
 
         self.interacted.append(interaction.user.id)
@@ -1863,7 +1974,7 @@ class SlashConfirmViewInitial(discord.ui.View):
             await self.on_confirm(interaction, self.message)
 
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.message.edit(view=None)
@@ -1871,26 +1982,32 @@ class SlashConfirmViewInitial(discord.ui.View):
             pass
 
         if self._on_timeout:
-            await self._on_timeout(self.ctx, self.message)    
-        
+            await self._on_timeout(self.ctx, self.message)
+
         self.event.set()
-    
+
     async def on_error(self, error, item, interaction):
         await self.interaction.client.misc.log_error(self.ctx, error)
 
     async def wait(self):
         """Returns True if the action was confirmed, False otherwise."""
         if type(self.confirm_content) is str:
-            self.message = await self.interaction.response.send_message(self.confirm_content, view=self)
+            self.message = await self.interaction.response.send_message(
+                self.confirm_content, view=self
+            )
         else:
-            self.message = await self.interaction.response.send_message(embed=self.confirm_content, view=self)
+            self.message = await self.interaction.response.send_message(
+                embed=self.confirm_content, view=self
+            )
         await self.event.wait()
 
         if self.cancelled:
             await self.message.edit(view=None)
             return False
 
-        if self.allowed_interactors and len(self.interacted) != len(self.allowed_interactors):
+        if self.allowed_interactors and len(self.interacted) != len(
+            self.allowed_interactors
+        ):
             self.event.clear()
             await self.event.wait()
 
@@ -1900,18 +2017,22 @@ class SlashConfirmViewInitial(discord.ui.View):
             return False
 
         return self.confirm
-    
+
+
 class SlashListSelect(discord.ui.Select):
     """Drop down selection."""
+
     def __init__(self, options: list):
         super().__init__(options=[discord.SelectOption(label=x) for x in options])
-    
+
     async def callback(self, interaction):
-        self.view.choice = interaction.data['values'][0]
+        self.view.choice = interaction.data["values"][0]
         self.view.event.set()
+
 
 class SlashListSelectView(discord.ui.View):
     """View to convert a list into a drop down selection."""
+
     def __init__(self, interaction, confirm_content: str, options: list):
         super().__init__(timeout=30)
         self.interaction = interaction
@@ -1919,13 +2040,16 @@ class SlashListSelectView(discord.ui.View):
         self.event = asyncio.Event()
         self.confirm_content = confirm_content
         self.add_item(SlashListSelect(options))
-    
+
     async def interaction_check(self, interaction):
         if interaction.user.id != self.interaction.user.id:
-            await interaction.response.send_message(content="You are not allowed to interact with this button.", ephemeral=True)
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
             return False
         return True
-    
+
     async def on_timeout(self):
         try:
             await self.interaction.edit_original_response(view=None)
@@ -1939,8 +2063,12 @@ class SlashListSelectView(discord.ui.View):
     async def wait(self):
         """Returns the user's choice, or None if they did not choose in time."""
         if type(self.confirm_content) is str:
-            self.message = await self.interaction.response.send_message(self.confirm_content, view=self)
+            self.message = await self.interaction.response.send_message(
+                self.confirm_content, view=self
+            )
         else:
-            self.message = await self.interaction.response.send_message(embed=self.confirm_content, view=self)
+            self.message = await self.interaction.response.send_message(
+                embed=self.confirm_content, view=self
+            )
         await self.event.wait()
         return self.choice

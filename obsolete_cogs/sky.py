@@ -990,7 +990,7 @@ class Sky(commands.Cog):
         fishing_exp = info["fishing_exp"]
         fishing_level = info["fishing_level"]
         party = info["party"]
-        #luck = info["luck"]
+        # luck = info["luck"]
         selected = info["selected"]
         visible = info["visible"]
         voted = info["voted"]
@@ -1026,7 +1026,7 @@ class Sky(commands.Cog):
         desc += f"\n\n**Energy**: `{energy}`"
         desc += f"\n**Fishing Exp**: `{fishing_exp}`"
         desc += f"\n**Fishing Level**: `{fishing_level}`"
-        #desc += f"\n**Luck**: `{luck}`"
+        # desc += f"\n**Luck**: `{luck}`"
         desc += f"\n\n**Visible Balance?**: `{visible}`"
         desc += f"\n**Voted?**: `{voted}`"
         desc += f"\n**Tradebanned?**: `{tradelock}`"
@@ -1517,9 +1517,7 @@ class Sky(commands.Cog):
     async def view_skins_pride(self, ctx):
         """PUBLIC: View Pride 2022 Skins"""
         pages = []
-        SERVER_BASE_PRIDE_SKIN = (
-            "https://mewbot.xyz/sprites/skins/pride2022/"
-        )
+        SERVER_BASE_PRIDE_SKIN = "https://mewbot.xyz/sprites/skins/pride2022/"
         PRIDE_BASE = "/home/dylee/clustered/shared/duel/sprites/skins/pride2022/"
         pages = []
         skins = list(pathlib.Path(PRIDE_BASE).glob("*-*-.png"))

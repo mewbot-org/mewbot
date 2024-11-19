@@ -6,12 +6,13 @@ import time
 
 from unicodedata import name
 from discord.ext import commands
+from mewcogs.json_files import make_embed
 from mewcogs.pokemon_list import *
 from mewutils.checks import tradelock, check_mod
 from mewutils.misc import get_file_name, get_emoji, ConfirmView, MenuView, pagify
 from collections import defaultdict
 from datetime import datetime
-from typing import Literal
+from typing import Coroutine, Literal
 from dataclasses import dataclass
 
 ORANGE = 0xF4831B
@@ -19,120 +20,120 @@ RED_GREEN = [0xBB2528, 0x146B3A]
 XMAS_ROLE = 1184182751067377674
 
 GLEAM_POKEMON = [
-    'Cutiefly', 
-    'Flabebe', 
-    'Darkrai', 
-    'Larvitar', 
-    'Scraggy', 
-    'Nihilego', 
-    'Cleffa', 
-    'Zeraora', 
-    'Cresselia', 
-    'Shaymin', 
-    'Dratini', 
-    'Wooper', 
-    'Wurmple', 
-    'Lunatone', 
-    'Reshiram', 
-    'Meltan', 
-    'Zapdos-galar', 
-    'Charmander', 
-    'Deerling', 
-    'Unown', 
-    'Pancham', 
-    'Corphish', 
-    'Kyogre', 
-    'Cyndaquil', 
-    'Ralts', 
-    'Magikarp', 
-    'Heracross', 
-    'Drowzee', 
-    'Porygon', 
-    'Shellder', 
-    'Chingling', 
-    'Entei', 
-    'Zapdos', 
-    'Weedle', 
-    'Mawile', 
-    'Omanyte',
-    'Anorith', 
-    'Togepi', 
-    'Torkoal', 
-    'Bellsprout', 
-    'Piplup', 
-    'Treecko', 
-    'Axew', 
-    'Clamperl', 
-    'Scyther', 
-    'Latios', 
-    'Deoxys', 
-    'Poliwag', 
-    'Roggenrola', 
-    'Yveltal', 
-    'Liligant', 
-    'Landorus', 
-    'Aegislash', 
-    'Infernape', 
-    'Gastrodon', 
-    'Chesnaught', 
-    'Zoroark', 
-    'Arceus', 
-    'Pheromosa', 
-    'Rotom', 
-    'Goomy', 
-    'Milcery', 
-    'Minccino', 
-    'Turtwig', 
-    'Salandit', 
-    'Scorbunny', 
-    'Dreepy', 
-    'Tornadus', 
-    'Genesect', 
-    'Groudon', 
-    'Xurkitree', 
-    'Popplio', 
-    'Litten', 
-    'Chikorita', 
-    'Noibat', 
-    'Sneasel', 
-    'Impidimp', 
-    'Eternatus', 
-    'Mudkip', 
-    'Zacian', 
-    'Giratina', 
-    'Dracovish', 
-    'Budew ', 
-    'Spritzee ', 
-    'Koraidon ', 
-    'Vulpix-alola ', 
-    'Teddiursa', 
-    'Skarmory',
-    'Solosis', 
-    'Hawlucha', 
-    'Sentret', 
-    'Diancie', 
-    'Audino', 
-    'Tapu-fini', 
-    'Suicune', 
-    'Froakie',
+    "Cutiefly",
+    "Flabebe",
+    "Darkrai",
+    "Larvitar",
+    "Scraggy",
+    "Nihilego",
+    "Cleffa",
+    "Zeraora",
+    "Cresselia",
+    "Shaymin",
+    "Dratini",
+    "Wooper",
+    "Wurmple",
+    "Lunatone",
+    "Reshiram",
+    "Meltan",
+    "Zapdos-galar",
+    "Charmander",
+    "Deerling",
+    "Unown",
+    "Pancham",
+    "Corphish",
+    "Kyogre",
+    "Cyndaquil",
+    "Ralts",
+    "Magikarp",
+    "Heracross",
+    "Drowzee",
+    "Porygon",
+    "Shellder",
+    "Chingling",
+    "Entei",
+    "Zapdos",
+    "Weedle",
+    "Mawile",
+    "Omanyte",
+    "Anorith",
+    "Togepi",
+    "Torkoal",
+    "Bellsprout",
+    "Piplup",
+    "Treecko",
+    "Axew",
+    "Clamperl",
+    "Scyther",
+    "Latios",
+    "Deoxys",
+    "Poliwag",
+    "Roggenrola",
+    "Yveltal",
+    "Liligant",
+    "Landorus",
+    "Aegislash",
+    "Infernape",
+    "Gastrodon",
+    "Chesnaught",
+    "Zoroark",
+    "Arceus",
+    "Pheromosa",
+    "Rotom",
+    "Goomy",
+    "Milcery",
+    "Minccino",
+    "Turtwig",
+    "Salandit",
+    "Scorbunny",
+    "Dreepy",
+    "Tornadus",
+    "Genesect",
+    "Groudon",
+    "Xurkitree",
+    "Popplio",
+    "Litten",
+    "Chikorita",
+    "Noibat",
+    "Sneasel",
+    "Impidimp",
+    "Eternatus",
+    "Mudkip",
+    "Zacian",
+    "Giratina",
+    "Dracovish",
+    "Budew ",
+    "Spritzee ",
+    "Koraidon ",
+    "Vulpix-alola ",
+    "Teddiursa",
+    "Skarmory",
+    "Solosis",
+    "Hawlucha",
+    "Sentret",
+    "Diancie",
+    "Audino",
+    "Tapu-fini",
+    "Suicune",
+    "Froakie",
 ]
 
 RADIANT_POKEMON = [
-    'Necrozma',
-    'Yveltal',
-    'Salamence',
-    'Xerneas',
-    'Eevee',
-    'Charmander',
-    'Celebi',
-    'Riolu',
-    'Rockruff',
-    'Zorua',
-    'Dreepy',
-    'Lapras',
-    'Tyrantrum',
-    'Mimikyu',
-    'Jynx'
+    "Necrozma",
+    "Yveltal",
+    "Salamence",
+    "Xerneas",
+    "Eevee",
+    "Charmander",
+    "Celebi",
+    "Riolu",
+    "Rockruff",
+    "Zorua",
+    "Dreepy",
+    "Lapras",
+    "Tyrantrum",
+    "Mimikyu",
+    "Jynx",
 ]
 
 uncoded_ids = [
@@ -221,6 +222,7 @@ uncoded_ids = [
     10018,
 ]
 
+
 @dataclass
 class Pokemon:
     name: str
@@ -247,37 +249,33 @@ class Pokemon:
             self.name.endswith(form) for form in ["alola", "galar", "hisui", "paldea"]
         )
 
+
 class ListSelectChristmas(discord.ui.Select):
     """Drop down selection for trainer image"""
+
     def __init__(self):
         options = [
             discord.SelectOption(
-                label="Swimmerm",
-                emoji="<:swimmerm:1273436007794212874>"
+                label="Swimmerm", emoji="<:swimmerm:1273436007794212874>"
             ),
             discord.SelectOption(
-                label="Swimmerf",
-                emoji="<:swimmerf:1273436006678401105>"
+                label="Swimmerf", emoji="<:swimmerf:1273436006678401105>"
             ),
             discord.SelectOption(
-                label="Cyclist",
-                emoji="<:cyclist:1273436027649921096>"
+                label="Cyclist", emoji="<:cyclist:1273436027649921096>"
             ),
-            discord.SelectOption(
-                label="Dancer",
-                emoji="<:dancer:1273436026680905812>"
-            ),
+            discord.SelectOption(label="Dancer", emoji="<:dancer:1273436026680905812>"),
         ]
-        super().__init__(
-            options=options
-        )
+        super().__init__(options=options)
 
     async def callback(self, interaction):
         self.view.choice = interaction.data["values"][0]
         self.view.event.set()
 
+
 class ListSelectView(discord.ui.View):
     """View to handle trainer selection"""
+
     def __init__(self, ctx, confirm_content: str):
         super().__init__(timeout=60)
         self.ctx = ctx
@@ -310,6 +308,7 @@ class ListSelectView(discord.ui.View):
         self.message = await self.ctx.send(self.confirm_content, view=self)
         await self.event.wait()
         return self.choice
+
 
 # Here for Easter 2023 Event
 async def get_egg(ctx, fund):
@@ -455,6 +454,7 @@ async def get_egg(ctx, fund):
     )
     return p, emoji, boosted
 
+
 # Here for Easter 2023 Event
 def get_insert_query(ctx, poke, is_shadow=False):
     tackle = "tackle"
@@ -497,6 +497,7 @@ def get_insert_query(ctx, poke, is_shadow=False):
     )
     return query2, args
 
+
 class Events(commands.Cog):
     """Various seasonal events in Mewbot."""
 
@@ -526,7 +527,7 @@ class Events(commands.Cog):
             "Illumise",
             "Pincurchin",
             "Golett",
-            "Dialga"
+            "Dialga",
         ]
         # "Poke name": ["Super effective (2)", "Not very (1)", "No effect (0)", "No effect (0)"]
         self.CHRISTMAS_MOVES = {
@@ -551,18 +552,30 @@ class Events(commands.Cog):
         self.EVENT_POKEMON = [
             "Mew",
             "Ditto",
-            "Absol", "Absol-mega",
-            "Snivy", "Servine", "Serperior",
-            "Fennekin", "Braixen", "Delphox",
-            "Lotad", "Lombre", "Ludicolo",
-            "Spinda", "Lunatone",
+            "Absol",
+            "Snivy",
+            "Servine",
+            "Serperior",
+            "Fennekin",
+            "Braixen",
+            "Delphox",
+            "Lotad",
+            "Lombre",
+            "Ludicolo",
+            "Spinda",
+            "Lunatone",
             "Luvdisc",
-            "Pidove", "Tranquill", "Unfezant",
+            "Pidove",
+            "Tranquill",
+            "Unfezant",
             "Comfey",
-            "Buzzwole", 
-            "Pineco", "Forretress",
-            "Azurill", "Marill", "Azumarill",
-            "Heracross", "Heracross-mega"
+            "Buzzwole",
+            "Pineco",
+            "Forretress",
+            "Azurill",
+            "Marill",
+            "Azumarill",
+            "Heracross",
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -980,9 +993,7 @@ class Events(commands.Cog):
                     name="Egg Details",
                     value=f"Diggersby has granted you a {emoji} {msg} **{ivpercent}** Painted Egg!\nIt'll hatch in **150** steps!",
                 )
-                embed.set_image(
-                    url="https://mewbot.xyz/eastereggs.png"
-                )
+                embed.set_image(url="https://mewbot.xyz/eastereggs.png")
                 embed.set_footer(
                     text="Easter 2023 ends on 4/23 | Make sure to join Mewbot Official for more Events!"
                 )
@@ -1044,11 +1055,11 @@ class Events(commands.Cog):
         embed.add_field(
             name="Throwing Water Balloons",
             value="Earned by Breeding, Fishing, Mining, and Catching Spawns! You can hit other players with your earned water balloons <:waterballoon:1273431369749495930>! There is a slight chance you'll miss though.",
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Water Ballon Rewards",
-            value="There will be several rewards for water balloons. At 100 thrown you get the <@&1273432534239285288> and at 250 thrown you'll get the choice of trainer image! We also plan on a bot wide reward that changes the more water balloons thrown!!"
+            value="There will be several rewards for water balloons. At 100 thrown you get the <@&1273432534239285288> and at 250 thrown you'll get the choice of trainer image! We also plan on a bot wide reward that changes the more water balloons thrown!!",
         )
         embed.set_thumbnail(
             url="https://cdn.discordapp.com/attachments/998291646443704320/1273461543543242816/Screenshot_2024-08-14_220100-removebg-preview.png?ex=66beb2fb&is=66bd617b&hm=2a01e545b315c1589a6ed0bceff6716e51812bccc5f78af126b23fb9f86d1287&"
@@ -1061,16 +1072,16 @@ class Events(commands.Cog):
     # @summer.command(name="items")
     async def summer_items(self, ctx):
         """Check your summer inventory."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
         if not self.SUMMER_COMMANDS:
             await ctx.send("This command can only be used during the summer season!")
             return
         async with self.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchrow(
                 "SELECT snowballs, seashells FROM events_new WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
         embed = discord.Embed(
             title=f"{ctx.author.name.title()}'s Summer Items",
@@ -1078,12 +1089,12 @@ class Events(commands.Cog):
             color=0x0084FD,
         )
         embed.add_field(
-            name="Items", 
+            name="Items",
             value=(
                 f"**Water Balloons**: {inventory['snowballs']}x <:waterballoon:1273431369749495930>\n"
                 f"**Seashells**: {inventory['seashells']}x 🐚"
             ),
-            inline=False
+            inline=False,
         )
         embed.set_footer(text="Remember, touch grass!")
         await ctx.send(embed=embed)
@@ -1091,9 +1102,9 @@ class Events(commands.Cog):
     # @summer.command(name="shop")
     async def summer_shop(self, ctx):
         """Check the summer shop."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
         if not self.SUMMER_COMMANDS:
             await ctx.send("This command can only be used during the summer season!")
             return
@@ -1110,14 +1121,14 @@ class Events(commands.Cog):
                 "`2.` __2x Shiny Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
                 "`3.` __2x Breeding Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Currencies",
             value=(
                 "`4.` __1-25 Gleam Gems.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\nLimited to 1000 daily."
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Gleams",
@@ -1125,7 +1136,7 @@ class Events(commands.Cog):
                 "`5.` __Event Skin__\n**Cost:** 150 <a:radiantgem:774866137472827432>\nThis is a skin that goes into inventory.\n"
                 "`6.` __Boosted Event Skin__\n**Cost:** 300 <a:radiantgem:774866137472827432>\nThis is a Pokemon already with the skin equipped."
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Seashells 🐚",
@@ -1135,15 +1146,13 @@ class Events(commands.Cog):
                 "`9.` __Shadow Streak__\n**Cost:** 300 🐚\nIncreases <:shadow:1010559067590246410> by 50. Limited to 10 daily.\n"
             ),
         )
-        embed.set_footer(
-            text="Use /summer buy to buy an item!"
-        )
+        embed.set_footer(text="Use /summer buy to buy an item!")
         await ctx.send(embed=embed)
 
     # @summer.command(name="buy")
     async def summer_buy(
-        self, 
-        ctx, 
+        self,
+        ctx,
         pack: Literal[
             "1. 2x Battle Multi.",
             "2. 2x Shiny Multi.",
@@ -1157,9 +1166,9 @@ class Events(commands.Cog):
         ],
     ):
         """Buy something from the summer shop."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
         if not self.SUMMER_COMMANDS:
             await ctx.send("This command can only be used during the summer season!")
             return
@@ -1173,39 +1182,51 @@ class Events(commands.Cog):
 
         async with self.bot.db[0].acquire() as pconn:
             credits, redeems, npc_energy = await pconn.fetchrow(
-                "SELECT mewcoins, redeems, npc_energy FROM users WHERE u_id = $1", ctx.author.id
+                "SELECT mewcoins, redeems, npc_energy FROM users WHERE u_id = $1",
+                ctx.author.id,
             )
             if credits is None:
-                await ctx.send("You haven't started! Please use `/start` to start your adventure!")
+                await ctx.send(
+                    "You haven't started! Please use `/start` to start your adventure!"
+                )
                 return
-            
-            radiant_gems, battle_multiplier, shiny_multiplier, breeding_multiplier = await pconn.fetchrow(
-                "SELECT radiant_gem, battle_multiplier, shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
+
+            (
+                radiant_gems,
+                battle_multiplier,
+                shiny_multiplier,
+                breeding_multiplier,
+            ) = await pconn.fetchrow(
+                "SELECT radiant_gem, battle_multiplier, shiny_multiplier, breeding_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
             )
             if radiant_gems is None:
-                await ctx.send("No bound items table found. Have you started or converted to the new bag system if needed?")
+                await ctx.send(
+                    "No bound items table found. Have you started or converted to the new bag system if needed?"
+                )
                 return
 
             gleam_limit = await pconn.fetchrow(
                 "SELECT seashells, event_limit, radiant_limit, gleam_limit FROM events_new WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if gleam_limit is None:
-                #Try to add user to table and then have them redo the command
+                # Try to add user to table and then have them redo the command
                 await pconn.execute(
-                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
                 )
                 await ctx.send("Please retry the command.")
                 return
 
-            seashells = gleam_limit['seashells']
-            event_limit = gleam_limit['event_limit']
-            radiant_limit = gleam_limit['radiant_limit']
-            gleam_limit = gleam_limit['gleam_limit']
-            
+            seashells = gleam_limit["seashells"]
+            event_limit = gleam_limit["event_limit"]
+            radiant_limit = gleam_limit["radiant_limit"]
+            gleam_limit = gleam_limit["gleam_limit"]
+
             self.purchaselock.append(ctx.author.id)
 
-            #Battle Multiplier
+            # Battle Multiplier
             if option == 1:
                 if credits < 50000:
                     await ctx.send("You don't have enough credits for that!")
@@ -1230,8 +1251,8 @@ class Events(commands.Cog):
                 await ctx.send("You have successfully purchased 2x Battle Multiplier!")
                 self.purchaselock.remove(ctx.author.id)
                 return
-            
-            #Shiny Multiplier
+
+            # Shiny Multiplier
             if option == 2:
                 if credits < 50000:
                     await ctx.send("You don't have enough credits for that!")
@@ -1257,7 +1278,7 @@ class Events(commands.Cog):
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #Breeding Multiplier
+            # Breeding Multiplier
             if option == 3:
                 if credits < 50000:
                     await ctx.send("You don't have enough credits for that!")
@@ -1279,11 +1300,13 @@ class Events(commands.Cog):
                     breeding_multiplier,
                     ctx.author.id,
                 )
-                await ctx.send("You have successfully purchased 2x Breeding Multiplier!")
+                await ctx.send(
+                    "You have successfully purchased 2x Breeding Multiplier!"
+                )
                 self.purchaselock.remove(ctx.author.id)
                 return
-       
-            #Gleam Gems
+
+            # Gleam Gems
             if option == 4:
                 if gleam_limit >= 1000:
                     await ctx.send("You have hit the daily purchase limit!")
@@ -1304,12 +1327,12 @@ class Events(commands.Cog):
                 await pconn.execute(
                     "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
                     earned_gleams,
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 await pconn.execute(
                     "UPDATE events_new SET gleam_limit = $1 WHERE u_id = $2",
                     new_limit,
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 await ctx.send(
                     f"You bought {earned_gleams}x Gleam Gems <a:radiantgem:774866137472827432>.\n"
@@ -1317,12 +1340,14 @@ class Events(commands.Cog):
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
-            
-            #Event Gleams
-            #Gives the skin for the Pokemon rather than the Pokemon
+
+            # Event Gleams
+            # Gives the skin for the Pokemon rather than the Pokemon
             if option == 5:
                 if radiant_gems < 150:
-                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    await ctx.send(
+                        "You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!"
+                    )
                     self.purchaselock.remove(ctx.author.id)
                     return
                 radiant_gems -= 150
@@ -1352,11 +1377,13 @@ class Events(commands.Cog):
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #Boosted Event Glems
-            #This gives Pokemon w/skin rather than just skin
+            # Boosted Event Glems
+            # This gives Pokemon w/skin rather than just skin
             if option == 6:
                 if radiant_gems < 300:
-                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    await ctx.send(
+                        "You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!"
+                    )
                     self.purchaselock.remove(ctx.author.id)
                     return
                 radiant_gems -= 300
@@ -1366,14 +1393,20 @@ class Events(commands.Cog):
                     radiant_gems,
                     ctx.author.id,
                 )
-                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), boosted=True, skin='summer2024')
+                await ctx.bot.commondb.create_poke(
+                    ctx.bot,
+                    ctx.author.id,
+                    pokemon.capitalize(),
+                    boosted=True,
+                    skin="summer2024",
+                )
                 await ctx.send(
                     f"You got a **{pokemon.title()} Summer Pokemon**!\nIt's been added to your list."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #NPC Energy
+            # NPC Energy
             if option == 7:
                 if npc_energy >= 50:
                     await ctx.send("Go spend some energy first!")
@@ -1386,8 +1419,8 @@ class Events(commands.Cog):
                 await pconn.execute(
                     "UPDATE events_new SET seashells = $1 WHERE u_id = $2",
                     seashells,
-                    ctx.author.id
-                )            
+                    ctx.author.id,
+                )
                 await pconn.execute(
                     "UPDATE users SET npc_energy = npc_energy + 2 WHERE u_id = $1",
                     ctx.author.id,
@@ -1396,8 +1429,8 @@ class Events(commands.Cog):
                 await ctx.send(
                     f"You received some **NPC Energy**!\nIt's been added to your current amount."
                 )
-            
-            #Random Chest
+
+            # Random Chest
             if option == 8:
                 if event_limit >= 20:
                     await ctx.send("You have hit the daily purchase limit!")
@@ -1419,7 +1452,7 @@ class Events(commands.Cog):
                 await pconn.execute(
                     "UPDATE events_new SET seashells = $1, event_limit = event_limit + 1 WHERE u_id = $2",
                     seashells,
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 fancy_name = chest_choice.replace("_", " ").title()
                 self.purchaselock.remove(ctx.author.id)
@@ -1428,7 +1461,7 @@ class Events(commands.Cog):
                     f"You have purchased {new_limit} chests, the limit is 20 per day."
                 )
 
-            #Shadow Streak
+            # Shadow Streak
             if option == 9:
                 if radiant_limit >= 10:
                     await ctx.send("You have hit the daily purchase limit!")
@@ -1441,13 +1474,12 @@ class Events(commands.Cog):
                 seashells -= 300
                 new_limit = radiant_limit + 1
                 await pconn.execute(
-                    "UPDATE users SET chain = chain + 50 WHERE u_id = $1",
-                    ctx.author.id
+                    "UPDATE users SET chain = chain + 50 WHERE u_id = $1", ctx.author.id
                 )
                 await pconn.execute(
                     "UPDATE events_new SET seashells = $1, radiant_limit = radiant_limit + 1 WHERE u_id = $2",
                     seashells,
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 self.purchaselock.remove(ctx.author.id)
                 await ctx.send(
@@ -1456,44 +1488,48 @@ class Events(commands.Cog):
                 )
 
     # @summer.command(name="wb")
-    async def water_balloon(self, ctx, amount:int, player:discord.Member):
+    async def water_balloon(self, ctx, amount: int, player: discord.Member):
         "Throw a water balloon at another member."
         if not self.SUMMER_COMMANDS:
             await ctx.send("This command can only be used during the summer season!")
             return
         if ctx.author.id == player.id:
-            await ctx.send(
-                "Why hit yourself? Hit a friend... or enemy!"
-            )
+            await ctx.send("Why hit yourself? Hit a friend... or enemy!")
             return
         async with ctx.bot.db[0].acquire() as pconn:
             msg = ""
-            snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed = await pconn.fetchrow(
+            (
+                snowballs,
+                times_hit,
+                times_thrown,
+                trainer_redeemed,
+                role_redeemed,
+            ) = await pconn.fetchrow(
                 "SELECT snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed FROM events_new WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if snowballs is None:
                 await ctx.send("You have not started the event!")
                 return
             elif snowballs < 1:
-                await ctx.send("You have to get some water balloons! <:waterballoon:1273431369749495930>!")
+                await ctx.send(
+                    "You have to get some water balloons! <:waterballoon:1273431369749495930>!"
+                )
                 return
             attacked_times_hit = await pconn.fetchval(
-                "SELECT times_hit FROM events_new WHERE u_id = $1",
-                player.id
+                "SELECT times_hit FROM events_new WHERE u_id = $1", player.id
             )
             if attacked_times_hit is None:
-                #Meaning player hit hasn't started event
+                # Meaning player hit hasn't started event
                 await pconn.execute(
-                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", player.id
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    player.id,
                 )
                 await ctx.send("Please try this command again shortly...")
                 return
             snowballs -= amount
             if snowballs < 0:
-                await ctx.send(
-                    "You don't have enough waterballoons for that throw!"
-                )
+                await ctx.send("You don't have enough waterballoons for that throw!")
                 return
             successful_hits = 0
             unsuccessful_hits = 0
@@ -1504,20 +1540,20 @@ class Events(commands.Cog):
                     successful_hits += 1
                 times_thrown += 1
 
-            #Process hits
+            # Process hits
             await pconn.execute(
                 "UPDATE events_new SET snowballs = $1, times_thrown = $2 WHERE u_id = $3",
                 snowballs,
                 times_thrown,
-                ctx.author.id
+                ctx.author.id,
             )
-            #Let's hit player
+            # Let's hit player
             await pconn.execute(
                 "UPDATE events_new SET times_hit = times_hit + $1 WHERE u_id = $2",
                 successful_hits,
-                player.id
+                player.id,
             )
-            #Process rewards, role only in Official.
+            # Process rewards, role only in Official.
             if ctx.guild.id == 998128574898896906:
                 if times_thrown >= 100 and role_redeemed is False:
                     event_role = ctx.guild.get_role(1273432534239285288)
@@ -1526,7 +1562,7 @@ class Events(commands.Cog):
                     )
                     await pconn.execute(
                         "UPDATE events_new SET role_redeemed = True WHERE u_id = $1",
-                        ctx.author.id
+                        ctx.author.id,
                     )
                     msg += "You've received the Summer Event '24 Official Server Role!"
             if times_thrown >= 250:
@@ -1542,7 +1578,7 @@ class Events(commands.Cog):
                         return
                     trainer_images = await pconn.fetchval(
                         "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
-                        ctx.author.id
+                        ctx.author.id,
                     )
                     choice = str(choice)
                     category = "summer"
@@ -1555,18 +1591,18 @@ class Events(commands.Cog):
                     await pconn.execute(
                         "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
                         trainer_images,
-                        ctx.author.id
+                        ctx.author.id,
                     )
                     await pconn.execute(
                         "UPDATE events_new SET trainer_redeemed = True WHERE u_id = $1",
-                        ctx.author.id
+                        ctx.author.id,
                     )
                     msg += f"You've successfully redeemed {choice} as your trainer image!\nIt's been added to your trainer image inventory."
 
         embed = discord.Embed(
             title="Mewbot Summer 2024",
             description=f"You've throw a water balloon <:waterballoon:1273431369749495930>\nDid you hit your mark?!",
-            color=0x0084FD
+            color=0x0084FD,
         )
         embed.add_field(
             name="Victim",
@@ -1574,22 +1610,16 @@ class Events(commands.Cog):
                 f"You've hit **{player.name} {successful_hits} times**!\n"
                 f"You missed {unsuccessful_hits} times though..."
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name=f"{ctx.author.name}'s Stats",
             value=f"You've been hit __{times_hit} times__.\nYou've thrown __{times_thrown}__ water balloons!",
-            inline=False
+            inline=False,
         )
         if msg != "":
-            embed.add_field(
-                name="Rewards",
-                value=f"{msg}",
-                inline=False
-            )
-        embed.set_footer(
-            text=f"You have {snowballs} water balloons remaining."
-        )
+            embed.add_field(name="Rewards", value=f"{msg}", inline=False)
+        embed.set_footer(text=f"You have {snowballs} water balloons remaining.")
         await ctx.send(embed=embed)
 
     # @commands.hybrid_group()
@@ -1800,7 +1830,7 @@ class Events(commands.Cog):
     async def halloween_buy(self, ctx, option: int):
         if not self.HALLOWEEN_COMMANDS:
             await ctx.send("This command can only be used during the halloween season!")
-            return        
+            return
         # if option == 8:
         # await ctx.send("The holiday raffle has ended!")
         # return
@@ -1828,7 +1858,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    "Successfully bought 1 <:mewbot_potion:1036332369076043776> for 50 <:mewbot_candy:1036332371038982264>."
+                    "Successfully bought 1 <:potion:1301436846307540992> for 50 :candy: ."
                 )
                 return
             # Leave this here incase we add Missingno and Gleam purchase option
@@ -1845,7 +1875,7 @@ class Events(commands.Cog):
                     await ctx.send(f"Successfully bought a {self.HALLOWEEN_RADIANT} for 1 pumpkin!")
                 elif option == 9:
                     await pconn.execute("UPDATE halloween SET raffle = raffle + 1 WHERE u_id = $1", ctx.author.id)
-                    await ctx.send("Successfully bought a raffle ticket for 1 <:mewbot_mask:1036332369818431580>!")
+                    await ctx.send("Successfully bought a raffle ticket for 1 <:pumpkin:1301436707169894430>!")
                 return"""
             # Replaces the above while we don't offer those options
             # Raffle entry
@@ -1858,15 +1888,15 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    "Successfully bought a raffle ticket for 1 <:mewbot_mask:1036332369818431580>!"
+                    "Successfully bought a raffle ticket for 1 <:pumpkin:1301436707169894430>!"
                 )
                 return
             # Everything from this point below uses Potions as currency
             # Checks balance per price as below.
-            price = [200, 8, 5, 25, 80][option - 2]
+            price = [50, 8, 2, 5, 10][option - 2]
             if bal["potion"] < price:
                 await ctx.send(
-                    "You don't have enough <:mewbot_potion:1036332369076043776> for that!"
+                    "You don't have enough <:potion:1301436846307540992> for that!"
                 )
                 return
             await pconn.execute(
@@ -1881,7 +1911,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"Successfully bought 1 <:mewbot_mask:1036332369818431580> for {price} <:mewbot_potion:1036332369076043776>."
+                    f"Successfully bought 1 <:pumpkin:1301436707169894430> for {price} <:potion:1301436846307540992>."
                 )
             # Spooky Chest
             if option == 4:
@@ -1891,7 +1921,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"Successfully bought a Spooky Chest for {price} <:mewbot_potion:1036332369076043776>."
+                    f"Successfully bought a Spooky Chest for {price} <:potion:1301436846307540992>."
                 )
             # Fleshy Chest
             elif option == 5:
@@ -1901,7 +1931,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"Successfully bought a Fleshy Chest for {price} <:mewbot_potion:1036332369076043776>."
+                    f"Successfully bought a Fleshy Chest for {price} <:potion:1301436846307540992>."
                 )
             # Horrific Chest
             elif option == 6:
@@ -1911,7 +1941,7 @@ class Events(commands.Cog):
                     ctx.author.id,
                 )
                 await ctx.send(
-                    f"Successfully bought a Horrific Chest for {price} <:mewbot_potion:1036332369076043776>."
+                    f"Successfully bought a Horrific Chest for {price} <:potion:1301436846307540992>."
                 )
 
     @halloween.command(name="inventory")
@@ -1934,13 +1964,13 @@ class Events(commands.Cog):
             color=ORANGE,
         )
         embed.add_field(
-            name="Currency",
+            name="Bag of Treats",
             value=(
-                f"{data['candy']}x Candy <:mewbot_candy:1036332371038982264>\n"
-                f"{data['potion']}x Sus Potions <:mewbot_potion:1036332369076043776>\n"
-                f"{data['pumpkin']}x Scary Pumpkins <:mewbot_mask:1036332369818431580>\n"
+                f"{data['candy']}x Candy :candy: \n"
+                f"{data['potion']}x Sus Potions <:potion:1301436846307540992>\n"
+                f"{data['pumpkin']}x Mystery Pumpkins <:pumpkin:1301436707169894430>\n"
             ),
-            inline=True
+            inline=True,
         )
         embed.add_field(
             name="Chests",
@@ -1949,13 +1979,142 @@ class Events(commands.Cog):
                 f"{data['fleshy_chest']}x Fleshy\n"
                 f"{data['horrific_chest']}x Horrific\n"
             ),
-            inline=True
+            inline=True,
         )
 
-        embed.set_footer(
-            text="Join Mewbot's Official Server for all event updates!"
-        )
+        embed.set_footer(text="Join Mewbot's Official Server for all event updates!")
         await ctx.send(embed=embed)
+
+    @halloween.group(name="pumpkin")
+    async def pumpkin(self, ctx):
+        ...
+
+    @pumpkin.command(name="pop")
+    async def pumpkin_pop(self, ctx):
+        """Open a mysterious pumpkin and receive a reward... or a trick!"""
+
+        # Starting message with suspense
+        embed = discord.Embed(
+            title="🎃 Selected a Mysterious pumpkin from your stash! 🎃",
+            description="*Do you dare to open it?*",
+            color=discord.Color.orange(),
+        )
+        open_button = discord.ui.Button(
+            label="Pop Pumpkin", style=discord.ButtonStyle.green
+        )
+
+        # Callback for the button to handle opening the pumpkin
+        async def open_callback(interaction: discord.Interaction):
+            if interaction.user != ctx.author:
+                await interaction.response.send_message(
+                    "Only the pumpkin owner can open it!", ephemeral=True
+                )
+                return
+
+            # Random rewards with suspense delay
+            rewards = {
+                "candy": (0.35, "🍬 A stash of candies and potions spills out!"),
+                "potion": (0.15, "🧪 You found a precious potion!"),
+                "shadow_streak": (
+                    0.25,
+                    "🌌 A mysterious shadow aura swirls out, granting you 150 Shadow Streak!",
+                ),
+                "trick": (
+                    0.25,
+                    "💀 A ghostly hand reaches out and gives you a fright! (You were tricked!)",
+                ),
+            }
+            reward = random.choices(
+                list(rewards.keys()), weights=[v[0] for v in rewards.values()], k=1
+            )[0]
+            message = rewards[reward][1]
+
+            # Get user pumpkin count
+            async with self.bot.db[0].acquire() as pconn:
+                try:
+                    pumpkins = await pconn.fetchval(
+                        "UPDATE events_new SET pumpkin = pumpkin - 1 WHERE u_id = $1 RETURNING pumpkin",
+                        ctx.author.id,
+                    )
+                except:
+                    await ctx.send(
+                        embed=make_embed(
+                            title="You probably don't have any <:pumpkin:1301436707169894430>"
+                        )
+                    )
+                    return
+
+                # if they have more than 5 pumpkins, there should be a 60% chance of event pokemon,
+                # if not, there should be a 90% chance
+                if pumpkins >= 5:
+                    true_reward = random.choices(
+                        ("event_pokemon", "reward"), weights=(0.6, 0.4), k=1
+                    )[0]
+                else:
+                    true_reward = random.choices(
+                        ("event_pokemon", "reward"), weights=(0.9, 0.1), k=1
+                    )[0]
+                if true_reward == "event_pokemon":
+                    pokemon = random.choice(self.EVENT_POKEMON).lower()
+                    await ctx.bot.commondb.create_poke(
+                        ctx.bot,
+                        ctx.author.id,
+                        pokemon.capitalize(),
+                        skin="halloween2024",
+                    )
+                    pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
+                        pokemon, ctx.bot, skin="halloween2024"
+                    )
+                    guild = await ctx.bot.mongo_find(
+                        "guilds", {"id": ctx.channel.guild.id}
+                    )
+                    if guild is None:
+                        small_images = False
+                    else:
+                        small_images = guild["small_images"]
+                    embed = discord.Embed(
+                        title="🎃 *A Halloween Pokémon Jumps Out!* 🎃",
+                        description="As you pry open the pumpkin, mist swirls out and...\n\n"
+                        "👻 *A Halloween Pokémon appears!* \n\n"
+                        "The Pokémon has been added to your inventory!",
+                        color=discord.Color.purple(),
+                    )
+                    embed.set_thumbnail(
+                        url=pokeurl
+                    )  # Replace with the actual Pokémon image URL
+                    embed.set_footer(
+                        text="Happy Halloween! Keep opening pumpkins for more surprises."
+                    )
+
+                    if small_images:
+                        embed.set_thumbnail(url=pokeurl)
+                    else:
+                        embed.set_image(url=pokeurl)
+                    await interaction.response.edit_message(embed=embed, view=None)
+
+                else:
+                    if reward == "shadow_streak":
+                        await pconn.execute(
+                            "UPDATE users SET chain = chain + 50 WHERE u_id = $1",
+                            ctx.author.id,
+                        )
+                    elif reward == "candy":
+                        await self.give_candy(ctx, 500)
+                    elif reward == "potion":
+                        await self.drop_potions(ctx)
+
+                    embed = discord.Embed()
+                    embed.title = "🎃 You opened the pumpkin!"
+                    embed.description = message
+                    await interaction.response.edit_message(embed=embed, view=None)
+
+        # Attach the callback to the button
+        open_button.callback = open_callback
+        view = discord.ui.View()
+        view.add_item(open_button)
+
+        # Send the initial message with the button
+        await ctx.send(embed=embed, view=view)
 
     @halloween.command(name="shop")
     async def halloween_shop(self, ctx):
@@ -1977,58 +2136,57 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="Halloween Shop",
             color=ORANGE,
-            description="Use /halloween buy with an option number to buy that item!",
+            description="Spend your Potions <:potion:1301436846307540992> and Candies :candy:. Use /halloween buy with an option number to buy that item!",
         )
         embed.add_field(
-            name="1. 1 Sus Potion",
-            value="50 <:mewbot_candy:1036332371038982264>",
+            name="1. Sus Potion <:potion:1301436846307540992>",
+            value="50 :candy: ",
             inline=True,
         )
         embed.add_field(
-            name="2. 1 Pumpkin",
-            value="100 <:mewbot_potion:1036332369076043776>",
+            name="2. Pumpkin <:pumpkin:1301436707169894430>",
+            value="50 <:potion:1301436846307540992>",
             inline=True,
         )
         embed.add_field(
-            name="3. 1 Raffle Entry",
-            value="1 <:mewbot_mask:1036332369818431580>",
+            name="3. Raffle Entry",
+            value="1 <:pumpkin:1301436707169894430>",
             inline=True,
         )
         embed.add_field(
             name="4. Spooky Chest",
-            value="5 <:mewbot_potion:1036332369076043776>",
+            value="2 <:potion:1301436846307540992>",
             inline=True,
         )
         embed.add_field(
             name="5. Fleshy Chest",
-            value="25 <:mewbot_potion:1036332369076043776>",
+            value="5 <:potion:1301436846307540992>",
             inline=True,
         )
         embed.add_field(
             name="6. Horrific Chest",
-            value="80 <:mewbot_potion:1036332369076043776>",
+            value="10 <:potion:1301436846307540992>",
             inline=True,
         )
         # embed.add_field(
         # name="7. Missingno",
-        # value="1 <:mewbot_mask:1036332369818431580>",
+        # value="1 <:pumpkin:1301436707169894430>",
         # inline=True
         # )
         # embed.add_field(
         # name="8. Halloween Radiant",
-        # value="1 <:mewbot_mask:1036332369818431580>",
+        # value="1 <:pumpkin:1301436707169894430>",
         # inline=True
         # )
         embed.set_footer(text="Use /halloween inventory to check your stash!")
         await ctx.send(embed=embed)
-        
-    
+
     @halloween.command(name="open_spooky")
     async def open_spooky(self, ctx):
         """Open a spooky chest."""
         if not self.HALLOWEEN_COMMANDS:
             await ctx.send("This command can only be used during the halloween season!")
-            return        
+            return
         async with ctx.bot.db[0].acquire() as pconn:
             spooky_chest = await pconn.fetchval(
                 "SELECT spooky_chest FROM events_new WHERE u_id = $1", ctx.author.id
@@ -2044,14 +2202,14 @@ class Events(commands.Cog):
                 ctx.author.id,
             )
             reward = random.choices(
-                ("gleam", "missingno", "cred", "trick"),
-                weights=(0.03, 0.18, 0.3, 0.4),
+                ("missingno", "potion", "candy", "trick"),
+                weights=(0.18, 0.12, 0.3, 0.4),
             )[0]
             if reward == "gleam":
-                #Chance of Zoroark trick
+                # Chance of Zoroark trick
                 chance_int = random.randint(1, 100)
                 if chance_int > 90:
-                    pokemon = 'Zoroark'
+                    pokemon = "Zoroark"
                     msg = f"**Trick!** You received a **{pokemon}!**\n"
                     skin = None
                 else:
@@ -2061,25 +2219,22 @@ class Events(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin=skin
                 )
-            #Redeems removed as event rewards
-            #elif reward == "redeem":
-                #amount = random.randint(1, 3)
-                #async with ctx.bot.db[0].acquire() as pconn:
-                    #await pconn.execute(
-                        #"UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
-                        #amount,
-                        #ctx.author.id,
-                    #)
-                #msg = f"You received {amount} redeem!\n"
-            elif reward == "cred":
-                amount = random.randint(35, 65) * 1000
-                async with ctx.bot.db[0].acquire() as pconn:
-                    await pconn.execute(
-                        "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                        amount,
-                        ctx.author.id,
-                    )
-                msg = f"You received {amount} credits!\n"
+            # Redeems removed as event rewards
+            # elif reward == "redeem":
+            # amount = random.randint(1, 3)
+            # async with ctx.bot.db[0].acquire() as pconn:
+            # await pconn.execute(
+            # "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+            # amount,
+            # ctx.author.id,
+            # )
+            # msg = f"You received {amount} redeem!\n"
+            elif reward == "candy":
+                await self.give_candy(ctx, 150)
+                return
+            elif reward == "potion":
+                await self.drop_potions(ctx)
+                return
             elif reward == "missingno":
                 await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, "Missingno")
                 msg = f"You received a Missingno!\n"
@@ -2095,8 +2250,8 @@ class Events(commands.Cog):
                 candy,
                 ctx.author.id,
             )
-        msg += f"You also received {candy} <:mewbot_candy:1036332371038982264>!\n"
-        await ctx.send(msg)
+        msg += f"You also received {candy} :candy: !\n"
+        await ctx.send(embed=make_embed(title=msg))
 
     @halloween.command(name="open_fleshy")
     async def open_fleshy(self, ctx):
@@ -2119,15 +2274,15 @@ class Events(commands.Cog):
                 ctx.author.id,
             )
             reward = random.choices(
-                ("gleam", "rarechest", "mythicchest", "missingno", "trick"),
-                weights=(0.32, 0.15, 0.05, 0.16, 0.32),
+                ("candy", "potion", "rarechest", "mythicchest", "missingno", "trick"),
+                weights=(0.35, 0.15, 0.10, 0.05, 0.20, 0.15),
             )[0]
 
             if reward == "gleam":
-                #Chance of Zoroark trick
+                # Chance of Zoroark trick
                 chance_int = random.randint(1, 100)
                 if chance_int > 90:
-                    pokemon = 'Zoroark'
+                    pokemon = "Zoroark"
                     msg = f"**Trick!** You received a **{pokemon}!**\n"
                     skin = None
                 else:
@@ -2137,6 +2292,12 @@ class Events(commands.Cog):
                 await ctx.bot.commondb.create_poke(
                     ctx.bot, ctx.author.id, pokemon, skin=skin
                 )
+            elif reward == "candy":
+                await self.give_candy(ctx, 300)
+                return
+            elif reward == "potion":
+                await self.drop_potions(ctx, random.randint(5, 8))
+                return
 
             elif reward == "mythicchest":
                 await ctx.bot.commondb.add_bag_item(
@@ -2166,7 +2327,7 @@ class Events(commands.Cog):
                 potions,
                 ctx.author.id,
             )
-        msg += f"You also received {potions} <:mewbot_potion:1036332369076043776>!\n"
+        msg += f"You also received {potions} <:potion:1301436846307540992>!\n"
         await ctx.send(msg)
 
     @halloween.command(name="open_horrific")
@@ -2190,42 +2351,44 @@ class Events(commands.Cog):
                 ctx.author.id,
             )
             reward = random.choices(
-                ("legendchest", "boostedshiny", "gleam", "trick"),
-                weights=(0.155, 0.3, 0.236, 0.30),
+                ("streak", "pumpkin", "trick"),
+                weights=(0.35, 0.20, 0.45),
             )[0]
-            if reward == "boostedshiny":
-                #Chance of Zoroark trick
-                chance_int = random.randint(1, 100)
-                if chance_int > 90:
-                    pokemon = 'Zoroark'
-                    boosted = False
-                    msg = f"**Trick!** You received a **{pokemon}!**\n"
-                    shiny = False
-                else:
-                    pokemon = random.choice(await self.get_ghosts())
-                    boosted = True
-                    msg = f"**Treat!** You received a Shiny Boosted **{pokemon}!**\n"
-                    shiny = True
-                await ctx.bot.commondb.create_poke(
-                    ctx.bot, ctx.author.id, pokemon, boosted=boosted, shiny=shiny
-                )
-            elif reward == "gleam":
-                #Chance of Zoroark trick
-                chance_int = random.randint(1, 100)
-                if chance_int > 90:
-                    pokemon = 'Zoroark'
-                    boosted = False
-                    msg = f"**Trick!** You received a **{pokemon}!**\n"
-                    skin = None
-                else:
-                    pokemon = random.choice(self.HALLOWEEN_RADIANT)
-                    boosted = True
-                    msg = f"**Treat!** You received a Boosted Halloween **{pokemon}**!\n"
-                    skin = "halloween2024"
+            if reward == "streak":
 
-                await ctx.bot.commondb.create_poke(
-                    ctx.bot, ctx.author.id, pokemon, skin=skin, boosted=boosted
+                # Chance of Zoroark trick
+                #     chance_int = random.randint(1, 100)
+                #     if chance_int > 90:
+                #         pokemon = 'Zoroark'
+                #         boosted = False
+                #         msg = f"**Trick!** You received a **{pokemon}!**\n"
+                #         shiny = False
+                #     else:
+                #         pokemon = random.choice(await self.get_ghosts())
+                #         boosted = True
+                #         msg = f"**Treat!** You received a Shiny Boosted **{pokemon}!**\n"
+                #         shiny = True
+                #     await ctx.bot.commondb.create_poke(
+                #         ctx.bot, ctx.author.id, pokemon, boosted=boosted, shiny=shiny
+                #     )
+                # if option == 9:
+                await pconn.execute(
+                    "UPDATE users SET chain = chain + 50 WHERE u_id = $1", ctx.author.id
                 )
+                await ctx.send(
+                    f"You received x50 Shadow Streak <:shadow:1010559067590246410>!\n"
+                )
+                return
+
+            elif reward == "pumpkin":
+                await self.give_pumpkin(ctx.author, 1)
+
+                await ctx.send(
+                    embed=make_embed(
+                        title="🎉 You found the treat!", description=self.rand_bag_text()
+                    )
+                )
+                return
             elif reward == "legendchest":
                 await ctx.bot.commondb.add_bag_item(
                     ctx.author.id, "legend_chest", 1, True
@@ -2236,14 +2399,18 @@ class Events(commands.Cog):
                     "*Trick or treat?*\nI choose trick!\n*A ghost flies out of the empty box*"
                 )
                 return
-        potions = random.randint(5, 10)
+            await pconn.execute(
+                "UPDATE events_new SET horrific_chest = horrific_chest - 1 where u_id = $1",
+                ctx.author.id,
+            )
+        potions = random.randint(1, 5)
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE events_new SET potion = potion + $1 WHERE u_id = $2",
                 potions,
                 ctx.author.id,
             )
-        msg += f"You also received {potions} <:mewbot_potion:1036332369076043776>!\n"
+        msg += f"You also received {potions} <:potion:1301436846307540992>!\n"
         await ctx.send(msg)
 
     # We removed this in 2022 Halloween event
@@ -2288,14 +2455,16 @@ class Events(commands.Cog):
                 f"You have successfully started a ghost detector, ghost spawn chances are greatly increased for the next hour!"
             )
 
-    #@commands.hybrid_group()
+    # @commands.hybrid_group()
     async def christmas(self, ctx):
         """Christmas commands."""
         pass
 
-    #@christmas.command(name="leaderboard")
-    async def leaderboard(self, ctx, board: Literal['Staff', 'User'], type:Literal['thrown', 'hit']):
-        if type == 'thrown':
+    # @christmas.command(name="leaderboard")
+    async def leaderboard(
+        self, ctx, board: Literal["Staff", "User"], type: Literal["thrown", "hit"]
+    ):
+        if type == "thrown":
             async with ctx.bot.db[0].acquire() as pconn:
                 details = await pconn.fetch(
                     f"""SELECT u_id, times_thrown FROM events_new WHERE times_thrown != 0 ORDER BY times_thrown DESC"""
@@ -2310,22 +2479,24 @@ class Events(commands.Cog):
                 desc = ""
                 true_idx = 1
                 for idx, id in enumerate(ids):
-                    #if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
-                        #continue
+                    # if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                    # continue
                     tnick, staff = await pconn.fetchrow(
                         "SELECT tnick, staff FROM users WHERE u_id = $1", id
                     )
                     exp = exps[idx]
-                    if board == 'Staff':
+                    if board == "Staff":
                         if id == 744831273406824449:
                             pass
-                        elif staff not in ('Admin', 'Mod', 'Investigator'):
+                        elif staff not in ("Admin", "Mod", "Investigator"):
                             continue
-                    elif board == 'User':
-                        if staff != 'User' or id == 744831273406824449:
+                    elif board == "User":
+                        if staff != "User" or id == 744831273406824449:
                             continue
                     else:
-                        await ctx.send("That is not a valid event leaderboard type, please try again...")
+                        await ctx.send(
+                            "That is not a valid event leaderboard type, please try again..."
+                        )
                         return
                     if tnick is not None:
                         name = f"{tnick} - ({id})"
@@ -2335,7 +2506,7 @@ class Events(commands.Cog):
                     true_idx += 1
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
-        elif type == 'hit':
+        elif type == "hit":
             async with ctx.bot.db[0].acquire() as pconn:
                 details = await pconn.fetch(
                     f"""SELECT u_id, times_hit FROM events_new WHERE times_thrown != 0 ORDER BY times_hit DESC"""
@@ -2350,22 +2521,24 @@ class Events(commands.Cog):
                 desc = ""
                 true_idx = 1
                 for idx, id in enumerate(ids):
-                    #if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
-                        #continue
+                    # if staffs[idx] == "Developer" or ids[idx] in LEADERBOARD_IMMUNE_USERS:
+                    # continue
                     tnick, staff = await pconn.fetchrow(
                         "SELECT tnick, staff FROM users WHERE u_id = $1", id
                     )
                     exp = exps[idx]
-                    if board == 'Staff':
+                    if board == "Staff":
                         if id == 744831273406824449:
                             pass
-                        elif staff not in ('Admin', 'Mod', 'Investigator'):
+                        elif staff not in ("Admin", "Mod", "Investigator"):
                             continue
-                    elif board == 'User':
-                        if staff != 'User' or id == 744831273406824449:
+                    elif board == "User":
+                        if staff != "User" or id == 744831273406824449:
                             continue
                     else:
-                        await ctx.send("That is not a valid event leaderboard type, please try again...")
+                        await ctx.send(
+                            "That is not a valid event leaderboard type, please try again..."
+                        )
                         return
                     if tnick is not None:
                         name = f"{tnick} - ({id})"
@@ -2376,8 +2549,8 @@ class Events(commands.Cog):
             pages = pagify(desc, base_embed=embed)
             await MenuView(ctx, pages).start()
 
-    #@christmas.command(name="snowball")
-    async def throw_snowball(self, ctx, player:discord.Member):
+    # @christmas.command(name="snowball")
+    async def throw_snowball(self, ctx, player: discord.Member):
         if ctx.guild != ctx.bot.official_server:
             await ctx.send(
                 "You can only use this command in the Mewbot Official Server."
@@ -2390,42 +2563,50 @@ class Events(commands.Cog):
             return
         async with ctx.bot.db[0].acquire() as pconn:
             msg = ""
-            snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed = await pconn.fetchrow(
+            (
+                snowballs,
+                times_hit,
+                times_thrown,
+                trainer_redeemed,
+                role_redeemed,
+            ) = await pconn.fetchrow(
                 "SELECT snowballs, times_hit, times_thrown, trainer_redeemed, role_redeemed FROM events_new WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if snowballs is None:
                 await ctx.send("You have not started the event!")
                 return
             elif snowballs < 1:
-                await ctx.send("You have to get some snowballs <:snowballs:1184292806190182420>!")
+                await ctx.send(
+                    "You have to get some snowballs <:snowballs:1184292806190182420>!"
+                )
                 return
-            
+
             attacked_times_hit = await pconn.fetchval(
-                "SELECT times_hit FROM events_new WHERE u_id = $1",
-                player.id
+                "SELECT times_hit FROM events_new WHERE u_id = $1", player.id
             )
             if attacked_times_hit is None:
-                #Meaning player hit hasn't started event
+                # Meaning player hit hasn't started event
                 await pconn.execute(
-                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", player.id
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    player.id,
                 )
                 await ctx.send("Please try this command again shortly...")
                 return
-                        
-            #Let's hit player
+
+            # Let's hit player
             await pconn.execute(
                 "UPDATE events_new SET times_hit = times_hit + 1 WHERE u_id = $1",
-                player.id
+                player.id,
             )
-            #Remove snowball and update stats
+            # Remove snowball and update stats
             snowballs -= 1
             times_thrown += 1
             await pconn.execute(
                 "UPDATE events_new SET snowballs = $1, times_thrown = $2 WHERE u_id = $3",
                 snowballs,
                 times_thrown,
-                ctx.author.id
+                ctx.author.id,
             )
             if times_thrown >= 100 and role_redeemed is False:
                 event_role = ctx.guild.get_role(1184182751067377674)
@@ -2434,11 +2615,11 @@ class Events(commands.Cog):
                 )
                 await pconn.execute(
                     "UPDATE events_new SET role_redeemed = True WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 msg += "You've received the Xmas2023 Official Server Role!"
             elif times_thrown >= 250 and trainer_redeemed is False:
-                #TODO: For xmas2024 this needs to be updated with new trainer imgs
+                # TODO: For xmas2024 this needs to be updated with new trainer imgs
                 choice = await ListSelectView(
                     ctx, "Please choose a trainer image!"
                 ).wait()
@@ -2448,7 +2629,7 @@ class Events(commands.Cog):
                     return
                 trainer_images = await pconn.fetchval(
                     "SELECT trainer_images::json FROM account_bound WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 choice = str(choice)
                 category = "xmas"
@@ -2461,37 +2642,30 @@ class Events(commands.Cog):
                 await pconn.execute(
                     "UPDATE account_bound SET trainer_images = $1::json WHERE u_id = $2",
                     trainer_images,
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 await pconn.execute(
                     "UPDATE events_new SET trainer_redeemed = True WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
                 msg += f"You've successfully redeemed {choice} as your trainer image!\nIt's been added to your trainer image inventory."
 
         embed = discord.Embed(
             title="Mewbot Christmas",
             description=f"You've throw a snowball!\nDid it hit?!",
-            color=0x0084FD
+            color=0x0084FD,
         )
         embed.add_field(
-            name="Victim",
-            value=f"You've hit **{player.name}**!",
-            inline=False
+            name="Victim", value=f"You've hit **{player.name}**!", inline=False
         )
         embed.add_field(
             name=f"{ctx.author.name}'s Stats",
             value=f"You've been hit __{times_hit} times__.\nYou've thrown __{times_thrown} snowballs__!",
-            inline=False
+            inline=False,
         )
         if msg != "":
-            embed.add_field(
-                name="Rewards",
-                value=f"{msg}",
-                inline=False
-            )
+            embed.add_field(name="Rewards", value=f"{msg}", inline=False)
         await ctx.send(embed=embed)
-
 
     # @christmas.command(name="spread_cheer")
     async def spread_cheer(self, ctx):
@@ -2540,11 +2714,11 @@ class Events(commands.Cog):
                 f"You have successfully spread holiday cheer! Christmas spirits will be attracted to this channel for 1 hour."
             )
 
-    #@christmas.command(name="buy")
+    # @christmas.command(name="buy")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def christmas_buy(
-        self, 
-        ctx, 
+        self,
+        ctx,
         pack: Literal[
             "1. 2x Battle Multi.",
             "2. 2x Shiny Multi.",
@@ -2556,9 +2730,9 @@ class Events(commands.Cog):
         ],
     ):
         """Buy something from the christmas shop."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
@@ -2575,31 +2749,37 @@ class Events(commands.Cog):
                 "SELECT mewcoins, redeems FROM users WHERE u_id = $1", ctx.author.id
             )
             if credits is None:
-                await ctx.send("You haven't started! Please use `/start` to start your adventure!")
+                await ctx.send(
+                    "You haven't started! Please use `/start` to start your adventure!"
+                )
                 return
-            
+
             radiant_gems, battle_multiplier, shiny_multiplier = await pconn.fetchrow(
-                "SELECT radiant_gem, battle_multiplier, shiny_multiplier FROM account_bound WHERE u_id = $1", ctx.author.id
+                "SELECT radiant_gem, battle_multiplier, shiny_multiplier FROM account_bound WHERE u_id = $1",
+                ctx.author.id,
             )
             if radiant_gems is None:
-                await ctx.send("No bound items table found. Have you started or converted to the new bag system if needed?")
+                await ctx.send(
+                    "No bound items table found. Have you started or converted to the new bag system if needed?"
+                )
                 return
-            
+
             gleam_limit, radiant_limit = await pconn.fetchrow(
                 "SELECT gleam_limit, radiant_limit FROM events_new WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if gleam_limit is None:
-                #Try to add user to table and then have them redo the command
+                # Try to add user to table and then have them redo the command
                 await pconn.execute(
-                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING", ctx.author.id
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
                 )
                 await ctx.send("Please retry the command.")
                 return
 
             self.purchaselock.append(ctx.author.id)
 
-            #Battle Multiplier
+            # Battle Multiplier
             if option == 1:
                 if credits < 50000:
                     await ctx.send("You don't have enough credits for that!")
@@ -2624,8 +2804,8 @@ class Events(commands.Cog):
                 await ctx.send("You have successfully purchased 2x Battle Multiplier!")
                 self.purchaselock.remove(ctx.author.id)
                 return
-            
-            #Shiny Multiplier
+
+            # Shiny Multiplier
             if option == 2:
                 if credits < 50000:
                     await ctx.send("You don't have enough snowflakes for that!")
@@ -2650,8 +2830,8 @@ class Events(commands.Cog):
                 await ctx.send("You have successfully purchased 2x Shiny Multiplier!")
                 self.purchaselock.remove(ctx.author.id)
                 return
-            
-            #Gleam Gems
+
+            # Gleam Gems
             if option == 3:
                 if credits < 50000:
                     await ctx.send("You don't have enough credits for that!")
@@ -2667,17 +2847,21 @@ class Events(commands.Cog):
                 await pconn.execute(
                     "UPDATE account_bound SET radiant_gem = radiant_gem + $1 WHERE u_id = $2",
                     earned_gleams,
-                    ctx.author.id
+                    ctx.author.id,
                 )
-                await ctx.send(f"You bought {earned_gleams}x Gleam Gems <a:radiantgem:774866137472827432>.")
+                await ctx.send(
+                    f"You bought {earned_gleams}x Gleam Gems <a:radiantgem:774866137472827432>."
+                )
                 self.purchaselock.remove(ctx.author.id)
                 return
-            
-            #Event Gleams
-            #Gives the skin for the Pokemon rather than the Pokemon
+
+            # Event Gleams
+            # Gives the skin for the Pokemon rather than the Pokemon
             if option == 4:
                 if radiant_gems < 150:
-                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    await ctx.send(
+                        "You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!"
+                    )
                     self.purchaselock.remove(ctx.author.id)
                     return
                 radiant_gems -= 150
@@ -2707,11 +2891,13 @@ class Events(commands.Cog):
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #Boosted Event Glems
-            #This gives Pokemon w/skin rather than just skin
+            # Boosted Event Glems
+            # This gives Pokemon w/skin rather than just skin
             if option == 5:
                 if radiant_gems < 300:
-                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    await ctx.send(
+                        "You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!"
+                    )
                     self.purchaselock.remove(ctx.author.id)
                     return
                 radiant_gems -= 300
@@ -2721,17 +2907,25 @@ class Events(commands.Cog):
                     radiant_gems,
                     ctx.author.id,
                 )
-                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), boosted=True, skin='xmas2023')
+                await ctx.bot.commondb.create_poke(
+                    ctx.bot,
+                    ctx.author.id,
+                    pokemon.capitalize(),
+                    boosted=True,
+                    skin="xmas2023",
+                )
                 await ctx.send(
                     f"You got a **{pokemon.title()} Christmas Pokemon**!\nIt's been added to your list."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #Returning Gleams
+            # Returning Gleams
             if option == 6:
                 if radiant_gems < 300:
-                    await ctx.send("You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!")
+                    await ctx.send(
+                        "You don't have enough Gleam Gems <a:radiantgem:774866137472827432> for that!"
+                    )
                     self.purchaselock.remove(ctx.author.id)
                     return
                 if gleam_limit >= 50:
@@ -2747,16 +2941,18 @@ class Events(commands.Cog):
                 )
                 await pconn.execute(
                     "UPDATE events_new SET gleam_limit = gleam_limit + 1 WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
-                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), skin='gleam')
+                await ctx.bot.commondb.create_poke(
+                    ctx.bot, ctx.author.id, pokemon.capitalize(), skin="gleam"
+                )
                 await ctx.send(
                     f"You got a **<:gleam:1010559151472115772> {pokemon.title()} **!\nIt's been added to your list."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-            #Returning Radiants
+            # Returning Radiants
             if option == 7:
                 if redeems < 200:
                     await ctx.send("You don't have enough Redeems for that!")
@@ -2775,28 +2971,30 @@ class Events(commands.Cog):
                 )
                 await pconn.execute(
                     "UPDATE events_new SET radiant_limit = radiant_limit + 1 WHERE u_id = $1",
-                    ctx.author.id
+                    ctx.author.id,
                 )
-                await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon.capitalize(), skin='radiant')
+                await ctx.bot.commondb.create_poke(
+                    ctx.bot, ctx.author.id, pokemon.capitalize(), skin="radiant"
+                )
                 await ctx.send(
                     f"You got a **<:radiant:1010558960027308052> {pokemon.title()} **!\nIt's been added to your list."
                 )
                 self.purchaselock.remove(ctx.author.id)
                 return
 
-    #@christmas.command(name="inventory")
+    # @christmas.command(name="inventory")
     async def christmas_inventory(self, ctx):
         """Check your christmas inventory."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
         async with self.bot.db[0].acquire() as pconn:
             inventory = await pconn.fetchrow(
-                "SELECT snowflakes, small_gift, large_gift, snowballs, times_hit, times_thrown FROM events_new WHERE u_id = $1", \
-                ctx.author.id
+                "SELECT snowflakes, small_gift, large_gift, snowballs, times_hit, times_thrown FROM events_new WHERE u_id = $1",
+                ctx.author.id,
             )
         embed = discord.Embed(
             title=f"{ctx.author.name.title()}'s Christmas Inventory",
@@ -2804,17 +3002,17 @@ class Events(commands.Cog):
             color=random.choice(RED_GREEN),
         )
         embed.add_field(
-            name="Snowballs <:snowballs:1184292806190182420>", 
+            name="Snowballs <:snowballs:1184292806190182420>",
             value=f"**Available**: {inventory['snowballs']}x\n**Times Hit**: {inventory['times_hit']}\n**Times Thrown**: {inventory['times_thrown']}",
-            inline=False
+            inline=False,
         )
         embed.add_field(
-            name="Presents", 
+            name="Presents",
             value=(
                 f"**Small Present** 📦: {inventory['small_gift']}x\n"
                 f"**Large Present** 🎁: {inventory['large_gift']}x"
             ),
-            inline=False
+            inline=False,
         )
         # if "holiday cheer" in inventory:
         # embed.add_field(name="Holiday Cheer",
@@ -2822,23 +3020,23 @@ class Events(commands.Cog):
         embed.set_footer(text="Happy Holidays!")
         await ctx.send(embed=embed)
 
-    #@christmas.command(name="shop")
+    # @christmas.command(name="shop")
     async def christmas_shop(self, ctx):
         """Check the christmas shop."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Not available at the moment!")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Not available at the moment!")
+        # return
 
         event_data = await ctx.bot.db[0].fetchrow(
             "SELECT radiant_limit, gleam_limit FROM events_new WHERE u_id = $1",
-            ctx.author.id
+            ctx.author.id,
         )
         if event_data is None:
             radiant_limit = 0
             gleam_limit = 0
         else:
-            radiant_limit = event_data['radiant_limit']
-            gleam_limit = event_data['gleam_limit']
+            radiant_limit = event_data["radiant_limit"]
+            gleam_limit = event_data["gleam_limit"]
 
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
@@ -2855,14 +3053,14 @@ class Events(commands.Cog):
                 "`1.` __2x Battle Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
                 "`2.` __2x Shiny Multi.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Currencies",
             value=(
                 "`3.` __1-25 Gleam Gems.__\n**Cost:** 50,000 <:mewcoin:1010959258638094386>\n"
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Gleams",
@@ -2870,7 +3068,7 @@ class Events(commands.Cog):
                 "`4.` __Event Skin__\n**Cost:** 150 <a:radiantgem:774866137472827432>\nThis is a skin that goes into inventory!\n"
                 "`5.` __Boosted Event Skin__\n**Cost:** 300 <a:radiantgem:774866137472827432>\nThis is a Pokemon already with the skin equipped!"
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Returning Gleams",
@@ -2879,7 +3077,7 @@ class Events(commands.Cog):
                 "**Cost:** 300 <a:radiantgem:774866137472827432>\n"
                 f"Purchase Limit: {gleam_limit} / 50\nGleams from 2023."
             ),
-            inline=False
+            inline=False,
         )
         embed.add_field(
             name="Returning Radiants",
@@ -2889,20 +3087,18 @@ class Events(commands.Cog):
                 f"Purchase Limit: {radiant_limit} / 20\n"
                 ""
             ),
-            inline=False
+            inline=False,
         )
-        embed.set_footer(
-            text="Use /christmas buy to buy an item!"
-        )
+        embed.set_footer(text="Use /christmas buy to buy an item!")
         await ctx.send(embed=embed)
 
-    #@christmas.command(name="smallgift")
+    # @christmas.command(name="smallgift")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_smallgift(self, ctx):
         """Open a small christmas gift."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Sorry, this is not available yet")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Sorry, this is not available yet")
+        # return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
@@ -2911,7 +3107,9 @@ class Events(commands.Cog):
                 "SELECT small_gift FROM events_new WHERE u_id = $1", ctx.author.id
             )
             if small_gift is None:
-                await ctx.send(f"You have not Started or participated in the event yet!\nStart with `/start` first!")
+                await ctx.send(
+                    f"You have not Started or participated in the event yet!\nStart with `/start` first!"
+                )
                 return
             if small_gift <= 0:
                 await ctx.send("You do not have any small gifts!")
@@ -2930,9 +3128,7 @@ class Events(commands.Cog):
         if reward == "normalice":
             pool = pList + starterList
             pokemon = random.choice(pool)
-            await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, pokemon
-            )
+            await ctx.bot.commondb.create_poke(ctx.bot, ctx.author.id, pokemon)
             msg = f"Upon opening the gift...\nYou received a **{pokemon}**!"
 
         elif reward == "shinyice":
@@ -2969,18 +3165,16 @@ class Events(commands.Cog):
                     "UPDATE users SET npc_energy = npc_energy + 2 WHERE u_id = $1",
                     ctx.author.id,
                 )
-            msg = (
-                "You stole some of Santa's cookies and milk! It restored some npc energy!\n"
-            )
+            msg = "You stole some of Santa's cookies and milk! It restored some npc energy!\n"
         await ctx.send(msg)
 
-    #@christmas.command(name="largegift")
+    # @christmas.command(name="largegift")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def open_largegift(self, ctx):
         """Open a large christmas gift."""
-        #if ctx.author.id != 334155028170407949:
-            #await ctx.send("Sorry, this is not available yet")
-            #return
+        # if ctx.author.id != 334155028170407949:
+        # await ctx.send("Sorry, this is not available yet")
+        # return
         if not self.CHRISTMAS_COMMANDS:
             await ctx.send("This command can only be used during the christmas season!")
             return
@@ -2989,7 +3183,9 @@ class Events(commands.Cog):
                 "SELECT large_gift FROM events_new WHERE u_id = $1", ctx.author.id
             )
             if large_gift is None:
-                await ctx.send(f"You have not Started or participated in the event yet!\nStart with `/start` first!")
+                await ctx.send(
+                    f"You have not Started or participated in the event yet!\nStart with `/start` first!"
+                )
                 return
             if large_gift <= 0:
                 await ctx.send("You do not have any large gifts!")
@@ -3004,7 +3200,7 @@ class Events(commands.Cog):
             ("radiant_gems", "credits", "chest", "boostedice", "shinyice"),
             weights=(0.20, 0.35, 0.15, 0.20, 0.10),
         )[0]
-        
+
         if reward == "radiant_gems":
             amount = random.randint(1, 10)
             async with ctx.bot.db[0].acquire() as pconn:
@@ -3030,12 +3226,7 @@ class Events(commands.Cog):
                 ("common_chest", "rare_chest", "mythic_chest"),
                 weights=(0.60, 0.20, 0.10),
             )[0]
-            await ctx.bot.commondb.add_bag_item(
-                ctx.author.id,
-                chest,
-                1,
-                True
-            )
+            await ctx.bot.commondb.add_bag_item(ctx.author.id, chest, 1, True)
             chest_name = chest.replace("_", " ").title()
             msg = f"Upon opening the gift...\nYou received a **{chest_name}**!"
 
@@ -3258,20 +3449,58 @@ class Events(commands.Cog):
             )
         await channel.send(embed=embed)
 
-    async def give_candy(self, channel, user):
+    async def give_candy(self, ctx, amount=0):
         """Gives candy to the provided user."""
+        if type(ctx) == list:
+            async with self.bot.db[0].acquire() as pconn:
+                await pconn.execute(
+                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    ctx[1].id,
+                )
+                await pconn.execute(
+                    "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
+                    amount if amount else random.randint(1, 3),
+                    ctx[1].id,
+                )
+            await ctx[0].send(
+                embed=make_embed(
+                    title=f"Dropped some candy!\nUse command `/halloween inventory` to view what you have collected."
+                )
+            )
+            return
+
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
-                user.id,
+                ctx.author.id,
             )
             await pconn.execute(
                 "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
-                random.randint(1, 3),
-                user.id,
+                amount if amount else random.randint(1, 3),
+                ctx.author.id,
             )
-        await channel.send(
-            f"The pokemon dropped some candy!\nUse command `/halloween inventory` to view what you have collected."
+        await ctx.send(
+            embed=make_embed(
+                title=f"Dropped some candy!\nUse command `/halloween inventory` to view what you have collected."
+            )
+        )
+
+    async def drop_potions(self, ctx, amount=0):
+        """Drops potions to the provided user."""
+        async with self.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                ctx.author.id,
+            )
+            await pconn.execute(
+                "UPDATE events_new SET potion = potion + $1 WHERE u_id = $2",
+                amount if amount else random.randint(1, 3),
+                ctx.author.id,
+            )
+        await ctx.send(
+            embed=make_embed(
+                title=f"Dropped some potions!\nUse command `/halloween inventory` to view what you have collected."
+            )
         )
 
     async def give_bone(self, channel, user):
@@ -3289,39 +3518,49 @@ class Events(commands.Cog):
         await channel.send(
             f"The pokemon dropped some potions!\nUse command `/halloween inventory` to view what you have collected."
         )
-    
-    
+
     def rand_pumpkin_title(self):
         return random.choice(
             [
-                "🎃 A wild pumpkin has appeared! Grab it before it disappears!", "Look! A spooky pumpkin awaits... Will you bag it for later?", "👻 A mysterious pumpkin appears in the shadows... Bag it now or miss out!"
+                "🎃 A wild pumpkin has appeared! Grab it before it disappears!",
+                "Look! A spooky pumpkin awaits... Will you bag it for later?",
+                "👻 A mysterious pumpkin appears in the shadows... Bag it now or miss out!",
             ]
         )
-    
+
     def rand_bag_text(self):
         return random.choice(
             [
-                "You bagged the pumpkin! 🎃 Wonder what’s inside…", "The pumpkin is safely stowed away for later. Who knows what awaits inside?", "🎃 Pumpkin bagged! You can open it when you’re ready for a treat... or trick!"
+                "You bagged the pumpkin! 🎃 Wonder what’s inside…",
+                "The pumpkin is safely stowed away for later. Who knows what awaits inside?",
+                "🎃 Pumpkin bagged! You can open it when you’re ready for a treat... or trick!",
             ]
         )
+
     async def spawn_pumpkin(self, channel, user):
         # Possible rewards and trick message
-        PUMPKIN_REWARDS = ["a Rare Candy 🍬", "a Ghost-type Pokémon encounter 👻", "some Stardust ✨", "a Mystery Box 🎁"]
+        PUMPKIN_REWARDS = [
+            "a Rare Candy 🍬",
+            "a Ghost-type Pokémon encounter 👻",
+            "some Stardust ✨",
+            "a Mystery Box 🎁",
+        ]
         TRICK_MESSAGE = "👻 You've been tricked! Better luck next time."
         # Create a random position for the "correct" button
         correct_button_index = random.randint(0, 8)
 
         # Embed message for the pumpkin challenge
         e = discord.Embed(
-            title=self.rand_pumpkin_title(),,
+            title=self.rand_pumpkin_title(),
             description="Press the right button quick! You only have a couple seconds to receive a massive treat!",
-            color=discord.Color.orange()
+            color=discord.Color.orange(),
         )
-        e.set_image(url="https://mewbot.xyz/img/pumpkin.jpg")  # Replace with Halloween image URL
-
+        e.set_image(
+            url="https://mewbot.xyz/img/pumpkin.jpg"
+        )  # Replace with Halloween image URL
 
         view = discord.ui.View(timeout=5)
-        
+
         # Callback function for each button
         async def button_callback(interaction: discord.Interaction, index: int):
             if index == correct_button_index:
@@ -3331,26 +3570,32 @@ class Events(commands.Cog):
                 await self.give_pumpkin(interaction.user, 1)
                 await interaction.response.edit_message(embed=e, view=None)
             else:
-                e.title = "🎃 Wrong pumpkin!"
+                e.title = "🎃 Wrong button!"
                 e.description = TRICK_MESSAGE
                 await interaction.response.edit_message(embed=e, view=None)
 
         # Add buttons to the view
         for i in range(9):
             # Use 🎃 or 👻 emoji for each button
-            button = discord.ui.Button(label="", emoji="🎃" if i % 2 == 0 else "👻", style=discord.ButtonStyle.secondary if i % 2 == 0 else discord.ButtonStyle.primary)
-            button.callback = lambda interaction, idx=i: button_callback(interaction, idx)
+            button = discord.ui.Button(
+                label="",
+                emoji="🎃" if i % 2 == 0 else "👻",
+                style=discord.ButtonStyle.secondary
+                if i % 2 == 0
+                else discord.ButtonStyle.primary,
+            )
+            button.callback = lambda interaction, idx=i: button_callback(
+                interaction, idx
+            )
             view.add_item(button)
             # Send the initial message with pumpkin challenge
         msg = await channel.send(embed=e, view=view)
-        
-        interaction: discord.Interaction = await self.bot.wait_for(
-                "button_click",
-                check=lambda i: i.message.id == msg.id,
-                timeout=5
+
+        try:
+            interaction: discord.Interaction = await self.bot.wait_for(
+                "button_click", check=lambda i: i.message.id == msg.id, timeout=120
             )
-        
-        if not view.is_finished():
+        except:
             e.title = "🎃 Time's up!"
             e.description = TRICK_MESSAGE
             await msg.edit(embed=e, view=None)
@@ -3359,7 +3604,7 @@ class Events(commands.Cog):
         """Gives pumpkins to the provided user."""
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute(
-                "INSERT INTO halloween (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
                 user.id,
             )
             await pconn.execute(
@@ -3525,10 +3770,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_poke_spawn(self, channel, user):
-        return
         # For limiting raids to Official only
-        #if self.bot.botbanned(user.id) or channel.guild.id != 998128574898896906:
-            #return
         if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS:
@@ -3537,10 +3779,16 @@ class Events(commands.Cog):
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
-            if not random.randrange(10):
-                await self.give_candy(channel, user)
-            if not random.randrange(5) or user.id == 334155028170407949:
-                await self.maybe_spawn_christmas(channel)
+
+            func: Coroutine = random.choices(
+                (self.give_candy, self.maybe_spawn_christmas), weights=(0.40, 0.60)
+            )[0]
+
+            try:
+                await func([channel, user])
+            except:
+                await func(channel)
+
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
@@ -3561,7 +3809,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_poke_fish(self, channel, user):
-        return
         if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS and not random.randrange(5):
@@ -3570,18 +3817,18 @@ class Events(commands.Cog):
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
         if self.HALLOWEEN_DROPS:
-            # if not random.randrange(100):
-            #     await self.give_scary_mask(channel, user)
-            if not random.randrange(15):
-                await self.give_bone(channel, user)
-            elif not random.randrange(4):
-                await self.give_candy(channel, user)
+            func: Coroutine = random.choices(
+                (self.give_candy, self.spawn_pumpkin), weights=(0.60, 0.40)
+            )[0]
+            try:
+                await func(channel, user)
+            except:
+                await func([channel, user])
         if not random.randrange(5):
             await self.maybe_spawn_unown(channel)
 
     @commands.Cog.listener()
     async def on_poke_breed(self, channel, user):
-        return
         if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS:
@@ -3591,15 +3838,18 @@ class Events(commands.Cog):
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
         if self.HALLOWEEN_DROPS:
-            if not random.randrange(200):
-                await self.give_scary_mask(channel, user)
-            elif not random.randrange(25):
-                await self.give_bone(channel, user)
-            elif not random.randrange(4):
-                await self.give_candy(channel, user)
+            func: Coroutine = random.choices(
+                (self.give_candy, self.spawn_pumpkin), weights=(0.60, 0.40)
+            )[0]
+
+            try:
+                await func(channel, user)
+            except:
+                await func([channel, user])
         # if not random.randrange(7):
         # await self.maybe_spawn_unown(channel)
-    
+
+
 class ChristmasSpawn(discord.ui.View):
     """A spawn embed for a christmas spawn."""
 
@@ -3643,12 +3893,18 @@ class ChristmasSpawn(discord.ui.View):
                 content="This battle has already ended!", ephemeral=True
             )
             return False
+
     def rand_spawn_title(self):
         return random.choice(
             [
-                f"👻 A ghostly aura fills the air... a wild {self.poke} has appeared!", f"🎃 Under the eerie moonlight, you encounter a spooky {self.poke} lurking in the shadows!", f"A chilling wind blows, and suddenly, {self.poke} emerges from the darkness!", f"✨ The Halloween spirit is strong... a mysterious {self.poke} is here for a limited time!", f"You feel an icy chill as {self.poke}] appears! Will you be brave enough to catch it?"
+                f"👻 A ghostly aura fills the air... a wild {self.poke} has appeared!",
+                f"🎃 Under the eerie moonlight, you encounter a spooky {self.poke} lurking in the shadows!",
+                f"A chilling wind blows, and suddenly, {self.poke} emerges from the darkness!",
+                f"✨ The Halloween spirit is strong... a mysterious {self.poke} is here for a limited time!",
+                f"You feel an icy chill as {self.poke}] appears! Will you be brave enough to catch it?",
             ]
         )
+
     async def start(self):
         # This should stop from more than one raid appearing
         # in any server that's not Official
@@ -3659,9 +3915,8 @@ class ChristmasSpawn(discord.ui.View):
                 self.servercache.append(self.channel.guild.id)
 
         extra_msg = ""
-        pokeurl = (
-            "http://mewbot.xyz/sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="halloween")
+        pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
+            self.poke, self.cog.bot, skin="halloween2024"
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -3670,7 +3925,7 @@ class ChristmasSpawn(discord.ui.View):
             small_images = guild["small_images"]
         self.embed = discord.Embed(
             title=self.rand_spawn_title(),
-            description="Join the battle to take it down.\nThe more damage you do the more <:mewbot_candy:1036332371038982264> you earn!",
+            description="Join the battle to take it down.\nThe more damage you do the more :candy:  you earn!",
             color=0x0084FD,
         )
         self.embed.add_field(name="Take Action", value="Click the Button to join!")
@@ -3746,7 +4001,11 @@ class ChristmasSpawn(discord.ui.View):
         super_raw = (
             await self.cog.bot.db[1]
             .moves.find(
-                {"type_id": {"$in": super_types}, "damage_class_id": {"$ne": 1}, "id": {"$nin": uncoded_ids}}
+                {
+                    "type_id": {"$in": super_types},
+                    "damage_class_id": {"$ne": 1},
+                    "id": {"$nin": uncoded_ids},
+                }
             )
             .to_list(None)
         )
@@ -3756,7 +4015,11 @@ class ChristmasSpawn(discord.ui.View):
         normal_raw = (
             await self.cog.bot.db[1]
             .moves.find(
-                {"type_id": {"$in": normal_types}, "damage_class_id": {"$ne": 1}, "id": {"$nin": uncoded_ids}}
+                {
+                    "type_id": {"$in": normal_types},
+                    "damage_class_id": {"$ne": 1},
+                    "id": {"$nin": uncoded_ids},
+                }
             )
             .to_list(None)
         )
@@ -3765,7 +4028,13 @@ class ChristmasSpawn(discord.ui.View):
         ]
         un_raw = (
             await self.cog.bot.db[1]
-            .moves.find({"type_id": {"$in": un_types}, "damage_class_id": {"$ne": 1}, "id": {"$nin": uncoded_ids}})
+            .moves.find(
+                {
+                    "type_id": {"$in": un_types},
+                    "damage_class_id": {"$ne": 1},
+                    "id": {"$nin": uncoded_ids},
+                }
+            )
             .to_list(None)
         )
         un_moves = [x["identifier"].capitalize().replace("-", " ") for x in un_raw]
@@ -3778,9 +4047,9 @@ class ChristmasSpawn(discord.ui.View):
         for i in range(4):
             if i == 0:
                 move_name = random.choice(super_moves)
-                #If you don't want type emotes, uncomment below
-                #and comment out what's below it
-                #moves.append(RaidMoveNoEmote(move_name, 2))
+                # If you don't want type emotes, uncomment below
+                # and comment out what's below it
+                # moves.append(RaidMoveNoEmote(move_name, 2))
 
                 type_id = await self.cog.bot.db[1].moves.find_one(
                     {"identifier": move_name.replace(" ", "-").lower()}
@@ -3796,7 +4065,7 @@ class ChristmasSpawn(discord.ui.View):
 
             if i == 1:
                 move_name = random.choice(normal_moves)
-                #moves.append(RaidMoveNoEmote(move_name, 1))
+                # moves.append(RaidMoveNoEmote(move_name, 1))
 
                 type_id = await self.cog.bot.db[1].moves.find_one(
                     {"identifier": move_name.replace(" ", "-").lower()}
@@ -3811,7 +4080,7 @@ class ChristmasSpawn(discord.ui.View):
                 moves.append(RaidMove(move_name, 1, type_emoji))
             elif i == 2:
                 move_name = random.choice(un_moves)
-                #moves.append(RaidMoveNoEmote(move_name, 0))
+                # moves.append(RaidMoveNoEmote(move_name, 0))
 
                 type_id = await self.cog.bot.db[1].moves.find_one(
                     {"identifier": move_name.replace(" ", "-").lower()}
@@ -3827,7 +4096,7 @@ class ChristmasSpawn(discord.ui.View):
 
             elif i == 3:
                 move_name = random.choice(un_moves)
-                #moves.append(RaidMoveNoEmote(move_name, 0))
+                # moves.append(RaidMoveNoEmote(move_name, 0))
 
                 type_id = await self.cog.bot.db[1].moves.find_one(
                     {"identifier": move_name.replace(" ", "-").lower()}
@@ -3882,8 +4151,8 @@ class ChristmasSpawn(discord.ui.View):
                 self.embed.set_image(url=pokeurl)
             await self.message.edit(embed=self.embed, view=None)
             return
-        
-        #Remove server from lock
+
+        # Remove server from lock
         if self.channel.guild.id != 998128574898896906:
             self.servercache.remove(self.channel.guild.id)
 
@@ -3921,7 +4190,7 @@ class ChristmasSpawn(discord.ui.View):
 
         self.embed = discord.Embed(
             title=f"The Spooky Pokémon was defeated!🧟👻",
-            description=f"Attackers have been awarded. A total of {total_seashells} <:mewbot_candy:1036332371038982264> was earned!",
+            description=f"Attackers have been awarded. A total of {total_seashells} :candy:  was earned!",
             color=0x0084FD,
         )
         if small_images:
@@ -3943,7 +4212,8 @@ class RaidJoin(discord.ui.Button):
             content="You have joined the battle!", ephemeral=True
         )
 
-#Has the Type Emote on Button
+
+# Has the Type Emote on Button
 class RaidMove(discord.ui.Button):
     """A move button for attacking a christmas pokemon."""
 
@@ -3957,19 +4227,19 @@ class RaidMove(discord.ui.Button):
             # "It's super effective! You will get a Large Present if the poke is defeated."
             # "It's super effective! You'll receive hearts if the poke is defeated!"
             # self.effective = (
-                
+
             #     f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
             # )
-            self.effective = "It's Super Effective! You will get 10 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
-            
+            self.effective = "It's Super Effective! You will get 10 :candy: if the Pokemon is defeated."
+
         elif damage == 1:
             # "It's not very effective... You will get a Small Present if the poke is defeated."
             # "It's not very effective... You'll receive hearts if the poke is defeated!"
             # self.effective = (
             #     f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
             # )
-            self.effective = "It's not Very Effective... You will 5 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
-            
+            self.effective = "It's not Very Effective... You will get 5 :candy: if the Pokemon is defeated."
+
         else:
             # "It had no effect... You will only get Snowflakes if the poke is defeated."
             # "It had no effect... You'll receive hearts if the poke is defeated!"
@@ -3977,7 +4247,7 @@ class RaidMove(discord.ui.Button):
             #     f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
             # )
             self.effective = (
-                "It had No Effect... You will get a 1 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
+                "It had No Effect... You will get a :candy: if the Pokemon is defeated."
             )
 
     async def callback(self, interaction):
@@ -3986,7 +4256,8 @@ class RaidMove(discord.ui.Button):
             content=f"You used {self.move}. {self.effective}", ephemeral=True
         )
 
-#No type emote on button
+
+# No type emote on button
 class RaidMoveNoEmote(discord.ui.Button):
     """A move button for attacking a christmas pokemon."""
 
@@ -4006,15 +4277,14 @@ class RaidMoveNoEmote(discord.ui.Button):
         else:
             # self.effective = "It had no effect... You will only get Snowflakes if the poke is defeated."
             # self.effective = "It had no effect... You'll receive hearts if the poke is defeated!"
-            self.effective = (
-                "It had No Effect... You will get a 1-5 <:mewbot_candy:1036332371038982264> if the Pokemon is defeated."
-            )
+            self.effective = "It had No Effect... You will get a 1-5 :candy:  if the Pokemon is defeated."
 
     async def callback(self, interaction):
         self.view.attacked[interaction.user] = self.damage
         await interaction.response.send_message(
             content=f"You used {self.move}. {self.effective}", ephemeral=True
         )
+
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

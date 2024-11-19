@@ -88,8 +88,7 @@ bagItemList = (
 activeItemList = (
     "tart_apple",
     "sweet_apple",
-    "syrupy_apple"
-    "sun_stone",
+    "syrupy_apple" "sun_stone",
     "dusk_stone",
     "thunder_stone",
     "fire_stone",
@@ -107,7 +106,7 @@ activeItemList = (
     "galarica_cuff",
     "black_augurite",
     "peat_block",
-    "metal_alloy"
+    "metal_alloy",
 )
 
 battle_items = [
@@ -1541,7 +1540,7 @@ LegendList = [
     "Raging-bolt",
     "Iron-boulder",
     "Iron-crown",
-    "Terapagos", # Note: Consider handling forms separately
+    "Terapagos",  # Note: Consider handling forms separately
     "Ogerpon",
     "Pecharunt",
     "Chien-pao",

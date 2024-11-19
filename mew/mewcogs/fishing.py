@@ -260,13 +260,13 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             # Gleam Gems and Credits
             if activity == "fishing":
                 if type(item) is int and item < 10:
-                    #most likely gems
+                    # most likely gems
                     await interaction.client.commondb.add_bag_item(
                         interaction.user.id, "radiant_gem", item, True
                     )
                     item_msg = f"**{item}** Gleam Gems"
                 if type(item) is int and item > 12499:
-                    #Most likely credits
+                    # Most likely credits
                     await pconn.execute(
                         "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                         item,
@@ -280,10 +280,9 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
                     item = item.replace("_", " ").title()
                     item_msg = f"**{item}**"
 
-
             if activity == "mining":
                 if type(item) is int and item < 10:
-                    #most likely gems
+                    # most likely gems
                     await interaction.client.commondb.add_bag_item(
                         interaction.user.id, "radiant_gem", item, True
                     )
@@ -381,13 +380,14 @@ class ActivitySpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             )
 
         self.guessed = True
-        
+
         # Dispatches an event that a poke was fished.
         # on_poke_fish(self, channel, user)
         # TODO: Update bottom event for event orientated fishing events
         interaction.client.dispatch("poke_fish", interaction.channel, interaction.user)
         self.view.stop()
-        
+
+
 class Minigames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -461,18 +461,18 @@ class Minigames(commands.Cog):
                 poke = random.choice(extremely_rare_water)
             poke = poke.capitalize()
 
-            #item_chance = random.choices(
-                #("credits", "item", "common_chest", "rare_chest"),
-                #weights=(0.440, 0.36, 0.15, 0.05),
-            #)[0]
-            #if item_chance == "credits":
-                #item = random.randint(5000, 10000)
-            #elif item_chance == "item":
-                #item = random.choice(battle_items)
-            #elif item_chance == "common_chest":
-                #item = "common_chest"
-            #elif item_chance == "rare_chest":
-                #item = "rare_chest"
+            # item_chance = random.choices(
+            # ("credits", "item", "common_chest", "rare_chest"),
+            # weights=(0.440, 0.36, 0.15, 0.05),
+            # )[0]
+            # if item_chance == "credits":
+            # item = random.randint(5000, 10000)
+            # elif item_chance == "item":
+            # item = random.choice(battle_items)
+            # elif item_chance == "common_chest":
+            # item = "common_chest"
+            # elif item_chance == "rare_chest":
+            # item = "rare_chest"
 
             item_chance = random.choices(
                 ("radiant_gem", "credits", "common_chest", "rare_chest"),
@@ -486,7 +486,7 @@ class Minigames(commands.Cog):
                 item = "common_chest"
             elif item_chance == "rare_chest":
                 item = "rare_chest"
-             
+
             name = poke
             # If Fishing Lvl 100 set threshold to normal
             if level >= 100:
@@ -509,7 +509,7 @@ class Minigames(commands.Cog):
                 exp_gain += exp_gain * level / 2
 
             await asyncio.sleep(random.randint(3, 7))
-            #scattered_name = scatter(name)
+            # scattered_name = scatter(name)
             letter_list = list(name)
             shuffle(letter_list)
             provided_name = "".join(letter_list)
@@ -700,6 +700,7 @@ class Minigames(commands.Cog):
     async def energy(self, ctx):
         """Energy and Minigame info"""
         async with ctx.bot.db[0].acquire() as tconn:
+            patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
             details = await tconn.fetchrow(
                 "SELECT * FROM users WHERE u_id = $1", ctx.author.id
             )
@@ -711,12 +712,12 @@ class Minigames(commands.Cog):
             )
             achievement_data = await tconn.fetchrow(
                 "SELECT ai_single_wins, ai_party_wins FROM achievements WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
             if not achievement_data:
                 achievement_data = {}
-                achievement_data['ai_single_wins'] = 0
-                achievement_data['ai_party_wins'] = 0
+                achievement_data["ai_single_wins"] = 0
+                achievement_data["ai_party_wins"] = 0
             fishing_ids = [record["u_id"] for record in fishing_players]
             mining_ids = [record["u_id"] for record in mining_players]
 

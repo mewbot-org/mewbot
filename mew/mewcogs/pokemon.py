@@ -72,33 +72,33 @@ class Pokemon(commands.Cog):
         form[0], form[1] = form[1], form[0]
         form = "-".join(form)
         return form
-    
+
     @commands.hybrid_group()
     async def pokedex(self, ctx):
         """Pokedex Commands"""
         pass
-    
+
     @pokedex.command()
-    async def national(self, ctx, shiny:Literal['True', 'False']):
+    async def national(self, ctx, shiny: Literal["True", "False"]):
         """View Caught & Uncaught Pokémon."""
         await self._build_pokedex(ctx, True, shiny)
 
     @pokedex.command()
-    async def unowned(self, ctx, shiny:Literal['True', 'False']):
+    async def unowned(self, ctx, shiny: Literal["True", "False"]):
         """View Uncaught Pokémon."""
         await self._build_pokedex(ctx, False, shiny)
 
-    async def _build_pokedex(self, ctx, include_owned: bool, shiny:bool):
+    async def _build_pokedex(self, ctx, include_owned: bool, shiny: bool):
         """Helper func to build & send the pokedex."""
         async with self.bot.db[0].acquire() as pconn:
-            msg = ''
+            msg = ""
             pokes = await pconn.fetchval(
                 "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
             )
             if pokes is None:
                 return
-            if shiny == 'True':
-                msg = 'Shiny '
+            if shiny == "True":
+                msg = "Shiny "
                 owned = await pconn.fetch(
                     "SELECT DISTINCT pokname FROM pokes WHERE id = ANY($1) AND pokname != ANY($2) AND shiny = True",
                     pokes,
@@ -240,15 +240,18 @@ class Pokemon(commands.Cog):
         await ctx.send(
             f"You have successfully released your {', '.join(pokenames).capitalize()}"
         )
-        #await self.bot.get_partial_messageable(998563289082626049).send(
-            #"{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
-        #)
-        #Send out log message - Webhook
+        # await self.bot.get_partial_messageable(998563289082626049).send(
+        # "{ctx.author} (`{ctx.author.id}`) released **{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
+        # )
+        # Send out log message - Webhook
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url('https://discord.com/api/webhooks/1240305225315782747/j3MWAffsGIOnHF9JYMA0cy5YJ4yDU8abAjkBYtBxeGaTb5QRzJUqiLyrxnefNP8ioAEp', session=session)
+            webhook = Webhook.from_url(
+                "https://discord.com/api/webhooks/1240305225315782747/j3MWAffsGIOnHF9JYMA0cy5YJ4yDU8abAjkBYtBxeGaTb5QRzJUqiLyrxnefNP8ioAEp",
+                session=session,
+            )
             embed = discord.Embed(
                 title=f"{ctx.author} released some Pokemon",
-                description=f"ID: ``{ctx.author.id}``\n**{len(valid_pokes)}** pokes.\n`{valid_pokes}`"
+                description=f"ID: ``{ctx.author.id}``\n**{len(valid_pokes)}** pokes.\n`{valid_pokes}`",
             )
             await webhook.send(embed=embed)
 
@@ -615,7 +618,13 @@ class Pokemon(commands.Cog):
     @discord.app_commands.describe(
         pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
     )
-    async def info(self, ctx, *, pokemon: str = None, type: Literal['Shiny', 'Gleam', 'Radiant', 'Alpha', 'Shadow'] = "None"):
+    async def info(
+        self,
+        ctx,
+        *,
+        pokemon: str = None,
+        type: Literal["Shiny", "Gleam", "Radiant", "Alpha", "Shadow"] = "None",
+    ):
         """Get information about a Pokémon."""
         if pokemon is None:
             async with ctx.bot.db[0].acquire() as pconn:
@@ -674,19 +683,19 @@ class Pokemon(commands.Cog):
         skin = None
         if "Shiny" in type:
             shiny = True
-            #pokemon.remove("shiny")
+            # pokemon.remove("shiny")
         elif "Gleam" in type:
             skin = "gleam"
-            #pokemon.remove("gleam")
+            # pokemon.remove("gleam")
         elif "Alpha" in type:
             skin = "alpha"
-            #pokemon.remove("alpha")
+            # pokemon.remove("alpha")
         elif "Radiant" in type:
             skin = "radiant"
-            #pokemon.remove("radiant")
+            # pokemon.remove("radiant")
         elif "Shadow" in type:
             skin = "shadow"
-            #pokemon.remove("shadow")
+            # pokemon.remove("shadow")
         pokemon = "-".join(pokemon)
         val = pokemon.capitalize()
 
@@ -802,9 +811,9 @@ class Pokemon(commands.Cog):
             form_suffix = ""
         base_name = val.lower().replace(form_suffix, "").strip("-")
         pfile = await ctx.bot.db[1].pfile.find_one({"identifier": base_name})
-        
+
         if pfile:
-            gender_rate = pfile['gender_rate']
+            gender_rate = pfile["gender_rate"]
             raw_evos = (
                 await ctx.bot.db[1]
                 .pfile.find({"evolution_chain_id": pfile["evolution_chain_id"]})

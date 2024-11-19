@@ -30,7 +30,6 @@ YELLOW = "\N{LARGE YELLOW CIRCLE}"
 RED = "\N{LARGE RED CIRCLE}"
 
 
-
 class EvalContext:
     def __init__(self, interaction):
         self.interaction = interaction
@@ -764,7 +763,6 @@ class KittyCat(commands.Cog):
         pages = pagify(desc, base_embed=discord.Embed(title="***Radiant Counts***"))
         await MenuView(ctx, pages).start()
 
-
     @check_helper()
     @mew_stats.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -777,7 +775,6 @@ class KittyCat(commands.Cog):
         desc = "\n".join([f'{x["count"]} | {x["pokname"]}' for x in data])
         pages = pagify(desc, base_embed=discord.Embed(title="***Gleam Counts***"))
         await MenuView(ctx, pages).start()
-
 
     @check_helper()
     @mew_stats.command()
@@ -899,17 +896,28 @@ class KittyCat(commands.Cog):
     @check_admin()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def streak(self, ctx, user: discord.Member, amount: int):
-        """Give Vote Streaks to a user"""
+    async def streak(
+        self, ctx, user: discord.Member, type: Literal["shadow", "vote"], amount: int
+    ):
+        """Give Shadow or Vote Streaks to a user"""
+
         async with ctx.bot.db[0].acquire() as pconn:
-            await pconn.execute(
-                "UPDATE users SET last_vote = $1, vote_streak = vote_streak + $2 WHERE u_id = $3",
-                int(time.time()),
-                amount,
-                user.id,
-            )
+            if type == "vote":
+                await pconn.execute(
+                    "UPDATE users SET last_vote = $1, vote_streak = vote_streak + $2 WHERE u_id = $3",
+                    int(time.time()),
+                    amount,
+                    user.id,
+                )
+            elif type == "shadow":
+                await pconn.execute(
+                    "UPDATE users SET chain = chain + $1 WHERE u_id = $2",
+                    amount,
+                    user.id,
+                )
             embed = discord.Embed(
-                title="Success!", description=f"{user} Got {amount} vote streak points."
+                title="Success!",
+                description=f"{user} Got {amount} {type} streak points.",
             )
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
@@ -998,18 +1006,21 @@ class KittyCat(commands.Cog):
     async def chest(
         self,
         ctx,
-        user_id,
+        user: discord.Member,
         chest: Literal[
             "legend chest",
             "mythic chest",
             "rare chest",
             "common chest",
             "art chest",
+            "pat chest",
         ],
         amount: int,
     ):
         """Add a chest"""
-        user_id = int(user_id)
+        if "pat" in chest and ctx.author.id != 455277032625012737:
+            return
+        user_id = int(user.id)
         await ctx.bot.commondb.add_bag_item(
             user_id, chest.replace(" ", "_"), amount, True
         )

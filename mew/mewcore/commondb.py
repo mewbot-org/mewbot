@@ -16,6 +16,7 @@ class UserNotStartedError(Exception):
 
     pass
 
+
 class Pokemon:
     """Dataclass to hold information about a created pokemon."""
 
@@ -38,16 +39,23 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Poliwrath",
-            "Meloetta",
-            "Bibarel",
-            "Blaziken",
-            "Blastoise",
-            "Drapion",
-            "Jirachi",
+            "Vikavolt",
+            "Venusaur",
+            "Krookodile",
+            "Sceptile",
+            "Falinks",
+            "Talonflame",
+            "Butterfree",
         ]
 
         self.ALL_ALPHA_POKEMON = [
+            "Vikavolt",
+            "Venusaur",
+            "Krookodile",
+            "Sceptile",
+            "Falinks",
+            "Talonflame",
+            "Butterfree",
             "Heatran",
             "Regigigas",
             "Regirock",
@@ -67,8 +75,7 @@ class CommonDB:
             "Darkrai",
             "Uxie",
             "Diancie",
-            "Mewtwo"
-            "Gardevoir",
+            "Mewtwo" "Gardevoir",
             "Rayquaza",
             "Leafeon",
             "Hydreigon",
@@ -109,7 +116,7 @@ class CommonDB:
             "Druddigon",
             "Raikou",
             "Zacian",
-            "Celebi", 
+            "Celebi",
             "Lugia",
             "Bellossom",
             "Vileplume",
@@ -130,6 +137,13 @@ class CommonDB:
             "Jirachi",
         ]
         self.ALPHA_MOVESETS = {
+            "Vikavolt": ["thunderclap", "tackle", "tackle", "tackle"],
+            "Venusaur": ["matcha-gotcha", "tackle", "tackle", "tackle"],
+            "Krookodile": ["dragon-dance", "tackle", "tackle", "tackle"],
+            "Sceptile": ["draco-meteor", "tackle", "tackle", "tackle"],
+            "Falinks": ["power-trip", "tackle", "tackle", "tackle"],
+            "Talonflame": ["dragon-ascent", "tackle", "tackle", "tackle"],
+            "Butterfree": ["focus-blast", "tackle", "tackle", "tackle"],
             "Golurk": ["mach-punch", "tackle", "tackle", "tackle"],
             "Snorlax": ["slack-off", "tackle", "tackle", "tackle"],
             "Banette": ["spectral-thief", "tackle", "tackle", "tackle"],
@@ -201,7 +215,7 @@ class CommonDB:
             "Druddigon": ["diamond-storm", "tackle", "tackle", "tackle"],
             "Raikou": ["geomancy", "tackle", "tackle", "tackle"],
             "Zacian": ["flying-press", "tackle", "tackle", "tackle"],
-            "Celebi": ["quiver-dance", "tackle", "tackle", "tackle"], 
+            "Celebi": ["quiver-dance", "tackle", "tackle", "tackle"],
             "Lugia": ["oblivian-wing", "tackle", "tackle", "tackle"],
             "Bellossom": ["powder", "tackle", "tackle", "tackle"],
             "Vileplume": ["toxic-thread", "tackle", "tackle", "tackle"],
@@ -217,8 +231,6 @@ class CommonDB:
             "Blaziken": ["fake-out", "tackle", "tackle", "tackle"],
             "Blastoise": ["origin-pulse", "tackle", "tackle", "tackle"],
             "Drapion": ["wicked-blow", "tackle", "tackle", "tackle"],
-
-
         }
 
     async def get_time(self):
@@ -226,7 +238,7 @@ class CommonDB:
         now = now.astimezone(ZoneInfo("EST"))
         now_time = now.time()
         display_time = now.strftime("%m/%d/%Y, %I:%M:%S %p")
-        if now_time >= time(6,00) and now_time <= time(17,59):
+        if now_time >= time(6, 00) and now_time <= time(17, 59):
             night = False
         else:
             night = True
@@ -279,7 +291,14 @@ class CommonDB:
             hunt, chain = data
             if hunt != pokemon.capitalize():
                 return False
-            make_shadow = random.random() < ((1 / 12000) * (4 ** (chain / 1000)))
+
+            # get pat tier
+            patreon = await self.bot.patreon_tier(user_id)
+
+            make_shadow = random.random() < (
+                (1 / 12000 - (12000 * 0.25 if patreon == "Rarity Hunter" else 0))
+                * (4 ** (chain / 1000))
+            )
             if make_shadow:
                 await pconn.execute(
                     "UPDATE users SET chain = 0 WHERE u_id = $1", user_id
@@ -304,22 +323,27 @@ class CommonDB:
         async with self.bot.db[0].acquire() as pconn:
             # Pull data for check
             data = await pconn.fetchrow(
-                "SELECT hunt, chain FROM users WHERE u_id = $1", 
-                user_id
+                "SELECT hunt, chain FROM users WHERE u_id = $1", user_id
             )
             if data is None:
                 return False
             hunt, chain = data
             # First to see if current chain results in shiny
-            if hunt != pokemon.capitalize(): # Spawn does not match hunt
+            if hunt != pokemon.capitalize():  # Spawn does not match hunt
                 make_shiny = random.choice([False for i in range(threshold)] + [True])
             else:
-                make_shiny = random.choice([False for i in range(threshold - chain)] + [True])
+                make_shiny = random.choice(
+                    [False for i in range(threshold - chain)] + [True]
+                )
                 # Either reset chain or increase depending on results
                 if make_shiny:
-                    await pconn.execute("UPDATE users SET chain = 0 WHERE u_id = $1", user_id)
+                    await pconn.execute(
+                        "UPDATE users SET chain = 0 WHERE u_id = $1", user_id
+                    )
                 else:
-                    await pconn.execute("UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id)
+                    await pconn.execute(
+                        "UPDATE users SET chain = chain + 1 WHERE u_id = $1", user_id
+                    )
         return make_shiny
 
     async def create_poke(
@@ -341,18 +365,18 @@ class CommonDB:
 
         Returns a Pokemon object if the poke was created, and None otherwise.
         """
-        form_info = await bot.db[1].forms.find_one({"identifier": pokemon.lower()})
+        form_info = await self.bot.db[1].forms.find_one({"identifier": pokemon.lower()})
         try:
-            pokemon_info = await bot.db[1].pfile.find_one(
+            pokemon_info = await self.bot.db[1].pfile.find_one(
                 {"id": form_info["pokemon_id"]}
             )
             gender_rate = pokemon_info["gender_rate"]
         except Exception:
-            bot.logger.warn("No Gender Rate for %s" % pokemon.lower())
+            self.bot.logger.warn("No Gender Rate for %s" % pokemon.lower())
             return None
 
         ab_ids = (
-            await bot.db[1]
+            await self.bot.db[1]
             .poke_abilities.find({"pokemon_id": form_info["pokemon_id"]})
             .to_list(length=3)
         )
@@ -443,7 +467,7 @@ class CommonDB:
             skin,
             tradable,
         )
-        async with bot.db[0].acquire() as pconn:
+        async with self.bot.db[0].acquire() as pconn:
             pokeid = await pconn.fetchval(query2, *args)
             await pconn.execute(
                 "UPDATE users SET pokes = array_append(pokes, $2) WHERE u_id = $1",

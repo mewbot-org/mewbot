@@ -214,8 +214,7 @@ class Party(commands.Cog):
                 ctx.author.id,
             )
             pokes = await pconn.fetchval(
-                "SELECT pokes FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
             )
 
             if party_data is None:

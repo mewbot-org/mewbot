@@ -30,16 +30,17 @@ from math import floor
 from datetime import datetime, timedelta
 
 REGIONS = [
-    "Kanto", 
-    "Johto", 
-    "Hoenn", 
-    "Sinnoh", 
-    "Unova", 
-    "Kalos", 
-    "Alola", 
-    "Galar", 
-    "Paldea"
+    "Kanto",
+    "Johto",
+    "Hoenn",
+    "Sinnoh",
+    "Unova",
+    "Kalos",
+    "Alola",
+    "Galar",
+    "Paldea",
 ]
+
 
 def do_health(maxHealth, health, healthDashes=10):
     dashConvert = int(
@@ -76,12 +77,14 @@ def calculate_iv_multiplier(level):
     difference = 0.5
     return f"{round((level * difference), 1)}%"
 
+
 def spec_char_check(string):
-    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:].')
-    if(regex.search(string) == None):
-        return True  
+    regex = re.compile("[@_!#$%^&*()<>?/\|}{~:].")
+    if regex.search(string) == None:
+        return True
     else:
         return False
+
 
 class Extras(commands.Cog):
     def __init__(self, bot):
@@ -135,7 +138,9 @@ class Extras(commands.Cog):
 
     @commands.hybrid_command()
     async def leaderboard(
-        self, ctx, board: Literal["Votes", "Servers", "Pokemon", "Fishing", "Mining", "Dueling"]
+        self,
+        ctx,
+        board: Literal["Votes", "Servers", "Pokemon", "Fishing", "Mining", "Dueling"],
     ):
         """Displays a Leaderboard Based on Votes, Servers, Pokémon or Fishing."""
         LEADERBOARD_IMMUNE_USERS = [
@@ -644,9 +649,7 @@ class Extras(commands.Cog):
         )
         embed.add_field(
             name="",
-            value=(
-                "[Mewbot Official Server](https://discord.gg/mewbot)"
-            ),
+            value=("[Mewbot Official Server](https://discord.gg/mewbot)"),
             inline=True,
         )
         embed.add_field(
@@ -654,10 +657,10 @@ class Extras(commands.Cog):
             value=f"{update_data['update']}\n{update_data['dev']} on {update_data['update_date']}",
             inline=False,
         )
-        
+
         embed.set_footer(
-            text = "Need redeems quicker? Get 5 Redeems + 2,000 credits for every USD donated. See `/donate`",
-            icon_url = "https://mewbot.xyz/eastereggs.png"
+            text="Need redeems quicker? Get 5 Redeems + 2,000 credits for every USD donated. See `/donate`",
+            icon_url="https://mewbot.xyz/eastereggs.png",
         )
 
         await ctx.send(embed=embed)
@@ -676,13 +679,15 @@ class Extras(commands.Cog):
                 await ctx.send("You have not started!\nStart with `/start` first!")
                 return
             staff = await pconn.fetchval(
-                "SELECT staff FROM users WHERE u_id = $1",
-                ctx.author.id
+                "SELECT staff FROM users WHERE u_id = $1", ctx.author.id
             )
             last = await pconn.fetchval(
                 "SELECT lastdate FROM patreonstore WHERE u_id = $1", ctx.author.id
             )
-        if staff not in ('User', 'Art Squad') and ctx.author.id not in (366319068476866570,334155028170407949):
+        if staff not in ("User", "Art Squad") and ctx.author.id not in (
+            366319068476866570,
+            334155028170407949,
+        ):
             await ctx.send("Not part of benefits.")
             return
         if last == date:
@@ -708,19 +713,21 @@ class Extras(commands.Cog):
                 "If none of the above worked, ask a staff member for further assistance."
             )
             return
-        if patreon_status == "Sapphire Tier":
-            redeems = 150
-            credits = 3000000
-        elif patreon_status == "Crystal Tier":
+
+        if patreon_status == "Elite Collector":
+            await self.bot.commondb.add_bag_item(ctx.author.id, "pat_chest", 1, True)
+            await ctx.send(
+                embed=make_embed(
+                    title="You have received one Patreon Chest, ",
+                    icon_url="https://media.discordapp.net/attachments/1301161012656869438/1301421098495250462/62_Sem_Titulo_20241031024106.png?ex=673c2559&is=673ad3d9&hm=869989f2e98e9570e44c0bc859756a179ee0ba25b02b7686e872dc8ae65728ad&=&format=webp&quality=lossless&width=176&height=176",
+                )
+            )
             redeems = 100
             credits = 2000000
-        elif patreon_status == "Silver Tier":
+        elif patreon_status == "Rarity Hunter":
             redeems = 30
             credits = 500000
-        elif patreon_status == "Yellow Tier":
-            redeems = 15
-            credits = 250000
-        elif patreon_status == "Red Tier":
+        elif patreon_status == "Ace Trainer":
             redeems = 3
             credits = 50000
         else:
@@ -749,7 +756,7 @@ class Extras(commands.Cog):
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                 credits,
-                ctx.author.id,   
+                ctx.author.id,
             )
         await ctx.send(
             f"You have received **{redeems}** redeems and **{credits}**.\nThank you for supporting Mewbot!"
@@ -763,18 +770,22 @@ class Extras(commands.Cog):
         if len(new_nick) > 50:
             await ctx.send("Nickname is too long, maximum of 50 characters!")
             return
-        
-        #Check if word is directly within the banned word list or carries special characters
+
+        # Check if word is directly within the banned word list or carries special characters
         if new_nick in banned_words or spec_char_check(new_nick) is False:
-            await ctx.send("There are words that are banned or it contained special characters.")
+            await ctx.send(
+                "There are words that are banned or it contained special characters."
+            )
             return
-        
-        #Check if banned_words are in the new nick
+
+        # Check if banned_words are in the new nick
         for word in banned_words:
             if word in new_nick:
-                await ctx.send("There are words that are banned or it contained special characters.")
+                await ctx.send(
+                    "There are words that are banned or it contained special characters."
+                )
                 return
-    
+
         async with ctx.bot.db[0].acquire() as pconn:
             await pconn.execute(
                 "UPDATE pokes SET poknick = $1 WHERE id = (SELECT selected FROM users WHERE u_id = $2)",
@@ -1070,18 +1081,20 @@ class Extras(commands.Cog):
 
     @commands.hybrid_command()
     async def region(
-        self, ctx, reg: Literal[
-            "Kanto", 
-            "Johto", 
-            "Hoenn", 
-            "Sinnoh", 
-            "Unova", 
-            "Kalos", 
-            "Alola", 
-            "Galar", 
+        self,
+        ctx,
+        reg: Literal[
+            "Kanto",
+            "Johto",
+            "Hoenn",
+            "Sinnoh",
+            "Unova",
+            "Kalos",
+            "Alola",
+            "Galar",
             "Paldea",
-            "Hisui"
-        ]
+            "Hisui",
+        ],
     ):
         """Change your region to allow your Pokémon evolve into regional forms."""
         reg = reg.lower()
@@ -1370,28 +1383,26 @@ class Extras(commands.Cog):
             )
         embed = discord.Embed(
             title="Mewbot Raffle",
-            description="This raffle is composed off the fees found across in-game transfers.\nEntries cost 35,000 and are limited to 1 per player."
+            description="This raffle is composed off the fees found across in-game transfers.\nEntries cost 35,000 and are limited to 1 per player.",
         )
         embed.add_field(
             name="<:blank:1012504803496177685>",
             value=f"{total_credits:,} <:mewcoin:1010959258638094386>",
-            inline=True
+            inline=True,
         )
-        embed.set_footer(
-            text="Raffle is drawn on Mondays!"
-        )
+        embed.set_footer(text="Raffle is drawn on Mondays!")
         await ctx.send(embed=embed)
 
-    #@raffle.command()
+    # @raffle.command()
     async def enter(self, ctx):
         """Enter the raffle"""
         async with ctx.bot.db[0].acquire() as pconn:
             user_data = await pconn.fetchrow(
                 "SELECT mewcoins, creds_raffle FROM users WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
-            total_credits = user_data['mewcoins']
-            raffle = user_data['creds_raffle']
+            total_credits = user_data["mewcoins"]
+            raffle = user_data["creds_raffle"]
             if raffle:
                 await ctx.send("You've already joined the raffle!")
                 return
@@ -1400,7 +1411,7 @@ class Extras(commands.Cog):
                 return
             await pconn.execute(
                 "UPDATE users SET mewcoins = mewcoins - 35000, raffle_credits = raffle_credits + 35000, creds_raffle = True WHERE u_id = $1",
-                ctx.author.id
+                ctx.author.id,
             )
         await ctx.send("You have entered the raffle! It's drawn each Monday!")
 

@@ -329,7 +329,7 @@ def get_insert_query(ctx, poke, counter, mother, is_shadow):
         0,
         False,
         poke.ability_id,
-        counter, # // 1.25, # Remove after the spring
+        counter,  # // 1.25, # Remove after the spring
         poke.name,
         poke.gender,
         ctx.author.id,
@@ -396,19 +396,21 @@ class RedoBreedView(discord.ui.View):
         await self.cog.breed.callback(
             self.cog, self.ctx, self.male, females=self.female
         )
-        
+
     @discord.ui.button(label="Cancel breed", style=discord.ButtonStyle.danger)
     async def cancel(self, interaction, button):
         await interaction.response.defer()
         self.ctx._created_at = time.time()
         self.ctx._interaction = interaction
         self.ctx.command.cancel = True
-        await self.message.edit(embed=make_embed(title=f"Auto Breeding Canceled"), view=None)
+        await self.message.edit(
+            embed=make_embed(title=f"Auto Breeding Canceled"), view=None
+        )
         return
 
-    #@discord.ui.button(
-        #label="Auto redo until success", style=discord.ButtonStyle.primary
-    #)
+    # @discord.ui.button(
+    # label="Auto redo until success", style=discord.ButtonStyle.primary
+    # )
     async def auto(self, interaction, button):
         await interaction.response.defer()
         if self.cog.auto_redo[self.ctx.author.id] is not None:
@@ -509,25 +511,24 @@ class Breeding(commands.Cog):
         await self.bot.redis_manager.redis.execute(
             "HMSET", "breedcooldowns", "examplekey", "examplevalue"
         )
-        
+
     async def get_female_max(self, user):
         achievement_bonus = await self.bot.db[0].fetchval(
-            "SELECT breed_success FROM achievements WHERE u_id = $1",
-            user
+            "SELECT breed_success FROM achievements WHERE u_id = $1", user
         )
         if achievement_bonus is None:
             achievement_bonus = 0
         patreon_status = await self.bot.patreon_tier(user)
-        if patreon_status in ("Crystal Tier", "Sapphire Tier"):
+        if patreon_status == "Elite Collector":
             limit = 150
-        elif patreon_status == "Silver Tier":
+        elif patreon_status == "Rarity Hunter":
             limit = 45
-        elif patreon_status == "Yellow Tier":
+        elif patreon_status == "Ace Trainer":
             limit = 30
-        elif patreon_status == "Red Tier" or achievement_bonus >= 500:
-            limit = 15
+        elif achievement_bonus >= 500:
+            limit = 5
         else:
-            limit = 10
+            limit = 2
         return limit
 
     async def reset_cooldown(self, id_):
@@ -544,6 +545,9 @@ class Breeding(commands.Cog):
     )
     async def breed(self, ctx, male: int, *, females):
         """Breeds two Pokémon - Male & Female"""
+
+        patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
+
         if type(females) == str:
             auto = females.endswith("auto")
             if auto:
@@ -562,18 +566,20 @@ class Breeding(commands.Cog):
             auto = False
             females_list = [females]
 
-        #TODO: Add Patreon specific rewards    
-        #get_female_max uses get_patreon which requires
-        #specific return int value per tier
-        #if len(females_list) > self.get_female_max(ctx.author.id):
-            #await ctx.send(f"You can not breed more than {self.get_female_max(ctx.author.id)} females.")
-            #return
-        #TEMP:
+        # TODO: Add Patreon specific rewards
+        # get_female_max uses get_patreon which requires
+        # specific return int value per tier
+        # if len(females_list) > self.get_female_max(ctx.author.id):
+        # await ctx.send(f"You can not breed more than {self.get_female_max(ctx.author.id)} females.")
+        # return
+        # TEMP:
         limit = await self.get_female_max(ctx.author.id)
         if len(females_list) > limit:
-            await ctx.send(f"You can not queue more than {limit} Female IDs.\nPatreon increases your limit, `/donate`")
+            await ctx.send(
+                f"You can not queue more than {limit} Female IDs.\Increase your limit from your achievement bonus or become a Patreon, `/donate`"
+            )
             return
-        
+
         breed_reset = (
             await ctx.bot.redis_manager.redis.execute(
                 "HMGET", "breedcooldowns", str(ctx.author.id)
@@ -591,11 +597,16 @@ class Breeding(commands.Cog):
             await ctx.send(f"Command on cooldown for {cooldown}")
             return
         await ctx.bot.redis_manager.redis.execute(
-            "HMSET", "breedcooldowns", str(ctx.author.id), str(time.time() + 35)
+            "HMSET",
+            "breedcooldowns",
+            str(ctx.author.id),
+            str(time.time() + 35 - (35 * 0.3 if patreon_status == "Elite" else 0)),
         )
         for idx, female in enumerate(females_list):
             if idx > 0:
-                await asyncio.sleep(30)
+                await asyncio.sleep(
+                    30 - (30 * 0.3 if patreon_status == "Elite Collector" else 0)
+                )
             ctx.command.cancel = False
             # Remove this female from the list of females - "unorthodoxly"
             # females = females.replace(str(female), "")
@@ -609,7 +620,7 @@ class Breeding(commands.Cog):
             if male > 2147483647 or female > 2147483647:
                 await ctx.send("You do not have that many pokemon!")
                 return
-            
+
             if male == female:
                 await ctx.send("You can not breed the same Pokemon!")
                 await self.reset_cooldown(ctx.author.id)
@@ -641,6 +652,7 @@ class Breeding(commands.Cog):
                     await ctx.send("You have not started!\nStart with `/start` first.")
                     return
                 s_threshold = round(8000 - 8000 * (shiny_multiplier / 100))
+                # s_threshold =  - ( * 0.3 if "Elite" in patreon_status else 0)
                 is_shiny = random.choice([False for i in range(s_threshold)] + [True])
 
                 dlimit = pokes["daycarelimit"]
@@ -681,7 +693,7 @@ class Breeding(commands.Cog):
                     await ctx.send("You cannot breed two dittos!")
                     await self.reset_cooldown(ctx.author.id)
                     return
-                
+
                 # Hard filter out legendary pokemon
                 if (
                     mother_details["pokname"] in nonBreedable
@@ -807,6 +819,7 @@ class Breeding(commands.Cog):
 
             # Failed attempt
             if not success:
+
                 embed = discord.Embed(
                     title=f"Breeding Attempt Failed!",
                     description=f"Factors affecting this include Parent Catch Rate and IV %\n",
@@ -817,10 +830,10 @@ class Breeding(commands.Cog):
                     view = RedoBreedView(ctx, self, male, female)
                 message = await ctx.send(embed=embed, view=view, ephemeral=True)
                 view.message = message
-                
+
                 if ctx.command.cancel:
                     return
-                
+
                 embed = discord.Embed(
                     title="Breeding Attempt Failed!",
                     description=f"Factors affecting this include Parent Catch Rate and IV %\n",
@@ -836,27 +849,40 @@ class Breeding(commands.Cog):
 
             # Got an egg
             else:
+                await self.reset_cooldown(ctx.author.id)
+                await ctx.bot.redis_manager.redis.execute(
+                    "HMSET",
+                    "breedcooldowns",
+                    str(ctx.author.id),
+                    str(
+                        time.time()
+                        + 900
+                        - (900 * 0.3 if patreon_status == "Elite Collector" else 0)
+                    ),
+                )
 
                 self.auto_redo[ctx.author.id] = None
 
-                patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
-
                 # Reduce Cgrubb's base step count for testing
                 # Test will be for reducing overall step count in the bot.
-                #if ctx.author.id == (366319068476866570, 334155028170407949):
-                    # Let's start with a flat 15% decrease
-                    #counter = counter - round(counter * ounter * (10 / 100))
-                
-                #THIS IS OFFICIAL REDUCTION IN STEPS
+                # if ctx.author.id == (366319068476866570, 334155028170407949):
+                # Let's start with a flat 15% decrease
+                # counter = counter - round(counter * ounter * (10 / 100))
+
+                # THIS IS OFFICIAL REDUCTION IN STEPS
                 counter = counter - round(counter * (10 / 100))
 
-                if patreon_status in ("Crystal Tier", "Sapphire Tier"):
+                if patreon_status in (
+                    "Crystal Tier",
+                    "Sapphire Tier",
+                    "Elite Collector",
+                ):
                     counter = counter - round(counter * (50 / 100))
                 elif patreon_status == "Silver Tier":
                     counter = counter - round(counter * (30 / 100))
-                elif patreon_status == "Yellow Tier":
+                elif patreon_status == "Rarity Hunter":
                     counter = counter - round(counter * (20 / 100))
-                elif patreon_status == "Red Tier" and random.randint(0, 1):
+                elif patreon_status == "Ace Trainer" and random.randint(0, 1):
                     counter = counter - round(counter * (20 / 100))
 
                 is_shadow = False
@@ -897,7 +923,14 @@ class Breeding(commands.Cog):
                     + child.hp
                 )
                 # TODO: achievement code
-                iv_list = [child.attack, child.defense, child.spatk, child.spdef, child.speed, child.hp]
+                iv_list = [
+                    child.attack,
+                    child.defense,
+                    child.spatk,
+                    child.spdef,
+                    child.speed,
+                    child.hp,
+                ]
                 iv_count = iv_list.count(31)
                 iv_count2 = iv_list.count(30)
                 if iv_count == 5 and iv_count2 == 1:
@@ -905,7 +938,7 @@ class Breeding(commands.Cog):
                 elif iv_count == 5:
                     achievement = "breed_penta"
                 else:
-                    achievement = "breed_success" 
+                    achievement = "breed_success"
 
                 ivpercent = round((ivsum / 186) * 100, 2)
                 e = make_embed(title=f"Your {emoji}{name} Egg ({ivpercent}% iv)")
@@ -931,47 +964,52 @@ class Breeding(commands.Cog):
                         value=f"This Shadow took {chain} attempts! WOW!",
                         inline=True,
                     )
-                embed.set_image(
-                    url="https://mewbot.xyz/eastereggs.png"
-                )
+                embed.set_image(url="https://mewbot.xyz/eastereggs.png")
                 embed.set_footer(text=chance_message)
-                
+
                 async def button1_callback(interaction: discord.Interaction):
                     if interaction.user == ctx.author:
                         ctx.command.cancel = True
-                        await interaction.message.edit(embed=make_embed(title=f"Breeding Queue Canceled"))
+                        await interaction.message.edit(
+                            embed=make_embed(title=f"Breeding Queue Canceled")
+                        )
                         return
 
-                button1 = discord.ui.Button(label="Cancel Next Breed", custom_id="button1")
+                button1 = discord.ui.Button(
+                    label="Cancel Next Breed", custom_id="button1"
+                )
                 button1.callback = button1_callback
 
                 view = discord.ui.View(timeout=15)
                 view.add_item(button1)
                 try:
                     if auto:
-                        message = await ctx.send(ctx.author.mention, embed=embed, view=view)
+                        message = await ctx.send(
+                            ctx.author.mention, embed=embed, view=view
+                        )
                     else:
                         message = await ctx.send(embed=embed, view=view)
                 except discord.NotFound:
                     pass
                 self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
-                self.bot.dispatch("egg_born", ctx.channel, ctx.author, achievement)    
+                self.bot.dispatch("egg_born", ctx.channel, ctx.author, achievement)
 
                 try:
                     interaction: discord.Interaction = await ctx.bot.wait_for(
                         "button_click",
-                        check=lambda i: i.message.id == message.id and i.user.id == ctx.author.id,
-                        timeout=10
+                        check=lambda i: i.message.id == message.id
+                        and i.user.id == ctx.author.id,
+                        timeout=10,
                     )
                     await message.edit(view=None)
                 except:
                     await message.edit(view=None)
                     pass
-                
+
                 if ctx.command.cancel:
                     print("Canceled cmd")
                     return
-                    
+
                 # Dispatches an event that a poke was bred.
                 # on_poke_breed(self, channel, user)
                 self.bot.dispatch("poke_breed", ctx.channel, ctx.author)
@@ -1001,7 +1039,7 @@ class Breeding(commands.Cog):
                 #     url="https://mewbot.xyz/eastereggs.png"
                 # )
                 # embed.set_footer(text=chance_message)
-                
+
                 # async def button1_callback(interaction: discord.Interaction):
                 #     if interaction.user == ctx.author:
                 #         return
@@ -1021,7 +1059,6 @@ class Breeding(commands.Cog):
                 #     check=lambda i: i.message.id == message.id and i.user.id == ctx.author.id,
                 #     timeout=36
                 # )
-                
 
     @commands.hybrid_command()
     @discord.app_commands.describe(

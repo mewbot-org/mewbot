@@ -28,7 +28,7 @@ from mewcore.redis_handler import RedisHandler
 from mewcore.dna_misc import MewMisc
 from mewcore.commondb import CommonDB
 from mewutils.checks import OWNER_IDS
-from mewutils.misc import EnableCommandsView
+from mewutils.misc import EnableCommandsView, reverse_id
 from mewcogs.json_files import make_embed
 import mewcogs
 
@@ -199,10 +199,10 @@ class Mew(commands.AutoShardedBot):
                 pass
 
     async def on_ready(self):
-        
+
         game = discord.Streaming(name="NPC move strategies", url="https://mewbot.xyz/")
         await self.change_presence(status=discord.Status.dnd, activity=game)
-        
+
         await self.log_cluster_action(
             {
                 "event": "shards_launched",
@@ -324,6 +324,8 @@ class Mew(commands.AutoShardedBot):
         await self.load_guild_settings()
         # await self.load_extensions()
         await self.load_bans()
+
+        await self.misc.get_old_skins()
         self.logger.info("Initialization Completed!")
         return await super().setup_hook()
 
@@ -364,6 +366,10 @@ class Mew(commands.AutoShardedBot):
         - "Silver Tier"
         - "Crystal Tier"
         - "Sapphire Tier"
+
+        - "Elite Collector"
+        - "Rarity Hunter"
+        - "Ace Trainer"
         """
         if user_id in (560502517012627497, 560502517012627497):  ## VK
             return "Crystal Tier"
@@ -396,7 +402,7 @@ class Mew(commands.AutoShardedBot):
         WARNING: This API is evil, modify this code at your own risk!
         """
         headers = {"Authorization": f"Bearer {os.environ['PATREON_TOKEN']}"}
-        api_url = "https://www.patreon.com/api/oauth2/v2/campaigns/8970466/members?include=user,currently_entitled_tiers&fields[member]=patron_status&fields[user]=social_connections&fields[tier]=title"
+        api_url = "https://www.patreon.com/api/oauth2/v2/campaigns/13026589/members?include=user,currently_entitled_tiers&fields[member]=patron_status&fields[user]=social_connections&fields[tier]=title"
         users_tiers = []
         members = []
         async with aiohttp.ClientSession() as session:
@@ -477,7 +483,7 @@ class Mew(commands.AutoShardedBot):
         for uid in userids:
             result[uid] = tiers[userids[uid]]
 
-        # Overrides
+        # Overrides``
         async with self.db[0].acquire() as pconn:
             overrides = await pconn.fetch(
                 "SELECT u_id, patreon_override FROM users WHERE patreon_override IS NOT NULL"
@@ -712,8 +718,7 @@ class Mew(commands.AutoShardedBot):
                     "Initializing Discord Connection..."
                 )  # Actually say Connecting to Discord WHEN it's connecting.
                 await self.start(self.token)
-                
-                
+
         except (BaseException, Exception) as e:
             self.logger.error(f"Error - {str(e)}")
             raise e

@@ -33,7 +33,13 @@ class Battle:
         self.ctxs = ctxs
         self.ctx = ctxs[0] if isinstance(ctxs, list) else ctxs
 
-        if type not in (self.BATTLE_TOWER, self.DUEL, self.PARTY_DUEL, self.NPC, self.RANKED):
+        if type not in (
+            self.BATTLE_TOWER,
+            self.DUEL,
+            self.PARTY_DUEL,
+            self.NPC,
+            self.RANKED,
+        ):
             raise ValueError("Invalid battle type")
 
         self.type = type
@@ -348,11 +354,11 @@ class Battle:
                 if self.type == self.RANKED:
                     winner = [self.trainer2, self.trainer1.id]
                 elif self.type == self.NPC and self.turn < 5:
-                    #Didn't hit 5 turn minimum
+                    # Didn't hit 5 turn minimum
                     winner = "forfeit"
                 else:
                     winner = self.trainer2
-                break 
+                break
             if self.trainer2.selected_action is None:
                 self.msg += (
                     f"{self.trainer2.name} forfeited, {self.trainer1.name} wins!\n"
@@ -360,7 +366,7 @@ class Battle:
                 if self.type == self.RANKED:
                     winner = [self.trainer1, self.trainer2.id]
                 elif self.type == self.NPC and self.turn < 5:
-                    #Didn't hit 5 turn minimum
+                    # Didn't hit 5 turn minimum
                     winner = "forfeit"
                 else:
                     winner = self.trainer1

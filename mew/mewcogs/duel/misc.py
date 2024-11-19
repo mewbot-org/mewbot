@@ -2,25 +2,26 @@ import random
 from .enums import Ability, ElementType
 
 
-class ExpiringEffect():
+class ExpiringEffect:
     """
     Some effect that has a specific amount of time it is active.
-    
+
     turns_to_expire can be None, in which case this effect never expires.
     """
+
     def __init__(self, turns_to_expire: int):
         self._remaining_turns = turns_to_expire
-    
+
     def active(self):
         """Returns True if this effect is still active, False otherwise."""
         if self._remaining_turns is None:
             return True
         return bool(self._remaining_turns)
-    
+
     def next_turn(self):
         """
         Progresses this effect for a turn.
-        
+
         Returns True if the effect just ended.
         """
         if self._remaining_turns is None:
@@ -29,7 +30,7 @@ class ExpiringEffect():
             self._remaining_turns -= 1
             return not self.active()
         return False
-    
+
     def set_turns(self, turns_to_expire):
         """Set the amount of turns until this effect expires."""
         self._remaining_turns = turns_to_expire
@@ -38,7 +39,7 @@ class ExpiringEffect():
 class Weather(ExpiringEffect):
     """
     The current weather of the battlefield.
-    
+
     Options:
     -hail
     -sandstorm
@@ -48,6 +49,7 @@ class Weather(ExpiringEffect):
     -sun
     -h-wind
     """
+
     def __init__(self, battle):
         super().__init__(0)
         self._weather_type = ""
@@ -56,52 +58,74 @@ class Weather(ExpiringEffect):
     def _expire_weather(self):
         """Clear the current weather and update Castform forms."""
         self._weather_type = ""
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
             # Forecast
-            if poke.ability() == Ability.FORECAST and poke._name in ("Castform-snowy", "Castform-rainy", "Castform-sunny"):
+            if poke.ability() == Ability.FORECAST and poke._name in (
+                "Castform-snowy",
+                "Castform-rainy",
+                "Castform-sunny",
+            ):
                 if poke.form("Castform"):
                     poke.type_ids = [ElementType.NORMAL]
-    
+
     def next_turn(self):
         """Progresses the weather a turn."""
         if super().next_turn():
             self._expire_weather()
             return True
         return False
-    
+
     def recheck_ability_weather(self):
         """Checks if strong weather effects from a pokemon with a weather ability need to be removed."""
         maintain_weather = False
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
-            if self._weather_type == "h-wind" and poke.ability() == Ability.DELTA_STREAM:
+            if (
+                self._weather_type == "h-wind"
+                and poke.ability() == Ability.DELTA_STREAM
+            ):
                 maintain_weather = True
-            if self._weather_type == "h-sun" and poke.ability() == Ability.DESOLATE_LAND:
+            if (
+                self._weather_type == "h-sun"
+                and poke.ability() == Ability.DESOLATE_LAND
+            ):
                 maintain_weather = True
-            if self._weather_type == "h-rain" and poke.ability() == Ability.PRIMORDIAL_SEA:
+            if (
+                self._weather_type == "h-rain"
+                and poke.ability() == Ability.PRIMORDIAL_SEA
+            ):
                 maintain_weather = True
-        
+
         if self._weather_type in ("h-wind", "h-sun", "h-rain") and not maintain_weather:
             self._expire_weather()
             return True
         return False
-    
+
     def get(self):
         """Get the current weather type."""
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
             if poke.ability() in (Ability.CLOUD_NINE, Ability.AIR_LOCK):
                 return ""
         return self._weather_type
-    
+
     def set(self, weather: str, pokemon):
         """
         Set the weather, lasting a certain number of turns.
-        
+
         Returns a formatted message indicating any weather change.
         """
         msg = ""
@@ -164,17 +188,22 @@ class Weather(ExpiringEffect):
             castform = "Castform"
         else:
             raise ValueError("unexpected weather")
-        
+
         # Forecast
         t = ElementType(element).name.lower()
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
             if poke.ability() == Ability.FORECAST and poke._name != castform:
                 if poke.form(castform):
                     poke.type_ids = [element]
-                    msg += f"{poke.name} transformed into a {t} type using its forecast!\n"
-        
+                    msg += (
+                        f"{poke.name} transformed into a {t} type using its forecast!\n"
+                    )
+
         self._weather_type = weather
         self._remaining_turns = turns
         return msg
@@ -182,17 +211,18 @@ class Weather(ExpiringEffect):
 
 class LockedMove(ExpiringEffect):
     """A multi-turn move that a pokemon is locked into."""
+
     def __init__(self, move, turns_to_expire: int):
         super().__init__(turns_to_expire)
         self.move = move
         self.turn = 0
-    
+
     def next_turn(self):
         """Progresses the move a turn."""
         expired = super().next_turn()
         self.turn += 1
         return expired
-    
+
     def is_last_turn(self):
         """Returns True if this is the last turn this move will be used."""
         return self._remaining_turns == 1
@@ -200,22 +230,23 @@ class LockedMove(ExpiringEffect):
 
 class ExpiringItem(ExpiringEffect):
     """An expiration timer with some data."""
+
     def __init__(self):
         super().__init__(0)
         self.item = None
-    
+
     def next_turn(self):
         """Progresses the effect a turn."""
         expired = super().next_turn()
         if expired:
             self.item = None
         return expired
-    
+
     def set(self, item, turns: int):
         """Set the item and turns until expiration."""
         self.item = item
         self._remaining_turns = turns
-    
+
     def end(self):
         """Ends this expiring item."""
         self.item = None
@@ -224,21 +255,22 @@ class ExpiringItem(ExpiringEffect):
 
 class Terrain(ExpiringItem):
     """The terrain of the battle"""
+
     def __init__(self, battle):
         super().__init__()
         self.battle = battle
-    
+
     def next_turn(self):
         """Progresses the effect a turn."""
         expired = super().next_turn()
         if expired:
             self.end()
         return expired
-    
+
     def set(self, item, attacker):
         """
         Set the terrain and turns until expiration.
-        
+
         Returns a formatted string.
         """
         if item == self.item:
@@ -256,7 +288,10 @@ class Terrain(ExpiringItem):
             element = ElementType.FAIRY
         elif item == "psychic":
             element = ElementType.PSYCHIC
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
             if poke.ability() == Ability.MIMICRY:
@@ -276,12 +311,15 @@ class Terrain(ExpiringItem):
                 msg += poke.append_defense(1, attacker=poke, source="its grassy seed")
                 poke.held_item.use()
         return msg
-    
+
     def end(self):
         """Ends the terrain."""
         super().end()
         # Mimicry
-        for poke in (self.battle.trainer1.current_pokemon, self.battle.trainer2.current_pokemon):
+        for poke in (
+            self.battle.trainer1.current_pokemon,
+            self.battle.trainer2.current_pokemon,
+        ):
             if poke is None:
                 continue
             if poke.ability() == Ability.MIMICRY:
@@ -290,10 +328,11 @@ class Terrain(ExpiringItem):
 
 class ExpiringWish(ExpiringEffect):
     """Stores the HP and when to heal for the move Wish."""
+
     def __init__(self):
         super().__init__(0)
         self.hp = None
-    
+
     def next_turn(self):
         """Progresses the effect a turn."""
         expired = super().next_turn()
@@ -302,32 +341,36 @@ class ExpiringWish(ExpiringEffect):
             hp = self.hp
             self.hp = None
         return hp
-    
+
     def set(self, hp):
         """Set the move and turns until expiration."""
         self.hp = hp
         self._remaining_turns = 2
 
 
-class NonVolatileEffect():
+class NonVolatileEffect:
     """The current non volatile effect status."""
+
     def __init__(self, pokemon):
         self.current = ""
         self.pokemon = pokemon
         self.sleep_timer = ExpiringEffect(0)
         self.badly_poisoned_turn = 0
-    
+
     def next_turn(self, battle):
         """
         Progresses this status by a turn.
-        
+
         Returns a formatted string if a status wore off.
         """
         if not self.current:
             return ""
         if self.current == "b-poison":
             self.badly_poisoned_turn += 1
-        if self.pokemon.ability() == Ability.HYDRATION and battle.weather.get() in ("rain", "h-rain"):
+        if self.pokemon.ability() == Ability.HYDRATION and battle.weather.get() in (
+            "rain",
+            "h-rain",
+        ):
             removed = self.current
             self.reset()
             return f"{self.pokemon.name}'s hydration cured its {removed}!\n"
@@ -343,44 +386,62 @@ class NonVolatileEffect():
             return self.pokemon.damage(damage, battle, source="its burn")
         if self.current == "b-poison":
             if self.pokemon.ability() == Ability.POISON_HEAL:
-                return self.pokemon.heal(self.pokemon.starting_hp // 8, source="its poison heal")
-            damage = max(1, (self.pokemon.starting_hp // 16) * min(15, self.badly_poisoned_turn))
+                return self.pokemon.heal(
+                    self.pokemon.starting_hp // 8, source="its poison heal"
+                )
+            damage = max(
+                1, (self.pokemon.starting_hp // 16) * min(15, self.badly_poisoned_turn)
+            )
             return self.pokemon.damage(damage, battle, source="its bad poison")
         if self.current == "poison":
             if self.pokemon.ability() == Ability.POISON_HEAL:
-                return self.pokemon.heal(self.pokemon.starting_hp // 8, source="its poison heal")
+                return self.pokemon.heal(
+                    self.pokemon.starting_hp // 8, source="its poison heal"
+                )
             damage = max(1, self.pokemon.starting_hp // 8)
             return self.pokemon.damage(damage, battle, source="its poison")
         if self.current == "sleep" and self.pokemon.nightmare:
-            return self.pokemon.damage(self.pokemon.starting_hp // 4, battle, source="its nightmare")
+            return self.pokemon.damage(
+                self.pokemon.starting_hp // 4, battle, source="its nightmare"
+            )
         return ""
 
     def burn(self):
         """Returns True if the pokemon is burned."""
         return self.current == "burn"
-        
+
     def sleep(self):
         """Returns True if the pokemon is asleep."""
         if self.pokemon.ability() == Ability.COMATOSE:
             return True
         return self.current == "sleep"
-        
+
     def poison(self):
         """Returns True if the pokemon is poisoned."""
         return self.current in ("poison", "b-poison")
-    
+
     def paralysis(self):
         """Returns True if the pokemon is paralyzed."""
         return self.current == "paralysis"
-        
+
     def freeze(self):
         """Returns True if the pokemon is frozen."""
         return self.current == "freeze"
-    
-    def apply_status(self, status, battle, *, attacker=None, move=None, turns=None, force=False, source: str=""):
+
+    def apply_status(
+        self,
+        status,
+        battle,
+        *,
+        attacker=None,
+        move=None,
+        turns=None,
+        force=False,
+        source: str = "",
+    ):
         """
         Apply a non volatile status to a pokemon.
-        
+
         Returns a formatted message.
         """
         msg = ""
@@ -392,35 +453,63 @@ class NonVolatileEffect():
             return f"{self.pokemon.name} already has a status, it can't get {status} too!\n"
         if self.pokemon.ability(attacker=attacker, move=move) == Ability.PURIFYING_SALT:
             return f"{self.pokemon.name}'s purifying salt protects it from being inflicted with {status}!\n"
-        if self.pokemon.ability(attacker=attacker, move=move) == Ability.LEAF_GUARD and battle.weather.get() in ("sun", "h-sun"):
+        if self.pokemon.ability(
+            attacker=attacker, move=move
+        ) == Ability.LEAF_GUARD and battle.weather.get() in ("sun", "h-sun"):
             return f"{self.pokemon.name}'s leaf guard protects it from being inflicted with {status}!\n"
         if self.pokemon.substitute and attacker is not self.pokemon:
             return f"{self.pokemon.name}'s substitute protects it from being inflicted with {status}!\n"
-        if self.pokemon.owner.safeguard.active() and attacker is not self.pokemon and (attacker is None or attacker.ability() != Ability.INFILTRATOR):
+        if (
+            self.pokemon.owner.safeguard.active()
+            and attacker is not self.pokemon
+            and (attacker is None or attacker.ability() != Ability.INFILTRATOR)
+        ):
             return f"{self.pokemon.name}'s safeguard protects it from being inflicted with {status}!\n"
-        if self.pokemon.grounded(battle, attacker=attacker, move=move) and battle.terrain.item == "misty":
+        if (
+            self.pokemon.grounded(battle, attacker=attacker, move=move)
+            and battle.terrain.item == "misty"
+        ):
             return f"The misty terrain protects {self.pokemon.name} from being inflicted with {status}!\n"
-        if self.pokemon.ability(attacker=attacker, move=move) == Ability.FLOWER_VEIL and ElementType.GRASS in self.pokemon.type_ids:
+        if (
+            self.pokemon.ability(attacker=attacker, move=move) == Ability.FLOWER_VEIL
+            and ElementType.GRASS in self.pokemon.type_ids
+        ):
             return f"{self.pokemon.name}'s flower veil protects it from being inflicted with {status}!\n"
         if self.pokemon._name == "Minior":
             return "Minior's hard shell protects it from status effects!\n"
         if status == "burn":
             if ElementType.FIRE in self.pokemon.type_ids:
                 return f"{self.pokemon.name} is a fire type and can't be burned!\n"
-            if self.pokemon.ability(attacker=attacker, move=move) in (Ability.WATER_VEIL, Ability.WATER_BUBBLE):
+            if self.pokemon.ability(attacker=attacker, move=move) in (
+                Ability.WATER_VEIL,
+                Ability.WATER_BUBBLE,
+            ):
                 ability_name = Ability(self.pokemon.ability_id).pretty_name
                 return f"{self.pokemon.name}'s {ability_name} prevents it from getting burned!\n"
             self.current = status
             msg += f"{self.pokemon.name} was burned{source}!\n"
         if status == "sleep":
-            if self.pokemon.ability(attacker=attacker, move=move) in (Ability.INSOMNIA, Ability.VITAL_SPIRIT, Ability.SWEET_VEIL):
+            if self.pokemon.ability(attacker=attacker, move=move) in (
+                Ability.INSOMNIA,
+                Ability.VITAL_SPIRIT,
+                Ability.SWEET_VEIL,
+            ):
                 ability_name = Ability(self.pokemon.ability_id).pretty_name
                 return f"{self.pokemon.name}'s {ability_name} keeps it awake!\n"
-            if self.pokemon.grounded(battle, attacker=attacker, move=move) and battle.terrain.item == "electric":
+            if (
+                self.pokemon.grounded(battle, attacker=attacker, move=move)
+                and battle.terrain.item == "electric"
+            ):
                 return f"The terrain is too electric for {self.pokemon.name} to fall asleep!\n"
-            if battle.trainer1.current_pokemon and battle.trainer1.current_pokemon.uproar.active():
+            if (
+                battle.trainer1.current_pokemon
+                and battle.trainer1.current_pokemon.uproar.active()
+            ):
                 return f"An uproar keeps {self.pokemon.name} from falling asleep!\n"
-            if battle.trainer2.current_pokemon and battle.trainer2.current_pokemon.uproar.active():
+            if (
+                battle.trainer2.current_pokemon
+                and battle.trainer2.current_pokemon.uproar.active()
+            ):
                 return f"An uproar keeps {self.pokemon.name} from falling asleep!\n"
             if turns is None:
                 turns = random.randint(2, 4)
@@ -432,10 +521,17 @@ class NonVolatileEffect():
         if status in ("poison", "b-poison"):
             if attacker is None or attacker.ability() != Ability.CORROSION:
                 if ElementType.STEEL in self.pokemon.type_ids:
-                    return f"{self.pokemon.name} is a steel type and can't be poisoned!\n"
+                    return (
+                        f"{self.pokemon.name} is a steel type and can't be poisoned!\n"
+                    )
                 if ElementType.POISON in self.pokemon.type_ids:
-                    return f"{self.pokemon.name} is a poison type and can't be poisoned!\n"
-            if self.pokemon.ability(attacker=attacker, move=move) in (Ability.IMMUNITY, Ability.PASTEL_VEIL):
+                    return (
+                        f"{self.pokemon.name} is a poison type and can't be poisoned!\n"
+                    )
+            if self.pokemon.ability(attacker=attacker, move=move) in (
+                Ability.IMMUNITY,
+                Ability.PASTEL_VEIL,
+            ):
                 ability_name = Ability(self.pokemon.ability_id).pretty_name
                 return f"{self.pokemon.name}'s {ability_name} keeps it from being poisoned!\n"
             self.current = status
@@ -443,7 +539,9 @@ class NonVolatileEffect():
             msg += f"{self.pokemon.name} was{bad} poisoned{source}!\n"
         if status == "paralysis":
             if ElementType.ELECTRIC in self.pokemon.type_ids:
-                return f"{self.pokemon.name} is an electric type and can't be paralyzed!\n"
+                return (
+                    f"{self.pokemon.name} is an electric type and can't be paralyzed!\n"
+                )
             if self.pokemon.ability(attacker=attacker, move=move) == Ability.LIMBER:
                 return f"{self.pokemon.name}'s limber keeps it from being paralyzed!\n"
             self.current = status
@@ -451,21 +549,34 @@ class NonVolatileEffect():
         if status == "freeze":
             if ElementType.ICE in self.pokemon.type_ids:
                 return f"{self.pokemon.name} is an ice type and can't be frozen!\n"
-            if self.pokemon.ability(attacker=attacker, move=move) == Ability.MAGMA_ARMOR:
-                return f"{self.pokemon.name}'s magma armor keeps it from being frozen!\n"
+            if (
+                self.pokemon.ability(attacker=attacker, move=move)
+                == Ability.MAGMA_ARMOR
+            ):
+                return (
+                    f"{self.pokemon.name}'s magma armor keeps it from being frozen!\n"
+                )
             if battle.weather.get() in ("sun", "h-sun"):
                 return f"It's too sunny to freeze {self.pokemon.name}!\n"
             self.current = status
             msg += f"{self.pokemon.name} was frozen solid{source}!\n"
-        
-        if self.pokemon.ability(attacker=attacker, move=move) == Ability.SYNCHRONIZE and attacker is not None:
-            msg += attacker.nv.apply_status(status, battle, attacker=self.pokemon, source=f"{self.pokemon.name}'s synchronize")
-        
+
+        if (
+            self.pokemon.ability(attacker=attacker, move=move) == Ability.SYNCHRONIZE
+            and attacker is not None
+        ):
+            msg += attacker.nv.apply_status(
+                status,
+                battle,
+                attacker=self.pokemon,
+                source=f"{self.pokemon.name}'s synchronize",
+            )
+
         if self.pokemon.held_item.should_eat_berry_status(attacker):
             msg += self.pokemon.held_item.eat_berry(attacker=attacker, move=move)
-        
+
         return msg
-    
+
     def reset(self):
         """Remove a non volatile status from a pokemon."""
         self.current = ""
@@ -474,17 +585,18 @@ class NonVolatileEffect():
         self.pokemon.nightmare = False
 
 
-class Metronome():
+class Metronome:
     """Holds recent move status for the held item metronome."""
+
     def __init__(self):
         self.move = ""
         self.count = 0
-    
+
     def reset(self):
         """A move failed or a non-move action was done."""
         self.move = ""
         self.count = 0
-    
+
     def use(self, movename):
         """Updates the metronome based on a used move."""
         if self.move == movename:
@@ -492,24 +604,27 @@ class Metronome():
         else:
             self.move = movename
             self.count = 1
-    
+
     def get_buff(self, movename):
         """Get the buff multiplier for this metronome."""
         if self.move != movename:
             return 1
-        return min(2, 1 + (.2 * self.count))
+        return min(2, 1 + (0.2 * self.count))
 
 
-class Item():
+class Item:
     """Stores information about an item."""
+
     def __init__(self, item_data):
         self.name = item_data["identifier"]
         self.id = item_data["id"]
         self.power = item_data["fling_power"]
         self.effect = item_data["fling_effect_id"]
 
-class HeldItem():
+
+class HeldItem:
     """Stores information about the current held item for a particualar poke."""
+
     def __init__(self, item_data, owner):
         if item_data is None:
             self.item = None
@@ -519,7 +634,7 @@ class HeldItem():
         self.battle = None
         self.last_used = None
         self.ever_had_item = self.item is not None
-    
+
     def get(self):
         """Get the current held item identifier."""
         if self.item is None:
@@ -535,45 +650,79 @@ class HeldItem():
         if self.owner.corrosive_gas:
             return None
         return self.item.name
-    
+
     def has_item(self):
         """Helper method to prevent attempting to acquire a new item if the poke already has one."""
         return self.item is not None
-    
+
     def can_remove(self):
         """Returns a boolean indicating whether this held item can be removed."""
         return self.name not in (
             # Plates
-            "draco-plate", "dread-plate", "earth-plate", "fist-plate", "flame-plate", "icicle-plate",
-            "insect-plate", "iron-plate", "meadow-plate", "mind-plate", "pixie-plate", "sky-plate",
-            "splash-plate", "spooky-plate", "stone-plate", "toxic-plate", "zap-plate",
+            "draco-plate",
+            "dread-plate",
+            "earth-plate",
+            "fist-plate",
+            "flame-plate",
+            "icicle-plate",
+            "insect-plate",
+            "iron-plate",
+            "meadow-plate",
+            "mind-plate",
+            "pixie-plate",
+            "sky-plate",
+            "splash-plate",
+            "spooky-plate",
+            "stone-plate",
+            "toxic-plate",
+            "zap-plate",
             # Memories
-            "dragon-memory", "dark-memory", "ground-memory", "fighting-memory", "fire-memory",
-            "ice-memory", "bug-memory", "steel-memory", "grass-memory", "psychic-memory",
-            "fairy-memory", "flying-memory", "water-memory", "ghost-memory", "rock-memory",
-            "poison-memory", "electric-memory",
+            "dragon-memory",
+            "dark-memory",
+            "ground-memory",
+            "fighting-memory",
+            "fire-memory",
+            "ice-memory",
+            "bug-memory",
+            "steel-memory",
+            "grass-memory",
+            "psychic-memory",
+            "fairy-memory",
+            "flying-memory",
+            "water-memory",
+            "ghost-memory",
+            "rock-memory",
+            "poison-memory",
+            "electric-memory",
             # Misc
-            "primal-orb", "griseous-orb", "blue-orb", "red-orb", "rusty-sword", "rusty-shield",
+            "primal-orb",
+            "griseous-orb",
+            "blue-orb",
+            "red-orb",
+            "rusty-sword",
+            "rusty-shield",
             # Mega Stones
-            "mega-stone", "mega-stone-x", "mega-stone-y",
+            "mega-stone",
+            "mega-stone-x",
+            "mega-stone-y",
         )
-    
+
     def is_berry(self, *, only_active=True):
         """
         Returns a boolean indicating whether this held item is a berry.
-        
+
         The optional param only_active determines if this method should only return True if the berry is active and usable.
         """
         if only_active:
             return self.get() is not None and self.get().endswith("-berry")
         return self.name is not None and self.name.endswith("-berry")
-    
+
     def remove(self):
         """Remove this held item, setting it to None."""
         if not self.can_remove():
             raise ValueError(f"{self.name} cannot be removed.")
         self.item = None
-    
+
     def use(self):
         """Uses this item, setting it to None but also recording that it was used."""
         if not self.can_remove():
@@ -581,7 +730,7 @@ class HeldItem():
         self.last_used = self.item
         self.owner.choice_move = None
         self.remove()
-    
+
     def transfer(self, other):
         """Transfer the data of this held item to other, and clear this item."""
         if not self.can_remove():
@@ -590,7 +739,7 @@ class HeldItem():
             raise ValueError(f"{other.name} cannot be removed.")
         other.item = self.item
         self.remove()
-    
+
     def swap(self, other):
         """Swap the date between this held item and other."""
         if not self.can_remove():
@@ -601,23 +750,27 @@ class HeldItem():
         self.owner.choice_move = None
         other.owner.choice_move = None
         self.ever_had_item = self.ever_had_item or self.item is not None
-    
+
     def recover(self, other):
         """Recover & claim the last_used item from other."""
         self.item = other.last_used
         other.last_used = None
         self.ever_had_item = self.ever_had_item or self.item is not None
-    
+
     def _should_eat_berry_util(self, otherpoke=None):
         """Util for all the things that are shared between the different kinds of berry."""
         if self.owner.hp == 0:
             return False
-        if otherpoke is not None and otherpoke.ability() in (Ability.UNNERVE, Ability.AS_ONE_SHADOW, Ability.AS_ONE_ICE): #TODO: idk make this check better...
+        if otherpoke is not None and otherpoke.ability() in (
+            Ability.UNNERVE,
+            Ability.AS_ONE_SHADOW,
+            Ability.AS_ONE_ICE,
+        ):  # TODO: idk make this check better...
             return False
         if not self.is_berry():
             return False
         return True
-    
+
     def should_eat_berry_damage(self, otherpoke=None):
         """Returns True if the pokemon meets the criteria to eat its held berry after being damaged."""
         if not self._should_eat_berry_util(otherpoke):
@@ -625,9 +778,20 @@ class HeldItem():
         if self.owner.hp <= self.owner.starting_hp / 4:
             if self in (
                 # HP berries
-                "figy-berry", "wiki-berry", "mago-berry", "aguav-berry", "iapapa-berry",
+                "figy-berry",
+                "wiki-berry",
+                "mago-berry",
+                "aguav-berry",
+                "iapapa-berry",
                 # Stat berries
-                "apicot-berry", "ganlon-berry", "lansat-berry", "liechi-berry", "micle-berry", "petaya-berry", "salac-berry", "starf-berry",
+                "apicot-berry",
+                "ganlon-berry",
+                "lansat-berry",
+                "liechi-berry",
+                "micle-berry",
+                "petaya-berry",
+                "salac-berry",
+                "starf-berry",
             ):
                 return True
         if self.owner.hp <= self.owner.starting_hp / 2:
@@ -636,7 +800,7 @@ class HeldItem():
             if self == "sitrus-berry":
                 return True
         return False
-    
+
     def should_eat_berry_status(self, otherpoke=None):
         """Returns True if the pokemon meets the criteria to eat its held berry after getting a status."""
         if not self._should_eat_berry_util(otherpoke):
@@ -654,15 +818,17 @@ class HeldItem():
         if self in ("persim-berry", "lum-berry") and self.owner.confusion.active():
             return True
         return False
-    
+
     def should_eat_berry(self, otherpoke=None):
         """Returns True if the pokemon meets the criteria to eat its held berry."""
-        return self.should_eat_berry_damage(otherpoke) or self.should_eat_berry_status(otherpoke)
-    
+        return self.should_eat_berry_damage(otherpoke) or self.should_eat_berry_status(
+            otherpoke
+        )
+
     def eat_berry(self, *, consumer=None, attacker=None, move=None):
         """
         Eat this held item berry.
-        
+
         Returns a formatted message.
         """
         msg = ""
@@ -672,44 +838,66 @@ class HeldItem():
             consumer = self.owner
         else:
             msg += f"{consumer.name} eats {self.owner.name}'s berry!\n"
-        
+
         # 2x or 1x
         ripe = int(consumer.ability(attacker=attacker, move=move) == Ability.RIPEN) + 1
         flavor = None
-        
+
         if self == "sitrus-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 4, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 4, source="eating its berry"
+            )
         elif self == "figy-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 3, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 3, source="eating its berry"
+            )
             flavor = "spicy"
         elif self == "wiki-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 3, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 3, source="eating its berry"
+            )
             flavor = "dry"
         elif self == "mago-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 3, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 3, source="eating its berry"
+            )
             flavor = "sweet"
         elif self == "aguav-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 3, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 3, source="eating its berry"
+            )
             flavor = "bitter"
         elif self == "iapapa-berry":
-            msg += consumer.heal((ripe * consumer.starting_hp) // 3, source="eating its berry")
+            msg += consumer.heal(
+                (ripe * consumer.starting_hp) // 3, source="eating its berry"
+            )
             flavor = "sour"
         elif self == "apicot-berry":
-            msg += consumer.append_spdef(ripe * 1, attacker=attacker, move=move, source="eating its berry")
+            msg += consumer.append_spdef(
+                ripe * 1, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "ganlon-berry":
-            msg += consumer.append_defense(ripe * 1, attacker=attacker, move=move, source="eating its berry")
+            msg += consumer.append_defense(
+                ripe * 1, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "lansat-berry":
             consumer.lansat_berry_ate = True
             msg += f"{consumer.name} is powered up by eating its berry.\n"
         elif self == "liechi-berry":
-            msg += consumer.append_attack(ripe * 1, attacker=attacker, move=move, source="eating its berry")
+            msg += consumer.append_attack(
+                ripe * 1, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "micle-berry":
             consumer.micle_berry_ate = True
             msg += f"{consumer.name} is powered up by eating its berry.\n"
         elif self == "petaya-berry":
-            msg += consumer.append_spatk(ripe * 1, attacker=attacker, move=move, source="eating its berry")
+            msg += consumer.append_spatk(
+                ripe * 1, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "salac-berry":
-            msg += consumer.append_speed(ripe * 1, attacker=attacker, move=move, source="eating its berry")
+            msg += consumer.append_speed(
+                ripe * 1, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "starf-berry":
             funcs = [
                 consumer.append_attack,
@@ -719,7 +907,9 @@ class HeldItem():
                 consumer.append_speed,
             ]
             func = random.choice(funcs)
-            msg += func(ripe * 2, attacker=attacker, move=move, source="eating its berry")
+            msg += func(
+                ripe * 2, attacker=attacker, move=move, source="eating its berry"
+            )
         elif self == "aspear-berry":
             if consumer.nv.freeze():
                 consumer.nv.reset()
@@ -729,7 +919,9 @@ class HeldItem():
         elif self == "cheri-berry":
             if consumer.nv.paralysis():
                 consumer.nv.reset()
-                msg += f"{consumer.name} is no longer paralyzed after eating its berry!\n"
+                msg += (
+                    f"{consumer.name} is no longer paralyzed after eating its berry!\n"
+                )
             else:
                 msg += f"{consumer.name}'s berry had no effect!\n"
         elif self == "chesto-berry":
@@ -741,7 +933,9 @@ class HeldItem():
         elif self == "pecha-berry":
             if consumer.nv.poison():
                 consumer.nv.reset()
-                msg += f"{consumer.name} is no longer poisoned after eating its berry!\n"
+                msg += (
+                    f"{consumer.name} is no longer poisoned after eating its berry!\n"
+                )
             else:
                 msg += f"{consumer.name}'s berry had no effect!\n"
         elif self == "rawst-berry":
@@ -753,19 +947,23 @@ class HeldItem():
         elif self == "persim-berry":
             if consumer.confusion.active():
                 consumer.confusion.set_turns(0)
-                msg += f"{consumer.name} is no longer confused after eating its berry!\n"
+                msg += (
+                    f"{consumer.name} is no longer confused after eating its berry!\n"
+                )
             else:
                 msg += f"{consumer.name}'s berry had no effect!\n"
         elif self == "lum-berry":
             consumer.nv.reset()
             consumer.confusion.set_turns(0)
             msg += f"{consumer.name}'s statuses were cleared from eating its berry!\n"
-        
+
         if flavor is not None and consumer.disliked_flavor == flavor:
-            msg += consumer.confuse(attacker=attacker, move=move, source="disliking its berry's flavor")
+            msg += consumer.confuse(
+                attacker=attacker, move=move, source="disliking its berry's flavor"
+            )
         if consumer.ability(attacker=attacker, move=move) == Ability.CHEEK_POUCH:
             msg += consumer.heal(consumer.starting_hp // 3, source="its cheek pouch")
-        
+
         consumer.last_berry = self.item
         consumer.ate_berry = True
         # TODO: right now HeldItem does not support `recover`ing/setting from anything other than another HeldItem object.
@@ -776,15 +974,17 @@ class HeldItem():
             self.use()
         else:
             self.remove()
-        
+
         return msg
-    
+
     def __eq__(self, other):
         return self.get() == other
-    
+
     def __getattr__(self, attr):
         if attr not in ("name", "power", "id", "effect"):
-            raise AttributeError(f"{attr} is not an attribute of {self.__class__.__name__}.")
+            raise AttributeError(
+                f"{attr} is not an attribute of {self.__class__.__name__}."
+            )
         if self.item is None:
             return None
         if attr == "name":
@@ -795,10 +995,14 @@ class HeldItem():
             return self.item.id
         if attr == "effect":
             return self.item.effect
-        raise AttributeError(f"{attr} is not an attribute of {self.__class__.__name__}.")
+        raise AttributeError(
+            f"{attr} is not an attribute of {self.__class__.__name__}."
+        )
 
-class BatonPass():
+
+class BatonPass:
     """Stores the necessary data from a pokemon to baton pass to another pokemon."""
+
     def __init__(self, poke):
         self.attack_stage = poke.attack_stage
         self.defense_stage = poke.defense_stage
@@ -822,7 +1026,7 @@ class BatonPass():
         self.magnet_rise = poke.magnet_rise
         self.aqua_ring = poke.aqua_ring
         self.telekinesis = poke.telekinesis
-    
+
     def apply(self, poke):
         """Push this objects data to a poke."""
         if poke.ability() != Ability.CURIOUS_MEDICINE:

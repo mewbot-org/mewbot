@@ -31,7 +31,7 @@ app = FastAPI()
 
 home = str(Path.home())
 
-load_dotenv('/home/dyroot/mewbot/env')
+load_dotenv("/home/dyroot/mewbot/env")
 
 TOKEN = os.environ["MTOKEN"]
 DATABASE = os.environ["DATABASE_URL"]
@@ -350,6 +350,7 @@ class FatesVote(BaseModel):
 class DBLVote(BaseModel):
     id: str
 
+
 def is_donation(data):
     return (
         "payment_status" in data
@@ -459,15 +460,15 @@ async def shutdown():
 @app.post("/paypal")
 async def paypalhook(request: Request):
     body = await request.body()
-    
-    body = (urllib.parse.parse_qsl(body.decode()))
+
+    body = urllib.parse.parse_qsl(body.decode())
     data = {}
 
     pprint.pprint(body)
 
     for k, v in body:
         data[k] = v
-    
+
     print("Requester - ", request.client.host)
     if is_donation(data):
         data = {k: v for k, v in data.items()}
@@ -616,8 +617,8 @@ async def vote_handler(data, auth, user_id, list_name):
     print(f"Processing vote from {list_name} for {user_id}...")
 
     # TEMP LOGGING TOPGG
-    if list_name == "topgg":
-        await app.utils.send_topgg_log_message(user_id)
+    # if list_name == "topgg":
+    #     await app.utils.send_topgg_log_message(user_id)
 
     # if user_id == 473541068378341376:
     #    votes = await app.redis.get(f"voting-{user_id}")
@@ -680,7 +681,7 @@ async def vote_handler(data, auth, user_id, list_name):
                     vote_streak = 0
                 else:
                     vote_streak = original_vote_streak
-                    
+
             await pconn.execute(
                 "UPDATE users SET last_vote = $1, vote_streak = $2 WHERE u_id = $3",
                 int(time.time()),
@@ -746,5 +747,5 @@ async def index():
 
 
 if __name__ == "__main__":
-    
+
     uvicorn.run("main:app", port=15210)

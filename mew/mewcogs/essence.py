@@ -26,14 +26,14 @@ class Essence(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def essence_craft(self, ctx: commands.Context, poke_num: int):
         """Trade-in shiny starter/pseudo/ub/legends for essence."""
-        #if ctx.author.id not in (
-            #861318943120818206, #Beto
-            #334155028170407949,
-            #366319068476866570
-        #):
-            #await ctx.send("Temporarily unavailable")
-            #return
-        
+        # if ctx.author.id not in (
+        # 861318943120818206, #Beto
+        # 334155028170407949,
+        # 366319068476866570
+        # ):
+        # await ctx.send("Temporarily unavailable")
+        # return
+
         e = make_embed(
             title="Crafting...",
             description=f"Attempting to trade-in Pokémon for essence!",
@@ -63,18 +63,12 @@ class Essence(commands.Cog):
         name = records["pokname"]
         poke_id = records["id"]
 
-        #TODO:
-        #Remove this once the bot restarts and pokemon_list is updated
-        if name in (
-            'Archaludon',
-            'Hydrapple',
-            'Dipplin',
-            'Poltchageist',
-            'Sinistcha'
-        ):
+        # TODO:
+        # Remove this once the bot restarts and pokemon_list is updated
+        if name in ("Archaludon", "Hydrapple", "Dipplin", "Poltchageist", "Sinistcha"):
             await ctx.send("That is not a valid Pokemon")
             return
-        
+
         # Embed fun
         if name == "Egg" or name == "egg":
             e.title = "Uh Oh"

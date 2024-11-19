@@ -182,7 +182,7 @@ class Market(commands.Cog):
                     )
                     return
                 poke, owner, price, buyer = details
-                #vat_price = self.bot.misc.get_vat_price(price)
+                # vat_price = self.bot.misc.get_vat_price(price)
                 if owner == ctx.author.id:
                     await ctx.send("You can not buy your own pokemon.")
                     await self.bot.redis_manager.redis.execute(
@@ -249,8 +249,8 @@ class Market(commands.Cog):
                     price,
                     ctx.author.id,
                 )
-                #deposit = int(price * DEPOSIT_RATE)
-                #gain = price + deposit
+                # deposit = int(price * DEPOSIT_RATE)
+                # gain = price + deposit
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                     price,
