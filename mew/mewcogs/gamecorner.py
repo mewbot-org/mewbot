@@ -10,6 +10,7 @@ from enum import IntEnum, Enum
 from typing import Optional
 from mewutils.checks import check_helper, check_owner
 
+
 # old
 def generate(luck):
     luck = 10 if luck > 10 else luck

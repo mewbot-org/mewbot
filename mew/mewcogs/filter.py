@@ -88,12 +88,12 @@ class Filter(commands.Cog):
     # If no args are provided, male | !male is used to just ensure the user gets an output.
     # This is equivalent to no filter without breaking the code
 
-    @commands.hybrid_group(aliases=["filter"])
+    @commands.hybrid_group(name="f")
     async def f(self, ctx):
         """Use this command to Filter Pokémon! See /f p .shiny."""
         ...
 
-    @f.command()
+    @f.command(name="market", aliases=["m"])
     async def m(self, ctx, args="male | !male"):
         """Filter Pokémon on the Global Market."""
         try:
@@ -101,9 +101,9 @@ class Filter(commands.Cog):
         except ExtractionException as e:
             await ctx.send(f"Your filter args were not valid.\n{e}")
 
-    @f.command(aliases=["pokemon"])
+    @f.command(name="pokemon", aliases=["p"])
     async def p(self, ctx, args="male | !male"):
-        """Filter your owned Pokémon."""
+        """Filter through your owned Pokémon."""
         try:
             await self._build_query(ctx, args, "p")
         except ExtractionException as e:

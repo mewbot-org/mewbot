@@ -99,7 +99,7 @@ class CatchView(discord.ui.View):
             held_item,
             self,
         )
-        super().__init__(timeout=30)
+        super().__init__(timeout=60)
         self.ctx = ctx
         self.msg = None
         self.pokemon = pokemon
@@ -755,8 +755,8 @@ class Minigames(commands.Cog):
         embed.add_field(
             name="Minigame Info",
             value=(
-                f"__**Fishing Stats**__ 🐟\n`Level`: {fishing_level} - `Exp`: {fishing_exp}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}\n"
-                f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {mining_exp}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}\n"
+                f"__**Fishing Stats**__ 🐟\n`Level`: {fishing_level} - `Exp`: {min(fishing_exp, fishing_levelcap)}/{fishing_levelcap}\n`Points`: {fishing_points} - {position_msg}\n"
+                f"__**Mining Stats**__ <:shovel:1083508753065848994>\n`Level`: {mining_level} - `Exp`: {min(mining_exp, mining_levelcap)}/{mining_levelcap}\n`Points`: {mining_points} - {mining_position_msg}\n"
                 f"__**NPC Duel Stats**__ ⚔️\n`Win Streak`: {details['win_streak']}\n`Single Wins`: {achievement_data['ai_single_wins']}\n`Party Wins`: {achievement_data['ai_party_wins']}\n"
             ),
         )

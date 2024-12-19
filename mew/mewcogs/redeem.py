@@ -5,7 +5,16 @@ from discord.ext import commands
 
 from mewcogs.pokemon_list import *
 from mewcogs.json_files import *
+from mewcogs.chests import Chests
 from mewutils.checks import tradelock
+from mewutils.checks import (
+    check_admin,
+    check_investigator,
+    check_mod,
+    check_helper,
+    check_gymauth,
+)
+
 from typing import Literal
 
 
@@ -91,9 +100,11 @@ class Redeem(commands.Cog):
                     else n_thing
                 )
                 e.add_field(
-                    name=n_thing.replace("multiplier", "chance")
-                    if "Shiny" in n_thing
-                    else n_thing,
+                    name=(
+                        n_thing.replace("multiplier", "chance")
+                        if "Shiny" in n_thing
+                        else n_thing
+                    ),
                     value=f"{s[thing]}{'%' if 'shiny' in thing or 'honey' in thing else 'x'}\n{desc}",
                     inline=False,
                 )
@@ -108,9 +119,27 @@ class Redeem(commands.Cog):
         )
 
     @commands.hybrid_group()
-    async def redeem(self, ctx):
-        ...
+    async def redeem(self, ctx): ...
+    
+    @redeem.command(name="mystery")
+    @check_investigator()
+    async def mystery_box(self, ctx):
+        """Redeem a Mystery box! Wonder what's inside??
 
+        Args:
+            ctx (_type_): _description_
+
+        Raises:
+            e: _description_
+        """
+        async with ctx.bot.db[0].acquire() as pconn:
+            try:
+                await pconn.execute("UPDATE users SET redeems = redeems - 50 WHERE u_id = $1", ctx.author.id)
+            except:
+                await ctx.send(embed=make_embed(title=f"You do not have enough Redeems{ctx.bot.get_emote('REDEEMS')}!Purchase from other players or check `/donate`"))
+                return
+        await Chests(ctx.bot).open_chest(ctx, "mystery", 1)
+        
     @redeem.command(name="shop")
     async def redeem_shop(self, ctx):
         """View some possible items you can spend your redeems on!"""
@@ -150,18 +179,23 @@ class Redeem(commands.Cog):
         # e.add_field(name="Packs", value="Get Extra Features, Items with `{ctx.prefix}packs`\nRedeem a pack with `{ctx.prefix}redeem pack <pack_id>`")
         e.add_field(
             name="EV points | 1 Redeem = 255 EVs",
-            value=f"`/redeem evs | Redeem 255 EV points`",
+            value=f"`/redeem evs` | Redeem 255 EV points",
             inline=False,
         )
         e.add_field(
             name="30 Redeems = 1 Random Shiny",
-            value=f"`/redeem shiny | Redeem random Shiny Legendary, Mythical, or Common Pokemon`",
+            value=f"`/redeem shiny` | Redeem random Shiny Legendary, Mythical, or Common Pokemon",
             inline=False,
         )
         e.add_field(
             name="Bike | 100 Redeems = 1 Bike",
-            value=f"`/redeem bike | Redeem a bike and double egg hatching rate`",
+            value=f"`/redeem bike` | Redeem a bike and double egg hatching rate",
             inline=False,
+        )
+        e.add_field(
+            name="Mystery Box | 50 Redeems",
+            value = "`/redeem mystery` | Redeem a Mystery Box containing extremely rare items & Pokemon"
+            inline=False
         )
         e.add_field(
             name="Packs",
@@ -273,9 +307,11 @@ class Redeem(commands.Cog):
                 else n_thing
             )
             e.add_field(
-                name=n_thing.replace("multiplier", "chance")
-                if "Shiny" in n_thing
-                else n_thing,
+                name=(
+                    n_thing.replace("multiplier", "chance")
+                    if "Shiny" in n_thing
+                    else n_thing
+                ),
                 value=f"{pack[item]}{'%' if 'shiny' in item or 'honey' in item else 'x'}",
                 inline=False,
             )
@@ -602,8 +638,7 @@ class Redeem(commands.Cog):
 
     @tradelock
     @redeem.group()
-    async def nature(self, ctx):
-        ...
+    async def nature(self, ctx): ...
 
     @nature.command()
     async def capsules(self, ctx):
@@ -695,6 +730,7 @@ class Redeem(commands.Cog):
     @tradelock
     async def multiple(self, ctx, amount: int, option: str):
         """Redeem multiple Pokemon or Credits"""
+        amount = max(1, amount)
         if option == "credits":
             await ctx.send("This has been temporarily disabled.")
             return

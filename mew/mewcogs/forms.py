@@ -337,7 +337,7 @@ class Forms(commands.Cog):
     )
     async def form(self, ctx, form_name: str):
         """Creates a form of a pokemon"""
-        val = form_name.lower()
+        val = form_name.lower().replace(" ", "-")
         if any(
             val.lower().endswith(x)
             for x in (
@@ -350,10 +350,30 @@ class Forms(commands.Cog):
                 "eternamax",
             )
         ):
-            await ctx.send("You cannot form your pokemon to a regional form!")
-            return
-        if val.lower().endswith("lord"):
-            await ctx.send("That form is not available yet!")
+            async with ctx.bot.db[0].acquire() as pconn:
+                region = await pconn.fetchval(
+                    "SELECT region FROM users WHERE u_id = $1", ctx.author.id
+                )
+                if region == "paldea":
+                    if any(("aqua" in val, "blaze" in val)):
+                        ...
+                    # else:
+                    #     await ctx.send(embed=make_embed(
+                    #         title="It seems you are in the wrong region!"
+                    #     ))
+                else:
+                    await ctx.send(
+                        embed=make_embed(
+                            title="Can not form this Pokemon into a regional form or you should redeem this form instead."
+                        )
+                    )
+                    return
+        if any(val.lower().endswith(x) for x in ("lord", "bloodmoon")):
+            await ctx.send(
+                embed=make_embed(
+                    title="That form is not available yet! (or try to redeem it with `/redeem`)"
+                )
+            )
             return
         if "mega" in val.lower():
             await ctx.send(f"Use `/mega` for mega evolutions.")
@@ -386,7 +406,18 @@ class Forms(commands.Cog):
                 )
                 return
             weathevo = ("thundurus", "tornadus", "landorus")
-            if pokename == "arceus":
+            if pokename == "ogerpon":
+                required_item = {
+                    "cornerstone": "cornerstone_mask",
+                    "wellspring": "wellspring_mask",
+                    "hearthflame": "hearthflame_mask",
+                }.get(val, None)
+                if not required_item:
+                    await ctx.send(
+                        embed=make_embed(description="Invalid form for that Pokemon!")
+                    )
+                    return
+            elif pokename == "arceus":
                 required_item = {
                     "electric": "zap",
                     "poison": "toxic",
@@ -407,7 +438,9 @@ class Forms(commands.Cog):
                     "ground": "earth",
                 }.get(val, None)
                 if not required_item:
-                    await ctx.send("Invalid form for that Pokemon!")
+                    await ctx.send(
+                        embed=make_embed(description="Invalid form for that Pokemon!")
+                    )
                     return
                 required_item += "_plate"
             else:
@@ -805,10 +838,22 @@ class Forms(commands.Cog):
                         )
                     )
                     return
+            elif pokename == "ogerpon":
+                if helditem != required_item:
+                    await ctx.send(
+                        embed=make_embed(
+                            title="",
+                            description=f"Your {pokename} is not holding the {required_item.replace('-', ' ')}",
+                        )
+                    )
+                    return
             elif pokename == "arceus":
                 if helditem != required_item:
                     await ctx.send(
-                        f"Your {pokename} is not holding the {required_item}"
+                        embed=make_embed(
+                            title="",
+                            description=f"Your {pokename} is not holding the {required_item}",
+                        )
                     )
                     return
                 form_to_evolve = f"{pokename.lower()}-{val.lower()}"
@@ -833,7 +878,7 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
-                    return
+                return
             elif pokename == "dialga":
                 if val.lower() == "origin":
                     if helditem != "adamant_orb":
@@ -870,6 +915,7 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
+                return
             elif pokename == "nihilego":
                 if helditem != "ultra_toxin":
                     await ctx.send(f"Your {pokename} is not holding the Ultra toxin")
@@ -896,6 +942,7 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name} Your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
+                return
             elif pokename == "palkia":
                 if helditem != "lustrous_orb":
                     await ctx.send(
@@ -924,6 +971,7 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
+                return
             elif pokename == "zacian":
                 if helditem != "rusty_sword":
                     await ctx.send(
@@ -952,6 +1000,7 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
+                return
             elif pokename == "zamazenta":
                 if helditem != "rusty_shield":
                     await ctx.send(
@@ -980,41 +1029,55 @@ class Forms(commands.Cog):
                             description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
                     )
-            else:
-                try:
-                    if pokename.endswith("-galar"):
-                        base = pokename.rstrip("-galar")
-                        form_to_evolve = f"{base.lower()}-{val.lower()}-galar"
-                    else:
-                        form_to_evolve = f"{pokename.lower()}-{val.lower()}"
-                    cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
-                    form_identifier = await cursor.distinct("form_identifier")
-                    if not form_identifier:
-                        await ctx.send("That form does not exist!")
-                        return
-                    form_identifier = form_identifier[0]
-                    if form_identifier != val:
-                        await ctx.send("Invalid form for that Pokemon!")
-                        return
-                    else:
-                        await pconn.execute(
-                            "UPDATE pokes SET pokname = $1 WHERE id = $2",
-                            form_to_evolve.capitalize(),
-                            _id,
+                return
+
+            try:
+                if pokename.endswith("-galar") or pokename.endswith("-paldea"):
+                    base = (
+                        pokename.rstrip("-galar")
+                        if pokename.endswith("-galar")
+                        else pokename.rstrip("-paldea")
+                    )
+                    form_to_evolve = (
+                        f"{base.lower()}-{val.lower()}-galar"
+                        if pokename.endswith("-galar")
+                        else f"{base.lower()}-{val.lower().replace(' ', '-')}"
+                    )
+                else:
+                    form_to_evolve = f"{pokename.lower()}-{val.lower()}"
+                cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
+                await ctx.send(form_to_evolve)
+                form_identifier = await cursor.distinct("form_identifier")
+                if not form_identifier:
+                    await ctx.send("That form does not exist!")
+                    return
+                form_identifier = form_identifier[0]
+                if form_identifier != val:
+                    await ctx.send("Invalid form for that Pokemon!")
+                    return
+                else:
+                    await pconn.execute(
+                        "UPDATE pokes SET pokname = $1 WHERE id = $2",
+                        form_to_evolve.capitalize(),
+                        _id,
+                    )
+                    await ctx.send(
+                        embed=make_embed(
+                            title="Congratulations!!!",
+                            description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
                         )
-                        await ctx.send(
-                            embed=make_embed(
-                                title="Congratulations!!!",
-                                description=f"{ctx.author.name}, your {pokename.capitalize()} has evolved into {form_to_evolve.capitalize()}!",
-                            )
+                    )
+                    return
+            except Exception as e:
+                if "-" in pokename:
+                    await ctx.send(f"`/deform` Your Pokemon first!")
+                else:
+                    await ctx.send(
+                        embed=make_embed(
+                            description="Invalid form! OR holding wrong item"
                         )
-                        return
-                except Exception as e:
-                    if "-" in pokename:
-                        await ctx.send(f"`/deform` Your Pokemon first!")
-                    else:
-                        await ctx.send("Invalid form! OR holding wrong item")
-                    raise e
+                    )
+                raise e
 
     @commands.hybrid_command()
     async def mega_evolve(self, ctx):

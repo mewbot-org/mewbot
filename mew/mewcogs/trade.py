@@ -849,8 +849,7 @@ class Trade(commands.Cog):
         view.set_message(msg)
 
     @commands.hybrid_group()
-    async def gift(self, ctx):
-        ...
+    async def gift(self, ctx): ...
 
     @gift.command(aliases=["redeem"])
     @discord.app_commands.describe(
@@ -1113,8 +1112,7 @@ class Trade(commands.Cog):
             )
 
     @commands.hybrid_group()
-    async def trade(self, ctx):
-        ...
+    async def trade(self, ctx): ...
 
     @trade.command(name="user")
     @discord.app_commands.describe(user="The User to begin the trade with.")

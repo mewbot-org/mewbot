@@ -2621,6 +2621,11 @@ class DuelPokemon:
             ):
                 return f"{self.name}'s aim stayed true because of its keen eye!\n"
             if (
+                self.ability(attacker=attacker, move=move) == Ability.MINDS_EYE
+                and stat == "accuracy"
+            ):
+                return f"{self.name}'s aim stayed true because of its mind's eye!\n"
+            if (
                 self.ability(attacker=attacker, move=move) == Ability.BIG_PECKS
                 and stat == "defense"
             ):
@@ -2841,7 +2846,7 @@ class DuelPokemon:
                 attacker_type in (ElementType.FIGHTING, ElementType.NORMAL)
                 and defender_type == ElementType.GHOST
                 and attacker is not None
-                and attacker.ability() == Ability.SCRAPPY
+                and attacker.ability() in (Ability.SCRAPPY, Ability.MINDS_EYE)
             ):
                 continue
             if (

@@ -5,6 +5,7 @@ from functools import wraps
 
 # This file holds checks that can be used to limit access to certain functions.
 
+
 # Staff checks will allow any user of at least that rank to use the command.
 # The hierarchy is Admin > Investigator > Mod > Helper.
 # This Enum outlines the hierarchy. Higher values indicate more access.

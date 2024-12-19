@@ -272,6 +272,8 @@ class Pokemon(commands.Cog):
     @commands.hybrid_command()
     async def p(self, ctx):
         """List all your currently owned Pokémon"""
+        await ctx.bot.get_command("f pokemon").__call__(ctx)
+        return
         async with ctx.bot.db[0].acquire() as pconn:
             pokes = await pconn.fetchval(
                 "SELECT pokes FROM users WHERE u_id = $1", ctx.author.id
@@ -321,8 +323,7 @@ class Pokemon(commands.Cog):
         await MenuView(ctx, pages).start()
 
     @commands.hybrid_group()
-    async def tags(self, ctx):
-        ...
+    async def tags(self, ctx): ...
 
     @tags.command()
     @discord.app_commands.describe(
@@ -706,12 +707,17 @@ class Pokemon(commands.Cog):
             await ctx.send("That Pokemon does not exist!")
             return
 
+        form_info = await ctx.bot.db[1].forms.find_one({"identifier": val.lower()})
+        if not form_info:
+            await ctx.send("That Pokemon does not exist!")
+            return
+
         forms = []
         if val.lower() in ("spewpa", "scatterbug", "mew"):
             forms = ["None"]
         else:
             # TODO: This is potentially VERY dangerous since this is user input directed to a regex pattern.
-            cursor = ctx.bot.db[1].forms.find({"identifier": {"$regex": f".*{val}.*"}})
+            cursor = ctx.bot.db[1].forms.find({"base_id": form_info["base_id"]})
             forms = [t.capitalize() for t in await cursor.distinct("form_identifier")]
 
         if "" in forms:
@@ -726,12 +732,13 @@ class Pokemon(commands.Cog):
             forms.remove("Paldea")
         if not forms:
             forms = ["None"]
-        forms = "\n".join(forms)
 
-        form_info = await ctx.bot.db[1].forms.find_one({"identifier": val.lower()})
-        if not form_info:
-            await ctx.send("That Pokemon does not exist!")
-            return
+        # forms = "\n".join(forms)
+        xforms = forms
+        forms = ""
+        for form in xforms:
+            forms += f"`{form.capitalize()}` "
+
         ptypes = await ctx.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         if not ptypes:
             await ctx.send("That Pokemon does not exist!")
@@ -786,6 +793,8 @@ class Pokemon(commands.Cog):
             await ctx.send("That Pokemon does not exist!")
             return
         stats = pokemon_stats["stats"]
+        blank = "<:blank:1012504803496177685>"
+
         pokemonSpeed = stats[5]
         pokemonSpd = stats[4]
         pokemonSpa = stats[3]
@@ -795,12 +804,12 @@ class Pokemon(commands.Cog):
         tlist = ", ".join(types)
         egg_groups = ", ".join(egg_groups)
         stats_str = (
-            f"HP: {pokemonHp}\n"
-            f"Attack: {pokemonAtk}\n"
-            f"Defense: {pokemonDef}\n"
-            f"Special Attack: {pokemonSpa}\n"
-            f"Special Defense: {pokemonSpd}\n"
-            f"Speed: {pokemonSpeed}"
+            f"`HP`: {pokemonHp}{blank*1}"
+            f"`Attack`: {pokemonAtk}{blank*1}"
+            f"`Defense`: {pokemonDef}{blank*1}"
+            f"`Sp. Attack`: {pokemonSpa}{blank*1}"
+            f"`Sp. Defense`: {pokemonSpd}{blank*1}"
+            f"`Speed`: {pokemonSpeed}"
         )
 
         # Evolution line / Catch Rate
@@ -951,8 +960,10 @@ class Pokemon(commands.Cog):
         else:
             # TODO: This is potentially VERY dangerous since this is user input directed to a regex pattern.
             cursor = ctx.bot.db[1].forms.find({"identifier": {"$regex": f".*{val}.*"}})
-            forms = [t.capitalize() for t in await cursor.distinct("form_identifier")]
-        forms = "\n".join(forms)
+            forms = ""
+            for t in await cursor.distinct("form_identifier"):
+                forms += f"`{t.capitalize()}`, "
+        # forms = "\n".join(forms)
 
         form_info = await ctx.bot.db[1].forms.find_one({"identifier": val.lower()})
         if not form_info:

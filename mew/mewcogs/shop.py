@@ -15,6 +15,7 @@ from mewutils.misc import (
 )
 from typing import Literal
 
+
 # This is temporary until pagify under mewutils.misc can be updated to match below
 # Requires bot restart, noted under todo.
 def shop_pagify(
@@ -89,8 +90,8 @@ class DropdownSelect(discord.ui.Select):
                 emoji="<:mega_stone:1085424851277324379>",
             ),
             discord.SelectOption(
-                label="Plates and Memories",
-                description="Change Arceus/Judgement and Silvally Typing",
+                label="Plates, Memories & Masks",
+                description="Change Arceus/Judgement, Silvally Typing and Ogerpon/Ivy cudgel Typing",
                 emoji="<:draco_plate:1085322300791996486>",
             ),
             discord.SelectOption(
@@ -302,78 +303,87 @@ class DropdownSelect(discord.ui.Select):
             pages = shop_pagify(desc, base_embed=embed, footer=footer_text)
             await SlashMenuView(interaction, pages).start()
 
-        if self.view.choice == "Plates and Memories":
+        if self.view.choice == "Plates, Memories & Masks":
             embed = discord.Embed(
-                title=f"Arceus Plates and Silvally Memories",
-                description=f"Plates are used for Arceus, they affect Arceus and Judgement's Type!\nMemories are used for Silvally, they effect Silvally's Type\nCost 10,000 each - Buy with `/buy item draco plate`",
+                title=f"Arceus Plates, Silvally Memories & Ogerpons' Masks",
+                description=f"Plates are used for Arceus, they affect Arceus and Judgement's Type!\nMemories are used for Silvally, they affect Silvallys' Type\nMasks are used for Ogerpon, they affect its' type and the type of Ivy Cudgel\nCost 10,000 each - Buy with `/buy item draco plate`",
                 color=0x0084FD,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:draco_plate:1085322300791996486> **Draco Plate**"
-                    f"\n<:dread_plate:1085322267342413874> **Dread Plate**"
-                    f"\n<:earth_plate:1085322266201571388> **Earth Plate**"
-                    f"\n<:fist_plate:1085322264913911958> **Fist Plate**"
-                    f"\n<:flame_plate:1085322264112803901> **Flame Plate**"
-                    f"\n<:icicle_plate:1085322263236194404> **Icicle Plate**"
+                    f"\n**Draco Plate**"
+                    f"\n**Dread Plate**"
+                    f"\n**Earth Plate**"
+                    f"\n**Fist Plate**"
+                    f"\n*Flame Plate**"
+                    f"\n**Icicle Plate**"
                 ),
                 inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:splash_plate:1085322093127807096> **Splash Plate**"
-                    f"\n<:sky_plate:1085322093928906902> **Sky Plate**"
-                    f"\n<:pixie_plate:1085322095237533787> **Pixie Plate**"
-                    f"\n<:mind_plate:1085322095761829940> **Mind Plate**"
-                    f"\n<:meadow_plate:1085322259817828383> **Meadow Plate**"
-                    f"\n<:insect_plate:1085322262426689728> **Insect Plate**"
+                    f"\n**Splash Plate**"
+                    f"\n**Sky Plate**"
+                    f"\n**Pixie Plate**"
+                    f"\n**Mind Plate**"
+                    f"\n**Meadow Plate**"
+                    f"\n**Insect Plate**"
                 ),
                 inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:spooky_plate:1085322092058251265> **Spooky Plate**"
-                    f"\n<:stone_plate:1085322090816749642> **Stone Plate**"
-                    f"\n<:toxic_plate:1085322090091135027> **Toxic Plate**"
-                    f"\n<:zap_plate:1085322088656687225> **Zap Plate**"
-                    f"\n<:icon_plate:1085322261487173733> **Iron Plate**"
+                    f"\n**Spooky Plate**"
+                    f"\n**Stone Plate**"
+                    f"\n**Toxic Plate**"
+                    f"\n**Zap Plate**"
+                    f"\n**Iron Plate**"
                 ),
                 inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:dragon_memory:1085589410453667880> **Dragon Memory**"
-                    f"\n<:dark_memory:1085589411535786065> **Dark Memory**"
-                    f"\n<:ground_memory:1085589591861502023> **Ground Memory**"
-                    f"\n<:fighting_memory:1085589598647881881> **Fighting Memory**"
-                    f"\n<:fire_memory:1085589597486067743> **Fire Memory**"
-                    f"\n<:ice_memory:1085589635977191454> **Ice Memory**"
+                    f"\n**Dragon Memory**"
+                    f"\n**Dark Memory**"
+                    f"\n**Ground Memory**"
+                    f"\n**Fighting Memory**"
+                    f"\n**Fire Memory**"
+                    f"\n**Ice Memory**"
                 ),
                 inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:steel_memory:1085589630457479189> **Steel Memory**"
-                    f"\n<:water_memory:1085589629463445565> **Water Memory**"
-                    f"\n<:fairy_memory:1085589407735746640> **Fairy Memory**"
-                    f"\n<:psychic_memory:1085589633125056562> **Psychic Memory**"
-                    f"\n<:grass_memory:1085589593723777054> **Grass Memory**"
-                    f"\n<:bug_memory:1085589412441772164> **Bug Memory**"
+                    f"\n**Steel Memory**"
+                    f"\n<**Water Memory**"
+                    f"\n**Fairy Memory**"
+                    f"\n**Psychic Memory**"
+                    f"\n**Grass Memory**"
+                    f"\n**Bug Memory**"
                 ),
                 inline=True,
             )
             embed.add_field(
                 name=f"<:blank:1012504803496177685>",
                 value=(
-                    f"\n<:ghost_memory:1085589594701058139> **Ghost Memory**"
-                    f"\n<:rock_memory:1085589632017760436> **Rock Memory**"
-                    f"\n<:poison_memory:1085589633972318238> **Poison Memory**"
-                    f"\n<:electric_memory:1085589409459605534> **Electric Memory**"
+                    f"\n**Ghost Memory**"
+                    f"\n**Rock Memory**"
+                    f"\n<**Poison Memory**"
+                    f"\n**Electric Memory**"
+                ),
+                inline=True,
+            )
+            embed.add_field(
+                name=f"<:blank:1012504803496177685>",
+                value=(
+                    f"\n**Wellspring Mask**"
+                    f"\n**Hearthflame Mask**"
+                    f"\n**Cornerstone Mask**"
                 ),
                 inline=True,
             )

@@ -334,7 +334,7 @@ class ProfileView(discord.ui.View):
         self.bag_data = bag_data
         self.bound_data = bound_data
         self.player_data = player_data
-        self.badge_data = badge_data
+        self.badge_data = badge_data if badge_data else {}
         self.event = asyncio.Event()
         self.embed = ""
 
@@ -374,10 +374,10 @@ class ProfileView(discord.ui.View):
         embed.add_field(
             name="Normal Chests",
             value=(
-                f"<:common_chest:1103387638544740482> **Common**\nCount: `{common}`\n"
-                f"<:rare_chest:1103388951357706241> **Rare**\nCount: `{rare}`\n"
-                f"<:mythic_chest:1103389973614436484> **Mythic**\nCount: `{mythic}`\n"
-                f"<:legend_chest:1103389711424294942> **Legend**\nCount: `{legend}`\n"
+                f"{interaction.client.misc.get_emote('COMMON_CHEST')} **Common**\nCount: `{common}`\n"
+                f"{interaction.client.misc.get_emote('RARE_CHEST')} **Rare**\nCount: `{rare}`\n"
+                f"{interaction.client.misc.get_emote('MYTHIC_CHEST')} **Mythic**\nCount: `{mythic}`\n"
+                f"{interaction.client.misc.get_emote('LEGEND_CHEST')} **Legend**\nCount: `{legend}`\n"
             ),
             inline=True,
         )
@@ -385,7 +385,7 @@ class ProfileView(discord.ui.View):
             name="Special Chests",
             value=(
                 # f"<:exalted_chest:1103389973614436484> **Exalted**\nCount: `{exalted}`\n"
-                f"<:exalted_chest:1103389973614436484> **Pat**\nCount: `{pats}`\n"
+                f"{interaction.client.misc.get_emote('PAT_CHEST')} **Pat**\nCount: `{pats}`\n"
                 f"<:art_chest:1103389240949215384> **Art**\nCount: `{art}`"
             ),
             inline=True,
@@ -550,7 +550,9 @@ class ProfileView(discord.ui.View):
                         f"🗺️ **{region_name.capitalize()}** Region Defeated: `True`\n\n"
                     )
                 else:
-                    desc += f"🗺️ **{region_name.capitalize()}** Region Defeated: `False`\n\n"
+                    desc += (
+                        f"🗺️ **{region_name.capitalize()}** Region Defeated: `False`\n\n"
+                    )
 
             # First pull badge name and emoji
             emoji, badge_name = get_badge_emoji(leader_name=column_names[idx])
@@ -644,8 +646,7 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_group()
-    async def profile(self, ctx):
-        ...
+    async def profile(self, ctx): ...
 
     @profile.command(name="view")
     async def profile_view(self, ctx):

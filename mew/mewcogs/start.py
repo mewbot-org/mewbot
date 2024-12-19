@@ -19,89 +19,39 @@ def replace_value_with_definition(key_to_find, definition, dictionary):
             dictionary[key] = definition
 
 
-class Start(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class StarterSelection(discord.ui.Select):
+    """Drop down selection for starter"""
 
-    @commands.hybrid_command()
-    @discord.app_commands.describe(
-        starter="The starter you wish to begin your Pokémon journey with!"
-    )
-    async def start(
-        self,
-        ctx,
-        starter: Literal[
-            "Bulbasaur",
-            "Chikorita",
-            "Treecko",
-            "Turtwig",
-            "Snivy",
-            "Chespin",
-            "Rowlet",
-            "Grookey",
-            "Charmander",
-            "Cyndaquil",
-            "Torchic",
-            "Chimchar",
-            "Tepig",
-            "Fennekin",
-            "Litten",
-            "Scorbunny",
-            "Squirtle",
-            "Totodile",
-            "Mudkip",
-            "Piplup",
-            "Oshawott",
-            "Froakie",
-            "Popplio",
-            "Sobble",
-        ],
-    ):
-        """Begin your Pokémon journey with MewBot!!!"""
+    def __init__(self, ctx):
+        self.ctx = ctx
+        options = [
+            discord.SelectOption(
+                label=starter,
+                emoji=self.ctx.bot.misc.get_pokemon_emoji(starter),
+            )
+            for starter in starters
+        ]
+        super().__init__(options=options)
+
+    async def callback(self, interaction):
+        choice = interaction.data["values"][0]
+        resp = interaction.response
+        ctx = self.ctx
+
+        msg = await ctx.send(
+            embed=make_embed(
+                title=f"You have chosen {choice} as your starter! {ctx.bot.misc.get_pokemon_emoji(choice)}"
+            ),
+            ephemeral=True,
+        )
+
         async with ctx.bot.db[0].acquire() as pconn:
             if await pconn.fetchval(
                 "SELECT exists(SELECT * from users WHERE u_id = $1)", ctx.author.id
             ):
-                await ctx.send("You have already registered")
+                await msg.edit(content="You have already registered")
                 return
-        initial_message = None
-        """
-        async with ctx.bot.db[0].acquire() as pconn:
-            language = await pconn.fetchval(
-                "SELECT language FROM servers WHERE serverid = $1", ctx.guild.id
-            )
-        """
-        language = "en"
-        if starter == None or not starter.capitalize() in starters:
-            embed = discord.Embed(
-                title="Begin by choosing your starter!",
-                color=random.choice(ctx.bot.colors),
-            )
-            embed.add_field(
-                name="🍃",
-                value="Bulbasaur, Chikorita, Treecko, Turtwig, Snivy, Chespin, Rowlet, Grookey",
-                inline=True,
-            )
-            embed.add_field(
-                name="🔥",
-                value="Charmander, Cyndaquil, Torchic, Chimchar, Tepig, Fennekin, Litten, Scorbunny",
-                inline=True,
-            )
-            embed.add_field(
-                name="💧",
-                value="Squirtle, Totodile, Mudkip, Piplup, Oshawott, Froakie, Popplio, Sobble",
-                inline=True,
-            )
-            embed.set_image(url="https://i.imgur.com/kFlj6ke.jpg")
-            embed.set_footer(text="Run /start <starter> to begin!")
-            await ctx.send(embed=embed)
-            return
-        starter = starter.capitalize()
-        if language in ctx.bot.pokemon_names:
-            starter = starters[translated_starters.index(starter)]
-
-        emoji = random.choice(emotes)
-        await ctx.send(f"You have selected {starter} as your starter! {emoji}")
+            self.view.stop()
 
         user_query = (
             "INSERT INTO users (u_id, redeems, evpoints, tnick, upvotepoints, mewcoins, user_order, pokes, visible, inventory) "
@@ -132,15 +82,15 @@ class Start(commands.Cog):
                 ctx.author.id,
             )
 
-        await ctx.bot.commondb.create_poke(
-            ctx.bot, ctx.author.id, starter, boosted=True
-        )
+            await ctx.bot.commondb.create_poke(
+                ctx.bot, ctx.author.id, choice, boosted=True
+            )
 
         new_embed = discord.Embed(
             title="Welcome to MewBot", color=ctx.bot.get_random_color()
         )
         new_embed.description = f"""See your owned Pokemon using `/p`\nSelect your starter with `/select 1`\n
-        Go through the MewBot tutorial - `/tutorial`\n
+        Go through the MewBot tutorial - `/tutorial`\nCheck out minigames and other things you can do like NPC duels and fishing!\n
         **Now begin your adventure!**"""
         await ctx.send(embed=new_embed)
         message = (
@@ -167,8 +117,78 @@ class Start(commands.Cog):
         )
         try:
             await ctx.author.send(embed=embed)
+            await ctx.author.send("https://discord.gg/mewbot")
         except discord.Forbidden:
-            pass
+            await ctx.send("https://discord.gg/mewbot")
+            await ctx.send(embed=embed)
+        self.view.stop()
+
+
+class StarterSelectView(discord.ui.View):
+    def __init__(self, ctx):
+        self.ctx = ctx
+        super().__init__(timeout=120)
+
+        self.add_item(StarterSelection(self.ctx))
+        
+    async def on_timeout(self):
+        await self.ctx.send(
+            embed=make_embed(title="🎃 Time's up!\nPlease use `\start` again."),
+            view=None,
+        )
+
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+                content="You are not allowed to interact with this button.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+
+class Start(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.hybrid_command(name="start")
+    @discord.app_commands.describe()
+    async def start(
+        self,
+        ctx,
+    ):
+        """Begin your Pokémon journey with MewBot!!!"""
+
+        embed = discord.Embed(
+            title="Say the Starter you want!",
+            description="Begin by choosing your starter!",
+            color=random.choice(ctx.bot.colors),
+        )
+        embed.add_field(
+            name="🍃",
+            value="",
+            inline=True,
+        )
+        embed.add_field(
+            name="🔥",
+            value="",
+            inline=True,
+        )
+        embed.add_field(
+            name="💧",
+            value="",
+            inline=True,
+        )
+        embed.set_image(url="https://i.imgur.com/kFlj6ke.jpg")
+        embed.set_footer(
+            text="Choose your starter by using the dropdown menu! If you don't see it use the /start command."
+        )
+        initial_message = await ctx.send(embed=embed)
+
+        view = StarterSelectView(ctx=ctx)
+
+        await initial_message.edit(view=view)
+        await view.wait()
 
     # #@commands.hybrid_command(name="promo-start")
     # async def start_journey2(self, ctx, starter=None):
@@ -188,32 +208,6 @@ class Start(commands.Cog):
     #     language = "en"
     #     if starter == None or not starter.capitalize() in starters:
     #         prefix = ctx.prefix
-    #         embed = discord.Embed(
-    #             title="Say the Starter you want!",
-    #             description="Begin by choosing your starter!",
-    #             color=random.choice(ctx.bot.colors),
-    #         )
-    #         embed.add_field(
-    #             name="🍃",
-    #             value="Bulbasaur, Chikorita, Treecko, Turtwig, Snivy, Chespin, Rowlet, Grookey",
-    #             inline=True,
-    #         )
-    #         embed.add_field(
-    #             name="🔥",
-    #             value="Charmander, Cyndaquil, Torchic, Chimchar, Tepig, Fennekin, Litten, Scorbunny",
-    #             inline=True,
-    #         )
-    #         embed.add_field(
-    #             name="💧",
-    #             value="Squirtle, Totodile, Mudkip, Piplup, Oshawott, Froakie, Popplio, Sobble",
-    #             inline=True,
-    #         )
-    #         embed.set_image(url="https://i.imgur.com/kFlj6ke.jpg")
-    #         embed.set_footer(
-    #             text="Say the Pokemon's name while mentioning the bot (ex: @Dittobot Squirtle)! Pokemon names are from left to right."
-    #         )
-    #         initial_message = await ctx.send(embed=embed)
-    #         if language in ctx.bot.pokemon_names:
     #             # ids = [[i['pokemon_id'] for i in FORMS if i['identifier'] == word.lower()][0] for word in starters]
     #             translated_starters = []
     #             for starter in starters:

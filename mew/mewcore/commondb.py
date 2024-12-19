@@ -39,13 +39,14 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Vikavolt",
-            "Venusaur",
-            "Krookodile",
-            "Sceptile",
-            "Falinks",
-            "Talonflame",
-            "Butterfree",
+            "Cobalion",
+            "Lugia",
+            "Gogoat",
+            "Pyroar",
+            "Celebi",
+            "Registeel",
+            # "Talonflame",
+            # "Butterfree",
         ]
 
         self.ALL_ALPHA_POKEMON = [
@@ -154,7 +155,7 @@ class CommonDB:
             "Regigigas": ["power-swap", "tackle", "tackle", "tackle"],
             "Regirock": ["shore-up", "tackle", "tackle", "tackle"],
             "Regice": ["freeze-dry", "tackle", "tackle", "tackle"],
-            "Registeel": ["knock-off", "tackle", "tackle", "tackle"],
+            "Registeel": ["mortal-spin", "tackle", "tackle", "tackle"],
             "Arceus": ["springtide-storm", "tackle", "tackle", "tackle"],
             "Darkrai": ["lovely-kiss", "tackle", "tackle", "tackle"],
             "Diancie": ["moonlight", "tackle", "tackle", "tackle"],
@@ -208,15 +209,15 @@ class CommonDB:
             "Pidgeot": ["focus-blast", "tackle", "tackle", "tackle"],
             "Salamence": ["crush-grip", "tackle", "tackle", "tackle"],
             "Gallade": ["no-retreat", "tackle", "tackle", "tackle"],
-            "Gogoat": ["wood-hammer", "tackle", "tackle", "tackle"],
-            "Pyroar": ["thunder", "tackle", "tackle", "tackle"],
+            "Gogoat": ["body-press", "tackle", "tackle", "tackle"],
+            "Pyroar": ["fiery-dance", "tackle", "tackle", "tackle"],
             "Aegislash": ["behemoth-blade", "tackle", "tackle", "tackle"],
             "Braviary-hisui": ["aeroblast", "tackle", "tackle", "tackle"],
             "Druddigon": ["diamond-storm", "tackle", "tackle", "tackle"],
             "Raikou": ["geomancy", "tackle", "tackle", "tackle"],
             "Zacian": ["flying-press", "tackle", "tackle", "tackle"],
             "Celebi": ["quiver-dance", "tackle", "tackle", "tackle"],
-            "Lugia": ["oblivian-wing", "tackle", "tackle", "tackle"],
+            "Lugia": ["oblivion-wing", "tackle", "tackle", "tackle"],
             "Bellossom": ["powder", "tackle", "tackle", "tackle"],
             "Vileplume": ["toxic-thread", "tackle", "tackle", "tackle"],
             "Corviknight": ["anchor-shot", "tackle", "tackle", "tackle"],
@@ -448,9 +449,11 @@ class CommonDB:
             0,
             0,
             level,
-            ["tackle", "tackle", "tackle", "tackle"]
-            if not skin == "alpha"
-            else self.ALPHA_MOVESETS.get(pokemon.capitalize()),
+            (
+                ["tackle", "tackle", "tackle", "tackle"]
+                if not skin == "alpha"
+                else self.ALPHA_MOVESETS.get(pokemon.capitalize())
+            ),
             "None",
             1,
             nature,
@@ -526,6 +529,7 @@ class CommonDB:
         quantity: int,
         bound=False,
     ):
+        quantity = max(1, quantity)
         """
         Creates new bag for user and inserts item
         If user already has bag just insert item

@@ -31,8 +31,6 @@ app = FastAPI()
 
 home = str(Path.home())
 
-load_dotenv("/home/dyroot/mewbot/env")
-
 TOKEN = os.environ["MTOKEN"]
 DATABASE = os.environ["DATABASE_URL"]
 MONGO_URL = os.environ["MONGO_URL"]
@@ -663,7 +661,7 @@ async def vote_handler(data, auth, user_id, list_name):
 
     async with app.pool.acquire() as pconn:
         await pconn.execute(
-            f"UPDATE users SET mewcoins = mewcoins + 1500, upvotepoints = upvotepoints + 1, energy = LEAST(energy + 5, 15) WHERE u_id = $1",
+            f"UPDATE users SET mewcoins = mewcoins + 1500, upvotepoints = upvotepoints + 1, energy = LEAST(energy + 5, 15), npc_energy = LEAST(npc_energy + 10, 15) WHERE u_id = $1",
             user_id,
         )
         if list_name == "topgg":
@@ -747,5 +745,4 @@ async def index():
 
 
 if __name__ == "__main__":
-
-    uvicorn.run("main:app", port=15210)
+    uvicorn.run("main:app", host="0.0.0.0", port=15210)

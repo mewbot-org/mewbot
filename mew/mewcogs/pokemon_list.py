@@ -1533,6 +1533,7 @@ starterList = [
 
 # legendary pokemon
 LegendList = [
+    "Ursaluna-bloodmoon",
     "Okidogi",
     "Munkidori",
     "Fezandipiti",
@@ -1878,6 +1879,10 @@ def is_formed(name):
             "-hangry",
             "-gorging",
             "-gulping",
+            "-bloodmoon",
+            "-cornerstone",
+            "-hearthflame",
+            "-wellspring",
         ]
     ):
         return True
@@ -1968,9 +1973,9 @@ async def tr(text: str, variables):
             elif entry and not language in entry:
                 new_entry = entry
                 new_entry[language] = "None"
-                ctx.bot.language_strings[
-                    ctx.bot.language_strings.index(entry)
-                ] = new_entry
+                ctx.bot.language_strings[ctx.bot.language_strings.index(entry)] = (
+                    new_entry
+                )
             elif entry and language in entry:
                 text = entry.get(language)
             try:

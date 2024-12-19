@@ -1,3 +1,5 @@
+from io import BytesIO
+import json
 import os
 import discord
 import random
@@ -681,8 +683,7 @@ class Events(commands.Cog):
             pass
 
     # @commands.hybrid_group()
-    async def easter(self, ctx: commands.Context):
-        ...
+    async def easter(self, ctx: commands.Context): ...
 
     # @easter.command(name="info")
     async def easter_info(self, ctx):
@@ -1031,8 +1032,7 @@ class Events(commands.Cog):
             await ctx.send("Successful")
 
     @commands.hybrid_group()
-    async def summer(self, ctx: commands.Context):
-        ...
+    async def summer(self, ctx: commands.Context): ...
 
     # @summer.command(name="info")
     async def summer_info(self, ctx):
@@ -1986,14 +1986,16 @@ class Events(commands.Cog):
         await ctx.send(embed=embed)
 
     @halloween.group(name="pumpkin")
-    async def pumpkin(self, ctx):
-        ...
+    async def pumpkin(self, ctx): ...
 
     @pumpkin.command(name="pop")
     async def pumpkin_pop(self, ctx):
         """Open a mysterious pumpkin and receive a reward... or a trick!"""
 
         # Starting message with suspense
+        # if not self.HALLOWEEN_COMMANDS:
+        #     await ctx.send("This command can only be used during the halloween season!")
+        #     return
         embed = discord.Embed(
             title="🎃 Selected a Mysterious pumpkin from your stash! 🎃",
             description="*Do you dare to open it?*",
@@ -2385,7 +2387,8 @@ class Events(commands.Cog):
 
                 await ctx.send(
                     embed=make_embed(
-                        title="🎉 You found the treat!", description=self.rand_bag_text()
+                        title="🎉 You found the treat!",
+                        description=self.rand_bag_text(),
                     )
                 )
                 return
@@ -3580,9 +3583,11 @@ class Events(commands.Cog):
             button = discord.ui.Button(
                 label="",
                 emoji="🎃" if i % 2 == 0 else "👻",
-                style=discord.ButtonStyle.secondary
-                if i % 2 == 0
-                else discord.ButtonStyle.primary,
+                style=(
+                    discord.ButtonStyle.secondary
+                    if i % 2 == 0
+                    else discord.ButtonStyle.primary
+                ),
             )
             button.callback = lambda interaction, idx=i: button_callback(
                 interaction, idx
@@ -3654,8 +3659,10 @@ class Events(commands.Cog):
         # )
         # if honey != "cheer":
         # return
-        await asyncio.sleep(random.randint(30, 45))
-        await ChristmasSpawn(self, channel, random.choice(self.EVENT_POKEMON)).start()
+        # await asyncio.sleep(random.randint(30, 45))
+        await ChristmasSpawn(
+            self, channel, "Lopunny"
+        ).start()  # random.choice(self.EVENT_POKEMON)).start()
 
     async def maybe_spawn_unown(self, channel):
         if not self.UNOWN_MESSAGE:
@@ -3748,7 +3755,7 @@ class Events(commands.Cog):
                 description=(
                     f"{formatted}\n\n"
                     "Users who guessed a letter correctly have been given credits.\n"
-                )
+                ),
                 # TODO: change to what the reward actually is?
             )
             await self.UNOWN_MESSAGE.edit(embed=embed)
@@ -3861,8 +3868,12 @@ class ChristmasSpawn(discord.ui.View):
         self.servercache = []
         self.registered = []
         self.attacked = {}
+        self.max_hp = 100
+        self.hp = 100
         self.state = "registering"
-        self.message = None
+        self.timeout = 120
+        self.message: discord.Message = None
+        self.DUELAPI_URL = "http://178.28.0.11:5864/healthbar"
         self.banned = [
             1075429458271547523,
         ]
@@ -3871,16 +3882,17 @@ class ChristmasSpawn(discord.ui.View):
         if self.state == "registering":
             if interaction.user in self.registered:
                 await interaction.response.send_message(
-                    content="You have already joined!", ephemeral=True
+                    content="You have already joined!\nWait for the others!",
+                    ephemeral=True,
                 )
                 return False
             return True
         elif self.state == "attacking":
-            if interaction.user in self.attacked:
-                await interaction.response.send_message(
-                    content="You have already attacked!", ephemeral=True
-                )
-                return False
+            # if interaction.user in self.attacked:
+            #     await interaction.response.send_message(
+            #         content="You have already attacked!", ephemeral=True
+            #     )
+            #     return True
             if interaction.user not in self.registered:
                 await interaction.response.send_message(
                     content="You didn't join the battle! You can't attack this one.",
@@ -3897,13 +3909,74 @@ class ChristmasSpawn(discord.ui.View):
     def rand_spawn_title(self):
         return random.choice(
             [
-                f"👻 A ghostly aura fills the air... a wild {self.poke} has appeared!",
-                f"🎃 Under the eerie moonlight, you encounter a spooky {self.poke} lurking in the shadows!",
-                f"A chilling wind blows, and suddenly, {self.poke} emerges from the darkness!",
-                f"✨ The Halloween spirit is strong... a mysterious {self.poke} is here for a limited time!",
-                f"You feel an icy chill as {self.poke}] appears! Will you be brave enough to catch it?",
+                f"🎄 A festive breeze carries a wild {self.poke} your way!",
+                f"🎅 Under the twinkling Christmas lights, a jolly {self.poke} has appeared!",
+                f"✨ A magical glow surrounds {self.poke} as it steps out of a winter wonderland!",
+                f"❄️ Amidst the falling snow, you spot a holiday {self.poke} looking for cheer!",
+                f"🎁 The spirit of Christmas is here, and {self.poke} has come to celebrate!",
             ]
         )
+
+    def pokemon_escaped_message(self):
+        return random.choice(
+            [
+                f"🎄 The wild {self.poke} was feeling too jolly and danced away into the snow!",
+                f"🎅 {self.poke} vanished with a ho-ho-ho! Better luck next time!",
+                f"✨ {self.poke} slipped away under the cover of twinkling Christmas lights!",
+                f"❄️ A gust of winter wind carried {self.poke} far away. It’s gone for now!",
+                f"🎁 {self.poke} decided to deliver presents elsewhere. Keep an eye out for another chance!",
+            ]
+        )
+    
+    def rand_defeat_message(self):
+        return random.choice(
+            [
+                f"❄️ {self.poke} fades into the snow, leaving behind a chilling silence...",
+                f"🎄 The festive lights dim as {self.poke} retreats into the winter night.",
+                f"🎁 {self.poke} leaves behind a parting gift of snowflakes as it vanishes!",
+                f"✨ {self.poke} sparkles one last time before disappearing into the frosty ether.",
+                f"🎅 With a jolly nod, {self.poke} bids farewell and vanishes into the holiday mist!",
+                f"❄️ The snow settles as {self.poke} is no longer in sight.",
+                f"🎁 {self.poke} leaves with a parting twinkle, disappearing into the magic of the season.",
+                f"🎄 The jingling bells quiet as {self.poke} drifts away into the winter wonderland.",
+                f"✨ The glow around {self.poke} fades, leaving only a frosty memory behind.",
+                f"🎅 With a merry wave, {self.poke} departs, its holiday spirit lingering in the air!",
+            ]
+        )
+
+
+    async def stream_image(self):
+        params = {
+            "poke_image_url": "sprites/"
+            + await get_file_name(self.poke, self.cog.bot, skin="xmas2024"),
+            "poke": ujson.dumps({"hp": self.hp, "starting_hp": self.max_hp}),
+        }
+        image = BytesIO()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.DUELAPI_URL, params=params) as resp:
+                image.write(await resp.read())
+        image.seek(0)
+        file = discord.File(image, "event.png")
+        return file
+    
+    def pick_winners(self):
+        # Separate participants into high and low damage tiers
+        sorted_participants = sorted(
+            self.attacked.items(), key=lambda x: x[1], reverse=True
+        )
+        half_count = max(1, len(sorted_participants) // 2)
+
+        # Randomly pick from the top 75% damage dealers
+        top_damage_dealers = sorted_participants[: int(len(sorted_participants) * 0.75)]
+        low_damage_dealers = sorted_participants[int(len(sorted_participants) * 0.75):]
+
+        # Select winners
+        top_picks = random.sample(top_damage_dealers, min(len(top_damage_dealers), half_count - len(low_damage_dealers)))
+        low_picks = random.sample(low_damage_dealers, min(len(low_damage_dealers), len(top_damage_dealers) // 4))
+
+        winners = top_picks + low_picks
+        random.shuffle(winners)  # Shuffle to make it more fun!
+        return winners
 
     async def start(self):
         # This should stop from more than one raid appearing
@@ -3916,7 +3989,7 @@ class ChristmasSpawn(discord.ui.View):
 
         extra_msg = ""
         pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
-            self.poke, self.cog.bot, skin="halloween2024"
+            self.poke, self.cog.bot, skin="xmas2024"
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -3925,7 +3998,7 @@ class ChristmasSpawn(discord.ui.View):
             small_images = guild["small_images"]
         self.embed = discord.Embed(
             title=self.rand_spawn_title(),
-            description="Join the battle to take it down.\nThe more damage you do the more :candy:  you earn!",
+            description="Join the battle to take it down.\nDo more damage to increase your chances of getting this raid Pokemon!!",
             color=0x0084FD,
         )
         self.embed.add_field(name="Take Action", value="Click the Button to join!")
@@ -3951,7 +4024,7 @@ class ChristmasSpawn(discord.ui.View):
 
         if not self.registered:
             embed = discord.Embed(
-                title="The Spooky Pokémon ran away!",
+                title=self.pokemon_escaped_message(),
                 color=0x0084FD,
             )
             if small_images:
@@ -4078,6 +4151,7 @@ class ChristmasSpawn(discord.ui.View):
                     )["identifier"]
                 )
                 moves.append(RaidMove(move_name, 1, type_emoji))
+
             elif i == 2:
                 move_name = random.choice(un_moves)
                 # moves.append(RaidMoveNoEmote(move_name, 0))
@@ -4116,35 +4190,44 @@ class ChristmasSpawn(discord.ui.View):
         for move in moves:
             self.add_item(move)
 
-        self.max_hp = int(len(self.registered) * 1.25)
+        self.max_hp = self.hp = int(len(self.registered) * self.max_hp * 1.25)
         self.embed = discord.Embed(
             title=self.rand_spawn_title(),
             description="Attack it with everything you've got!",
             color=0x0084FD,
         )
-        self.embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
-        if small_images:
-            self.embed.set_thumbnail(url=pokeurl)
-        else:
-            self.embed.set_image(url=pokeurl)
+        self.embed.set_image(url="attachment://event.png")
+        # self.embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
+        # if small_images:
+        #     self.embed.set_thumbnail(url=pokeurl)
+        # else:
+        #     self.embed.set_image(url=pokeurl)
+
+        ## begin attack
         self.state = "attacking"
-        await self.message.edit(embed=self.embed, view=self)
-        for i in range(5):
+        await self.message.edit(
+            embed=self.embed, attachments=[await self.stream_image()], view=self
+        )
+
+        while self.hp > 0:
             await asyncio.sleep(3)
-            hp = max(self.max_hp - sum(self.attacked.values()), 0)
-            self.embed.clear_fields()
-            self.embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
-            await self.message.edit(embed=self.embed)
+            # hp = max(self.max_hp - sum(self.attacked.values()), 0)
+            # self.embed.clear_fields()
+            # self.embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")/
+            self.embed.set_image(url="attachment://event.png")
+            await self.message.edit(embed=self.embed, attachments=[await self.stream_image()], view=self)
+            await asyncio.sleep(3)
+
         self.state = "ended"
-        hp = max(self.max_hp - sum(self.attacked.values()), 0)
-        if hp > 0:
+        # hp = max(self.max_hp - sum(self.attacked.values()), 0)
+        if self.hp > 0:
             self.embed = discord.Embed(
-                title="The Spooky Pokémon tricked you and got away!🧟👻",
+                title="The Pokémon slipped and got away!🧟👻",
                 description="Catch more Pokémon to spawn another one.",
                 color=0x0084FD,
             )
-            hp = max(self.max_hp - sum(self.attacked.values()), 0)
-            self.embed.add_field(name="Status", value=f"HP = {hp}/{self.max_hp}")
+            # hp = max(self.max_hp - sum(self.attacked.values()), 0)
+            # self.embed.add_field(name="Status", value=f"HP = {hp}/{self.max_hp}")
             if small_images:
                 self.embed.set_thumbnail(url=pokeurl)
             else:
@@ -4157,42 +4240,16 @@ class ChristmasSpawn(discord.ui.View):
             self.servercache.remove(self.channel.guild.id)
 
         async with self.cog.bot.db[0].acquire() as pconn:
-            total_seashells = 0
-            for attacker, damage in self.attacked.items():
-                await pconn.execute(
-                    "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
-                    attacker.id,
-                )
-                if damage == 2:
-                    amount = 10
-                    total_seashells += amount
-                    await pconn.execute(
-                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
-                        amount,
-                        attacker.id,
-                    )
-                elif damage == 1:
-                    amount = 5
-                    total_seashells += amount
-                    await pconn.execute(
-                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
-                        amount,
-                        attacker.id,
-                    )
-                elif damage == 0:
-                    amount = 1
-                    total_seashells += amount
-                    await pconn.execute(
-                        "UPDATE events_new SET candy = candy + $1 WHERE u_id = $2",
-                        1,
-                        attacker.id,
-                    )
+            winners = self.pick_winners()
+            for winner in winners:
+                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, poke, skin = 'xmas2024')
 
         self.embed = discord.Embed(
-            title=f"The Spooky Pokémon was defeated!🧟👻",
-            description=f"Attackers have been awarded. A total of {total_seashells} :candy:  was earned!",
+            title=self.rand_defeat_message(),
             color=0x0084FD,
         )
+        winner_mentions = ", ".join([f"<@{user_id}>" for user_id, _ in winners])
+        self.embed.description += f"🎉 Congratulations to the winners of {self.pokemon_name}:\n{winner_mentions}!\nThank you for participating!"
         if small_images:
             self.embed.set_thumbnail(url=pokeurl)
         else:
@@ -4251,9 +4308,12 @@ class RaidMove(discord.ui.Button):
             )
 
     async def callback(self, interaction):
-        self.view.attacked[interaction.user] = self.damage
+        self.view.attacked[interaction.user] = (
+            self.view.attacked.get(interaction.user, 0) + self.damage
+        )
+        self.view.hp -= self.damage
         await interaction.response.send_message(
-            content=f"You used {self.move}. {self.effective}", ephemeral=True
+            content=f"You used {self.move}. {self.effective}", ephemeral=True, delete_after = 2.00
         )
 
 

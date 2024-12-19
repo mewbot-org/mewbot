@@ -4,7 +4,7 @@ from pathlib import Path
 
 class HealthBar:
     def __init__(self):
-        self.radius = 30
+        self.radius = 20
 
     def round_corner(self, radius, fill):
         """Draw a round corner."""
@@ -45,7 +45,7 @@ class HealthBar:
         draw = ImageDraw.Draw(base_bar)
 
         font = ImageFont.truetype(
-            str(Path(__file__).parent.parent / "res" / "JMH Ava bold.otf"), 48
+            str(Path(__file__).parent.parent / "res" / "EightBitDragon-anqx.ttf"), 48
         )
         draw.text(
             (140, 19), f"{current_health}/{max_health}", fill=(0, 0, 0, 255), font=font

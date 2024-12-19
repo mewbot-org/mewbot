@@ -118,6 +118,9 @@ class Items(commands.Cog):
             "rusty_sword",
             "rusty_shield",
             "ultra_toxin",
+            "cornerstone_mask",
+            "hearthflame_mask",
+            "wellspring_mask",
         ):
             await ctx.send(
                 f"You must deform this Pokemon before unequipping the {held_item}!"
@@ -432,8 +435,7 @@ class Items(commands.Cog):
         await ctx.send(f"Your {fancy_name} was consumed!")
 
     @commands.hybrid_group()
-    async def buy(self, ctx):
-        ...
+    async def buy(self, ctx): ...
 
     @buy.command(name="item")
     async def buy_item(self, ctx, item_name: str):
@@ -663,6 +665,7 @@ class Items(commands.Cog):
 
     @buy.command(name="daycare")
     async def buy_daycare(self, ctx, amount: int = 1):
+        amount = max(1, amount)
         """Buy daycare spaces."""
         item = await ctx.bot.db[1].new_shop.find_one({"item": "daycare_space"})
         if not item:

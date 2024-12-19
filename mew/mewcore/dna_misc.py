@@ -16,7 +16,15 @@ class MewMisc:
         self.emotes = {
             "CREDITS": "<:mewcoin:1010959258638094386>",
             "REDEEMS": "<:redeem:1037942226132668417>",
+            "COMMON_CHEST": "<:common_chest:1311626467360378970>",
+            "RARE_CHEST": "<:rare_chest:1311626539917512714>",
+            "MYTHIC_CHEST": "<:mythic_chest:1311626611220676680>",
+            "LEGEND_CHEST": "<:legend_chest:1311626665239117894>",
+            "PAT_CHEST": "",
         }
+
+    def get_emote(self, emote):
+        return self.emotes.get(emote)
 
     async def get_old_skins(self):
         # Get list of pokemon in old skin folders
@@ -121,6 +129,10 @@ class MewMisc:
             return None
         return types[t]
 
+    def get_pokemon_emoji(self, pokemon: str):
+        emoji = discord.utils.get(self.bot.emote_server.emojis, name=pokemon.lower())
+        return emoji
+
     def get_egg_emote(self, egg_group):
         egg_group = egg_group.lower()
         egg_groups = {
@@ -138,7 +150,7 @@ class MewMisc:
             "water3": "<:water3:1116458665088655512> `Water3`",
             "dragon": "<:dragonegg:1116458619739836516> `Dragon`",
             "ditto": "<:ditto:1116458611997155368> `Ditto`",
-            "undiscovered": "<:undiscovered:1116477713960669195> `Undiscovered`",
+            "undiscovered": "<:undiscovered:1316198633460465674> `Undiscovered`",
             "special": "<:special_egg:1222219380251955202> `Special`",
         }
         if egg_group not in egg_groups:

@@ -35,7 +35,6 @@ import mewcogs
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-OXI_DATABASE_URL = "postgresql://postgres:liger666@143.198.171.254:5432/mewbot"
 
 
 class Mew(commands.AutoShardedBot):
@@ -98,7 +97,9 @@ class Mew(commands.AutoShardedBot):
             self.pokemon_names[i[:2]] = ujson.load(
                 open(self.app_directory / "shared" / "data" / "pokemon_names" / f"{i}")
             )
-        self.mongo_client = AsyncIOMotorClient(os.environ["MONGO_URL"])
+        self.mongo_client = AsyncIOMotorClient(
+            "mongodb://mewbot:mew@localhost:61392"
+        )  # os.environ["MONGO_URL"])
         self.mongo_pokemon_db = self.mongo_client.pokemon
         self.db[1] = self.mongo_pokemon_db
 
@@ -200,7 +201,9 @@ class Mew(commands.AutoShardedBot):
 
     async def on_ready(self):
 
-        game = discord.Streaming(name="NPC move strategies", url="https://mewbot.xyz/")
+        game = discord.Streaming(
+            name="/start - Use this command", url="https://mewbot.xyz/"
+        )
         await self.change_presence(status=discord.Status.dnd, activity=game)
 
         await self.log_cluster_action(

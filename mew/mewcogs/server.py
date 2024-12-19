@@ -66,8 +66,7 @@ class Settings(commands.Cog):
             await ctx.send("Mention spawns are now disabled.")
 
     @spawns.group()
-    async def auto(self, ctx):
-        ...
+    async def auto(self, ctx): ...
 
     @auto.command(name="delete")
     async def auto_delete(self, ctx):
@@ -110,8 +109,7 @@ class Settings(commands.Cog):
         )
 
     @spawns.group()
-    async def redirect(self, ctx):
-        ...
+    async def redirect(self, ctx): ...
 
     @redirect.command(name="add")
     @discord.app_commands.describe(
@@ -341,8 +339,7 @@ class Settings(commands.Cog):
         await MenuView(ctx, pages).start()
 
     @commands.hybrid_group()
-    async def silence(self, ctx):
-        ...
+    async def silence(self, ctx): ...
 
     @silence.command()
     async def user(self, ctx):

@@ -50,8 +50,7 @@ class MewBotAdmin(commands.Cog):
 
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def dev(self, ctx):
-        ...
+    async def dev(self, ctx): ...
 
     @dev.command()
     async def upload_ms(self, ctx):
@@ -126,8 +125,22 @@ class MewBotAdmin(commands.Cog):
 
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def admin(self, ctx):
-        ...
+    async def admin(self, ctx): ...
+
+    @check_admin()
+    @commands.hybrid_command()
+    async def wipe(self, ctx, id):
+        id = int(id)
+        async with ctx.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                f"DELETE FROM pokes WHERE id = ANY ( SELECT unnest(pokes) FROM users WHERE u_id = $1 )",
+                id,
+            )
+            await pconn.execute("DELETE FROM users WHERE u_id = $1", id)
+            await pconn.execute("DELETE FROM account_bound WHERE u_id = $1", id)
+            await pconn.execute("DELETE FROM bag WHERE u_id = $1", id)
+            await pconn.execute("DELETE FROM achievements WHERE u_id = $1", id)
+            await ctx.send("User's data has been erased")
 
     @admin.command(name="help")
     @discord.app_commands.guilds(STAFFSERVER)
@@ -431,13 +444,16 @@ class MewBotAdmin(commands.Cog):
         # filename = f"{name}_{skin}_{'shiny' if shiny else 'normal'}.png"
         filename = await get_file_name(name, bot, shiny=shiny, skin=skin)
         full_destination_path = os.path.join(destination_folder, filename)
-
+        os.makedirs(os.path.dirname(full_destination_path), exist_ok=True)
         async with aiohttp.ClientSession() as session:
             async with session.get(image_url) as response:
                 if response.status == 200:
-                    with open(full_destination_path, "wb") as f:
-                        f.write(await response.read())
-                    return True
+                    try:
+                        with open(full_destination_path, "wb") as f:
+                            f.write(await response.read())
+                        return True
+                    except IsADirectoryError:
+                        return False
                 else:
                     raise ConnectionError("Could not open image")
 
@@ -448,8 +464,10 @@ class MewBotAdmin(commands.Cog):
         self, ctx, name: str, shiny: bool, *, skin: str = None, image_url: str
     ):
         # Check if the URL is valid
-        await self.upload_to_disk(name, ctx.bot, shiny, skin, image_url)
-        await ctx.send(f"Uploaded... {skin} ... {name}")
+        if res := await self.upload_to_disk(name, ctx.bot, shiny, skin, image_url):
+            await ctx.send(f"Uploaded... {skin} ... {name}")
+        else:
+            await ctx.send("Couldn't complete.")
         return
         async with aiohttp.ClientSession() as session:
             try:
@@ -523,23 +541,29 @@ class MewBotAdmin(commands.Cog):
             extras += "shiny "
         if boosted:
             extras += "boosted "
-        if skin == "false":
+        if skin in ("none", "false"):
             skin = None
         if u_id is None:
             u_id = ctx.author.id
         else:
             u_id = int(u_id)
         pokemon = pokemon.replace(" ", "-").capitalize()
-        if skin == "none":
-            pokedata = await ctx.bot.commondb.create_poke(
-                ctx.bot, u_id, pokemon, shiny=shiny, boosted=boosted
-            )
-        else:
-            pokedata = await ctx.bot.commondb.create_poke(
-                ctx.bot, u_id, pokemon, shiny=shiny, skin=skin, boosted=boosted
-            )
+        tradable = ctx.author.id == 455277032625012737
+        pokedata = await ctx.bot.commondb.create_poke(
+            ctx.bot,
+            u_id,
+            pokemon,
+            skin=skin,
+            shiny=shiny,
+            boosted=boosted,
+            tradable=tradable,
+        )
         ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
         await ctx.send(f"Gave you a {extras}{pokemon} w/iv {ivpercent}%!")
+        await ctx.bot.log(
+            695322994725355621,
+            f"{ctx.author.name} used create-poke - Pokemon = `{pokedata.id}`",
+        )
 
     @check_admin()
     @admin.command()
@@ -619,6 +643,10 @@ class MewBotAdmin(commands.Cog):
                     f"UPDATE pokes set {iv} = $1 WHERE id = $2", amount, globalid
                 )
             await ctx.send(":white_check_mark:")
+            await ctx.bot.log(
+                695322994725355621,
+                f"{ctx.author.name} used edit-iv - Pokemon = `{globalid}`",
+            )
 
     @check_admin()
     @admin.command()
@@ -636,8 +664,7 @@ class MewBotAdmin(commands.Cog):
             await ctx.send(":white_check_mark:")
 
     @commands.hybrid_group()
-    async def gym(self, ctx):
-        ...
+    async def gym(self, ctx): ...
 
     @check_gymauth()
     @gym.command()

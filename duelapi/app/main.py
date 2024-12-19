@@ -219,13 +219,13 @@ def build_image(
             p1 = Image.open(DIR / args["poke1_image_url"]).convert("RGBA")
         except FileNotFoundError:
             print(f"{args['poke1_image_url']} does not exist in duel resources!")
-            p1 = Image.open(DIR / "sprites" / "ERROR.png").convert("RGBA")
+            p1 = PRELOADED["sub"]
 
         try:
             p2 = Image.open(DIR / args["poke2_image_url"]).convert("RGBA")
         except FileNotFoundError:
             print(f"{args['poke2_image_url']} does not exist in duel resources!")
-            p2 = Image.open(DIR / "sprites" / "ERROR.png").convert("RGBA")
+            p2 = PRELOADED["sub"]
 
         p1 = sresize(p1)
         p2 = sresize(p2)
@@ -254,3 +254,58 @@ def build_image(
 
     fp.seek(0)
     return StreamingResponse(fp, media_type="image/png")
+
+
+@app.post("/healthbar")
+def generate_healthbar_image(poke_image_url: str, poke: str):
+    """
+    Generates an image with a transparent background and a single Pokémon with its health bar.
+
+    Parameters:
+        poke_image_url: str
+            URL to the Pokémon's image
+        poke: dict
+            JSON serializable dictionary with the Pokémon's current HP and starting HP
+
+    Returns:
+        StreamingResponse with the image
+    """
+    print(poke_image_url)
+    print(poke)
+    poke = orjson.loads(poke)
+    try:
+        # Load Pokémon image
+        try:
+            poke_img = Image.open(DIR / poke_image_url).convert("RGBA")
+        except FileNotFoundError:
+            print(f"{poke_image_url} does not exist in duel resources!")
+            poke_img = PRELOADED["sub"]  # Placeholder if the image is not found
+
+        # Resize Pokémon image
+        poke_img = sresize(poke_img)
+
+        # Generate the health bar
+        hb = HealthBar()
+        bar = hb.bar(math.ceil(poke["hp"]), poke["starting_hp"])
+
+        # Create a transparent canvas
+        canvas_size = (
+            max(poke_img.width, bar.width),
+            poke_img.height + bar.height + 10,
+        )
+        transparent_bg = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+
+        # Paste Pokémon and health bar onto the transparent canvas
+        transparent_bg.paste(poke_img, (0, bar.height + 10), mask=poke_img)
+        transparent_bg.paste(bar, (0, 0), mask=bar)
+
+        # Save image to a BytesIO stream
+        fp = io.BytesIO()
+        transparent_bg.save(fp, "PNG")
+        fp.seek(0)
+
+        return StreamingResponse(fp, media_type="image/png")
+
+    finally:
+        # Ensure images are closed to prevent memory leaks
+        poke_img.close()

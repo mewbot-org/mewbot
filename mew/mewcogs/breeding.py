@@ -600,12 +600,12 @@ class Breeding(commands.Cog):
             "HMSET",
             "breedcooldowns",
             str(ctx.author.id),
-            str(time.time() + 35 - (35 * 0.3 if patreon_status == "Elite" else 0)),
+            str(time.time() + 45 - (45 * 0.3 if patreon_status == "Elite" else 0)),
         )
         for idx, female in enumerate(females_list):
             if idx > 0:
                 await asyncio.sleep(
-                    30 - (30 * 0.3 if patreon_status == "Elite Collector" else 0)
+                    5 - (5 * 0.3 if patreon_status == "Elite Collector" else 0)
                 )
             ctx.command.cancel = False
             # Remove this female from the list of females - "unorthodoxly"
@@ -842,6 +842,7 @@ class Breeding(commands.Cog):
                     await message.edit(embed=embed)
                 except discord.NotFound:
                     pass
+
                 if auto and self.auto_redo[ctx.author.id] == [male, female]:
                     return await self.breed.callback(
                         self, ctx, male, females=str(female) + "auto"
@@ -849,19 +850,6 @@ class Breeding(commands.Cog):
 
             # Got an egg
             else:
-                await self.reset_cooldown(ctx.author.id)
-                await ctx.bot.redis_manager.redis.execute(
-                    "HMSET",
-                    "breedcooldowns",
-                    str(ctx.author.id),
-                    str(
-                        time.time()
-                        + 900
-                        - (900 * 0.3 if patreon_status == "Elite Collector" else 0)
-                    ),
-                )
-
-                self.auto_redo[ctx.author.id] = None
 
                 # Reduce Cgrubb's base step count for testing
                 # Test will be for reducing overall step count in the bot.

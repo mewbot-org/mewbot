@@ -145,8 +145,7 @@ class Achievements(commands.Cog):
                 return
 
     @commands.hybrid_group()
-    async def achievements(self, ctx: commands.Context):
-        ...
+    async def achievements(self, ctx: commands.Context): ...
 
     @achievements.command(name="breeding")
     async def achievements_breeding(self, ctx):

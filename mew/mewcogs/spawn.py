@@ -7,6 +7,7 @@ import asyncio
 import time
 
 from discord.ext import commands
+import discord.ext
 from mewutils.checks import check_owner
 from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
@@ -241,10 +242,10 @@ class SpawnModal(discord.ui.Modal, title="Catch This Pokemon!"):
             )
 
         if not poke_spawn_check(str(self.name), pokemon):
+            # await interaction.response.defer()
             await interaction.followup.send(
                 "Incorrect name! Try again :(", ephemeral=True
             )
-            await interaction.response.defer()
             return
 
         # Someone caught the poke, create it

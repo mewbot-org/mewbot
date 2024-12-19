@@ -302,6 +302,7 @@ class Ability(IntEnum):
     ARMOR_TAIL = 296
     EARTH_EATER = 297
     MYCELIUM_MIGHT = 298
+    MINDS_EYE = 299
 
     @property
     def pretty_name(self):

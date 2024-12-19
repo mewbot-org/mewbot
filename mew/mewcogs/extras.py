@@ -98,8 +98,7 @@ class Extras(commands.Cog):
         )
 
     @commands.hybrid_group()
-    async def spread(self, ctx):
-        ...
+    async def spread(self, ctx): ...
 
     @spread.command()
     async def honey(self, ctx):
@@ -365,8 +364,7 @@ class Extras(commands.Cog):
         await MenuView(ctx, pages).start()
 
     @commands.hybrid_group()
-    async def change(self, ctx):
-        ...
+    async def change(self, ctx): ...
 
     @change.command()
     @discord.app_commands.describe(nature="The nature to change to.")

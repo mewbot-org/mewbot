@@ -40,17 +40,21 @@ class Market(commands.Cog):
             "1231231346546515131351351351315",  # I don't think we'll get to a market listing this high
         )
 
-    @commands.hybrid_group()
-    async def m(self, ctx):
-        ...
+    @commands.hybrid_group(name="market")
+    async def m(self, ctx): ...
 
-    @m.command()
+    @m.command(aliases=["a"])
     @tradelock
-    async def market_add(self, ctx, poke: int, price: int):
+    async def add(self, ctx, poke: int, price: int):
         """Add a pokemon to the market."""
         price = max(price, 0)
-        if price > 2147483647:
-            await ctx.send("Haha, no.")
+        if price > 50000000:
+            await ctx.send(
+                embed=make_embed(
+                    title="",
+                    description=f'`Maximum price is currently set to 50,000,000`{ctx.bot.misc.get_emote("CREDITS")}',
+                )
+            )
             return
         if poke == 1:
             await ctx.send("You can not enlist your first Pokemon in the market.")
@@ -72,19 +76,20 @@ class Market(commands.Cog):
                 await ctx.send("You don't have that Pokemon.")
                 return
             deposit = int(price * DEPOSIT_RATE)
-            if credits < price:
+            if credits < round(0.1 * price):
                 await ctx.send(
-                    f"You can not afford the cost for this listing, it is {price:,} credits.\nPlease return with funds."
+                    embed=make_embed(
+                        title="",
+                        description=f'`Your balance should be at least 15% of the set price to enlist this Pokemon ({round(0.1 * price)})`{ctx.bot.misc.get_emote("CREDITS")}',
+                    )
                 )
                 return
             patreon_status = await ctx.bot.patreon_tier(ctx.author.id)
-            if patreon_status in ("Crystal Tier", "Sapphire Tier"):
+            if patreon_status == "Elite Collector":
                 marketlimit += CRYSTAL_PATREON_SLOT_BONUS
-            elif patreon_status == "Silver Tier":
+            elif patreon_status == "Rarity Hunter":
                 marketlimit += SILVER_PATREON_SLOT_BONUS
-            elif patreon_status == "Yellow Tier":
-                marketlimit += YELLOW_PATREON_SLOT_BONUS
-            elif patreon_status == "Red Tier":
+            elif patreon_status == "Ace Trainer":
                 marketlimit += PATREON_SLOT_BONUS
             current_listings = await pconn.fetchval(
                 "SELECT count(id) FROM market WHERE owner = $1 AND buyer IS NULL",
@@ -123,18 +128,16 @@ class Market(commands.Cog):
             if not await ConfirmView(
                 ctx,
                 (
-                    f"Are you sure you want to list your level {pokelevel} {pokename} to the market for {price} credits?\n"
-                    f"Listing it will require a {deposit} deposit, which you will only get back if it is sold.\n"
-                    f"1% of the listing price, {round(1/100 * price)} credits, will be deducted automatically from your balance after the first week this Pokemon stays in the market.\n"
+                    f"Are you sure you want to list your level {pokelevel} {pokename} to the market for {price} {ctx.bot.misc.get_emote('CREDITS')}?\n"
                 ),
             ).wait():
                 await ctx.send("Cancelling.")
                 return
-            await pconn.execute(
-                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                deposit,
-                ctx.author.id,
-            )
+            # await pconn.execute(
+            #     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+            #     deposit,
+            #     ctx.author.id,
+            # )
             listing_id = await pconn.fetchval(
                 "INSERT INTO market (poke, owner, price) VALUES ($1, $2, $3) RETURNING id",
                 poke_id,
@@ -150,9 +153,9 @@ class Market(commands.Cog):
             f"<:market1:820145226495950898><:market2:820145226357932042>\n{ctx.author.name}(`{ctx.author.id}`) has added a **{pokename}** to market in listing id #{listing_id}\n-----------",
         )
 
-    @m.command()
+    @m.command(aliases=["purchase", "b"])
     @tradelock
-    async def market_buy(self, ctx, listing_id: int):
+    async def buy(self, ctx, listing_id: int):
         """Buy a pokemon currently listed on the market."""
         in_lock = [
             int(id_)
@@ -283,8 +286,8 @@ class Market(commands.Cog):
                 "LREM", "marketlock", "1", str(listing_id)
             )  # As a just in case
 
-    @m.command()
-    async def market_remove(self, ctx, listing_id: int):
+    @m.command(aliases=["r"])
+    async def remove(self, ctx, listing_id: int):
         """Remove a pokemon from the market."""
         in_lock = [
             int(id_)
@@ -325,8 +328,8 @@ class Market(commands.Cog):
             )
         await ctx.send(f"You have removed your {pokename} from the market")
 
-    @m.command()
-    async def market_info(self, ctx, listing_id: int):
+    @m.command(aliases=["i"])
+    async def info(self, ctx, listing_id: int):
         """View the info of a marketed pokemon."""
         async with ctx.bot.db[0].acquire() as pconn:
             details = await pconn.fetchrow(

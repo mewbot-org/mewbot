@@ -317,8 +317,7 @@ class KittyCat(commands.Cog):
     @check_admin()
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def bb(self, ctx):
-        ...
+    async def bb(self, ctx): ...
 
     @check_investigator()
     @bb.command(name="add")
@@ -890,8 +889,7 @@ class KittyCat(commands.Cog):
     @check_admin()
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
-    async def gib(self, ctx):
-        ...
+    async def gib(self, ctx): ...
 
     @check_admin()
     @gib.command()

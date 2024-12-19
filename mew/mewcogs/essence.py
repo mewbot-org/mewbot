@@ -18,8 +18,7 @@ class Essence(commands.Cog):
 
     @check_mod()
     @commands.hybrid_group()
-    async def essence(self, ctx):
-        ...
+    async def essence(self, ctx): ...
 
     # @check_mod()
     @essence.command(name="craft")

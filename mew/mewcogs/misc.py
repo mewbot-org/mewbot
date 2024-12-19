@@ -292,7 +292,7 @@ class Misc(commands.Cog):
         if " " in name:
             name = name.replace(" ", "")
         e = discord.Embed(title="Donate to the Bot Here!", color=0xFFB6C1)
-        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&notify_url=https://api.mewbot.xyz/paypal&business=idkusernames125@gmail.com&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&currency_code=USD&custom={ctx.author.id}"
+        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&notify_url=https://api.mewbot.xyz/paypal&business=vintagedust@live.com&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&currency_code=USD&custom={ctx.author.id}"
 
         payload = {"user_name": ctx.author.name, "user_id": ctx.author.id}
         # donation_url = f"https://mewbot.xyz/donate?{urllib.parse.urlencode(payload)}"

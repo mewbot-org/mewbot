@@ -119,8 +119,7 @@ class HelpCog(commands.Cog):
         await ctx.send(embed=e)
 
     # @help.group()
-    async def game(self, ctx):
-        ...
+    async def game(self, ctx): ...
 
     # @game.command()
     async def corner(self, ctx):
@@ -139,7 +138,7 @@ class HelpCog(commands.Cog):
         )
         e.add_field(
             name="Energy",
-            value="Just like other activities, The Slot machines deplete your Energy!\nYou will get an Energy Bar after every 20 Minutes!",
+            value="Just like other activities, The Slot machines deplete your Energy!\nYou will get 5 Energy Bars after every 30 Minutes!",
         )
         e.add_field(
             name="Cashing Out",

@@ -248,6 +248,7 @@ FORMS = [
     "-deezy",
 ]
 
+
 # https://github.com/Cog-Creators/Red-DiscordBot/blob/febca8ccbb10d4a618a20c5a25df86ca3532acb0/redbot/core/utils/__init__.py#L265
 class AsyncIter:
     """Asynchronous iterator yielding items from ``iterable``

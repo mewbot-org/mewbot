@@ -16,8 +16,7 @@ class Orders(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_group()
-    async def order(self, ctx):
-        ...
+    async def order(self, ctx): ...
 
     @order.command()
     async def ivs(self, ctx):

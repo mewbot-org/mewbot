@@ -83,8 +83,7 @@ class Skins(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_group()
-    async def skin(self, ctx):
-        ...
+    async def skin(self, ctx): ...
 
     @skin.command()
     @discord.app_commands.describe(

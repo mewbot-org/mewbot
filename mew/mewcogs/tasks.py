@@ -17,6 +17,7 @@ class Mother(commands.Cog):
         if self.bot.cluster["id"] == 1:
             self.mother.start()
             self.energy.start()
+            self.npc_energy.start()
             self.berries.start()
 
     @tasks.loop(seconds=10)  # Runs every week
@@ -56,8 +57,12 @@ class Mother(commands.Cog):
             await pconn.execute(
                 "UPDATE users SET energy = energy + 1 WHERE energy < 10"
             )
+
+    @tasks.loop(minutes=30)
+    async def npc_energy(self):
+        async with self.bot.db[0].acquire() as pconn:
             await pconn.execute(
-                "UPDATE users SET npc_energy = npc_energy + 1 WHERE npc_energy < 10"
+                "UPDATE users SET npc_energy = LEAST(npc_energy + 5, 10) WHERE npc_energy < 10;"
             )
 
     @tasks.loop(seconds=300)
@@ -109,6 +114,7 @@ class Mother(commands.Cog):
 
     def cog_unload(self):
         self.energy.cancel()
+        self.npc_energy.cancel()
         self.mother.cancel()
         self.berries.cancel()
 

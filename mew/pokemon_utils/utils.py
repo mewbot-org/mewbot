@@ -230,9 +230,11 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
     pn = pn.capitalize()
     ivs, txt = (
         round(t_ivs / 186 * 100, 2) if not pn.lower() == "egg" else "?",
-        f" | Will hatch in {counter} Messages"
-        if (pn.lower() == "egg" and counter > 0)
-        else "",
+        (
+            f" | Will hatch in {counter} Messages"
+            if (pn.lower() == "egg" and counter > 0)
+            else ""
+        ),
     )
     if pn != "Egg":
         gender = (
@@ -251,9 +253,11 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         price = records["pokeprice"]
         mid = records["mid"]
     embed = discord.Embed(
-        title=f'Market ID# {mid}{emoji}{pn} "{gender}" - Price {price:,.0f}'
-        if info_type and info_type == "market"
-        else f'<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} "{pnick}"',
+        title=(
+            f'Market ID# {mid}{emoji}{pn} "{gender}" - Price {price:,.0f}'
+            if info_type and info_type == "market"
+            else f'<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} "{pnick}"'
+        ),
         color=random.choice(ctx.bot.colors),
     )
     move1, move2, move3, move4 = (
@@ -516,9 +520,11 @@ async def get_pokemon_info(ctx, records, info_type=None):
         price = records["pokeprice"]
         mid = records["mid"]
     embed = discord.Embed(
-        title=f"Market ID# {mid}{emoji}{gender} {pn} - Price {price:,.0f}"
-        if info_type and info_type == "market"
-        else f"<:lvl:1029030189981765673> {plevel} {emoji}{gender} {pn} {pnick} {(':x:' if not tradable else '')}",
+        title=(
+            f"Market ID# {mid}{emoji}{gender} {pn} - Price {price:,.0f}"
+            if info_type and info_type == "market"
+            else f"<:lvl:1029030189981765673> {plevel} {emoji}{gender} {nature} {pn} {pnick} {(':x:' if not tradable else '')}"
+        ),
         color=random.choice(ctx.bot.colors),
     )
 
@@ -531,9 +537,9 @@ async def get_pokemon_info(ctx, records, info_type=None):
     speedev_display = f"{speedev:03d}"
     desc = ""
 
-    happiness_txt = f"**Happiness**: `{happiness}` - {('❌' if not tradable else '')} {('💎' if crystalized else '')}"
-    desc += f"**Ability**: {abilities}\n**Exp**: `{exp}/{expcap}`\n**Nature**: `{nature}` - `+{inc_stat}/-{dec_stat}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n{happiness_txt}\n\n"
-    desc += f"**__Stats__ {blank*2}__Total__{blank*2}<:ivs:1029331472789819442> __|__ <:evs:1029331432792915988>**\n"
+    happiness_txt = f"Happiness: {happiness} - {('❌' if not tradable else '')} {('💎' if crystalized else '')}"
+    desc += f"`+{inc_stat}/-{dec_stat}`\n**Ability**: {abilities}\n**EXP**: `{exp}/{expcap}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n"
+    desc += f"**__Stats__ {blank*2}{blank*2}{blank*2}<:ivs:1029331472789819442> __|__ <:evs:1029331432792915988>**\n"
     desc += f"`HP:       {hp:03d} `{blank}` {hpiv:02d} | {hpev_display}`\n"
     desc += f"`Attack:   {attack:03d} `{blank}` {atkiv:02d} | {atkev_display}`\n"
     desc += f"`Defense:  {defense:03d} `{blank}` {defiv:02d} | {defev_display}`\n"
@@ -575,16 +581,17 @@ async def get_pokemon_info(ctx, records, info_type=None):
     embed.add_field(
         name="__Moves:__", value=f"`{move1}, {move2}, {move3}, {move4}`", inline=False
     )
-    embed.add_field(name="__Held Item:__", value=f"`{hi}`")
     embed.add_field(name="__OT:__", value=f"`{tnick}`")
     if ctx.author.avatar is not None:
         embed.set_thumbnail(url=ctx.author.avatar.url)
     embed.set_image(url=iurl)
     id_count = len(ids)
     embed.set_footer(
-        text=f"Number {pnum}/{id_count} | Global ID#: {_id}{txt}"
-        if not info_type
-        else ""
+        text=(
+            f"No. {pnum}/{id_count} | Global ID#: {_id}{txt} | {happiness_txt} | Holding: {hi}"
+            if not info_type
+            else ""
+        )
     )
     return embed
 

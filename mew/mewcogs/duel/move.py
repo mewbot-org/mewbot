@@ -3595,7 +3595,10 @@ class Move:
                 return ElementType.GROUND
             if attacker.held_item in ("fist-plate", "fighting-memory"):
                 return ElementType.FIGHTING
-            if attacker.held_item in ("flame-plate", "burn-drive", "fire-memory"):
+            if (
+                attacker.held_item in ("flame-plate", "burn-drive", "fire-memory")
+                or "hearthflame" in attacker.name
+            ):
                 return ElementType.FIRE
             if attacker.held_item in ("icicle-plate", "chill-drive", "ice-memory"):
                 return ElementType.ICE
@@ -3611,11 +3614,17 @@ class Move:
                 return ElementType.FAIRY
             if attacker.held_item in ("sky-plate", "flying-memory"):
                 return ElementType.FLYING
-            if attacker.held_item in ("splash-plate", "douse-drive", "water-memory"):
+            if (
+                attacker.held_item in ("splash-plate", "douse-drive", "water-memory")
+                or "wellspring" in attacker.name
+            ):
                 return ElementType.WATER
             if attacker.held_item in ("spooky-plate", "ghost-memory"):
                 return ElementType.GHOST
-            if attacker.held_item in ("stone-plate", "rock-memory"):
+            if (
+                attacker.held_item in ("stone-plate", "rock-memory")
+                or "cornerstone" in attacker.name
+            ):
                 return ElementType.ROCK
             if attacker.held_item in ("toxic-plate", "poison-memory"):
                 return ElementType.POISON

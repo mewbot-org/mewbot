@@ -110,7 +110,18 @@ async def get_moves(ctx, pokemon_name):
         return [t["identifier"] for t in all_moves]
     moves = await ctx.bot.db[1].pokemon_moves.find_one({"pokemon": pokemon_name})
     if moves is None:
-        return None
+        form = await ctx.bot.db[1].forms.find_one({"identifier": pokemon_name})
+        base = await ctx.bot.db[1].forms.find_one(
+            {
+                "base_id": form["base_id"],
+                "form_identifier": "",
+            }
+        )
+        moves = await ctx.bot.db[1].pokemon_moves.find_one(
+            {"pokemon": base["identifier"]}
+        )
+        if not moves:
+            return None
     moves = moves["moves"]
     new_moves = list(set(moves))
     new_moves.sort()

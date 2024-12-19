@@ -100,7 +100,6 @@ class Duel(commands.Cog):
 
     # @commands.Cog.listener()
     async def on_ready(self):
-
         """Starts the matchmaking loop when the bot is ready"""
 
         await self.bot.wait_until_ready()
@@ -1120,18 +1119,13 @@ class Duel(commands.Cog):
             )
 
         # Grant credits & xp
-        creds = random.randint(600, 1000)
+        creds = random.randint(200, 300)
         creds *= min(battle_multi, 50)
-        # Staff benefits instead of Patreon rewards
-        if ctx.author.id in (
-            330111417200017418,  # Kyla
-            366319068476866570,  # Cgrubb
-        ):
-            creds = (creds * 0.50) + creds
+        creds = round(creds)
 
         async with ctx.bot.db[0].acquire() as pconn:
             if won == False:
-                creds = creds * 0.50
+                creds //= 2  # * (.25 if random.random() < .65 else .35))
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
                     creds,
@@ -1221,6 +1215,12 @@ class Duel(commands.Cog):
             badge_data = await pconn.fetchrow(
                 "SELECT * FROM achievements WHERE u_id = $1", ctx.author.id
             )
+            if not badge_data:
+                await pconn.execute(
+                "INSERT INTO achievements (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                )
+                badge_data = {}
             badge_data = dict(badge_data)
 
             # TODO: Decide whether we're doing Badge Levels OR Level 50 Rule
@@ -1322,8 +1322,9 @@ class Duel(commands.Cog):
         winner = await self.wrapped_run(battle)
 
         # Grant credits & xp
-        creds = random.randint(500, 2500)
+        creds = random.randint(200, 400)
         creds *= min(battle_multi, 50)
+        creds = round(creds)  #  * (.25 if random.random() < .65 else .35))
         creds_msg = f"You received **{creds} credits** for winning the duel!\n\n"
         desc = ""
         async with ctx.bot.db[0].acquire() as pconn:

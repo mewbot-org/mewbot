@@ -35,13 +35,13 @@ class ChoicesView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(
-                label="1 - Rare chest - x1",
+                label="1 - Legend chest - x5",
             ),
             discord.SelectOption(
                 label="2 - Battle/shiny multi - x5\nBreed/IV multi - x3",
             ),
             discord.SelectOption(
-                label="3 - Credits - 150,000\nRedeems - x3",
+                label="3 - Redeems - x10",
             ),
         ],
     )
@@ -59,7 +59,7 @@ class ChoicesView(discord.ui.View):
             inventory = dict(inventory)
             if choice == 1:
                 await interaction.client.commondb.add_bag_item(
-                    ctx.author.id, "rare_chest", 1, True
+                    ctx.author.id, "legend_chest", 5, True
                 )
             elif choice == 2:
                 battle_multi = min(50, inventory["battle_multiplier"] + 5)
@@ -77,7 +77,7 @@ class ChoicesView(discord.ui.View):
                 )
             elif choice == 3:
                 await pconn.execute(
-                    "UPDATE users SET redeems = redeems + 3, mewcoins = mewcoins + 150000 WHERE u_id = $1",
+                    "UPDATE users SET redeems = redeems + 10 WHERE u_id = $1",
                     ctx.author.id,
                 )
         await self.msg.edit(
@@ -101,8 +101,7 @@ class Boost(commands.Cog):
         await self.bot.redis_manager.redis.execute("LPUSH", "nitrorace", "123")
 
     @commands.hybrid_group()
-    async def nitro(self, _):
-        ...
+    async def nitro(self, _): ...
 
     @nitro.command()
     async def claim(self, ctx):

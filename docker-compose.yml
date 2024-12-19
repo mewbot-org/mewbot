@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   mewbot-duelapi:
     build: ./duelapi
@@ -11,6 +10,8 @@ services:
       - type: bind
         source: ./shared/duel
         target: /app/res
+
+        
   mewbot-gateway-queue:
     image: twilightrs/gateway-queue:latest
     container_name: mewbot-gateway-queue
@@ -20,6 +21,7 @@ services:
         ipv4_address: 178.28.0.12
     environment:
       - PORT=5000
+
   mewbot-callbacks:
     build: ./callbacks
     container_name: mewbot-callbacks
@@ -34,10 +36,9 @@ services:
       - ./env/mongo.env
       - ./env/postgres.env
       - ./env/voting.env
-    environment:
-      - "MONGO_URL=mongodb://localhost:27017"
     ports:
-      - "15211:15211"
+      - "15210:15210"
+
   mewbot-redis:
     image: redis
     container_name: mewbot-redis
@@ -45,6 +46,7 @@ services:
     networks:
       mewbot_network:
         ipv4_address: 178.28.0.13
+        
   mewbot-memcached:
     image: memcached
     container_name: mewbot-memcached
@@ -52,6 +54,7 @@ services:
     networks:
       mewbot_network:
         ipv4_address: 178.28.0.20
+
   mewbot-database:
     image: postgres
     container_name: mewbot-database
@@ -68,6 +71,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
   mewbot-mongo:
     image: mongo
     container_name: mewbot-mongo
@@ -88,5 +92,3 @@ networks:
     ipam:
       config:
         - subnet: 178.28.0.0/24
-
-

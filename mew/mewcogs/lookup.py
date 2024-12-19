@@ -67,8 +67,7 @@ class Lookup(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_group()
-    async def lookup(self, ctx):
-        ...
+    async def lookup(self, ctx): ...
 
     @lookup.command()
     async def item(self, ctx, item: str):
