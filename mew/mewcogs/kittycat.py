@@ -17,6 +17,7 @@ from mewcore import commondb
 from mewutils.checks import (
     check_admin,
     check_gymauth,
+    check_art_team,
     check_helper,
     check_investigator,
     check_mod,
@@ -998,7 +999,7 @@ class KittyCat(commands.Cog):
         )
         await self.load_bans_cross_cluster()
 
-    @check_admin()
+    @check_art_team()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def chest(

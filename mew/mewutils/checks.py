@@ -15,11 +15,12 @@ class Rank(IntEnum):
     SUPPORT = 1
     GYM = 2
     HELPER = 3
-    MOD = 4
-    GYMAUTH = 5
-    INVESTIGATOR = 6
-    ADMIN = 7
-    DEVELOPER = 8
+    ART_TEAM = 4
+    MOD = 5
+    GYMAUTH = 6
+    INVESTIGATOR = 7
+    ADMIN = 8
+    DEVELOPER = 9
 
 
 # In order to prevent developers from being locked out, this variable holds the user ids of developers.
@@ -52,6 +53,21 @@ def check_admin():
 
     return commands.check(predicate)
 
+def check_art_team():
+    async def predicate(ctx):
+        if ctx.author.id in OWNER_IDS:
+            return True
+        async with ctx.bot.db[0].acquire() as pconn:
+            rank = await pconn.fetchval(
+                "SELECT staff FROM users WHERE u_id = $1", ctx.author.id
+            )
+        if rank is None:
+            return False
+        rank = Rank[rank.upper()]
+        # ONLY allow EXACTLY Art Team (or higher) to use
+        return rank >= Rank.ART_TEAM
+
+    return commands.check(predicate)
 
 def check_investigator():
     async def predicate(ctx):
