@@ -45,9 +45,9 @@ class HealthBar:
         draw = ImageDraw.Draw(base_bar)
 
         font = ImageFont.truetype(
-            str(Path(__file__).parent.parent / "res" / "EightBitDragon-anqx.ttf"), 48
+            str(Path(__file__).parent.parent / "res" / "Exo2-VariableFont_wght.ttf"), 48
         )
         draw.text(
-            (140, 19), f"{current_health}/{max_health}", fill=(0, 0, 0, 255), font=font
+            (140, 5), f"{current_health}/{max_health}", fill=(0, 0, 0, 255), font=font
         )
         return base_bar

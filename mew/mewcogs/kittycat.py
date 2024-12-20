@@ -268,7 +268,7 @@ class KittyCat(commands.Cog):
                 self.id = id
 
         await ctx.send("Syncing Commands...")
-        await ctx.bot.tree.sync()
+        # await ctx.bot.tree.sync()
         await ctx.bot.tree.sync(guild=FSnow(STAFFSERVER))
         await ctx.send("Successfully Synced.")
         await ctx.send(embed=e)

@@ -133,7 +133,7 @@ async def add_spawn(
     if boosted:
         teext += "It was boosted by your IV Multiplier!\n"
     if berry_chance:
-        teext += f"It also dropped a {berry}!\n"
+        teext += f"It also dropped a {berry.replace('_', ' ')}!\n"
     if chest_chance:
         teext += f"It also dropped a Common Chest!\n"
     if credits:

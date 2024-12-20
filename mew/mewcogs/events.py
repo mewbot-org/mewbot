@@ -552,32 +552,16 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Mew",
-            "Ditto",
-            "Absol",
-            "Snivy",
-            "Servine",
-            "Serperior",
-            "Fennekin",
-            "Braixen",
-            "Delphox",
-            "Lotad",
-            "Lombre",
-            "Ludicolo",
-            "Spinda",
-            "Lunatone",
-            "Luvdisc",
-            "Pidove",
-            "Tranquill",
-            "Unfezant",
-            "Comfey",
-            "Buzzwole",
-            "Pineco",
-            "Forretress",
-            "Azurill",
-            "Marill",
-            "Azumarill",
-            "Heracross",
+            "Lopunny",
+            "Bidoof",
+            "Bibarel",
+            "Buneary",
+            "Klefki",
+            "Mimikyu",
+            "Mimikyu-busted",
+            "Raging-bolt",
+            "Flamigo",
+            "Komala"
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -3661,8 +3645,7 @@ class Events(commands.Cog):
         # return
         # await asyncio.sleep(random.randint(30, 45))
         await ChristmasSpawn(
-            self, channel, "Lopunny"
-        ).start()  # random.choice(self.EVENT_POKEMON)).start()
+            self, channel, random.choice(self.EVENT_POKEMON)).start()
 
     async def maybe_spawn_unown(self, channel):
         if not self.UNOWN_MESSAGE:
@@ -3799,7 +3782,7 @@ class Events(commands.Cog):
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
-            if not random.randrange(5) or user.id == 334155028170407949:
+            if not random.randrange(5) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.VALENTINE_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
@@ -3823,6 +3806,11 @@ class Events(commands.Cog):
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
+        if self.CHRISTMAS_DROPS:
+            # if not random.randrange(15) or user.id == 334155028170407949:
+            # await self.give_cheer(channel, user)
+            if not random.randrange(5) or user.id == 455277032625012737:
+                await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
             func: Coroutine = random.choices(
                 (self.give_candy, self.spawn_pumpkin), weights=(0.60, 0.40)
@@ -3844,6 +3832,11 @@ class Events(commands.Cog):
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
+        if self.CHRISTMAS_DROPS:
+            # if not random.randrange(15) or user.id == 334155028170407949:
+            # await self.give_cheer(channel, user)
+            if not random.randrange(5) or user.id == 455277032625012737:
+                await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
             func: Coroutine = random.choices(
                 (self.give_candy, self.spawn_pumpkin), weights=(0.60, 0.40)
@@ -3868,8 +3861,8 @@ class ChristmasSpawn(discord.ui.View):
         self.servercache = []
         self.registered = []
         self.attacked = {}
-        self.max_hp = 100
-        self.hp = 100
+        self.max_hp = random.randint(2, 3)
+        self.hp = self.max_hp
         self.state = "registering"
         self.timeout = 120
         self.message: discord.Message = None
@@ -4051,6 +4044,11 @@ class ChristmasSpawn(discord.ui.View):
         type_ids = (
             await self.cog.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         )["types"]
+        
+        self.max_hp *= (await self.cog.bot.db[1].pokemon_stats.find_one(
+            {"pokemon_id": form_info["pokemon_id"]}
+        ))['stats'][0]
+    
         type_effectiveness = {}
         for te in await self.cog.bot.db[1].type_effectiveness.find({}).to_list(None):
             type_effectiveness[(te["damage_type_id"], te["target_type_id"])] = te[
@@ -4190,7 +4188,7 @@ class ChristmasSpawn(discord.ui.View):
         for move in moves:
             self.add_item(move)
 
-        self.max_hp = self.hp = int(len(self.registered) * self.max_hp * 1.25)
+        self.hp = self.max_hp
         self.embed = discord.Embed(
             title=self.rand_spawn_title(),
             description="Attack it with everything you've got!",
@@ -4232,29 +4230,32 @@ class ChristmasSpawn(discord.ui.View):
                 self.embed.set_thumbnail(url=pokeurl)
             else:
                 self.embed.set_image(url=pokeurl)
-            await self.message.edit(embed=self.embed, view=None)
+            await self.message.edit(embed=self.embed, attachments = [], view=None)
             return
 
         # Remove server from lock
         if self.channel.guild.id != 998128574898896906:
             self.servercache.remove(self.channel.guild.id)
-
+            
+        winners = self.pick_winners()
+        # await self.message.channel.send(winners)
+        # await self.message.channel.send(self.attacked)
         async with self.cog.bot.db[0].acquire() as pconn:
-            winners = self.pick_winners()
-            for winner in winners:
-                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, poke, skin = 'xmas2024')
+            for winner, dmg in winners:
+                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, skin = 'xmas2024')
 
         self.embed = discord.Embed(
             title=self.rand_defeat_message(),
             color=0x0084FD,
         )
         winner_mentions = ", ".join([f"<@{user_id}>" for user_id, _ in winners])
-        self.embed.description += f"🎉 Congratulations to the winners of {self.pokemon_name}:\n{winner_mentions}!\nThank you for participating!"
+        self.embed.description = f"🎉 Congratulations to everyone for conquering the {self.poke} raid!\n{winner_mentions}\n🎉 You've proven your strength and earned the reward!\nTo everyone else, don't worry! More raids are just around the corner—join in and show your power in the next challenge! 🌟"
         if small_images:
             self.embed.set_thumbnail(url=pokeurl)
         else:
             self.embed.set_image(url=pokeurl)
-        await self.message.edit(embed=self.embed, view=None)
+        await self.message.edit(embed=self.embed, attachments = [], view=None)
+        return True
 
 
 class RaidJoin(discord.ui.Button):
@@ -4308,12 +4309,12 @@ class RaidMove(discord.ui.Button):
             )
 
     async def callback(self, interaction):
-        self.view.attacked[interaction.user] = (
-            self.view.attacked.get(interaction.user, 0) + self.damage
+        self.view.attacked[interaction.user.id] = (
+            self.view.attacked.get(interaction.user.id, 0) + self.damage
         )
         self.view.hp -= self.damage
         await interaction.response.send_message(
-            content=f"You used {self.move}. {self.effective}", ephemeral=True, delete_after = 2.00
+            content=f"You used {self.move}. {self.effective}\n{self.view.attacked}", ephemeral=True, delete_after = 2.00
         )
 
 

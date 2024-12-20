@@ -122,16 +122,8 @@ class Redeem(commands.Cog):
     async def redeem(self, ctx): ...
     
     @redeem.command(name="mystery")
-    @check_investigator()
     async def mystery_box(self, ctx):
-        """Redeem a Mystery box! Wonder what's inside??
-
-        Args:
-            ctx (_type_): _description_
-
-        Raises:
-            e: _description_
-        """
+        """Redeem a Mystery box! Wonder what's inside??"""
         async with ctx.bot.db[0].acquire() as pconn:
             try:
                 await pconn.execute("UPDATE users SET redeems = redeems - 50 WHERE u_id = $1", ctx.author.id)
@@ -194,7 +186,7 @@ class Redeem(commands.Cog):
         )
         e.add_field(
             name="Mystery Box | 50 Redeems",
-            value = "`/redeem mystery` | Redeem a Mystery Box containing extremely rare items & Pokemon"
+            value = "`/redeem mystery` | Redeem a Mystery Box containing extremely rare items & Pokemon",
             inline=False
         )
         e.add_field(

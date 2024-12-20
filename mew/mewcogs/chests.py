@@ -181,7 +181,11 @@ class Chests(commands.Cog):
                 ("voucher", 0.005, "An exclusive voucher for rare rewards."),
                 ("credits", 0.18, "Shop credits for purchases."),
 
-                ]
+                ],
+                "image_url": "https://media.discordapp.net/attachments/1301161012656869438/1311618793562181642/75_Sem_Titulo_20241128060443.png?ex=674983b1&is=67483231&hm=d3b658a22f84801763510bcaeee9af11085cc1901eaa1dabd409548419d13292&=&format=webp&quality=lossless&width=88&height=88",
+                "description": "Mystery box! Wonder what's inside??",
+                "emoji": bot.misc.get_emote('REDEEMS'),
+                "color": discord.Color.red(),
 
             }
         }
@@ -398,11 +402,11 @@ class Chests(commands.Cog):
                 ),
             )
             embed.set_footer(text="Keep exploring and collecting chests!")
-            (
+            try:
                 await opening_msg.edit(embed=embed)
-                if index == 0
-                else await ctx.send(embed=embed)
-            )
+            except:
+                await ctx.send(embed=embed)
+                
             await asyncio.sleep(1)
 
     @commands.hybrid_group()
