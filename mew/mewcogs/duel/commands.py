@@ -8,13 +8,8 @@ import time
 import traceback
 import collections
 import pandas as pd
-import joblib
 
-from pymemcache.client import base
-from pymemcache import serde
 from datetime import datetime, timedelta
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction import DictVectorizer
 from mewutils.misc import STAFFSERVER, get_generation, get_badge_emoji
 from mewcogs.achieve import threshold_check
 
@@ -53,19 +48,19 @@ class Duel(commands.Cog):
     async def initialize(self):
         """Preps the redis cache."""
         # This is to make sure the duelcooldowns dict exists before we access in the cog check
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "duelcooldowns", "examplekey", "examplevalue"
         )
         # And then the 50 per day
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "dailyduelcooldowns", "examplekey", "examplevalue"
         )
-        self.duel_reset_time = await self.bot.redis_manager.redis.execute(
+        self.duel_reset_time = await self.bot.redis_manager.redis.execute_command(
             "GET", "duelcooldownreset"
         )
         if self.duel_reset_time is None:
             self.duel_reset_time = datetime.now()
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "SET", "duelcooldownreset", self.duel_reset_time.strftime(DATE_FORMAT)
             )
         else:
@@ -147,7 +142,7 @@ class Duel(commands.Cog):
             return False
         try:
             duel_reset = (
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "HMGET", "duelcooldowns", str(ctx.author.id)
                 )
             )[0]
@@ -162,7 +157,7 @@ class Duel(commands.Cog):
                 cooldown = f"{round(reset_in)}s"
                 await ctx.channel.send(f"Command on cooldown for {cooldown}")
                 return
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "HMSET",
                 "duelcooldowns",
                 str(ctx.author.id),
@@ -177,36 +172,36 @@ class Duel(commands.Cog):
             ctx.bot.logger.exception("Error in check for duel/commands.py", exc_info=e)
         if datetime.now() > (timedelta(seconds=5) + self.duel_reset_time):
             temp_time = (
-                await self.bot.redis_manager.redis.execute("GET", "duelcooldownreset")
+                await self.bot.redis_manager.redis.execute_command("GET", "duelcooldownreset")
             ).decode("utf-8")
             if self.duel_reset_time.strftime(DATE_FORMAT) == temp_time:
                 self.duel_reset_time = datetime.now()
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "SET",
                     "duelcooldownreset",
                     self.duel_reset_time.strftime(DATE_FORMAT),
                 )
-                await self.bot.redis_manager.redis.execute("DEL", "dailyduelcooldowns")
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command("DEL", "dailyduelcooldowns")
+                await self.bot.redis_manager.redis.execute_command(
                     "HSET", "dailyduelcooldowns", str(ctx.author.id), "0"
                 )
                 used = 0
             else:
                 self.duel_reset_time = datetime.strptime(temp_time, DATE_FORMAT)
-                used = await self.bot.redis_manager.redis.execute(
+                used = await self.bot.redis_manager.redis.execute_command(
                     "HGET", "dailyduelcooldowns", str(ctx.author.id)
                 )
                 if used is None:
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "HSET", "dailyduelcooldowns", str(ctx.author.id), "0"
                     )
                     used = 0
         else:
-            used = await self.bot.redis_manager.redis.execute(
+            used = await self.bot.redis_manager.redis.execute_command(
                 "HGET", "dailyduelcooldowns", str(ctx.author.id)
             )
             if used is None:
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "HSET", "dailyduelcooldowns", str(ctx.author.id), "0"
                 )
                 used = 0
@@ -217,7 +212,7 @@ class Duel(commands.Cog):
             await ctx.send("You have hit the maximum number of duels per day!")
             return False
 
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "dailyduelcooldowns", str(ctx.author.id), str(used + 1)
         )
         return True

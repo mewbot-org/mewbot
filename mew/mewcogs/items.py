@@ -75,7 +75,7 @@ class Items(commands.Cog):
 
     async def initialize(self):
         # This is to make sure the dict exists before we access in the cog check
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "energycooldown", "examplekey", "examplevalue"
         )
 
@@ -782,7 +782,7 @@ class Items(commands.Cog):
         """Buy energy refills using this command"""
 
         cooldown = (
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMGET", "energycooldown", str(ctx.author.id)
             )
         )[0]
@@ -826,21 +826,21 @@ class Items(commands.Cog):
 
         patreon = await ctx.bot.patreon_tier(ctx.author.id)
         if ctx.author.id in (455277032625012737, 449401742568849409):
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMSET",
                 "energycooldown",
                 str(ctx.author.id),
                 str(time.time() + 60 * 1.25),
             )
         elif patreon in ("Crystal Tier", "Silver Tier"):
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMSET",
                 "energycooldown",
                 str(ctx.author.id),
                 str(time.time() + 60 * 60 * 4),
             )
         else:
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMSET",
                 "energycooldown",
                 str(ctx.author.id),
@@ -940,7 +940,7 @@ class Items(commands.Cog):
             return
         price = {
             "credits": {"rare": 600000, "mythic": 1250000, "legend": 3000000},
-            "redeems": {"rare": 12, "mythic": 25, "legend": 55},
+            "redeems": {"rare": 10, "mythic": 15, "legend": 25},
         }[cor][ct]
         if not await ConfirmView(
             ctx, f"Are you sure you want to buy a {ct} chest for {price} {cor}?\n"
@@ -1045,10 +1045,316 @@ class Items(commands.Cog):
             f"You have successfully bought a {ct} chest for {price} {cor}!\n"
             f"You can open it with `/open {ct}`."
         )
+    
+    @commands.hybrid_group(name="unlist")
+    async def unlist(self, ctx):
+        """Unlist a listing from the market."""
+        ...
+        
+    @unlist.command(name="redeems")
+    @discord.app_commands.describe(
+        listing_id="Listing ID you would wish to remove.",
+    )
+    async def unlistredeem(self, ctx, listing_id: int):
+        """
+        Remove a listing from the redeem market.
+        """
+        async with ctx.bot.db[0].acquire() as conn:
+            # Fetch listing details
+            listing = await conn.fetchrow(
+                """
+                SELECT quantity, seller_id
+                FROM redeem_market
+                WHERE id = $1 AND seller_id = $2
+                """,
+                listing_id,
+                ctx.author.id,
+            )
 
+            if listing is None:
+                await ctx.send(
+                    "You either don't own this listing or it doesn't exist."
+                )
+                return
+
+            quantity, seller_id = listing
+
+            # Add quantity back to the user's balance
+            await conn.execute(
+                """
+                UPDATE users
+                SET redeems = redeems + $1
+                WHERE u_id = $2
+                """,
+                quantity,
+                seller_id,
+            )
+
+            # Delete the listing from the redeemmarket
+            await conn.execute(
+                """
+                DELETE FROM redeem_market
+                WHERE id = $1
+                """,
+                listing_id,
+            )
+
+        await ctx.send(
+            f"Successfully removed listing #{listing_id} from the market, and {quantity} redeems have been returned to your balance."
+        )
+        await ctx.bot.log(
+            1017198932704637008,
+            f"{ctx.author.name} (`{ctx.author.id}`) removed listing #{listing_id} from the redeem market. {quantity} redeems were returned to their balance.",
+        )
+
+    @commands.hybrid_group(name="list")
+    async def listing(self, ctx):
+        ...
+    
+    @listing.command(name="redeems")
+    @discord.app_commands.describe(
+        quantity="Quantity of redeems you would wish to list.",
+        currency="Choose to get paid either Credits or Gleam Gems",
+        price="Price of this listing."
+    )
+    async def listredeems(self, ctx, quantity: int, currency: Literal["credits", "gleam gems"], price: int):
+        """
+        List a redeem for sale in the market and choose the currency to get paid with.
+        """
+        price = max(price, 1)  # Ensure price is at least 1
+        quantity = max(quantity, 1)  # Ensure quantity is at least 1
+        currency = currency.lower()
+
+        if currency not in ("gleam gems", "credits"):
+            await ctx.send("Currency must be either 'gems' or 'credits'.")
+            return
+        
+        if quantity < 5:
+            await ctx.send("You must list at least 5 redeems.")
+            return
+        currency = 'gems' if 'gems' in currency else currency
+        async with ctx.bot.db[0].acquire() as conn:
+            # Check user's redeems and market limits
+            user_data = await conn.fetchrow(
+                "SELECT redeems, marketlimit, tradelock FROM users WHERE u_id = $1",
+                ctx.author.id,
+            )
+
+            if user_data is None:
+                await ctx.send("You haven't started! Start with `/start`.")
+                return
+
+            redeems, market_limit, trade_ban = user_data
+
+            if trade_ban:
+                await ctx.send("You are not allowed to trade.")
+                return
+
+            # Check if user has enough redeems
+            if not redeems or quantity > redeems:
+                await ctx.send("You don't have enough redeems to list.")
+                return
+
+            # # Check current market listings
+            # current_listings = await conn.fetchval(
+            #     "SELECT COUNT(id) FROM redeemmarket WHERE seller_id = $1 AND buyer_id IS NULL",
+            #     ctx.author.id,
+            # )
+
+            # if current_listings >= market_limit:
+            #     await ctx.send(
+            #         f"You can only list {market_limit} redeems on the market at once.\n"
+            #         f"Consider increasing your limit with upgrades."
+            #     )
+            #     return
+
+            # Ask for confirmation
+            if not await ConfirmView(
+                ctx,
+                (
+                    f"Are you sure you want to list {quantity}{ctx.bot.misc.get_emote('REDEEM')} "
+                    f"on the market for {price} {ctx.bot.misc.get_emote(currency.upper())} each?\n"
+                ),
+            ).wait():
+                await ctx.send("Listing cancelled.")
+                return
+
+            # Lock redeems and insert into the market table
+            await conn.execute(
+                """
+                UPDATE users SET redeems = redeems - $1 WHERE u_id = $2
+                """,
+                quantity,
+                ctx.author.id,
+            )
+
+            listing_id = await conn.fetchval(
+                """
+                INSERT INTO redeem_market (seller_id, quantity, price, currency)
+                VALUES ($1, $2, $3, $4) RETURNING id
+                """,
+                ctx.author.id,
+                quantity,
+                price,
+                currency,
+            )
+
+        await ctx.send(
+            embed=make_embed(title="", description=
+            f"Successfully listed {quantity}{ctx.bot.misc.get_emote('REDEEM')} "
+            f"for {price}{ctx.bot.misc.get_emote(currency.upper())} each! Market listing ID: #{listing_id}."
+        ))
+
+        # Log the market action
+        await ctx.bot.log(
+            1017198932704637008,
+            f"{ctx.author.name} (`{ctx.author.id}`) has listed {quantity}{ctx.bot.misc.get_emote('REDEEM')} "
+            f"for {price}{ctx.bot.misc.get_emote(currency.upper())}. Listing ID: #{listing_id}.",
+        )
+
+    
     @buy.command(name="redeems")
-    async def buy_redeems(self, ctx, amount: int = None):
-        f"""Buy redeems using Credits"""
+    @discord.app_commands.describe(
+        id="Purchase a redeem market listing using it's purchase ID",
+    )
+    async def buy_redeems(self, ctx, id: int = None):
+        """Buy redeems from the redeem market featuring other players!"""
+        if not id:
+            await ctx.bot.get_command("f redeems").__call__(ctx)
+            return
+        else:
+            initial_message = await ctx.send(embed=make_embed(
+                title = "Processing...",
+                description = "Please wait while we process your purchase."
+            ))
+            async with ctx.bot.db[0].acquire() as pconn:
+                if not await pconn.fetchval(
+                    "SELECT exists(SELECT * from users WHERE u_id = $1)", ctx.author.id
+                ):
+                    await ctx.send("You have not started!\nStart with `/start` first.")
+                    return
+                
+                listing = await pconn.fetchrow("SELECT * FROM redeem_market WHERE id = $1 AND buyer_id is NULL", id)
+                
+            if not listing:
+                await ctx.send("That listing does not exist!")
+                return
+            
+            seller = await ctx.bot.fetch_user(listing['seller_id'])
+            qty = listing['quantity']
+            if ctx.author.id == seller.id:
+                await ctx.send("You can't buy your own listing!")
+                return
+            currency = listing['currency']
+                
+                
+            async with ctx.bot.db[0].acquire() as pconn:
+                
+                await pconn.execute(
+                    "INSERT INTO redeemstore VALUES ($1, 0, 0) ON CONFLICT DO NOTHING",
+                    ctx.author.id,
+                )
+                info = await pconn.fetchrow(
+                    "SELECT * FROM redeemstore WHERE u_id = $1", ctx.author.id
+                )
+
+                if not info:
+                    info = {"u_id": ctx.author.id, "bought": 0, "restock": 0}
+                else:
+                    info = {
+                        "u_id": info["u_id"],
+                        "bought": info["bought"],
+                        "restock": int(info["restock"]),
+                    }
+
+                max_redeems = 50
+                restock_time = 86400
+
+                if info["restock"] <= int(time.time() // restock_time):
+                    async with ctx.bot.db[0].acquire() as pconn:
+                        await pconn.execute(
+                            "UPDATE redeemstore SET bought = 0, restock = $1 WHERE u_id = $2",
+                            str(int(time.time() // restock_time) + 1),
+                            ctx.author.id,
+                        )
+                    info = {
+                        "u_id": ctx.author.id,
+                        "bought": 0,
+                        "restock": int(time.time() // restock_time) + 1,
+                    }
+
+            if not qty:
+                if info["restock"] != 0:
+                    desc = f"You have bought {info['bought']} redeems today.\n"
+                    if info["bought"] >= max_redeems:
+                        desc += "You cannot buy any more this week."
+                    else:
+                        desc += "Buy more using `/buy redeems <amount>`!"
+                    embed = discord.Embed(
+                        title="Buy redeems",
+                        description=desc,
+                        color=0xFFB6C1,
+                    )
+                    embed.set_footer(text="Redeems restock everyday at 8pm ET.")
+                else:
+                    embed = discord.Embed(
+                        title="Buy redeems",
+                        description="You haven't bought any redeems yet! Use `/buy redeems <amount>`!",
+                        color=0xFFB6C1,
+                    )
+
+                await ctx.send(embed=embed)
+            else:
+                if info["bought"] + qty > max_redeems:
+                    await ctx.send(
+                        f"You can't buy more than {max_redeems} per day!  You've already bought {info['bought']}."
+                    )
+                    return
+                
+                
+                
+            async with ctx.bot.db[0].acquire() as pconn:
+                
+                match currency:
+                    case "credits":
+                        price = listing['price']
+                        await ctx.bot.commondb.transfer_credits(ctx.author, seller, price)
+                    case "gems":
+                        price = listing['price']
+                        await ctx.bot.commondb.transfer_gems(ctx.author, seller, price)
+                    case _:
+                        await ctx.send("Invalid currency!")
+                        return
+                
+                await ctx.bot.commondb.transfer_redeems(seller, ctx.author, qty, 'market')
+                
+                await pconn.execute("UPDATE redeem_market SET buyer_id = $1 WHERE id = $2 AND buyer_id is NULL", ctx.author.id, id)
+                await initial_message.edit(embed = make_embed (
+                    title = "Purchase Successful!",
+                    description = f"You have successfully bought {qty}{ctx.bot.misc.get_emote('REDEEM')} for {price}{ctx.bot.misc.get_emote(currency.upper())} from {seller.mention}!"
+                ))
+                try:
+                    await seller.send(embed = make_embed (
+                        title = "Sale Successful!",
+                        description = f"You have successfully sold {qty}{ctx.bot.misc.get_emote('REDEEM')} for {price}{ctx.bot.misc.get_emote(currency.upper())} to {ctx.author.mention}!"
+                    ))
+                except:
+                    ...
+                await pconn.execute(
+                    "UPDATE redeemstore SET bought = bought + $1 WHERE u_id = $2",
+                    qty,
+                    ctx.author.id,
+                )
+                if info["restock"] == 0:
+                    await pconn.execute(
+                        "UPDATE redeemstore SET restock = $1 WHERE u_id = $2",
+                        str(int(time.time() // restock_time) + 1),
+                        ctx.author.id,
+                    )
+                await self.bot.get_partial_messageable(998559833873711204).send(
+                f"__**Buy Redeem Command Transaction**__\n\N{SMALL BLUE DIAMOND}- {seller.name} - ``{seller.id}`` has sold Redeems to \n{ctx.author.name} - `{ctx.author.id}`\n```{qty} redeems```\n"
+            )
+        return
         if amount and amount < 1:
             await ctx.send("Nice try...")
             return
@@ -1059,67 +1365,7 @@ class Items(commands.Cog):
                 await ctx.send("You have not started!\nStart with `/start` first.")
                 return
 
-            await pconn.execute(
-                "INSERT INTO redeemstore VALUES ($1, 0, 0) ON CONFLICT DO NOTHING",
-                ctx.author.id,
-            )
-            info = await pconn.fetchrow(
-                "SELECT * FROM redeemstore WHERE u_id = $1", ctx.author.id
-            )
-
-        if not info:
-            info = {"u_id": ctx.author.id, "bought": 0, "restock": 0}
-        else:
-            info = {
-                "u_id": info["u_id"],
-                "bought": info["bought"],
-                "restock": int(info["restock"]),
-            }
-
-        max_redeems = 5
-        restock_time = 604800
-        credits_per_redeem = 60000
-
-        if info["restock"] <= int(time.time() // restock_time):
-            async with ctx.bot.db[0].acquire() as pconn:
-                await pconn.execute(
-                    "UPDATE redeemstore SET bought = 0, restock = $1 WHERE u_id = $2",
-                    str(int(time.time() // restock_time) + 1),
-                    ctx.author.id,
-                )
-            info = {
-                "u_id": ctx.author.id,
-                "bought": 0,
-                "restock": int(time.time() // restock_time) + 1,
-            }
-
-        if not amount:
-            if info["restock"] != 0:
-                desc = f"You have bought {info['bought']} redeems this week.\n"
-                if info["bought"] >= max_redeems:
-                    desc += "You cannot buy any more this week."
-                else:
-                    desc += "Buy more using `/buy redeems <amount>`!"
-                embed = discord.Embed(
-                    title="Buy redeems",
-                    description=desc,
-                    color=0xFFB6C1,
-                )
-                embed.set_footer(text="Redeems restock every Wednesday at 8pm ET.")
-            else:
-                embed = discord.Embed(
-                    title="Buy redeems",
-                    description="You haven't bought any redeems yet! Use `/buy redeems <amount>`!",
-                    color=0xFFB6C1,
-                )
-
-            await ctx.send(embed=embed)
-        else:
-            if info["bought"] + amount > max_redeems:
-                await ctx.send(
-                    f"You can't buy more than {max_redeems} per week!  You've already bought {info['bought']}."
-                )
-                return
+            
 
             async with ctx.bot.db[0].acquire() as pconn:
                 bal = await pconn.fetchval(

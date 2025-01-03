@@ -9,32 +9,34 @@ class Tutorial(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         texts = [
-            [
-                "Mewbot tutorial",
-                """
+            {
+                "title" : "Mewbot tutorial",
+                "description" : """
                 **This tutorial aims to explain the basics of Mewbot.**
                 As a new user, you might be confused by the multitude of commands in Mewbot. This guide serves to explain the most fundamental features of mewbot.
                 **Table of Contents:**
-                    - Page 1 - **Catching Pokemon**
-                    - Page 2 - **Managing your Pokemon**
-                    - Page 3 - **Dueling with your Pokemon**
-                    - Page 4 - **Trading your Pokemon**
-                    - Page 5 - **Breeding your Pokemon**
-                    - Page 6 - **Selling your Pokemon**
-                    - Page 7 - **Filtering your Pokemon**
-                    - Page 8 - **Nicknames and Tags**
-                    - Page 9 - **Manage your inventory**
-                    - Page 10 - **Credits and Redeems**
-                    - Page 11 - **Other miscellaneous activities**
-                    - Page 12 - **Setting up Mewbot in your server**
+                
+                    - Page 1 - **Catching Pokemon**\n
+                    - Page 2 - **Managing your Pokemon**\n
+                    - Page 3 - **Dueling with your Pokemon**\n
+                    - Page 4 - **Trading your Pokemon**\n
+                    - Page 5 - **Breeding your Pokemon**\n
+                    - Page 6 - **Selling your Pokemon**\n
+                    - Page 7 - **Filtering your Pokemon**\n
+                    - Page 8 - **Nicknames and Tags**\n
+                    - Page 9 - **Manage your inventory**\n
+                    - Page 10 - **Credits and Redeems**\n
+                    - Page 11 - **Other miscellaneous activities**\n
+                    - Page 12 - **Setting up Mewbot in your server**\n
                 Those are the basics of MewBot!
                 """,
-            ],
-            [
-                "Catching pokemon",
-                """
-                In Mewbot, to catch a Pokemon, you just have to say it's name after it spawns!
-                **You do not need to use any command or apostrophe (`'`)!**
+                "embed_image": ""
+            },
+            {
+                "title" : "Catching pokemon",
+                "description": """
+                In Mewbot, to catch a Pokemon, you just have to mention it (or ping it) and say it's name after it spawns!
+                **You can also use the `/catch <pokemon_name>` command !**
                 
                 Pokemon spawn as you chat, so keep talking to attract more spawns!
                 Server owners can disable spawns in specific channels with `/spawns disable`, or make all spawns go to specific channels with `/redirect add`.
@@ -43,79 +45,77 @@ class Tutorial(commands.Cog):
                 Redeems are a special currency that allow you get any Pokemon at all, from Ultra Beasts to Dittoes!
                 See page 9, or `/redeem` for more.
                 """,
-            ],
-            [
-                "Managing your Pokemon",
-                """
+                "embed_image": "https://mewbot.xyz/img/catch_img.jpg"
+            },
+            {
+                "title": "Managing your Pokemon",
+                "description": """
                 `/p` - List the Pokemon you own.
                 `/select <Pokemon #>` - Selects the specified Pokemon .
-                - This number can be found using `/p`
+                - This number can be found using `/p`\n
                 `/i [Pokemon #]` - View detailed information about a pokemon. If a pokemon number is not provided, defaults to your selected pokemon.
-                -  Shows your Pokemon's Gender, Name, Level, Ability, Experience, Nature, Type, Egg Group, IVs, EVs, Happiness, Moves, Item, Original Trainer, Number, and Global ID
+                - Detailed information includes: `Gender, Name, Level, Ability, Experience, Nature, Type, Egg Group, IVs, EVs, Happiness, Moves, and more.`\n
                 `/release <Pokemon #>` - Release a pokemon. Released pokemon cannot be reacquired.
-                - You can release multiple Pokemon at once, ex. `/release 1 12 24 48`
-                `/fav add <Pokemon #>` - Mark a pokemon as a favorite to prevent it from being traded or released.
-                `/fav remove <Pokemon #>` - Unmark a pokemon as a favorite.
-                `/buy candy <#>` - Purchase rare candies. Each rare candy increases your Pokemon's level by 1.
-                `/change nature <nature>` - Use a nature capsule to change your Pokemon's nature.
+                - You can release multiple Pokemon at once, ex. `/release 1 12 24 48`\n
+                `/fav add <Pokemon #>` - Mark a pokemon as a favorite to prevent it from being traded or released.\n
+                `/fav remove <Pokemon #>` - Unmark a pokemon as a favorite.\n
+                `/buy candy <#>` - Purchase rare candies. Each rare candy increases your Pokemon's level by 1.\n
+                `/change nature <nature>` - Use a nature capsule to change your Pokemon's nature.\n
                 `/add evs <amount> <stat>` - Add EVs to your selected pokemon.
                 """,
-            ],
-            [
-                "Dueling with your Pokemon",
-                """
+            },
+            {
+                "title": "Dueling with your Pokemon",
+                "description": """
                 You can challenge your friends to a Pokemon battle using the pokemon you have collected on Mewbot!
 
                 **Prepare for a duel**
-                `/moveset` - Show a list of moves your selected Pokemon can learn.
-                `/learn <slot> <move>` - Teaches a move to your selected Pokemon in the slot selected.
+                `/moveset` - Show a list of moves your selected Pokemon can learn.\n
+                `/learn <slot> <move>` - Teaches a move to your selected Pokemon in the slot selected.\n
                 - Pokemon have 4 move slots.
-                `/moves` - Shows your selected Pokemon's configured moves.
-                `/party` - View your Pokemon party. Parties are used for 6v6 duels.
-                `/party add <slot> <Pokemon #>` - Add the specified Pokemon to the slot selected.
-                `/party remove <slot>` - Removes the Pokemon in the party slot selected.
-                `/party register <party name>` - Saves your current party to be loaded again later.
-                `/party list` - Shows all of your saved parties and their names.
-                `/party load <party name>` Load a registered party, overriding your current party.
+                `/moves` - Shows your selected Pokemon's configured moves.\n
+                `/party` - View your Pokemon party. Parties are used for 6v6 duels.\n
+                `/party add <slot> <Pokemon #>` - Add the specified Pokemon to the slot selected.\n
+                `/party remove <slot>` - Removes the Pokemon in the party slot selected.\n
+                `/party register <party name>` - Saves your current party to be loaded again later.\n
+                `/party list` - Shows all of your saved parties and their names.\n
+                `/party load <party name>` Load a registered party, overriding your current party.\n
 
                 **Take part in a duel**
                 `/duel single <@user>` - 1v1 duel another user. This will use your selected pokemon.
                 `/duel party <@user>` - 6v6 duel another user. This will use your party.
                 `/duel npc` - 1v1 duel an NPC with your selected Pokemon. If you defeat them, you will gain some credits as a reward.
                 """,
-            ],
-            [
-                "Trading your Pokemon",
-                """
+            },
+            {
+                "title": "Trading your Pokemon",
+                "description": """
                 `/gift credits <@user> <# credits>` - Gives the mentioned user the specified amount of credits.
                 `/gift pokemon <@user> <Pokemon #>` - Gives the mentioned user the specified Pokemon.
                 If you want to give items to a player, you can give them a Pokemon holding that item.
                 `/trade <@user>` - Sends a trade request to the mentioned user.
-                - The other user player must `;accept` to begin the trade, or `;reject` to deny to trade.
-                - In a trade, the following can be used to modify the trade:
-                `;add c <# credits>` - Adds the specified amount of credits to the trade.
-                `;remove c <# credits>` - Removes the specified amount of credits from the trade.
-                `;add p <Pokemon #>` - Adds the specified Pokemon to the trade.
-                `;remove p <Pokemon #>` - Removes the specified Pokemon from the trade.
-                - You are able add or remove multiple Pokemon in one message, ex. `;add p 1 22 3 44 5`.
-                `;confirm` - Completes the trade when both users confirm.
+                - The other user player must `accept` the trade prompt to begin the trade.
+                - In a trade, the bot will present on-screen buttons which can be used to modify the trade.
+                - You are able add or remove multiple Pokemon in the prompt from the `add pokemon` button.
+                - When both users tap on the `confirm` button, this completes the trade.
 
                 __Redeems can only be traded in the Mewbot Official Server.__
                 __Make sure to check the Pokemon and their # to make sure they are trading the right thing!__
                 """,
-            ],
-            [
-                "Breeding your Pokemon",
-                """
+                "embed_image": "https://i.ibb.co/BgSg7fB/image-2024-12-28-144422316.png"
+            },
+            {
+                "title": "Breeding your Pokemon",
+                "description": """
                 **Requirements For Breeding**
                 **1.** Pokemon must share an egg group.
                 - Use `/i <Pokemon name>` to see what egg group the Pokemon is in.
-                - You can search for your Pokemon based on their egg group and what Pokemon can breed with them
-                `/f p egg-group <egg group>` - Find Pokemon in a specified egg group.
+                - You can search for your Pokemon based on their egg group and what Pokemon can breed with them.\n
+                `/f p egg-group <egg group>` - Find Pokemon in a specified egg group.\n
                 `/breedswith <Pokemon #> [filter args]` - Find Pokemon that can breed with the specified Pokemon.
-                - Supports adding additional filter arguments. See page 7 for more information.
+                - Supports adding additional filter arguments. See page 7 for more information.\n
                 **2.** Pokemon must be deformed before being able to breed
-                - Use `/deform` with a Pokemon selected to deform it.
+                - Use `/deform` with a Pokemon selected to deform it.\n
                 **3.** You need to have an available Daycare Space.
                 - Use `/bal` to see how many Daycare Spaces you have. 
                 - Use `/buy daycare <#>` to buy additional spaces.
@@ -130,26 +130,25 @@ class Tutorial(commands.Cog):
                 `/f p name egg` - View your unhatched eggs.
                 `/sell egg <Pokemon #>` - Sell an unhatched egg.
                 """,
-            ],
-            [
-                "Selling your Pokemon",
-                """
+            },
+            {
+                "title": "Selling your Pokemon",
+                "description": f"""
                 `/m add <Pokemon #> <# credits>` - Lists your Pokemon on the market for the amount specified.
-                - New market listings require a 15% deposit.
-                - Deposit is refunded upon a successful sale. If you cancel your listing, you will lose your deposit.
-                `/buy item market space` - Purchases an additional market space.
-                `/m remove <Market ID>` - Removes your Pokemon from the market.
-                - You will lose your deposit if you remove your pokemon from the market.
-                `/m i <Market ID>` - View the specified marketed Pokemon's stats and price.
-                `/m buy <Market ID>` - Purchase the specified Pokemon from the market.
-                `/f m <filter args>`  - Searches the market for Pokemon.
-                - Supports adding additional filter arguments. See page 7 for more information.
+                - New market listings require you to have at least 15% of the price you want to set in your balance. \n(If you want to enlist a Pokemon of price 200,000 {self.bot.misc.get_emote('MEWCOIN')}, you should have had at least 30,000 {self.bot.misc.get_emote('MEWCOIN')})
+                `/buy item market space` - Purchases an additional market space.\n
+                `/m remove <Market ID>` - Removes your Pokemon from the market.\n
+                `/m i <Market ID>` - View the specified marketed Pokemon's stats and price.\n
+                `/m buy <Market ID>` - Purchase the specified Pokemon from the market.\n
+                `/f m <filter args>`  - Searches the market for Pokemon.\n
+                - Supports adding additional filter arguments. See page 7 for more information.\n
                 `/f m owned` - Views the Pokemon you have listed in the market with the market IDs.
                 """,
-            ],
-            [
-                "Filtering your Pokemon",
-                """
+                "embed_image": "https://i.ibb.co/cggPc5N/image-2024-12-28-144554166.png"
+            },
+            {
+                "title": "Filtering your Pokemon",
+                "description": """
                 `/order <default | ivs | evs | name | level>` - Order your Pokemon according to a set order.
                 `/f p <filter args>` - Filter your owned Pokemon.
                 `/f m <filter args>` - Filter the market listings.
@@ -173,44 +172,38 @@ class Tutorial(commands.Cog):
                 **Market Arguments:**
                 `owned`, `id [direction]`, `price [direction or value]`
                 The `price` argument can be used either to filter or to sort, depending on how it is used: 
-                `price ascending`
-                - Listings, from low price to high price.
-                `price < 10000`
-                - Listings that cost less than 10,000 credits.
+                `price ascending` - Listings, from low price to high price.
+                `price < 10000` - Listings that cost less than 10,000 credits.
 
                 **Arguments can be combined using `&`, `|`, and `!`:**
-                `/f p name pikachu | male`
-                - Filters for any pokemon that are either pikachus or are male.
-                `/f p type fire & type ghost`
-                - Filters for any pokemon that are duel type fire ghost.
-                `/f p !type fire`
-                - Filters for any pokemon that are not a fire type.
-                `/f p male & iv`
-                - Filters for male pokemon, sorted by iv.
-                `/f p egg amorphous & (male | (!evo mimikyu & female))`
-                - Filters for all pokemon in the amorphous egg group, with female pokemon in the mimikyu evolution line excluded.
+                `/f p name pikachu | male` - Filters for any pokemon that are either pikachus or are male.
+                `/f p type fire & type ghost` - Filters for any pokemon that are duel type fire ghost.
+                `/f p !type fire` - Filters for any pokemon that are not a fire type.
+                `/f p male & iv` - Filters for male pokemon, sorted by iv.
+                `/f p egg amorphous & (male | (!evo mimikyu & female))` - Filters for all pokemon in the amorphous egg group, with female pokemon in the mimikyu evolution line excluded.
                 """,
-            ],
-            [
-                "Nicknames and Tags",
-                """
+                "embed_image": "https://i.ibb.co/HgQ7pHS/image-2024-12-28-144216984.png"
+            },
+            {
+                "title": "Nicknames and Tags",
+                "description": """
                 You can add a nickname or tag to your Pokemon to help highlight your favorite Pokemon, or add another level of organization to your collection.
 
-                The Pokemon you want to nickname needs to be selected by using `/select <Pokemon #>`
+                First off, select the Pokemon that needs to be nicknamed - `/select <Pokemon #>`
                 Then you can use `/nick <nickname>` to apply a nickname.
                 You can search for your Pokemon by using `/f p nick <nickname>`
 
                 `/tags add <tag> <Pokemon #s>` - Add a tag to one or more Pokemon.
                 - Tags cannot have a space.
-                - You can add multiple Pokemon at once, ex. `/tags add Kermit 1 22 3 44 5`.
-                `/tags remove <tag> <Pokemon #s>` - Removes a tag from one or more Pokemon.
-                `/tags list <Pokemon #>` - Show what tags a Pokemon has been assigned.
+                - You can add multiple Pokemon at once, ex. `/tags add Kermit 1 22 3 44 5`.\n
+                `/tags remove <tag> <Pokemon #s>` - Removes a tag from one or more Pokemon.\n
+                `/tags list <Pokemon #>` - Show what tags a Pokemon has been assigned.\n
                 `/f p tag <tag>` - Filter pokemon that have been given a certain tag.
                 """,
-            ],
-            [
-                "Manage your inventory",
-                """
+            },
+            {
+                "title": "Manage your inventory",
+                "description": """
                 The shop is an area where you can spend your credits on various items for your Pokemon.
                 `/bag` - Opens up your inventory to show what items you have.
                 `/shop` - Shows what stores are available.
@@ -221,10 +214,10 @@ class Tutorial(commands.Cog):
                 `/unequip` - Removes your Pokemon's held item and returns it to your bag.
                 `/drop` - COMPLETELY DELETES the item held by your selected Pokemon.
                 """,
-            ],
-            [
-                "Credits and Redeems",
-                """
+            },
+            {
+                "title": "Credits and Redeems",
+                "description": """
                 In Mewbot, you have two major currencies, Credits and Redeems.
                 `/profile view` - Shows your Credits, Redeems, EV points, Upvote Points and your Fishing Rod.
                
@@ -255,28 +248,28 @@ class Tutorial(commands.Cog):
                 **1.** Upvoting the bot and claiming rewards
                 - Use `/vote` for links to upvote Mewbot.
                 - Voting gives you upvote points.
-                - Use `/claim` when you have 5 upvote points to get some credits.
-                **2.** Purchasing redeems with credits using `/buy redeems`
-                - You can by 30 redeems per week this way, at 60,000 credits per redeem. (Unavailable)
+                - Use `/claim` when you have 5 upvote points to get some credits.\n
+                **2.** Using the redeem market
+                - `/buy redeems` - You can buy 25 redeems per day from other players using the Redeem market.\n
                 **3.** Opening chests
-                - Chests are found randomly from catching Pokemon or fishing. They can also be bought for credits or redeems.
+                - Chests are found randomly from catching Pokemon or fishing. They can also be bought for credits or redeems.\n
                 **4.** Donating to the bot
                 - Use `/donate` to obtain a link. You can donate via Patreon or Paypal.
-                - Donations through paypal give *1 redeem** and **2000 credits** per $1 USD donated.
+                - Donations through paypal give *3 redeem** and **3000 credits** per $1 USD donated.
                 - Patreon rewards can be claimed monthly using `/predeem`.
                 """,
-            ],
-            [
-                "Other miscellaneous activities",
-                """
+            },
+            {
+                "title": "Other miscellaneous activities",
+                "description": """
                 `/duel npc` - 1v1 duel an NPC with your selected Pokemon. If you defeat them, you will gain some credits as a reward.
                 `/fish` - Guess the water Pokemon's name to catch it.
                 - You will need a fishing rod by purchasing one from the shop using `/shop rods`.
                 """,
-            ],
-            [
-                "Setting up Mewbot in your server",
-                """
+            },
+            {
+                "title": "Setting up Mewbot in your server",
+                "description": """
                 **Note**: Only the owner of the server and users with the `manage_messages` permission can configure Mewbot in a server.
                 `[channel]` Defaults to the channel it is executed in.
 
@@ -306,24 +299,26 @@ class Tutorial(commands.Cog):
                 `/auto pin` - Toggle automatically pinning rare spawns when they are caught.
                 `/silence server` - Silence level up messages across the entire server.
                 """,
-            ],
+            },
         ]
         self.pages = []
-        for help_texts in texts:
+        for text in texts:
             embed = discord.Embed(color=bot.get_random_color())
-            embed.title = help_texts[0]
-            embed.description = help_texts[1]
+            embed.title = text['title']
+            embed.description = text['description']
+            if 'embed_image' in text and text['embed_image']:
+                embed.set_image(url=text['embed_image'])
             self.pages.append(embed)
 
     @commands.hybrid_command()
     async def tutorial(self, ctx):
         """Opens a brief tutorial providing basic information."""
-        await MenuView(ctx, self.pages).start()
+        await MenuView(ctx, self.pages, 360).start()
 
     @commands.hybrid_command()
     async def help(self, ctx):
         """Opens a brief tutorial providing basic information."""
-        await MenuView(ctx, self.pages).start()
+        await MenuView(ctx, self.pages, 360).start()
 
 
 async def setup(bot):

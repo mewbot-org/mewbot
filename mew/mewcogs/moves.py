@@ -133,7 +133,7 @@ class Moves(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command()
-    async def learn(self, ctx, slot: int, move: str):
+    async def learn(self, ctx, slot: int, *, move: str):
         if slot > 4 or slot < 1:
             return
         move = move.replace(" ", "-").lower()

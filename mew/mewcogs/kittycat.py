@@ -589,7 +589,7 @@ class KittyCat(commands.Cog):
             return
         locked = [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "marketlock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -635,7 +635,7 @@ class KittyCat(commands.Cog):
         """Helper function to buy a poke from the market."""
         if listing_id in locked:
             return ("Locked", listing_id)
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "LPUSH", "marketlock", str(listing_id)
         )
         try:
@@ -694,7 +694,7 @@ class KittyCat(commands.Cog):
         except Exception as e:
             return (e, listing_id)
         finally:
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "LREM", "marketlock", "1", str(listing_id)
             )
         return (None, None)
@@ -704,7 +704,7 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def refreshpatreons(self, ctx):
         """MOD: Refresh the patreon tier cache"""
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "SET", "patreonreset", time.time() + (60 * 15)
         )
         data = await ctx.bot._fetch_patreons()
@@ -712,8 +712,8 @@ class KittyCat(commands.Cog):
         result = []
         for k, v in data.items():
             result += [k, v]
-        await ctx.bot.redis_manager.redis.execute("DEL", "patreontier")
-        await ctx.bot.redis_manager.redis.execute("HMSET", "patreontier", *result)
+        await ctx.bot.redis_manager.redis.execute_command("DEL", "patreontier")
+        await ctx.bot.redis_manager.redis.execute_command("HMSET", "patreontier", *result)
         await ctx.send("Refreshed.")
 
     @commands.hybrid_group(name="mewstats")
@@ -1014,7 +1014,7 @@ class KittyCat(commands.Cog):
             "art chest",
             "pat chest",
         ],
-        amount: int,
+        amount: int = 1,
     ):
         """Add a chest"""
         if "pat" in chest and ctx.author.id != 455277032625012737:

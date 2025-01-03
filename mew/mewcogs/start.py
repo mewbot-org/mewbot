@@ -160,7 +160,7 @@ class Start(commands.Cog):
         """Begin your Pokémon journey with MewBot!!!"""
 
         embed = discord.Embed(
-            title="Say the Starter you want!",
+            title="Choose your starter by using the menu below!",
             description="Begin by choosing your starter!",
             color=random.choice(ctx.bot.colors),
         )

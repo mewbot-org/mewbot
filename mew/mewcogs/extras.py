@@ -93,7 +93,7 @@ class Extras(commands.Cog):
 
     async def initialize(self):
         # This is to make sure the dict exists before we access in the cog check
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "resetcooldown", "examplekey", "examplevalue"
         )
 
@@ -657,7 +657,7 @@ class Extras(commands.Cog):
         )
 
         embed.set_footer(
-            text="Need redeems quicker? Get 5 Redeems + 2,000 credits for every USD donated. See `/donate`",
+            text="Need redeems quicker? Get 3 Redeems + 3,000 credits for every USD donated. See `/donate`",
             icon_url="https://mewbot.xyz/eastereggs.png",
         )
 
@@ -1018,7 +1018,7 @@ class Extras(commands.Cog):
     async def resetme(self, ctx):
         """Resets your account & all data - This Cannot be UNDONE!"""
         cooldown = (
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMGET", "resetcooldown", str(ctx.author.id)
             )
         )[0]
@@ -1033,7 +1033,7 @@ class Extras(commands.Cog):
             cooldown = f"{round(reset_in)}s"
             await ctx.send(f"Command on cooldown for {cooldown}")
             return
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "HMSET", "resetcooldown", str(ctx.author.id), str(time.time() + 60 * 60 * 3)
         )
 

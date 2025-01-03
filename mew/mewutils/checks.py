@@ -55,8 +55,6 @@ def check_admin():
 
 def check_art_team():
     async def predicate(ctx):
-        if ctx.author.id in OWNER_IDS:
-            return True
         async with ctx.bot.db[0].acquire() as pconn:
             rank = await pconn.fetchval(
                 "SELECT staff FROM users WHERE u_id = $1", ctx.author.id
@@ -171,7 +169,7 @@ def tradelock(coro_or_command):
     async def wrapped(self, ctx, *args, **kwargs):
         current_traders = [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -214,7 +212,7 @@ def tradelock_with_receiver(coro_or_command):
             )
         current_traders = [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()

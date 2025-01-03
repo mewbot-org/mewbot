@@ -24,8 +24,8 @@ import traceback
 from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
 
-REDEEMS_PER_DOLLAR = 5
-CREDITS_PER_DOLLAR = 2000
+REDEEMS_PER_DOLLAR = 3
+CREDITS_PER_DOLLAR = 3000
 
 app = FastAPI()
 

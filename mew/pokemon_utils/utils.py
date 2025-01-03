@@ -57,6 +57,8 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
     plevel = records["pokelevel"]
     hpiv = records["hpiv"]
     hi = records["hitem"]
+    hi = ctx.bot.misc.get_emote(hi) if ctx.bot.misc.get_emote(hi) else hi
+    
     exp = records["exp"]
     expcap = records["expcap"]
     hpev = records["hpev"]
@@ -263,7 +265,7 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
     move1, move2, move3, move4 = (
         move.capitalize().replace("-", " ") for move in records["moves"]
     )
-    embed.description = f"""**Ability**: `{abilities}` | **Nature**: `{nature}` | **Types**: {tlist}\n**Egg Groups**: {egg_groups}\n`HP`: **{hpiv}** | `Attack`: **{atkiv}** | `Defense`: **{defiv}**\n`SP.A`: **{spatkiv}** | `SP.D`: **{spdefiv}** | `Speed`: **{speediv}**\n__**Total IV%:**__ `{ivs}`\n**__Held item__** : `{hi}{txt}`\n**__Moves__** : `{move1}, {move2}, {move3}, {move4}`"""
+    embed.description = f"""**Ability**: `{abilities}` | **Nature**: `{nature}` | **Types**: {tlist}\n**Egg Groups**: {egg_groups}\n`HP`: **{hpiv}** | `Attack`: **{atkiv}** | `Defense`: **{defiv}**\n`SP.A`: **{spatkiv}** | `SP.D`: **{spdefiv}** | `Speed`: **{speediv}**\n__**Total IV%:**__ `{ivs}`\n**__Held item__** : {hi}\n**__Moves__** : `{move1}, {move2}, {move3}, {move4}`"""
     # embed.set_thumbnail(url=ctx.author.avatar_url)
     # embed.set_image(url=iurl)
     id_count = len(ids)
@@ -303,7 +305,10 @@ async def get_pokemon_info(ctx, records, info_type=None):
     pnick = records["poknick"]
     plevel = records["pokelevel"]
     hpiv = records["hpiv"]
-    hi = records["hitem"].capitalize().replace("-", " ")
+    held_item = records["hitem"].capitalize().replace("-", " ")
+    
+    hi = ctx.bot.misc.get_emote(held_item) if ctx.bot.misc.get_emote(held_item) else held_item
+    
     exp = records["exp"]
     expcap = records["expcap"]
     hpev = records["hpev"]
@@ -538,7 +543,7 @@ async def get_pokemon_info(ctx, records, info_type=None):
     desc = ""
 
     happiness_txt = f"Happiness: {happiness} - {('❌' if not tradable else '')} {('💎' if crystalized else '')}"
-    desc += f"`+{inc_stat}/-{dec_stat}`\n**Ability**: {abilities}\n**EXP**: `{exp}/{expcap}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n"
+    desc += f"`+{inc_stat}/-{dec_stat}`\n**Ability**: {abilities}\n**EXP**: `{exp}/{expcap}`\n**Types**: {tlist}\n**Egg Groups**: {egg_groups}\n**Hidden Power**: `{hidden_power}`\n**Holding**: {hi}`{held_item.replace('_', ' ')}`\n"
     desc += f"**__Stats__ {blank*2}{blank*2}{blank*2}<:ivs:1029331472789819442> __|__ <:evs:1029331432792915988>**\n"
     desc += f"`HP:       {hp:03d} `{blank}` {hpiv:02d} | {hpev_display}`\n"
     desc += f"`Attack:   {attack:03d} `{blank}` {atkiv:02d} | {atkev_display}`\n"
@@ -581,14 +586,15 @@ async def get_pokemon_info(ctx, records, info_type=None):
     embed.add_field(
         name="__Moves:__", value=f"`{move1}, {move2}, {move3}, {move4}`", inline=False
     )
-    embed.add_field(name="__OT:__", value=f"`{tnick}`")
+    # embed.add_field(name="__OT:__", value=f"`{tnick}`")
+    # embed.add_field(name="__Holding:__", value=f"{hi}")
     if ctx.author.avatar is not None:
         embed.set_thumbnail(url=ctx.author.avatar.url)
     embed.set_image(url=iurl)
     id_count = len(ids)
     embed.set_footer(
         text=(
-            f"No. {pnum}/{id_count} | Global ID#: {_id}{txt} | {happiness_txt} | Holding: {hi}"
+            f"No. {pnum}/{id_count} | Global ID#: {_id}{txt} | {happiness_txt} | OT: {tnick}"
             if not info_type
             else ""
         )

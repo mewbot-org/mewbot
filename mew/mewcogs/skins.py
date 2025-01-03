@@ -197,13 +197,16 @@ class Skins(commands.Cog):
         pokemon: str,
         skin: Literal[
             "halloween",
+            "xmas",
             "xmas2022",
             "xmas2023",
+            "xmas2024",
             "valentines2023",
             "easter2023",
             "summer2023",
             "summer2024",
             "halloween2023",
+            "halloween2024",
         ],
     ):
         """Preview a skin on a pokemon."""
@@ -218,6 +221,10 @@ class Skins(commands.Cog):
         skin = skin.lower()
         if skin == "halloween":
             skin = "halloween2024"
+            
+        if skin == "xmas":
+            skin = "xmas2024"
+            
         if skin in BUYABLE_SKINS:
             # This can be removed once shop is redone
             await ctx.send("That skin is not a valid option!")

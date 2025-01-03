@@ -19,22 +19,22 @@ from mewutils.misc import (
 )
 
 IMAGE_URLS = {
-    "xmas/Maleskier": "https://lforebodingl.github.io/Kohaku-Images/trainers/skier_trainer_male.png",
-    "xmas/Femaleskier": "https://lforebodingl.github.io/Kohaku-Images/trainers/skier_trainer_female.png",
-    "xmas/Pyrce": "https://lforebodingl.github.io/Kohaku-Images/trainers/pyrce_trainer.png",
-    "staff/Artsquad": "https://lforebodingl.github.io/Kohaku-Images/trainers/art_squad.png",
-    "halloween/Hexmaniac": "https://lforebodingl.github.io/Kohaku-Images/trainers/hex_maniac_6.png",
-    "summer/Phoebe": "https://lforebodingl.github.io/Kohaku-Images/trainers/phoebe.png",
-    "summer/Brycen": "https://lforebodingl.github.io/Kohaku-Images/trainers/brycen.png",
-    "halloween/Allister": "https://lforebodingl.github.io/Kohaku-Images/trainers/allister.png",
+    "xmas/Maleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_male.png",
+    "xmas/Femaleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_female.png",
+    "xmas/Pyrce": "https://mewbot.xyz/sprites/trainers/pyrce_trainer.png",
+    "staff/Artsquad": "https://mewbot.xyz/sprites/trainers/art_squad.png",
+    "halloween/Hexmaniac": "https://mewbot.xyz/sprites/trainers/hex_maniac_6.png",
+    "summer/Phoebe": "https://mewbot.xyz/sprites/trainers/phoebe.png",
+    "summer/Brycen": "https://mewbot.xyz/sprites/trainers/brycen.png",
+    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png",
     "user/Youngster": "https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png",
-    "breeder/Breeder1": "https://lforebodingl.github.io/Kohaku-Images/trainers/breeder1.png",
-    "breeder/Breeder2": "https://lforebodingl.github.io/Kohaku-Images/trainers/breeder2.png",
-    "summer/Swimmerf": "https://lforebodingl.github.io/Kohaku-Images/trainers/swimmerf.png",
-    "summer/Swimmerm": "https://lforebodingl.github.io/Kohaku-Images/trainers/swimmerm.png",
-    "summer/Cyclist": "https://lforebodingl.github.io/Kohaku-Images/trainers/cyclist.png",
-    "summer/Dancer": "https://lforebodingl.github.io/Kohaku-Images/trainers/dancer.png",
-    "dev/Ghetsis": "https://lforebodingl.github.io/Kohaku-Images/trainers/ghetsis.png",
+    "breeder/Breeder1": "https://mewbot.xyz/sprites/trainers/breeder1.png",
+    "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
+    "summer/Swimmerf": "https://mewbot.xyz/sprites/trainers/swimmerf.png",
+    "summer/Swimmerm": "https://mewbot.xyz/sprites/trainers/swimmerm.png",
+    "summer/Cyclist": "https://mewbot.xyz/sprites/trainers/cyclistf.png",
+    "summer/Dancer": "https://mewbot.xyz/sprites/trainers/dancer.png",
+    "dev/Ghetsis": "https://mewbot.xyz/sprites/trainers/ghetsis.png",
 }
 
 REGIONS = [

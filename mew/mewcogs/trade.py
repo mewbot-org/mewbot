@@ -553,10 +553,10 @@ class TradeMainView(discord.ui.View):
         await self.update_msg()
 
     async def unlock_trade(self):
-        await self.ctx.bot.redis_manager.redis.execute(
+        await self.ctx.bot.redis_manager.redis.execute_command(
             "LREM", "tradelock", "1", str(self.p1)
         )
-        await self.ctx.bot.redis_manager.redis.execute(
+        await self.ctx.bot.redis_manager.redis.execute_command(
             "LREM", "tradelock", "1", str(self.p2)
         )
 
@@ -833,12 +833,12 @@ class Trade(commands.Cog):
         self.start_tradelock = []
 
     async def initialize(self):
-        await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", "123")
+        await self.bot.redis_manager.redis.execute_command("LPUSH", "tradelock", "123")
 
     @commands.hybrid_command()
     async def tradediag(self, ctx):
         """Diagnoses trading"""
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "LREM", "tradelock", "1", str(ctx.author.id)
         )
 
@@ -1128,7 +1128,7 @@ class Trade(commands.Cog):
             return
         current_traders = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute(
+            for id_ in await self.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -1171,13 +1171,13 @@ class Trade(commands.Cog):
                     f"{user.display_name} has not started!\nStart with `/start` first!"
                 )
                 return
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "LPUSH", "tradelock", str(ctx.author.id)
         )
         prefix = "/"
 
         async def _unlock(ctx, msg):
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "tradelock", "1", str(ctx.author.id)
             )
             await msg.edit(
@@ -1193,7 +1193,7 @@ class Trade(commands.Cog):
         )
 
         if not await cview.wait():
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "tradelock", "1", str(ctx.author.id)
             )
             await cview.message.edit(content="Trade Rejected!")
@@ -1204,7 +1204,7 @@ class Trade(commands.Cog):
         )
 
         if user.id in self.start_tradelock:
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "tradelock", "1", str(ctx.author.id)
             )
             await ctx.send(f"{user.name} is currently in a trade!")
@@ -1212,18 +1212,18 @@ class Trade(commands.Cog):
         self.start_tradelock.append(user.id)
         current_traders = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute(
+            for id_ in await self.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
         ]
         if user.id in current_traders:
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "tradelock", "1", str(ctx.author.id)
             )
             await ctx.send(f"{user.name} is currently in a Trade!")
             return
-        await self.bot.redis_manager.redis.execute("LPUSH", "tradelock", str(user.id))
+        await self.bot.redis_manager.redis.execute_command("LPUSH", "tradelock", str(user.id))
         self.start_tradelock.remove(user.id)
         view = TradeMainView(ctx, ctx.author.id, user.id)
         msg = await ctx.send(

@@ -119,16 +119,17 @@ class Redeem(commands.Cog):
         )
 
     @commands.hybrid_group()
-    async def redeem(self, ctx): ...
+    async def redeem(self, ctx):
+        ...
     
     @redeem.command(name="mystery")
-    async def mystery_box(self, ctx):
+    async def redeem_mystery(self, ctx):
         """Redeem a Mystery box! Wonder what's inside??"""
         async with ctx.bot.db[0].acquire() as pconn:
             try:
                 await pconn.execute("UPDATE users SET redeems = redeems - 50 WHERE u_id = $1", ctx.author.id)
             except:
-                await ctx.send(embed=make_embed(title=f"You do not have enough Redeems{ctx.bot.misc.get_emote('REDEEMS')}!\nPurchase from other players or check `/donate`"))
+                await ctx.send(embed=make_embed(title=f"You do not have enough Redeems{ctx.bot.misc.get_emote('REDEEM')}!\nPurchase from other players or check `/donate`"))
                 return
         await Chests(ctx.bot).open_chest(ctx, "mystery", 1)
         

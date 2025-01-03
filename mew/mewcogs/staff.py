@@ -26,7 +26,7 @@ from mewutils.checks import (
 )
 from mewutils.misc import ConfirmView, MenuView, pagify, STAFFSERVER, get_file_name
 import datetime
-import pokebase as pb
+# import pokebase as pb
 
 
 def round_speed(speed):
@@ -282,7 +282,6 @@ class MewBotAdmin(commands.Cog):
 
         await ctx.send("Syncing Commands...")
         await ctx.bot.tree.sync()
-        await ctx.bot.tree.sync(guild=FSnow(STAFFSERVER))
         await ctx.send("Successfully Synced.")
         await ctx.send(embed=e)
 
@@ -374,7 +373,7 @@ class MewBotAdmin(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def detradelock(self, ctx, user_id):
         """Reset the redis market tradelock for a user"""
-        result = await ctx.bot.redis_manager.redis.execute(
+        result = await ctx.bot.redis_manager.redis.execute_command(
             "LREM", "tradelock", "1", user_id
         )
         if result == 0:
@@ -427,7 +426,24 @@ class MewBotAdmin(commands.Cog):
                 "UPDATE users SET tradelock = $1 WHERE u_id = $2", False, id
             )
         await ctx.send(f"Successfully removed trade ban from USER ID - {id}")
-
+        
+    async def upload_app_emoji(self, name, bot : commands.Bot, image_url):
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.head(image_url) as response:
+                    if response.status != 200:
+                        raise ConnectionError
+            except Exception as e:
+                raise e
+            
+        async with aiohttp.ClientSession() as session:
+            async with session.get(image_url) as response:
+                if response.status == 200:
+                    await bot.create_application_emoji(name=name, image=await response.read())
+                    return True
+                else:
+                    raise ConnectionError("Could not open image")
+                
     async def upload_to_disk(self, name, bot, shiny, skin, image_url):
         async with aiohttp.ClientSession() as session:
             try:
@@ -456,7 +472,13 @@ class MewBotAdmin(commands.Cog):
                         return False
                 else:
                     raise ConnectionError("Could not open image")
-
+                
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def upload_emote(self, ctx, name: str, image_url: str):
+        if res := await self.upload_app_emoji(name, ctx.bot, image_url):
+            await ctx.send("Uploaded Image")
+            
     @check_admin()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -533,7 +555,7 @@ class MewBotAdmin(commands.Cog):
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def createpoke(
-        self, ctx, *, pokemon: str, shiny: bool, skin: str, boosted: bool, u_id: str
+        self, ctx, *, pokemon: str, shiny: bool, skin: str, boosted: bool, u_id: str, tradable: bool
     ):
         """Creates a new poke and gives it to the author."""
         extras = ""
@@ -548,7 +570,6 @@ class MewBotAdmin(commands.Cog):
         else:
             u_id = int(u_id)
         pokemon = pokemon.replace(" ", "-").capitalize()
-        tradable = ctx.author.id == 455277032625012737
         pokedata = await ctx.bot.commondb.create_poke(
             ctx.bot,
             u_id,
@@ -1134,7 +1155,7 @@ class MewBotAdmin(commands.Cog):
         patreon_tier = await ctx.bot.patreon_tier(user)
         intrade = user in [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()

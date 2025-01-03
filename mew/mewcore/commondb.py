@@ -383,8 +383,8 @@ class CommonDB:
         )
         ab_ids = [doc["ability_id"] for doc in ab_ids]
 
-        min_iv = 12 if boosted else 1
-        max_iv = 31 if boosted or random.randint(0, 1) else 29
+        min_iv = 15 if boosted else 1
+        max_iv = random.randint(29, 31) if boosted else 29
         hpiv = random.randint(min_iv, max_iv)
         atkiv = random.randint(min_iv, max_iv)
         defiv = random.randint(min_iv, max_iv)
@@ -480,7 +480,55 @@ class CommonDB:
         return Pokemon(
             pokeid, gender, sum((hpiv, atkiv, defiv, spaiv, spdiv, speiv)), emoji
         )
-
+        
+    async def transfer_redeems(self, sender, receiver, amount, market: str = ""):
+        market = market == "market"
+        async with self.bot.db[0].acquire() as pconn:
+            if market:
+                await pconn.execute("UPDATE users SET redeems = redeems + $1 WHERE u_id = $2", amount, receiver.id)
+                return
+            await pconn.execute(
+                "UPDATE users SET redeems = redeems - $1 WHERE u_id = $2",
+                amount,
+                sender.id,
+            )
+            await pconn.execute(
+                "UPDATE users SET redeems = redeems + $1 WHERE u_id = $2",
+                amount,
+                receiver.id,
+            )
+            return True
+    
+    async def transfer_gems(self, sender, receiver, amount):
+        async with self.bot.db[0].acquire() as pconn:
+            await self.remove_bag_item(
+                        sender.id,
+                        "radiant_gem",
+                        amount,
+                        True,
+                    )
+            await self.add_bag_item(
+                        receiver.id,
+                        "radiant_gem",
+                        amount,
+                        True,
+                    )
+            return True
+    
+    async def transfer_credits(self, sender, receiver, amount):
+        async with self.bot.db[0].acquire() as pconn:
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
+                amount,
+                sender.id,
+            )
+            await pconn.execute(
+                "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
+                amount,
+                receiver.id,
+            )
+            return True
+            
     async def add_bag_item(
         self,
         user: int,
@@ -564,12 +612,12 @@ class CommonDB:
 
         async def __aenter__(self):
             for user in self.users:
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "LPUSH", "tradelock", str(user.id)
                 )
 
         async def __aexit__(self, exc_type, exc_value, traceback):
             for user in self.users:
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "LREM", "tradelock", "1", str(user.id)
                 )

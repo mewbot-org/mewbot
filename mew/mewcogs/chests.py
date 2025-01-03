@@ -27,16 +27,14 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = [
-            "Onix",
-            "Cyclizar",
-            "Cryogonal",
-            "Brute-bonnet",
-            "Regieleki",
-            "Calyrex",
-            "Pawmi",
-            "Swinub",
-            "Nacli",
-            "Mareep",
+            "Mew",
+            "Psyduck",
+            "Voltorb",
+            "Spectrier",
+            "Bombirdier",
+            "Veluza",
+            "Grimer",
+            "Grimer-alola"
         ]
 
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
@@ -137,13 +135,13 @@ class Chests(commands.Cog):
                     ("gems", 0.17, "Gleaming gems for top-tier adventures!"),
                     (
                         "credits",
-                        0.17,
+                        0.24998,
                         "Credits to purchase the rarest and most powerful items.",
                     ),
                     (
                         "redeems",
-                        0.1,
-                        "The Premium In-game currency for redeeming anything.",
+                        0.05,
+                        "The Premium In-game currency for redeeming anything.\nThe ultimate currency for redeemable items, rewards and Pokemon!",
                     ),
                     ("boostedgleam", 0.22, "A rare but high-tier Pokemon."),
                     ("boostedshiny", 0.16, "A powerful shiny Pokemon."),
@@ -157,12 +155,7 @@ class Chests(commands.Cog):
                             "Message any staff in Mewbot's Official Server for more information!\n"
                         ),
                     ),
-                    ("shadowstreak", 0.17, "Shadow energy with mysterious properties."),
-                    (
-                        "redeems",
-                        0.00998,
-                        "The ultimate currency for redeemable items, rewards and Pokemon!",
-                    ),
+                    ("shadowstreak", 0.15, "Shadow energy with mysterious properties."),
                 ],
                 "image_url": "https://media.discordapp.net/attachments/1301161012656869438/1311618793562181642/75_Sem_Titulo_20241128060443.png?ex=674983b1&is=67483231&hm=d3b658a22f84801763510bcaeee9af11085cc1901eaa1dabd409548419d13292&=&format=webp&quality=lossless&width=88&height=88",
                 "description": "A legendary chest containing treasures beyond imagination. Are you worthy?",
@@ -172,10 +165,10 @@ class Chests(commands.Cog):
             "MYSTERY": {
                 "rewards": [
                 
-                ("radiant", 0.15, "A special radiant Pokémon with a unique appearance."),
+                ("radiant", 0.015, "A special radiant Pokémon with a unique appearance."),
                 ("shadowstreak", 0.40, "Grants 75 shadow streak to boost shadow Pokémon odds."),
                 ("shadowstreak2", 0.10, "Grants 150 shadow streak to significantly improve shadow Pokémon odds."),
-                ("shadow", 0.02, "An elusive shadow Pokémon."),
+                ("shadow", 0.02, "An exclusive shadow Pokémon."),
                 ("gleam", 0.20, "A rare gleam Pokémon."),
                 ("boostedgleam", 0.08, "A high-IV gleam Pokémon."),
                 ("voucher", 0.005, "An exclusive voucher for rare rewards."),
@@ -184,7 +177,7 @@ class Chests(commands.Cog):
                 ],
                 "image_url": "https://media.discordapp.net/attachments/1301161012656869438/1311618793562181642/75_Sem_Titulo_20241128060443.png?ex=674983b1&is=67483231&hm=d3b658a22f84801763510bcaeee9af11085cc1901eaa1dabd409548419d13292&=&format=webp&quality=lossless&width=88&height=88",
                 "description": "Mystery box! Wonder what's inside??",
-                "emoji": bot.misc.get_emote('REDEEMS'),
+                "emoji": bot.misc.get_emote('REDEEM'),
                 "color": discord.Color.red(),
 
             }
@@ -228,8 +221,9 @@ class Chests(commands.Cog):
         return self.EVENT_ACTIVE[poke]
 
     async def display_chest(self, ctx, chest: str):
+        
         embed = discord.Embed(
-            title="Opening Chest...",
+            title="Opening " + "Mystery Box..." if chest.lower() == "mystery" else "Chest...",
             description="Explore the rewards you can get from each chest!\nLearn more about its rewards!",
             color=discord.Color.orange(),
         )
@@ -275,7 +269,7 @@ class Chests(commands.Cog):
                 )
             )
             if reward.endswith("gleam"):
-                pokemon = random.choice(self.CURRENTLY_ACTIVE)
+                pokemon = random.choice(ctx.bot.misc.ALL_GLEAMS if chest == "mystery" else self.CURRENTLY_ACTIVE)
                 boosted = "boosted" in reward
                 await ctx.bot.commondb.create_poke(
                     ctx.bot,
@@ -299,7 +293,7 @@ class Chests(commands.Cog):
                 reward = "Boosted Radiant" if boosted else reward
 
             elif reward == "shadowstreak":
-                amount = 75 if chest == "MYSTERY" else gem_weight * 5 
+                amount = 75 if chest == "mystery" else gem_weight * 5 
                 async with ctx.bot.db[0].acquire() as pconn:
                     await pconn.execute(
                         "UPDATE users SET chain = chain + $1 WHERE u_id = $2",
@@ -311,8 +305,7 @@ class Chests(commands.Cog):
             elif reward == "shadowstreak2":
                 async with ctx.bot.db[0].acquire() as pconn:
                     await pconn.execute(
-                        "UPDATE users SET chain = chain + 150 WHERE u_id = $2",
-                        amount,
+                        "UPDATE users SET chain = chain + 150 WHERE u_id = $1",
                         ctx.author.id,
                     )
                 reward = "Shadow Streak"
@@ -326,13 +319,9 @@ class Chests(commands.Cog):
                 reward = "Boosted Shiny" if boosted else reward
                 
             elif reward.endswith("shadow"):
-                async with ctx.bot.db[0].acquire() as pconn:
-                    pokemon = await pconn.fetchval(
-                        "UPDATE users SET chain = chain + 5000 WHERE u_id = $1 RETURNING hunt;",
-                        ctx.author.id,
-                    )
+                pokemon = random.choice(LegendList if random.random() < 0.1 else pList)
                 await ctx.bot.commondb.create_poke(
-                    ctx.bot, ctx.author.id, pokemon,
+                    ctx.bot, ctx.author.id, pokemon, skin = 'shadow'
                 )
                 reward = "Shadow Pokemon"
 
@@ -382,7 +371,7 @@ class Chests(commands.Cog):
                 async with ctx.bot.db[0].acquire() as pconn:
                     await pconn.execute(
                         "UPDATE users SET mewcoins = mewcoins + $1 WHERE u_id = $2",
-                        amount,
+                        1500000 if chest == "mystery" else amount,
                         ctx.author.id,
                     )
 
@@ -395,7 +384,7 @@ class Chests(commands.Cog):
                 )
             # Send result as an embed
             embed = discord.Embed(
-                title=f"{ctx.bot.misc.get_emote(chest.upper() + '_CHEST')} {chest.capitalize()} Chest Opened!",
+                title=f"{ctx.bot.misc.get_emote(chest.upper() + '_CHEST')} {chest.capitalize()} Chest Opened!" if not chest == 'mystery' else "Mystery Box Opened Wonder What's Inside??",
                 description=description,
                 color=random.choice(
                     (16711888, 0xFFB6C1, 0xFF69B4, 0xFFC0CB, 0xC71585, 0xDB7093)

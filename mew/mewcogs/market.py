@@ -34,7 +34,7 @@ class Market(commands.Cog):
         self.init_task = asyncio.create_task(self.initialize())
 
     async def initialize(self):
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "LPUSH",
             "marketlock",
             "1231231346546515131351351351315",  # I don't think we'll get to a market listing this high
@@ -128,7 +128,7 @@ class Market(commands.Cog):
             if not await ConfirmView(
                 ctx,
                 (
-                    f"Are you sure you want to list your level {pokelevel} {pokename} to the market for {price} {ctx.bot.misc.get_emote('CREDITS')}?\n"
+                    f"Are you sure you want to list your level {pokelevel} {pokename} to the market for {price} {ctx.bot.misc.get_emote('MEWCOIN')}?\n"
                 ),
             ).wait():
                 await ctx.send("Cancelling.")
@@ -159,7 +159,7 @@ class Market(commands.Cog):
         """Buy a pokemon currently listed on the market."""
         in_lock = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute(
+            for id_ in await self.bot.redis_manager.redis.execute_command(
                 "LRANGE", "marketlock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -169,7 +169,7 @@ class Market(commands.Cog):
                 "Someone is already in the process of buying that pokemon. You can try again later."
             )
             return
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "LPUSH", "marketlock", str(listing_id)
         )
         try:
@@ -180,7 +180,7 @@ class Market(commands.Cog):
                 )
                 if not details:
                     await ctx.send("That listing does not exist.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
@@ -188,13 +188,13 @@ class Market(commands.Cog):
                 # vat_price = self.bot.misc.get_vat_price(price)
                 if owner == ctx.author.id:
                     await ctx.send("You can not buy your own pokemon.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
                 if buyer is not None:
                     await ctx.send("That listing has already ended.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
@@ -203,7 +203,7 @@ class Market(commands.Cog):
                 )
             if not details:
                 await ctx.send("That pokemon does not exist?")
-                await self.bot.redis_manager.redis.execute(
+                await self.bot.redis_manager.redis.execute_command(
                     "LREM", "marketlock", "1", str(listing_id)
                 )
                 raise ValueError(
@@ -224,20 +224,20 @@ class Market(commands.Cog):
                 )
                 if data is None:
                     await ctx.send("You have not started!\nStart with `/start` first.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
                 credits, tradeban = data
                 if tradeban:
                     await ctx.send("You are not allowed to trade.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
                 if price > credits:
                     await ctx.send("You don't have enough credits to buy that pokemon.")
-                    await self.bot.redis_manager.redis.execute(
+                    await self.bot.redis_manager.redis.execute_command(
                         "LREM", "marketlock", "1", str(listing_id)
                     )
                     return
@@ -282,7 +282,7 @@ class Market(commands.Cog):
         except Exception:
             raise
         finally:
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "marketlock", "1", str(listing_id)
             )  # As a just in case
 
@@ -291,7 +291,7 @@ class Market(commands.Cog):
         """Remove a pokemon from the market."""
         in_lock = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute(
+            for id_ in await self.bot.redis_manager.redis.execute_command(
                 "LRANGE", "marketlock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()

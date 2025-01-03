@@ -4,7 +4,7 @@ import asyncpg
 from discord.ext import commands
 import textwrap
 from datetime import datetime, timedelta
-
+from typing import Literal
 
 from mewutils.misc import get_emoji, pagify, MenuView, AsyncIter
 from mewcogs.pokemon_list import *
@@ -92,7 +92,56 @@ class Filter(commands.Cog):
     async def f(self, ctx):
         """Use this command to Filter Pokémon! See /f p .shiny."""
         ...
-
+    
+    @f.command(name="redeems", aliases=['r'])
+    async def redeem(self, ctx, recent : bool = False, *, currency: Literal['Gems', 'Mewcoins'] = ''):
+        """View current sales on the Global Redeem Market."""
+        async with ctx.bot.db[0].acquire() as pconn:
+            filters = ""
+            match currency:
+                case 'Gems':
+                    filters += " WHERE lower(currency) = 'gems' "
+                case 'Mewcoins':
+                    filters += " WHERE lower(currency) = 'mewcoins' "
+            
+            if recent:
+                filters += " ORDER by ID desc"
+                
+            details = await pconn.fetch(
+                    f"""SELECT * FROM redeem_market WHERE buyer_id IS NULL"""
+                )
+            random.shuffle(details)
+            currencies = [record["currency"] for record in details]
+            amounts = [t["quantity"] for t in details]
+            prices = [record["price"] for record in details]
+            names = [await pconn.fetchval("SELECT tnick FROM users WHERE u_id = $1", record['seller_id']) for record in details]
+            ids = [record["id"] for record in details]
+            embed = discord.Embed(
+                title="Make a purchase using `/buy redeem <id>`",
+                color=0xFFB6C1,
+            )
+            desc = ""
+            true_idx = 1
+            for idx, id in enumerate(ids):
+                price = prices[idx]
+                currency = currencies[idx]
+                amount = amounts[idx]
+                if names[idx] is not None:
+                    name = f"{names[idx]}"
+                else:
+                    name = f"Unknown user"
+                # desc += f"__{true_idx}__. `Points` : **{exp}** - `{name}`\n"
+                desc += (
+                    f"__`ID: {id:05}`__ | "
+                    f"Qty. {ctx.bot.misc.get_emote('redeem')}"
+                    f"**`{amount:03}`** "
+                    f" | Costs {price}"
+                    f"{ctx.bot.misc.get_emote(currency.upper())}"
+                    f" | Seller: {name}\n"
+                )
+            pages = pagify(desc, base_embed=embed)
+            await MenuView(ctx, pages).start()
+    
     @f.command(name="market", aliases=["m"])
     async def m(self, ctx, args="male | !male"):
         """Filter Pokémon on the Global Market."""

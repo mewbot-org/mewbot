@@ -3510,8 +3510,13 @@ class DuelPokemon:
                 "-hangry",
             ]
         ):
-            name = pn.lower().split("-")[0]
-            pid = (await find_one(ctx, "forms", {"identifier": name}))["pokemon_id"]
+            form_info = (await find_one(ctx, "forms", {"identifier": pn.lower()}))
+            
+            if not form_info:
+                form_info = (await find_one(ctx, "forms", {"identifier": pn.lower().split('-')[0]}))
+            
+            pid = form_info["pokemon_id"]
+            
         else:
             pid = form_info["pokemon_id"]
 

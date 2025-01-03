@@ -25,7 +25,7 @@ class ChoicesView(discord.ui.View):
         await self.msg.edit(
             content="You took too long to pick a nitro reward.", embed=None, view=None
         )
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "LREM", "nitrorace", "1", str(ctx.author.id)
         )
 
@@ -86,7 +86,7 @@ class ChoicesView(discord.ui.View):
             ),
             view=None,
         )
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "LREM", "nitrorace", "1", str(ctx.author.id)
         )
         self.stop()
@@ -98,7 +98,7 @@ class Boost(commands.Cog):
         self.init_task = asyncio.create_task(self.initialize())
 
     async def initialize(self):
-        await self.bot.redis_manager.redis.execute("LPUSH", "nitrorace", "123")
+        await self.bot.redis_manager.redis.execute_command("LPUSH", "nitrorace", "123")
 
     @commands.hybrid_group()
     async def nitro(self, _): ...
@@ -121,7 +121,7 @@ class Boost(commands.Cog):
 
         in_process = [
             int(id_)
-            for id_ in await self.bot.redis_manager.redis.execute(
+            for id_ in await self.bot.redis_manager.redis.execute_command(
                 "LRANGE", "nitrorace", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -137,7 +137,7 @@ class Boost(commands.Cog):
             )
             return
 
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "LPUSH", "nitrorace", str(ctx.author.id)
         )
 
@@ -148,7 +148,7 @@ class Boost(commands.Cog):
 
         if u_id is None:
             await ctx.send(f"You have not Started!\nStart with `/start` first!")
-            await self.bot.redis_manager.redis.execute(
+            await self.bot.redis_manager.redis.execute_command(
                 "LREM", "nitrorace", "1", str(ctx.author.id)
             )
             return

@@ -615,7 +615,7 @@ class Pokemon(commands.Cog):
     #             result += await self.get_kids(raw, poke["id"], f"{prefix}│ ")
     #     return result
 
-    @commands.hybrid_command(name="i")
+    @commands.hybrid_command(name="i", aliases=['info', 'view'])
     @discord.app_commands.describe(
         pokemon="Can be <pokemon_number> | <pokemon_name> or 'new', 'latest' for most recent Pokémon or blank for currently selected Pokémon."
     )

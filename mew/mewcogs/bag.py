@@ -131,7 +131,7 @@ class DropdownSelect(discord.ui.Select):
             desc = ""
             count = 1
             for idx, item in enumerate(items):
-                emoji = get_trade_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 amount = self.bag_data_dict[item]
                 # So on each of these items essentially page break
                 if count in [7, 14, 21]:
@@ -268,7 +268,7 @@ class DropdownSelect(discord.ui.Select):
             desc = ""
             count = 1
             for idx, item in enumerate(items):
-                emoji = get_form_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 amount = self.bag_data_dict[item]
                 if count in [7, 14, 21]:
                     desc += f"{emoji} **{item.title().replace('_', ' ')}**\n`Amount`: {amount:,}\n\n"
@@ -290,7 +290,7 @@ class DropdownSelect(discord.ui.Select):
             desc = ""
             count = 1
             for idx, item in enumerate(items):
-                emoji = get_battle_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 amount = self.bag_data_dict[item]
                 if count in [7, 14, 21, 28, 35, 42, 49, 56, 63, 70]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`Amount`: {amount:,}\n\n"

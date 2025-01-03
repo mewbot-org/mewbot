@@ -20,6 +20,7 @@ from dataclasses import dataclass
 ORANGE = 0xF4831B
 RED_GREEN = [0xBB2528, 0x146B3A]
 XMAS_ROLE = 1184182751067377674
+RAIDS_CHANNEL = 1274044986349846641
 
 GLEAM_POKEMON = [
     "Cutiefly",
@@ -558,10 +559,13 @@ class Events(commands.Cog):
             "Buneary",
             "Klefki",
             "Mimikyu",
-            "Mimikyu-busted",
             "Raging-bolt",
             "Flamigo",
-            "Komala"
+            "Komala",
+            "Mew",
+            "Corviknight",
+            "Rookidee",
+            "Corvisquire"
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -1969,10 +1973,10 @@ class Events(commands.Cog):
         embed.set_footer(text="Join Mewbot's Official Server for all event updates!")
         await ctx.send(embed=embed)
 
-    @halloween.group(name="pumpkin")
+    # @halloween.group(name="pumpkin")
     async def pumpkin(self, ctx): ...
 
-    @pumpkin.command(name="pop")
+    # @pumpkin.command(name="pop")
     async def pumpkin_pop(self, ctx):
         """Open a mysterious pumpkin and receive a reward... or a trick!"""
 
@@ -3644,6 +3648,8 @@ class Events(commands.Cog):
         # if honey != "cheer":
         # return
         # await asyncio.sleep(random.randint(30, 45))
+        if channel.guild == self.bot.official_server:
+            channel = await self.bot.fetch_channel(RAIDS_CHANNEL) # Redirect to RAIDS
         await ChristmasSpawn(
             self, channel, random.choice(self.EVENT_POKEMON)).start()
 
@@ -3782,7 +3788,7 @@ class Events(commands.Cog):
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
-            if not random.randrange(5) or user.id == 455277032625012737:
+            if not random.randrange(3) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.VALENTINE_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
@@ -3809,7 +3815,7 @@ class Events(commands.Cog):
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
-            if not random.randrange(5) or user.id == 455277032625012737:
+            if not random.randrange(3) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
             func: Coroutine = random.choices(
@@ -3835,7 +3841,7 @@ class Events(commands.Cog):
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
-            if not random.randrange(5) or user.id == 455277032625012737:
+            if not random.randrange(3) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
             func: Coroutine = random.choices(
@@ -3861,9 +3867,10 @@ class ChristmasSpawn(discord.ui.View):
         self.servercache = []
         self.registered = []
         self.attacked = {}
-        self.max_hp = random.randint(2, 3)
+        self.max_hp = 0
         self.hp = self.max_hp
         self.state = "registering"
+        self.pokeurl = ""
         self.timeout = 120
         self.message: discord.Message = None
         self.DUELAPI_URL = "http://178.28.0.11:5864/healthbar"
@@ -3954,22 +3961,60 @@ class ChristmasSpawn(discord.ui.View):
     
     def pick_winners(self):
         # Separate participants into high and low damage tiers
-        sorted_participants = sorted(
-            self.attacked.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_participants = sorted(self.attacked.items(), key=lambda x: x[1], reverse=True)
         half_count = max(1, len(sorted_participants) // 2)
 
         # Randomly pick from the top 75% damage dealers
         top_damage_dealers = sorted_participants[: int(len(sorted_participants) * 0.75)]
         low_damage_dealers = sorted_participants[int(len(sorted_participants) * 0.75):]
 
+        # Ensure at least one winner
+        if not top_damage_dealers and not low_damage_dealers:
+            return [random.choice(sorted_participants)]  # Pick a random winner if the list is empty
+        
         # Select winners
         top_picks = random.sample(top_damage_dealers, min(len(top_damage_dealers), half_count - len(low_damage_dealers)))
         low_picks = random.sample(low_damage_dealers, min(len(low_damage_dealers), len(top_damage_dealers) // 4))
 
+        # If there are no low picks, just pick a random low damage dealer for variety
+        if not top_picks and top_damage_dealers:
+            top_picks = [random.choice(top_damage_dealers)]
+            
+        if not low_picks and not top_picks and low_damage_dealers:
+            low_picks = [random.choice(low_damage_dealers)]
+
         winners = top_picks + low_picks
         random.shuffle(winners)  # Shuffle to make it more fun!
+
+        # Ensure that at least one winner is picked if no one was selected from top_picks and low_picks
+        if not winners:
+            winners.append(random.choice(sorted_participants))
+
         return winners
+    
+    async def calculate_diminishing_gems(self, amount_of_gems):
+        # Normalize the amount_of_gems to a diminishing scale
+        base = 10  # Minimum value
+        max_value = 25  # Maximum value
+        
+        # Diminishing factor to scale the gems to the range [10, 25]
+        scaled_value = base + (max_value - base) * (1 - 1 / (1 + 0.01 * amount_of_gems))
+        
+        # Randomize the final output within a small range of the scaled value
+        return random.randint(int(max(base, scaled_value - 2)), int(min(max_value, scaled_value + 2)))
+
+    async def on_timeout(self):
+        self.embed = discord.Embed(
+            title="The Pokémon slipped and got away!🧟👻",
+            description="Catch more Pokémon to spawn another one.",
+            color=0x0084FD,
+        )
+        # hp = max(self.max_hp - sum(self.attacked.values()), 0)
+        # self.embed.add_field(name="Status", value=f"HP = {hp}/{self.max_hp}")
+        self.embed.set_thumbnail(url=self.pokeurl)
+        await self.message.edit(embed=self.embed, attachments = [], view=None)
+        self.stop()
+        return
 
     async def start(self):
         # This should stop from more than one raid appearing
@@ -3981,7 +4026,7 @@ class ChristmasSpawn(discord.ui.View):
                 self.servercache.append(self.channel.guild.id)
 
         extra_msg = ""
-        pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
+        self.pokeurl = pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
             self.poke, self.cog.bot, skin="xmas2024"
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
@@ -4045,9 +4090,13 @@ class ChristmasSpawn(discord.ui.View):
             await self.cog.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
         )["types"]
         
+        # Set the HP
+        self.max_hp = len(self.registered)
         self.max_hp *= (await self.cog.bot.db[1].pokemon_stats.find_one(
             {"pokemon_id": form_info["pokemon_id"]}
         ))['stats'][0]
+        self.max_hp //= 1.5
+        self.hp = self.max_hp = int(self.max_hp)
     
         type_effectiveness = {}
         for te in await self.cog.bot.db[1].type_effectiveness.find({}).to_list(None):
@@ -4188,7 +4237,6 @@ class ChristmasSpawn(discord.ui.View):
         for move in moves:
             self.add_item(move)
 
-        self.hp = self.max_hp
         self.embed = discord.Embed(
             title=self.rand_spawn_title(),
             description="Attack it with everything you've got!",
@@ -4207,18 +4255,17 @@ class ChristmasSpawn(discord.ui.View):
             embed=self.embed, attachments=[await self.stream_image()], view=self
         )
 
-        while self.hp > 0:
-            await asyncio.sleep(3)
+        while self.hp > 0 and not self.is_finished():
             # hp = max(self.max_hp - sum(self.attacked.values()), 0)
             # self.embed.clear_fields()
             # self.embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")/
             self.embed.set_image(url="attachment://event.png")
             await self.message.edit(embed=self.embed, attachments=[await self.stream_image()], view=self)
-            await asyncio.sleep(3)
+            await asyncio.sleep(12)
 
         self.state = "ended"
         # hp = max(self.max_hp - sum(self.attacked.values()), 0)
-        if self.hp > 0:
+        if self.hp > 0 or self.is_finished():
             self.embed = discord.Embed(
                 title="The Pokémon slipped and got away!🧟👻",
                 description="Catch more Pokémon to spawn another one.",
@@ -4236,20 +4283,32 @@ class ChristmasSpawn(discord.ui.View):
         # Remove server from lock
         if self.channel.guild.id != 998128574898896906:
             self.servercache.remove(self.channel.guild.id)
+        
+        
             
         winners = self.pick_winners()
-        # await self.message.channel.send(winners)
-        # await self.message.channel.send(self.attacked)
+        
         async with self.cog.bot.db[0].acquire() as pconn:
+            if self.channel.guild.id == 998128574898896906:
+                for user in self.registered:
+                    amount_of_gems = self.max_hp // len(self.attacked)
+                    amount_of_gems = await self.calculate_diminishing_gems(amount_of_gems) if amount_of_gems > 10 else amount_of_gems
+
+                    await self.cog.bot.commondb.add_bag_item(
+                        user.id,
+                        "radiant_gem",
+                        amount_of_gems,
+                        True,
+                    )
             for winner, dmg in winners:
-                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, skin = 'xmas2024')
+                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, boosted = bool(random.randint(0, 3)), skin = 'xmas2024')
 
         self.embed = discord.Embed(
             title=self.rand_defeat_message(),
             color=0x0084FD,
         )
         winner_mentions = ", ".join([f"<@{user_id}>" for user_id, _ in winners])
-        self.embed.description = f"🎉 Congratulations to everyone for conquering the {self.poke} raid!\n{winner_mentions}\n🎉 You've proven your strength and earned the reward!\nTo everyone else, don't worry! More raids are just around the corner—join in and show your power in the next challenge! 🌟"
+        self.embed.description = f"🎉 Congratulations to everyone for conquering the {self.poke} raid!\n{winner_mentions}\n🎉 You've proven your strength and earned the Raid boss and gleam gem rewards!\nTo everyone else, don't worry! More raids are just around the corner—join in and show your power in the next challenge! 🌟"
         if small_images:
             self.embed.set_thumbnail(url=pokeurl)
         else:
@@ -4288,7 +4347,7 @@ class RaidMove(discord.ui.Button):
 
             #     f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
             # )
-            self.effective = "It's Super Effective! You will get 10 :candy: if the Pokemon is defeated."
+            self.effective = f"It's Super Effective!\n{self.random_motivational_phrase()}"
 
         elif damage == 1:
             # "It's not very effective... You will get a Small Present if the poke is defeated."
@@ -4296,7 +4355,7 @@ class RaidMove(discord.ui.Button):
             # self.effective = (
             #     f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
             # )
-            self.effective = "It's not Very Effective... You will get 5 :candy: if the Pokemon is defeated."
+            self.effective = f"It's not Very Effective...\n{self.random_motivational_phrase()}"
 
         else:
             # "It had no effect... You will only get Snowflakes if the poke is defeated."
@@ -4305,8 +4364,23 @@ class RaidMove(discord.ui.Button):
             #     f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
             # )
             self.effective = (
-                "It had No Effect... You will get a :candy: if the Pokemon is defeated."
+                f"It had No Effect...\n{self.random_motivational_phrase()}"
             )
+            
+    def random_motivational_phrase(self):
+        phrases = [
+            "Keep attacking!",
+            "You're doing great, keep it up!",
+            "Stay strong, you're almost there!",
+            "Don't give up, defeat is close!",
+            "Keep fighting, the win is near!",
+            "You're crushing it, keep going!",
+            "Attack with all you've got!",
+            "Victory is within reach, keep pushing!",
+            "Keep up the pressure, you're winning!",
+            "The battle is yours, just a bit more!"
+        ]
+        return random.choice(phrases)
 
     async def callback(self, interaction):
         self.view.attacked[interaction.user.id] = (
@@ -4314,7 +4388,7 @@ class RaidMove(discord.ui.Button):
         )
         self.view.hp -= self.damage
         await interaction.response.send_message(
-            content=f"You used {self.move}. {self.effective}\n{self.view.attacked}", ephemeral=True, delete_after = 2.00
+            content=f"You used {self.move}. {self.effective}", ephemeral=True, delete_after = 2.00
         )
 
 

@@ -13,7 +13,7 @@ import json
 import os
 import traceback
 from collections import defaultdict
-import aioredis
+from redis import asyncio as aioredis
 import discord
 import asyncpg
 import aiohttp
@@ -178,7 +178,7 @@ class Mew(commands.AutoShardedBot):
                 await asyncio.sleep(5)
 
     async def log_cluster_action(self, data):
-        await self.redis_manager.redis.execute(
+        await self.redis_manager.redis.execute_command(
             "PUBLISH",
             os.environ["MEWLD_CHANNEL"],
             json.dumps({"scope": "launcher", "action": "action_logs", "data": data}),
@@ -222,7 +222,7 @@ class Mew(commands.AutoShardedBot):
             "action": "launch_next",
             "args": {"id": self.cluster["id"], "pid": os.getpid()},
         }
-        await self.db[2].execute(
+        await self.db[2].execute_command(
             "PUBLISH", os.environ["MEWLD_CHANNEL"], json.dumps(payload)
         )
         if self.initial_launch:
@@ -235,6 +235,8 @@ class Mew(commands.AutoShardedBot):
             except discord.HTTPException:
                 pass
         self.initial_launch = False
+        
+        await self.misc.refresh_app_emotes()
 
     async def check(self, ctx):
         # TODO
@@ -317,9 +319,10 @@ class Mew(commands.AutoShardedBot):
         self.db[0] = await asyncpg.create_pool(
             DATABASE_URL, min_size=2, max_size=5, command_timeout=10, init=self.init_pg
         )
-        self.db[2] = await aioredis.create_pool(
-            "redis://178.28.0.13", minsize=10, maxsize=20
+        pool = aioredis.ConnectionPool(max_connections=10, socket_timeout=5).from_url(
+            "redis://178.28.0.13"
         )
+        self.db[2] = aioredis.Redis.from_pool(pool) 
         # self.oxidb = await asyncpg.create_pool(
         #    OXI_DATABASE_URL, min_size=2, max_size=10, command_timeout=10, init=self.init
         # )
@@ -376,9 +379,9 @@ class Mew(commands.AutoShardedBot):
         """
         if user_id in (560502517012627497, 560502517012627497):  ## VK
             return "Crystal Tier"
-        expired = await self.redis_manager.redis.execute("GET", "patreonreset")
+        expired = await self.redis_manager.redis.execute_command("GET", "patreonreset")
         if expired is None or time.time() > float(expired):
-            await self.redis_manager.redis.execute(
+            await self.redis_manager.redis.execute_command(
                 "SET", "patreonreset", time.time() + (60 * 15)
             )
             try:
@@ -389,9 +392,9 @@ class Mew(commands.AutoShardedBot):
             result = []
             for k, v in data.items():
                 result += [k, v]
-            await self.redis_manager.redis.execute("DEL", "patreontier")
-            await self.redis_manager.redis.execute("HMSET", "patreontier", *result)
-        tier = await self.redis_manager.redis.execute("HGET", "patreontier", user_id)
+            await self.redis_manager.redis.execute_command("DEL", "patreontier")
+            await self.redis_manager.redis.execute_command("HMSET", "patreontier", *result)
+        tier = await self.redis_manager.redis.execute_command("HGET", "patreontier", user_id)
         # Don't return a string None
         if tier is None:
             return None
@@ -546,12 +549,6 @@ class Mew(commands.AutoShardedBot):
         cursor = self.mongo_pokemon_db.guilds.find()
         async for document in cursor:
             self.guild_settings[document.pop("id")] = document
-
-    async def pubsub_request(self, target_shard="all", **kwargs):
-        if self.db[2]:
-            request = {"target_shard": target_shard}
-            request.update(kwargs)
-            await self.db[2].publish(self.pubsub_id, ujson.dumps(request))
 
     async def mongo_find(self, collection, query, default=None):
         result = await self.db[1][collection].find_one(query)

@@ -13,6 +13,7 @@ import inspect
 import discord
 import time
 import io
+from redis import asyncio as aioredis
 
 
 class RedisHandler:
@@ -22,8 +23,6 @@ class RedisHandler:
         self.bot = bot
         self.cluster = bot.cluster
         self.logger = bot.logger
-        self.redis = None
-
         self._messages = dict()
 
     async def start(self):
@@ -31,68 +30,75 @@ class RedisHandler:
         asyncio.create_task(self.cluster_handler())
 
     async def cluster_handler(self):
-        await self.redis.execute_pubsub("SUBSCRIBE", os.environ["MEWLD_CHANNEL"])
-        channel = self.redis.pubsub_channels[
-            bytes(os.environ["MEWLD_CHANNEL"], "utf-8")
-        ]
+        async with self.redis.pubsub() as pubsub:
+            await pubsub.subscribe(os.environ["MEWLD_CHANNEL"])
+            
+            # channel = self.redis.pubsub_channels[
+            #     bytes(os.environ["MEWLD_CHANNEL"], "utf-8")
+            # ]
 
-        while await channel.wait_message():
-            try:
-                payload = await channel.get_json(encoding="utf-8")
-            except orjson.JSONDecodeError:
-                continue  # not a valid JSON message
-
-            if payload.get("diag"):
+            while True:
                 try:
-                    if self.cluster["id"] != payload["id"]:
-                        self.logger.info(
-                            f"Got diag message for (different) cluster {payload['id']}. Ignoring..."
+                    payload = await pubsub.get_message(ignore_subscribe_messages=True, timeout=None)
+                except orjson.JSONDecodeError:
+                    continue  # not a valid JSON message
+                
+                if payload:
+                    if 'data' in payload:
+                        payload = orjson.loads(payload['data'].decode())
+                
+                # self.logger.info(payload)
+                if payload and payload.get("diag"):
+                    try:
+                        if self.cluster["id"] != payload["id"]:
+                            # self.logger.info(
+                            #     f"Got diag message for (different) cluster {payload['id']}. Ignoring..."
+                            # )
+                            continue
+                        # self.logger.info(f"Got diag message for cluster {payload['id']}")
+
+                        shards = []
+                        for shard_id, shard in self.bot.shards.items():
+                            shards.append(
+                                {
+                                    "id": shard_id,
+                                    "latency": shard.latency,
+                                    "up": True,
+                                    "guilds": len(self.bot.guilds),
+                                }
+                            )
+
+                        sPayload = {
+                            "scope": "launcher",
+                            "action": "diag",
+                            "output": orjson.dumps(
+                                {
+                                    "data": shards,
+                                    "nonce": payload["nonce"],
+                                }
+                            ).decode(),
+                        }
+
+                        await self.redis.execute_command(
+                            "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(sPayload)
                         )
+                    except Exception as e:
+                        self.logger.error("Exception in cluster_handler", exc_info=True)
                         continue
-                    self.logger.info(f"Got diag message for cluster {payload['id']}")
 
-                    shards = []
-                    for shard_id, shard in self.bot.shards.items():
-                        shards.append(
-                            {
-                                "id": shard_id,
-                                "latency": shard.latency,
-                                "up": True,
-                                "guilds": len(self.bot.guilds),
-                            }
-                        )
-
-                    sPayload = {
-                        "scope": "launcher",
-                        "action": "diag",
-                        "output": orjson.dumps(
-                            {
-                                "data": shards,
-                                "nonce": payload["nonce"],
-                            }
-                        ).decode(),
-                    }
-
-                    await self.redis.execute(
-                        "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(sPayload)
-                    )
-                except Exception as e:
-                    self.logger.error("Exception in cluster_handler", exc_info=True)
+                if payload and payload.get("scope") != "bot":
                     continue
 
-            if payload.get("scope") != "bot":
-                continue
-
-            if payload.get("action") and hasattr(self, payload.get("action")):
-                args = payload.get("args", {})
-                asyncio.create_task(
-                    getattr(self, payload["action"])(
-                        args, command_id=payload["command_id"]
+                if payload and payload.get("action") and hasattr(self, payload.get("action")):
+                    args = payload.get("args", {})
+                    asyncio.create_task(
+                        getattr(self, payload["action"])(
+                            args, command_id=payload["command_id"]
+                        )
                     )
-                )
 
-            if payload.get("output") and payload["command_id"] in self._messages:
-                self._messages[payload["command_id"]].append(payload["output"])
+                if payload and payload.get("output") and payload["command_id"] in self._messages:
+                    self._messages[payload["command_id"]].append(payload["output"])
 
     async def handler(
         self,
@@ -113,7 +119,7 @@ class RedisHandler:
         if output:
             payload["output"] = output
 
-        await self.redis.execute(
+        await self.redis.execute_command(
             "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
         )
 
@@ -161,7 +167,7 @@ class RedisHandler:
                 "scope": "bot",
             }
 
-            await self.redis.execute(
+            await self.redis.execute_command(
                 "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
             )
         except Exception as e:
@@ -198,7 +204,7 @@ class RedisHandler:
                 "command_id": command_id,
                 "scope": "bot",
             }
-            await self.redis.execute(
+            await self.redis.execute_command(
                 "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
             )
         except Exception as e:
@@ -225,7 +231,7 @@ class RedisHandler:
                     "command_id": command_id,
                     "scope": "bot",
                 }
-                await self.redis.execute(
+                await self.redis.execute_command(
                     "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
                 )
         except Exception as e:
@@ -253,7 +259,7 @@ class RedisHandler:
                     "command_id": command_id,
                     "scope": "bot",
                 }
-                await self.redis.execute(
+                await self.redis.execute_command(
                     "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
                 )
         except Exception as e:
@@ -299,7 +305,7 @@ class RedisHandler:
                 "command_id": command_id,
                 "scope": "bot",
             }
-            return await self.redis.execute(
+            return await self.redis.execute_command(
                 "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
             )
 
@@ -318,7 +324,7 @@ class RedisHandler:
                 "command_id": command_id,
                 "scope": "bot",
             }
-            return await self.redis.execute(
+            return await self.redis.execute_command(
                 "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
             )
         value = stdout.getvalue()
@@ -333,7 +339,7 @@ class RedisHandler:
                     "command_id": command_id,
                     "scope": "bot",
                 }
-                return await self.redis.execute(
+                return await self.redis.execute_command(
                     "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
                 )
         else:
@@ -346,7 +352,7 @@ class RedisHandler:
                 "command_id": command_id,
                 "scope": "bot",
             }
-            return await self.redis.execute(
+            return await self.redis.execute_command(
                 "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
             )
         payload = {
@@ -358,7 +364,7 @@ class RedisHandler:
             "command_id": command_id,
             "scope": "bot",
         }
-        return await self.redis.execute(
+        return await self.redis.execute_command(
             "PUBLISH", os.environ["MEWLD_CHANNEL"], orjson.dumps(payload)
         )
 

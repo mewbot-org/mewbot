@@ -551,7 +551,7 @@ class Sky(commands.Cog):
             return
         locked = [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "marketlock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()
@@ -597,7 +597,7 @@ class Sky(commands.Cog):
         """Helper function to buy a poke from the market."""
         if listing_id in locked:
             return ("Locked", listing_id)
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "LPUSH", "marketlock", str(listing_id)
         )
         try:
@@ -656,7 +656,7 @@ class Sky(commands.Cog):
         except Exception as e:
             return (e, listing_id)
         finally:
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "LREM", "marketlock", "1", str(listing_id)
             )
         return (None, None)
@@ -1002,7 +1002,7 @@ class Sky(commands.Cog):
         patreon_tier = await ctx.bot.patreon_tier(user)
         intrade = user in [
             int(id_)
-            for id_ in await ctx.bot.redis_manager.redis.execute(
+            for id_ in await ctx.bot.redis_manager.redis.execute_command(
                 "LRANGE", "tradelock", "0", "-1"
             )
             if id_.decode("utf-8").isdigit()

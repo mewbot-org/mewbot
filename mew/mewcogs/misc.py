@@ -124,8 +124,6 @@ class Misc(commands.Cog):
                     set([record["pokname"] for record in party_pokemon])
                 )
                 if exists and random.random() < 0.25:  # 25% Chance.
-                    if message.author.id == 455277032625012737:
-                        await message.channel.send("Hit the spot.")
                     (
                         hatched_party_pokemon,
                         hatched_pokemon,
@@ -305,7 +303,7 @@ class Misc(commands.Cog):
             inline=False,
         )
         e.set_footer(
-            text="You will receive 1 Redeem + 2,000 credits for every USD donated."
+            text="You will receive 2 Redeem + 3,000 credits for every USD donated."
         )
         await ctx.send(embed=e)
 

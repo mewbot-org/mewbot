@@ -67,52 +67,52 @@ class DropdownSelect(discord.ui.Select):
             discord.SelectOption(
                 label="Minigames",
                 description="Rods & Shovels for Minigames",
-                emoji="<:fishingrod:679809835939790877>",
+                emoji=f"{ctx.bot.misc.get_emote('fishing_rod')}",
             ),
             discord.SelectOption(
                 label="Items",
                 description="Items for Pokemon, Breeding, etc",
-                emoji="<:destinyknot:679168705141407764>",
+                emoji=f"{ctx.bot.misc.get_emote('destiny_knot')}",
             ),
             discord.SelectOption(
                 label="Battle Items",
                 description="Items for Dueling Friends or NPCs",
-                emoji="<:focus_sash:1092676207348297738>",
+                emoji=f"{ctx.bot.misc.get_emote('focus_sash')}",
             ),
             discord.SelectOption(
                 label="Trade Items",
                 description="Items Held by Pokemon when being Traded",
-                emoji="<:kingsrock:671571987214368812>",
+                emoji=f"{ctx.bot.misc.get_emote('kings_rock')}",
             ),
             discord.SelectOption(
                 label="Mega & Evo Stones",
                 description="Trigger Type or Mega Evolutions",
-                emoji="<:mega_stone:1085424851277324379>",
+                emoji=f"{ctx.bot.misc.get_emote('mega_stone')}",
             ),
             discord.SelectOption(
                 label="Plates, Memories & Masks",
                 description="Change Arceus/Judgement, Silvally Typing and Ogerpon/Ivy cudgel Typing",
-                emoji="<:draco_plate:1085322300791996486>",
+                emoji=f"{ctx.bot.misc.get_emote('draco_plate')}",
             ),
             discord.SelectOption(
                 label="Forms",
                 description="Items that trigger Form changes",
-                emoji="<:reveal_glass:1085406077186736248>",
+                emoji=f"{ctx.bot.misc.get_emote('reveal_glass')}",
             ),
             discord.SelectOption(
                 label="Vitamins",
                 description="Help with increasing EVs on Pokemon",
-                emoji="<:hp_up:1093288050035003442>",
+                emoji=f"{ctx.bot.misc.get_emote('hp_up')}",
             ),
             discord.SelectOption(
                 label="Berry Seeds",
                 description="Use to grow berries in your farm",
-                emoji="<:iapapa_berry:1085430969684742215>",
+                emoji=f"{ctx.bot.misc.get_emote('iapapa_berry')}",
             ),
             discord.SelectOption(
                 label="Monthly Alpha Rotation",
                 description="Purchase Rare Alpha Pokemon",
-                emoji="<:alphapoke2:1145814445239574538>",
+                emoji=f"{ctx.bot.misc.get_emote('alpha_poke')}",
             ),
         ]
         self.credits = credits
@@ -132,7 +132,7 @@ class DropdownSelect(discord.ui.Select):
                 description="Items give benefits through their respective activity!\n",
             )
             embed.add_field(
-                name="Fishing Rods <:fishingrod:679809835939790877>",
+                name=f"Fishing Rods {interaction.client.misc.get_emote('fishing_rod')}",
                 value=(
                     f"\n`Old Rod`: 5,000 credits"
                     f"\n`New Rod`: 10,000 credits"
@@ -142,7 +142,7 @@ class DropdownSelect(discord.ui.Select):
                 ),
             )
             embed.add_field(
-                name="Mining Shovels <:shovel:1083508753065848994>",
+                name=f"Mining Shovels {interaction.client.misc.get_emote('shovel')}",
                 value=(
                     f"\n`Old Shovel`: 5,000 credits"
                     f"\n`New Shovel`: 10,000 credits"
@@ -160,7 +160,7 @@ class DropdownSelect(discord.ui.Select):
                 description="Various items that help with different parts of the bot.",
             )
             embed.add_field(
-                name="<:rarecandy:669758477089898525> Rare Candies",
+                name=f"{interaction.client.misc.get_emote('rare_candy')} Rare Candies",
                 value="Increase Lvl by 1\n`/buy item rare candy`\nCost: 100 credits each",
                 inline=True,
             )
@@ -170,32 +170,32 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name="<:everstone:676820212741308451> Everstone",
+                name=f"{interaction.client.misc.get_emote('everstone')} Everstone",
                 value="Automatically stops evolutions\n`/buy item everstone`\nCost: 3,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:xp_block:1092656579993665568> Exp Blocker",
+                name=f"{interaction.client.misc.get_emote('xp_block')} Exp Blocker",
                 value="Stop any Exp Gain!\n`/buy item xp block`\nCost: 3,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:luckyegg:668821570973597716> Lucky Egg",
+                name=f"{interaction.client.misc.get_emote('lucky_egg')} Lucky Egg",
                 value="150% EXP Gain for selected Pokemon\n`/buy item lucky egg`\nCost: 5,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:soothebell:707992343772659793> Soothe Bell",
+                name=f"{interaction.client.misc.get_emote('soothe_bell')} Soothe Bell",
                 value="50% Friendship Gain for selected Pokemon\n`/buy item soothe bell`\nCost: 5,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:ability_capsule:726906080948518962> Ability Capsule",
+                name=f"{interaction.client.misc.get_emote('ability_capsule')} Ability Capsule",
                 value="Change selected Pokemon's Ability\n`/buy item ability capsule`\nCost: 10,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:poke_egg:676810968000495633> Daycare Space",
+                name=f"{interaction.client.misc.get_emote('poke_egg')} Daycare Space",
                 value="Increases Daycare Spaces so you can breed more\n`/buy daycare`\nCost: 10,000 credits",
                 inline=True,
             )
@@ -205,17 +205,17 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name="<:destinyknot:679168705141407764> Destiny Knot",
+                name=f"{interaction.client.misc.get_emote('destiny_knot')} Destiny Knot",
                 value="Pass down 2-3 random IVs to an Offspring during Breeding\n`/buy item destiny knot`\nCost: 15,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:destinyknot:679168705141407764> Ultra Destiny Knot",
+                name=f"{interaction.client.misc.get_emote('destiny_knot')} Ultra Destiny Knot",
                 value="Pass down 2-5 random IVs to an Offspring during Breeding\n`/buy item ultra destiny knot`\nCost: 30,000 credits",
                 inline=True,
             )
             embed.add_field(
-                name="<:evs:1029331432792915988> EV Reset",
+                name=f"{interaction.client.misc.get_emote('evs')} EV Reset",
                 value="Reset EVs on your selected Pokemon.\n`buy item ev reset`\nCost: 10,000 credits",
                 inline=True,
             )
@@ -231,7 +231,7 @@ class DropdownSelect(discord.ui.Select):
             desc = ""
             count = 1
             for idx, item in enumerate(items):
-                emoji = get_battle_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 # So on each of these items essentially page break
                 if count in [7, 14, 21, 28, 35, 42, 49, 56, 63, 70]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n\n"
@@ -254,7 +254,7 @@ class DropdownSelect(discord.ui.Select):
             count = 1
             for idx, item in enumerate(items):
                 price = prices[idx]
-                emoji = get_trade_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 # So on each of these items essentially page break
                 if count in [7, 14, 21]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n`/buy item {item.lower().replace('_', ' ')}`\n\n"
@@ -284,13 +284,13 @@ class DropdownSelect(discord.ui.Select):
             desc = ""
             count = 1
             for stone in megastone:
-                emoji = get_stone_emoji(item_name=stone)
+                emoji = interaction.client.misc.get_emote(stone)
                 desc += f"**{emoji} {stone.title().replace('_', ' ')}**\n`/buy item {stone.lower().replace('_', ' ')}`\n"
                 count += 1
 
             for stone in stones:
                 full_name = f"{stone}_stone"
-                emoji = get_stone_emoji(item_name=full_name)
+                emoji = interaction.client.misc.get_emote(full_name)
                 # So on each of these items essentially page break
                 if count in [7, 14, 21, 28]:
                     desc += f"**{emoji} {full_name.title().replace('_', ' ')}**\n`/buy item {full_name.lower().replace('_', ' ')}`\n\n"
@@ -310,7 +310,7 @@ class DropdownSelect(discord.ui.Select):
                 color=0x0084FD,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Draco Plate**"
                     f"\n**Dread Plate**"
@@ -322,7 +322,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Splash Plate**"
                     f"\n**Sky Plate**"
@@ -334,7 +334,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Spooky Plate**"
                     f"\n**Stone Plate**"
@@ -345,7 +345,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Dragon Memory**"
                     f"\n**Dark Memory**"
@@ -357,7 +357,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Steel Memory**"
                     f"\n<**Water Memory**"
@@ -369,7 +369,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Ghost Memory**"
                     f"\n**Rock Memory**"
@@ -379,7 +379,7 @@ class DropdownSelect(discord.ui.Select):
                 inline=True,
             )
             embed.add_field(
-                name=f"<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
                     f"\n**Wellspring Mask**"
                     f"\n**Hearthflame Mask**"
@@ -402,7 +402,7 @@ class DropdownSelect(discord.ui.Select):
             for idx, item in enumerate(items):
                 price = prices[idx]
                 description = descriptions[idx]
-                emoji = get_form_emoji(item_name=item.lower())
+                emoji = interaction.client.misc.get_emote(item.lower())
                 # So on each of these items essentially page break
                 if count in [5, 10, 15, 20, 25, 30, 35]:
                     desc += f"**{emoji} {item.title().replace('_', ' ')}**\n{description}\n`/buy item {item.title().replace('_', ' ')}` - {price:,.0f} credits\n\n"
@@ -420,32 +420,32 @@ class DropdownSelect(discord.ui.Select):
                 description="Each vitamin increases a different Effort Value!\nEVs are a boost to a particular stat. All costing 100 credits each!",
             )
             embed.add_field(
-                name="<:hp_up:1093288050035003442> HP Up",
+                name=f"{interaction.client.misc.get_emote('hp_up')} HP Up",
                 value="Increases HP EV\n`/buy vitamin hp-up`",
                 inline=True,
             )
             embed.add_field(
-                name="<:protein:1093288048462147715> Protein",
+                name=f"{interaction.client.misc.get_emote('protein')} Protein",
                 value="Increases Attack EV\n`/buy vitamin protein`",
                 inline=True,
             )
             embed.add_field(
-                name="<:iron:1093288047577157773> Iron",
+                name=f"{interaction.client.misc.get_emote('iron')} Iron",
                 value="Increases Defense EV\n`/buy vitamin iron`",
                 inline=True,
             )
             embed.add_field(
-                name="<:calcium:1093288046536953977> Calcium",
+                name=f"{interaction.client.misc.get_emote('calcium')} Calcium",
                 value="Increases Special Attack EV\n`/buy vitamin calcium`",
                 inline=True,
             )
             embed.add_field(
-                name="<:zinc:1093288045765198004> Zinc",
+                name=f"{interaction.client.misc.get_emote('zinc')} Zinc",
                 value="Increases Special Defense EV\n`/buy vitamin zinc`",
                 inline=True,
             )
             embed.add_field(
-                name="<:carbos:1093288043991007302> Carbos",
+                name=f"{interaction.client.misc.get_emote('carbos')} Carbos",
                 value="Increases Speed EV\n`/buy vitamin carbos`",
                 inline=True,
             )
@@ -458,41 +458,41 @@ class DropdownSelect(discord.ui.Select):
                 description="Used for Farming, plant to gain a berry!\nBuy with `/buy item [seed name]`, they all cost 2,500 credits.",
             )
             embed.add_field(
-                name="<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
-                    f"<:aguav_berry:1085430968455811112> **Aguav Seed**\n"
-                    f"<:apicot_berry:1085430940798566410> **Apicot Seed**\n"
-                    f"<:aspear_berry:1085430915540471929> **Aspear Seed**\n"
-                    f"<:cheri_berry:1085430875300302909> **Cheri Seed**\n"
-                    f"<:chesto_berry:1085430874268500079> **Chesto Seed**\n"
-                    f"<:figy_berry:1085430966899720223> **Figy Seed**\n"
-                    f"<:ganlon_berry:1085430940001640509> **Ganlon Seed**"
+                    f"{interaction.client.misc.get_emote('aguav_berry')} **Aguav Seed**\n"
+                    f"{interaction.client.misc.get_emote('apicot_berry')} **Apicot Seed**\n"
+                    f"{interaction.client.misc.get_emote('aspear_berry')} **Aspear Seed**\n"
+                    f"{interaction.client.misc.get_emote('cheri_berry')} **Cheri Seed**\n"
+                    f"{interaction.client.misc.get_emote('chesto_berry')} **Chesto Seed**\n"
+                    f"{interaction.client.misc.get_emote('figy_berry')} **Figy Seed**\n"
+                    f"{interaction.client.misc.get_emote('ganlon_berry')} **Ganlon Seed**"
                 ),
                 inline=True,
             )
             embed.add_field(
-                name="<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
-                    f"<:iapapa_berry:1085430969684742215> **Iapapa Seed**\n"
-                    f"<:lansat_berry:1085430944338550825> **Lansat Seed**\n"
-                    f"<:liechi_berry:1085430914038894602> **Liechi Seed**\n"
-                    f"<:lum_berry:1085430873266069526> **Lum Seed**\n"
-                    f"<:mago_berry:1085430943852015677> **Mago Seed**\n"
-                    f"<:micle_berry:1085430912977739826> **Micle Seed**\n"
-                    f"<:pecha_berry:1085430872523681872> **Pecha Seed**"
+                    f"{interaction.client.misc.get_emote('iapapa_berry')} **Iapapa Seed**\n"
+                    f"{interaction.client.misc.get_emote('lansat_berry')} **Lansat Seed**\n"
+                    f"{interaction.client.misc.get_emote('liechi_berry')} **Liechi Seed**\n"
+                    f"{interaction.client.misc.get_emote('lum_berry')} **Lum Seed**\n"
+                    f"{interaction.client.misc.get_emote('mago_berry')} **Mago Seed**\n"
+                    f"{interaction.client.misc.get_emote('micle_berry')} **Micle Seed**\n"
+                    f"{interaction.client.misc.get_emote('pecha_berry')} **Pecha Seed**"
                 ),
                 inline=True,
             )
             embed.add_field(
-                name="<:blank:1012504803496177685>",
+                name=f"{interaction.client.misc.get_emote('blank')}",
                 value=(
-                    f"<:persim_berry:1085430878135660574> **Persim Seed**\n"
-                    f"<:petaya_berry:1085430911945940992> **Petaya Seed**\n"
-                    f"<:rawst_berry:1085430876407611464> **Rawst Seed**\n"
-                    f"<:salac_berry:1085430910842843217> **Salac Seed**\n"
-                    f"<:sitrus_berry:1085430942065242112> **Sitrus Seed**\n"
-                    f"<:starf_berry:1085430909492273182> **Starf Seed**\n"
-                    f"<:wiki_berry:1085430943071883304> **Wiki Seed**\n"
+                    f"{interaction.client.misc.get_emote('persim_berry')} **Persim Seed**\n"
+                    f"{interaction.client.misc.get_emote('petaya_berry')} **Petaya Seed**\n"
+                    f"{interaction.client.misc.get_emote('rawst_berry')} **Rawst Seed**\n"
+                    f"{interaction.client.misc.get_emote('salac_berry')} **Salac Seed**\n"
+                    f"{interaction.client.misc.get_emote('sitrus_berry')} **Sitrus Seed**\n"
+                    f"{interaction.client.misc.get_emote('starf_berry')} **Starf Seed**\n"
+                    f"{interaction.client.misc.get_emote('wiki_berry')} **Wiki Seed**\n"
                 ),
                 inline=True,
             )
@@ -507,7 +507,7 @@ class DropdownSelect(discord.ui.Select):
 
             for alpha_pokemon in self.ctx.bot.commondb.ALPHA_POKEMON:
                 embed.add_field(
-                    name="<:blank:1012504803496177685>",
+                    name=f"{interaction.client.misc.get_emote('blank')}",
                     value=(
                         f"{self.ctx.bot.misc.get_random_egg_emote()} **"
                         + alpha_pokemon

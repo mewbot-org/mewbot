@@ -13,6 +13,8 @@ class MewMisc:
     def __init__(self, bot):
         self.bot = bot
         self.OLD_SKINS = []
+        self.ALL_GLEAMS = []
+        self.app_emojis = []
         self.emotes = {
             "CREDITS": "<:mewcoin:1010959258638094386>",
             "REDEEMS": "<:redeem:1037942226132668417>",
@@ -20,17 +22,48 @@ class MewMisc:
             "RARE_CHEST": "<:rare_chest:1311626539917512714>",
             "MYTHIC_CHEST": "<:mythic_chest:1311626611220676680>",
             "LEGEND_CHEST": "<:legend_chest:1311626665239117894>",
+            "GEMS": "<a:radiantgem:774866137472827432>",
             "PAT_CHEST": "",
         }
+    def get_emoji(self, emote):
+        return self.get_emote(emote)
+    
+    def get_emote(self, emote_name):
+        self.bot.logger.info("Fetching Emote %s " % emote_name)
+        emote = self.emotes.get(emote_name.lower(), None)
+        if not emote:
+            emote = discord.utils.get(self.app_emojis, name = emote_name.lower())
+        return emote
+    
+    async def get_all_gleams(self):
+        # Get list of pokemon in old skin folders
 
-    def get_emote(self, emote):
-        return self.emotes.get(emote)
+        # Initialize a list to store the prefixes
+        names = []
+
+        directory = f"/home/dyroot/mewbot/shared/duel/sprites/skins/gleam"
+        if os.path.exists(directory) and os.path.isdir(directory):
+            # Iterate through the files in the directory
+            for item in os.listdir(directory):
+                # Check if the file ends with '.png'
+                if item.endswith(".png"):
+                    # Extract the first 3 letters of the file name (without extension)
+                    prefix = item[:3]
+                    # Remove letters & shit
+                    prefix = "".join(c for c in prefix if c.isdigit())
+                    names.append((await reverse_id(int(prefix), self.bot), 'gleam')[0])
+
+        self.ALL_GLEAMS = names
+        return
+    async def refresh_app_emotes(self):
+        self.app_emojis = await self.bot.fetch_application_emojis()
 
     async def get_old_skins(self):
         # Get list of pokemon in old skin folders
 
         # Initialize a list to store the prefixes
         names = []
+        await self.get_all_gleams()
 
         for skin in OLD_SKIN_LIST:
             directory = f"/home/dyroot/mewbot/shared/duel/sprites/skins/{skin}"
@@ -136,22 +169,22 @@ class MewMisc:
     def get_egg_emote(self, egg_group):
         egg_group = egg_group.lower()
         egg_groups = {
-            "monster": "<:monster:1116458614664744994> `Monster`",
-            "bug": "<:bug:1116458618624155728> `Bug`",
-            "flying": "<:flying:1116459495644737708> `Flying`",
-            "field": "<:field:1116458620612268134> `Field`",
-            "fairy": "<:fairy:1116459475893764170> `Fairy`",
-            "grass": "<:grass:1116458678984388718> `Grass`",
-            "humanlike": "<:humanlike:1116458614123667608> `Humanlike`",
-            "mineral": "<:mineral:1116458623804125184> `Mineral`",
-            "amorphous": "<:amorphous:1116458617114214441> `Amorphous`",
-            "water1": "<:water1:1116458616166301717> `Water1`",
-            "water2": "<:water2:1116458787503608029> `Water2`",
-            "water3": "<:water3:1116458665088655512> `Water3`",
-            "dragon": "<:dragonegg:1116458619739836516> `Dragon`",
-            "ditto": "<:ditto:1116458611997155368> `Ditto`",
-            "undiscovered": "<:undiscovered:1316198633460465674> `Undiscovered`",
-            "special": "<:special_egg:1222219380251955202> `Special`",
+            "monster": f"{self.get_emote('monster')} `Monster`",
+            "bug": f"{self.get_emote('bug')} `Bug`",
+            "flying": f"{self.get_emote('flying')} `Flying`",
+            "field": f"{self.get_emote('field')} `Field`",
+            "fairy": f"{self.get_emote('fairy')} `Fairy`",
+            "grass": f"{self.get_emote('grass')} `Grass`",
+            "humanlike": f"{self.get_emote('humanlike')} `Humanlike`",
+            "mineral": f"{self.get_emote('mineral')} `Mineral`",
+            "amorphous": f"{self.get_emote('amorphous')} `Amorphous`",
+            "water1": f"{self.get_emote('water1')} `Water1`",
+            "water2": f"{self.get_emote('water2')} `Water2`",
+            "water3": f"{self.get_emote('water3')} `Water3`",
+            "dragon": f"{self.get_emote('dragon')} `Dragon`",
+            "ditto": f"{self.get_emote('ditto')} `Ditto`",
+            "undiscovered": f"{self.get_emote('undiscovered')} `Undiscovered`",
+            "special": f"{self.get_emote('special')} `Special`",
         }
         if egg_group not in egg_groups:
             return None

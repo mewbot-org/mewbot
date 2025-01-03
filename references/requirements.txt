@@ -1,5 +1,5 @@
 aiohttp
-aioredis==1.2
+redis>=4.2.0rc1
 aiosmtplib
 asyncio
 asyncpg
@@ -14,6 +14,7 @@ motor
 numpy
 orjson
 pillow
+pandas
 psutil
 pydantic
 py-cpuinfo
@@ -22,4 +23,5 @@ starlette
 ujson
 uvicorn
 uvloop
+websockets
 zmq

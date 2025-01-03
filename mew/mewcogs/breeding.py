@@ -508,7 +508,7 @@ class Breeding(commands.Cog):
 
     async def initialize(self):
         # This is to make sure the breedcooldowns dict exists before we access in the cog check
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "breedcooldowns", "examplekey", "examplevalue"
         )
 
@@ -526,13 +526,13 @@ class Breeding(commands.Cog):
         elif patreon_status == "Ace Trainer":
             limit = 30
         elif achievement_bonus >= 500:
-            limit = 5
+            limit = 10
         else:
-            limit = 2
+            limit = 10
         return limit
 
     async def reset_cooldown(self, id_):
-        await self.bot.redis_manager.redis.execute(
+        await self.bot.redis_manager.redis.execute_command(
             "HMSET", "breedcooldowns", str(id_), "0"
         )
         self.auto_redo[id_] = None
@@ -581,7 +581,7 @@ class Breeding(commands.Cog):
             return
 
         breed_reset = (
-            await ctx.bot.redis_manager.redis.execute(
+            await ctx.bot.redis_manager.redis.execute_command(
                 "HMGET", "breedcooldowns", str(ctx.author.id)
             )
         )[0]
@@ -596,11 +596,11 @@ class Breeding(commands.Cog):
             cooldown = f"{round(reset_in)}s"
             await ctx.send(f"Command on cooldown for {cooldown}")
             return
-        await ctx.bot.redis_manager.redis.execute(
+        await ctx.bot.redis_manager.redis.execute_command(
             "HMSET",
             "breedcooldowns",
             str(ctx.author.id),
-            str(time.time() + 45 - (45 * 0.3 if patreon_status == "Elite" else 0)),
+            str(time.time() + 15 - (15 * 0.3 if patreon_status == "Elite" else 0)),
         )
         for idx, female in enumerate(females_list):
             if idx > 0:
@@ -811,8 +811,9 @@ class Breeding(commands.Cog):
             chance *= inc
             if ctx.bot.premium_server(ctx.guild.id):
                 chance *= 1.05
+            chance //= 10
             success = random.choices([True, False], weights=(chance, 1 - chance))[0]
-            chance_message = f"Chance of success: {chance * 100:.2f}% | {ctx.author}"
+            chance_message = f"Chance of success: {chance * 1000:.2f}% | {ctx.author}"
 
             if ctx.author.id == 334155028170407949:
                 success = True

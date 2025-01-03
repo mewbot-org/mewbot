@@ -621,6 +621,8 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
             emoji = "<a:votestreak:998338987070603354>"  # Can Use
         elif skin in ("xmas", "xmas2022", "xmas2023"):
             emoji = "<:xmas:1184562262137114715>"
+        elif skin == "xmas2024":
+            emoji = "<:xmas2024:1321798263313137704>"
         elif skin == "xmas_special":
             emoji = "<:xmas_special:1184562294156439572>"
         elif skin == "tourney":
@@ -1327,9 +1329,9 @@ class MenuView(discord.ui.View):
     """View that creates a menu using the List[str] or List[embed] provided."""
 
     def __init__(
-        self, ctx: "commands.Context", pages: "List[Union[str, discord.Embed]]"
+        self, ctx: "commands.Context", pages: "List[Union[str, discord.Embed]]", timeout: int = 60,
     ):
-        super().__init__(timeout=60)
+        super().__init__(timeout=timeout)
         self.ctx = ctx
         self.pages = pages
         self.page = 0
