@@ -538,7 +538,34 @@ async def paypalhook(request: Request):
     """
     return PlainTextResponse("")
 
-
+@app.post("/save_json")
+async def save_json(request: Request):
+    try:
+        # Get JSON data from request body
+        data = await request.json()
+        
+        # Pretty print the received data
+        pprint.pprint(data)
+        
+        # Generate timestamp for unique filename
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"json_data_{timestamp}.json"
+        
+        # Save to file with pretty printing
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+            
+        return ORJSONResponse({
+            "status": "success",
+            "message": f"Data saved to {filename}",
+            "timestamp": timestamp
+        })
+    except Exception as e:
+        return ORJSONResponse({
+            "status": "error",
+            "message": str(e)
+        }, status_code=400)
+        
 @app.get("/paystack_verify/{ref}")
 async def paystack_verify(ref: int, request: Request):
     headers = {

@@ -54,6 +54,10 @@ class Mother(commands.Cog):
     @tasks.loop(seconds=1440)
     async def energy(self):
         async with self.bot.db[0].acquire() as pconn:
+            # DELETE HONEY
+            await pconn.execute(
+                "DELETE FROM honey WHERE expires < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP);"
+            )
             await pconn.execute(
                 "UPDATE users SET energy = energy + 1 WHERE energy < 10"
             )
@@ -89,28 +93,6 @@ class Mother(commands.Cog):
             await self.bot.db[1].missions.insert_one(insert)
             # Reset the missions progress for all users
             await self.bot.db[1].users.delete_many({})
-
-        async with self.bot.db[0].acquire() as pconn:
-            honeys = await pconn.fetch(
-                "SELECT * FROM honey WHERE expires < $1", int(time.time())
-            )
-            channels = [t["channel"] for t in honeys]
-            ids = [t["id"] for t in honeys]
-            owners = [t["owner"] for t in honeys]
-            types = [t["type"] for t in honeys]
-            for idx, id in enumerate(ids):
-                await pconn.execute("DELETE FROM honey WHERE id = $1", id)
-                try:
-                    owner = await self.bot.fetch_user(owners[idx])
-                    await owner.send(
-                        embed=discord.Embed(
-                            title=f"Your {types[idx]} spread has expired!",
-                            description=f"Your {types[idx]} Spread in <#{channels[idx]}> has expired!\nSpread some more with `/spread`.",
-                            color=0xFFB6C1,
-                        )
-                    )
-                except discord.HTTPException:
-                    pass
 
     def cog_unload(self):
         self.energy.cancel()

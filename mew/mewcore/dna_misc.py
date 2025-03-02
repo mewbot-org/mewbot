@@ -23,17 +23,41 @@ class MewMisc:
             "MYTHIC_CHEST": "<:mythic_chest:1311626611220676680>",
             "LEGEND_CHEST": "<:legend_chest:1311626665239117894>",
             "GEMS": "<a:radiantgem:774866137472827432>",
-            "PAT_CHEST": "",
+            "GLEAM": "<:gleam:1010559151472115772>",
+            "SHINY": ":star2:",
+            "SHADOW": "<:shadow:1010559067590246410>",
+            "ALPHA": "<:alphapoke2:1145814445239574538>",
+            "XMAS": "<:xmas:927667765135945798>",
+            "VOTE": "<a:votestreak:998338987070603354>",
+            # "PAT_CHEST": "<:patreon:1184571762705432679>",
+            "VALENTINE": "<:heart:1184895213399982140>",
+            "EASTER": "<:easter:1184895215060914277>",
+
         }
     def get_emoji(self, emote):
         return self.get_emote(emote)
     
     def get_emote(self, emote_name):
+        if not emote_name: emote_name = "" 
         self.bot.logger.info("Fetching Emote %s " % emote_name)
-        emote = self.emotes.get(emote_name.lower(), None)
+
+        ##
+        if 'voucher' in emote_name:
+            emote_name = 'custom'
+        elif 'xmas' in emote_name:
+            emote_name = 'xmas'
+        elif 'valentine' in emote_name:
+            emote_name = 'valentine'
+        elif 'easter' in emote_name:
+            emote_name = 'easter'
+        elif 'vote' in emote_name:
+            emote_name = 'vote'
+        ##
+
+        emote = self.emotes.get(emote_name.upper(), None)
         if not emote:
             emote = discord.utils.get(self.app_emojis, name = emote_name.lower())
-        return emote
+        return emote or "<:blank:1012504803496177685>"
     
     async def get_all_gleams(self):
         # Get list of pokemon in old skin folders

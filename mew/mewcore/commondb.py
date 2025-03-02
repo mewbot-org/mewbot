@@ -39,17 +39,21 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Cobalion",
-            "Lugia",
-            "Gogoat",
-            "Pyroar",
-            "Celebi",
-            "Registeel",
-            # "Talonflame",
-            # "Butterfree",
+            "Salamence",
+            "Blacephalon",
+            "Lunatone",
+            "Iron-hands",
+            "Altaria",
+            "Zeraora"
         ]
 
         self.ALL_ALPHA_POKEMON = [
+            "Salamence",
+            "Blacephalon",
+            "Lunatone",
+            "Iron-hands",
+            "Altaria",
+            "Zeraora",
             "Vikavolt",
             "Venusaur",
             "Krookodile",
@@ -76,7 +80,7 @@ class CommonDB:
             "Darkrai",
             "Uxie",
             "Diancie",
-            "Mewtwo" "Gardevoir",
+            "Mewtwo", "Gardevoir",
             "Rayquaza",
             "Leafeon",
             "Hydreigon",
@@ -136,8 +140,38 @@ class CommonDB:
             "Blastoise",
             "Drapion",
             "Jirachi",
+            "Floatzel",
+            "Lucario",
+            "Audino",
+            "Thundurus",
+            "Swampert",
+            "Lycanroc",
+            "Melmetal",
+            "Iron-jugulis",
+            "Terrakion",
+            "Walking-wake",
+            "Glastrier",
+            "Samurott-hisui"
         ]
         self.ALPHA_MOVESETS = {
+            "Salamence": ["dragon-darts", "tackle", "tackle", "tackle"],
+            "Blacephalon": ["astral-barrage", "tackle", "tackle", "tackle"],
+            "Lunatone": ["geomancy", "tackle", "tackle", "tackle"],
+            "Iron-hands": ["plasma-fists", "tackle", "tackle", "tackle"],
+            "Altaria": ["calm-mind", "tackle", "tackle", "tackle"],
+            "Zeraora": ["ice-punch", "tackle", "tackle", "tackle"],
+            "Melmetal": ["jet-punch", "tackle", "tackle", "tackle"],  # New entry
+            "Iron-jugulis": ["nasty-plot", "tackle", "tackle", "tackle"],  # New entry
+            "Terrakion": ["diamond-storm", "tackle", "tackle", "tackle"],  # New entry
+            "Walking-wake": ["clanging-scales", "tackle", "tackle", "tackle"],  # New entry
+            "Glastrier": ["ice-shard", "tackle", "tackle", "tackle"],  # New entry
+            "Samurott-hisui": ["bitter-blade", "tackle", "tackle", "tackle"],  # New entry
+            "Floatzel": ["surging-strikes", "tackle", "tackle", "tackle"],
+            "Lucario": ["glacial-lance", "tackle", "tackle", "tackle"],
+            "Audino": ["soft-boiled", "tackle", "tackle", "tackle"],
+            "Thundurus": ["hurricane", "tackle", "tackle", "tackle"],
+            "Swampert": ["slack-off", "tackle", "tackle", "tackle"],
+            "Lycanroc": ["headlong-rush", "tackle", "tackle", "tackle"],
             "Vikavolt": ["thunderclap", "tackle", "tackle", "tackle"],
             "Venusaur": ["matcha-gotcha", "tackle", "tackle", "tackle"],
             "Krookodile": ["dragon-dance", "tackle", "tackle", "tackle"],

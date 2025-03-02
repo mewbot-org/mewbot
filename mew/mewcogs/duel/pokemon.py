@@ -32,12 +32,12 @@ class DuelPokemon:
         self.spatk = self.base_stats[self._name][3]
         self.spdef = self.base_stats[self._name][4]
         self.speed = self.base_stats[self._name][5]
-        self.hpiv = min(31, kwargs["hpiv"])
-        self.atkiv = min(31, kwargs["atkiv"])
-        self.defiv = min(31, kwargs["defiv"])
-        self.spatkiv = min(31, kwargs["spatkiv"])
-        self.spdefiv = min(31, kwargs["spdefiv"])
-        self.speediv = min(31, kwargs["speediv"])
+        self.hpiv = kwargs["hpiv"]
+        self.atkiv = kwargs["atkiv"]
+        self.defiv = kwargs["defiv"]
+        self.spatkiv = kwargs["spatkiv"]
+        self.spdefiv = kwargs["spdefiv"]
+        self.speediv = kwargs["speediv"]
         self.hpev = kwargs["hpev"]
         self.atkev = kwargs["atkev"]
         self.defev = kwargs["defev"]
@@ -3056,12 +3056,12 @@ class DuelPokemon:
         """Creates a new DuelPokemon object using the raw data provided."""
         pn = raw_data["pokname"]
         nick = raw_data["poknick"]
-        hpiv = min(31, raw_data["hpiv"])
-        atkiv = min(31, raw_data["atkiv"])
-        defiv = min(31, raw_data["defiv"])
-        spatkiv = min(31, raw_data["spatkiv"])
-        spdefiv = min(31, raw_data["spdefiv"])
-        speediv = min(31, raw_data["speediv"])
+        hpiv = raw_data["hpiv"]
+        atkiv = raw_data["atkiv"]
+        defiv = raw_data["defiv"]
+        spatkiv = raw_data["spatkiv"]
+        spdefiv = raw_data["spdefiv"]
+        speediv = raw_data["speediv"]
         hpev = raw_data["hpev"]
         atkev = raw_data["atkev"]
         defev = raw_data["defev"]

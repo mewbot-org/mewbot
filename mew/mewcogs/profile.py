@@ -26,7 +26,7 @@ IMAGE_URLS = {
     "halloween/Hexmaniac": "https://mewbot.xyz/sprites/trainers/hex_maniac_6.png",
     "summer/Phoebe": "https://mewbot.xyz/sprites/trainers/phoebe.png",
     "summer/Brycen": "https://mewbot.xyz/sprites/trainers/brycen.png",
-    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png",
+    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png", 
     "user/Youngster": "https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png",
     "breeder/Breeder1": "https://mewbot.xyz/sprites/trainers/breeder1.png",
     "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
@@ -628,9 +628,9 @@ class ProfileView(discord.ui.View):
         embed.add_field(
             name="Balances",
             value=(
-                f"`Credits`: {credits:,} <:mewcoin:1010959258638094386>\n"
-                f"`Redeems`: {redeems:,} <:redeem:1037942226132668417>\n"
-                f"`Gleam Gems`: {gleam_gems:,} <a:radiantgem:774866137472827432>"
+                f"`Credits`: {credits:,} {self.ctx.bot.misc.get_emote('mewcoin')}\n"
+                f"`Redeems`: {redeems:,} {self.ctx.bot.misc.get_emote('redeem')}\n"
+                f"`Gleam Gems`: {gleam_gems:,} {self.ctx.bot.misc.get_emote('gems')}"
             ),
             inline=True,
         )

@@ -1046,7 +1046,7 @@ class Forms(commands.Cog):
                 else:
                     form_to_evolve = f"{pokename.lower()}-{val.lower()}"
                 cursor = ctx.bot.db[1].forms.find({"identifier": form_to_evolve})
-                await ctx.send(form_to_evolve)
+                # await ctx.send(form_to_evolve)
                 form_identifier = await cursor.distinct("form_identifier")
                 if not form_identifier:
                     await ctx.send("That form does not exist!")

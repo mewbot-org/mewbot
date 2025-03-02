@@ -18,6 +18,7 @@ from mewcogs.json_files import *
 from mewcogs.pokemon_list import *
 from mewcogs.pokemon_list import _
 from mewutils.checks import (
+    check_art_team,
     check_admin,
     check_investigator,
     check_mod,
@@ -47,6 +48,9 @@ class MewBotAdmin(commands.Cog):
         for parameter in params.keys():
             msg += f"<{parameter}> "
         return msg
+    
+    async def cog_check(self, ctx):
+        return ctx.guild.id == STAFFSERVER
 
     @commands.hybrid_group()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -161,6 +165,71 @@ class MewBotAdmin(commands.Cog):
             desc += f"`/{command.qualified_name} {self.parse_params(command.clean_params)}` - {command.short_doc}\n"
         pages = pagify(desc, per_page=20, base_embed=embed)
         await MenuView(ctx, pages).start()
+    
+    @check_admin()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def rollingrestart(self, ctx):
+        """Restarts the entire bot process"""
+        if not await ConfirmView(
+            ctx,
+            f"**Are you sure you want to restart the process?**\n\nThis includes the cluster launcher!  This will default back to Systemctl handling the program exit.",
+        ).wait():
+            await ctx.send("Restart cancelled.")
+            return
+
+        embed = discord.Embed(
+            title=f"Are you sure you want to restart the process?",
+            description="This includes the cluster launcher!  This will default back to Systemctl handling the program exit.",
+            color=0xFFB6C1,
+        )
+
+        embed = discord.Embed(title=f"Restarting process...", color=0xFFB6C1)
+        await ctx.send(embed=embed)
+
+        res = await ctx.bot.handler(
+            "rollingrestart",
+            1,
+            scope="launcher",
+        )
+
+        if not res:
+            await ctx.send("Launcher did not respond.  Did you start with launcher?")
+            return
+
+
+    @check_admin()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    async def restart(self, ctx, cluster_id: int):
+        """Restart a bots cluster"""
+        if not await ConfirmView(
+            ctx, f"Are you sure you want to restart cluster #{cluster_id}?"
+        ).wait():
+            await ctx.send("Restart cancelled.")
+            return
+
+        res = await ctx.bot.handler(
+            "restart", 1, scope="launcher", args={"id": cluster_id}
+        )
+
+        if not res:
+            await ctx.send(
+                "Launcher did not respond.  Did you start with launcher and are sure cluster with that ID exists?"
+            )
+            return
+
+        if res[0] == "ok":
+            embed = discord.Embed(
+                title=f"Cluster #{cluster_id} restarting...", color=0xFFB6C1
+            )
+            await ctx.send(embed=embed)
+        else:
+            # This should never be anything else, really
+            await ctx.send(
+                content="rip, something went weird with the response.  Maybe it worked?"
+            )
+
 
     @check_admin()
     @discord.app_commands.describe(extension_name="The name of the extension to load.")
@@ -479,7 +548,7 @@ class MewBotAdmin(commands.Cog):
         if res := await self.upload_app_emoji(name, ctx.bot, image_url):
             await ctx.send("Uploaded Image")
             
-    @check_admin()
+    @check_art_team()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def create_image(
@@ -551,7 +620,7 @@ class MewBotAdmin(commands.Cog):
             )
             await ctx.send(":white_check_mark:")
 
-    @check_admin()
+    @check_gymauth()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def createpoke(
@@ -638,8 +707,23 @@ class MewBotAdmin(commands.Cog):
                 "UPDATE pokes SET caught_by = $1 where id = $2", user.id, pokeid
             )
             await ctx.send(f"```Elm\n- Successflly set OT of `{pokeid}` to {user}```")
-
-    @check_admin()
+    
+    @check_gymauth()
+    @admin.command()
+    @discord.app_commands.guilds(STAFFSERVER)
+    @discord.app_commands.describe(
+        pokemon="The Pokemon",
+        weight="Weight in decagrams."
+    )
+    async def editweight(self, ctx, pokemon: str, weight: int):
+        info = await ctx.bot.db[1].forms.find_one({"identifier": pokemon.lower()})
+        if not info:
+            await ctx.send("Pokemon not found.")
+            return
+        await ctx.bot.mongo_update('forms', {"identifier": pokemon.lower()}, {"weight": weight})
+        return await ctx.send("Updated %s Weight to %d KG" % (pokemon, weight//10))
+        
+    @check_gymauth()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def editiv(
@@ -1048,7 +1132,7 @@ class MewBotAdmin(commands.Cog):
     #     else:
     #         await ctx.send("Choose Redeems, and thats it! Just redeems!")
 
-    @check_mod()
+    @check_investigator()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def combine(
@@ -1191,7 +1275,7 @@ class MewBotAdmin(commands.Cog):
         embed.set_footer(text="Information live from Database")
         await ctx.send(embed=embed)
 
-    @check_mod()
+    @check_investigator()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     @discord.app_commands.describe(

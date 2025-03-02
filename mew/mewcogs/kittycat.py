@@ -140,6 +140,9 @@ class KittyCat(commands.Cog):
         else:
             self.task = None
 
+    async def cog_check(self, ctx):
+        return ctx.guild.id == STAFFSERVER
+
     async def cog_before_invoke(self, ctx):
         try:
             await ctx.bot.get_partial_messageable(999442907465523220).send(
@@ -921,7 +924,7 @@ class KittyCat(commands.Cog):
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
-    @check_admin()
+    @check_gymauth()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def redeems(self, ctx, user: discord.Member, amount: int):
@@ -999,7 +1002,7 @@ class KittyCat(commands.Cog):
         )
         await self.load_bans_cross_cluster()
 
-    @check_art_team()
+    @check_gymauth()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def chest(
@@ -1770,38 +1773,7 @@ class KittyCat(commands.Cog):
         await ctx.bot.tree.sync(guild=FSnow(STAFFSERVER))
         await ctx.send("Successfully synced.")
 
-    @check_owner()
-    @owner.command()
-    @discord.app_commands.guilds(STAFFSERVER)
-    async def restart(self, ctx, cluster_id: int):
-        """Restart a bots cluster"""
-        if not await ConfirmView(
-            ctx, f"Are you sure you want to restart cluster #{cluster_id}?"
-        ).wait():
-            await ctx.send("Restart cancelled.")
-            return
-
-        res = await ctx.bot.handler(
-            "restart", 1, scope="launcher", args={"id": cluster_id}
-        )
-
-        if not res:
-            await ctx.send(
-                "Launcher did not respond.  Did you start with launcher and are sure cluster with that ID exists?"
-            )
-            return
-
-        if res[0] == "ok":
-            embed = discord.Embed(
-                title=f"Cluster #{cluster_id} restarting...", color=0xFFB6C1
-            )
-            await ctx.send(embed=embed)
-        else:
-            # This should never be anything else, really
-            await ctx.send(
-                content="rip, something went weird with the response.  Maybe it worked?"
-            )
-
+    
     @check_owner()
     @owner.command()
     @discord.app_commands.guilds(STAFFSERVER)
@@ -1858,37 +1830,6 @@ class KittyCat(commands.Cog):
         if len(result) > 1950:
             result = result[:1950] + "\n\n..."
         await ctx.send(f"```py\n{result}```")
-
-    @check_owner()
-    @owner.command()
-    @discord.app_commands.guilds(STAFFSERVER)
-    async def rollingrestart(self, ctx):
-        """Restarts the entire bot process"""
-        if not await ConfirmView(
-            ctx,
-            f"**Are you sure you want to restart the process?**\n\nThis includes the cluster launcher!  This will default back to Systemctl handling the program exit.",
-        ).wait():
-            await ctx.send("Restart cancelled.")
-            return
-
-        embed = discord.Embed(
-            title=f"Are you sure you want to restart the process?",
-            description="This includes the cluster launcher!  This will default back to Systemctl handling the program exit.",
-            color=0xFFB6C1,
-        )
-
-        embed = discord.Embed(title=f"Restarting process...", color=0xFFB6C1)
-        await ctx.send(embed=embed)
-
-        res = await ctx.bot.handler(
-            "rollingrestart",
-            1,
-            scope="launcher",
-        )
-
-        if not res:
-            await ctx.send("Launcher did not respond.  Did you start with launcher?")
-            return
 
     async def get_commit(self, ctx):
         COMMAND = f"cd {ctx.bot.app_directory} && git branch -vv"

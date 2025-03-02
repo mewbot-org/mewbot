@@ -421,7 +421,7 @@ class Redeem(commands.Cog):
                     )
 
             pokedata = await ctx.bot.commondb.create_poke(
-                ctx.bot, ctx.author.id, shiny, shiny=True
+                ctx.bot, ctx.author.id, shiny, boosted = True, shiny = True
             )
             ivpercent = round((pokedata.iv_sum / 186) * 100, 2)
             await ctx.bot.get_partial_messageable(998341289164689459).send(

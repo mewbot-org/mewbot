@@ -6,7 +6,7 @@ from mewcogs.json_files import make_embed
 import asyncio
 
 CHOICES = (
-    "Rare chest - x1",
+    "Legend chests - x5",
     "Battle/shiny multi - x5\nBreed/IV multi - x3",
     "Credits - 150,000\nRedeems - x3",
 )

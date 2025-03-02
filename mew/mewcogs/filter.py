@@ -923,15 +923,18 @@ class Filter(commands.Cog):
             nick = record["poknick"]
             iv = record["ivs"]
             shiny = record["shiny"]
+            print(shiny)
             gleam = record["radiant"]
             level = str(record["pokelevel"]).rjust(max_lvl, " ")
+            skin = record['skin']
             level = f"<:lvl:1029030189981765673>`{level}`"
-            emoji = get_emoji(
-                blank="<:blank:1012504803496177685>",
-                shiny=shiny,
-                radiant=gleam,  # Will change later
-                skin=record["skin"],
-            )
+            emoji = ctx.bot.misc.get_emote("shiny" if shiny else (skin or ''))
+            # emoji = get_emoji(
+                # blank="<:blank:1012504803496177685>",
+                # shiny=shiny,
+                # radiant=gleam,  # Will change later
+                # skin=record["skin"],
+            # )
             price_text = f" | **Price** {price:,.0f}" if filter_type == "m" else ""
             gender = ctx.bot.misc.get_gender_emote(record["gender"])
 
@@ -956,11 +959,11 @@ class Filter(commands.Cog):
             iv = f"{iv/186:02.0%}".rjust(4, " ")
 
             desc += (
-                f"{emoji}{'' if not is_egg else ':egg:`' + str(counter) + '`'}{gender}"
+                f"{emoji}{gender}"
                 f"<:num:1029030329350111232>**`{pn}`** "
                 f"__`{formatted_name}`__"
                 f"{level}"
-                f"<:ivs:1029331472789819442>`{iv}`"
+                f"<:ivs:1029331472789819442>`{iv}`{'' if not is_egg else ':egg:`' + str(counter) + '`'}"
                 f"{extra_text}\n"
             )
 

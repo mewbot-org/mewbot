@@ -978,7 +978,7 @@ class Items(commands.Cog):
                     "restock": int(info["restock"]),
                 }
 
-                max_chests = 5
+                max_chests = 100
                 restock_time = 604800
                 if info["restock"] <= int(time.time() // restock_time):
                     await pconn.execute(

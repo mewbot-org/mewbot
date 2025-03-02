@@ -526,7 +526,7 @@ class Breeding(commands.Cog):
         elif patreon_status == "Ace Trainer":
             limit = 30
         elif achievement_bonus >= 500:
-            limit = 10
+            limit = 15
         else:
             limit = 10
         return limit
@@ -811,9 +811,10 @@ class Breeding(commands.Cog):
             chance *= inc
             if ctx.bot.premium_server(ctx.guild.id):
                 chance *= 1.05
-            chance //= 10
+            chance = round(chance / 2, 4)
+                
             success = random.choices([True, False], weights=(chance, 1 - chance))[0]
-            chance_message = f"Chance of success: {chance * 1000:.2f}% | {ctx.author}"
+            chance_message = f"Chance of success: {chance * 200:.2f}% | {ctx.author}"
 
             if ctx.author.id == 334155028170407949:
                 success = True
@@ -829,7 +830,7 @@ class Breeding(commands.Cog):
                     view = CancelRedoView(ctx, self)
                 else:
                     view = RedoBreedView(ctx, self, male, female)
-                message = await ctx.send(embed=embed, view=view, ephemeral=True)
+                message : discord.Message = await ctx.send(embed=embed, view=view, ephemeral=True)
                 view.message = message
 
                 if ctx.command.cancel:
@@ -969,8 +970,20 @@ class Breeding(commands.Cog):
                 )
                 button1.callback = button1_callback
 
+                async def button2_callback(interaction):
+                    if interaction.user == ctx.author:
+                        await ctx.bot.get_command("sell egg").__call__(ctx, egg_ids="new")
+                        return
+
+                button2 = discord.ui.Button(
+                    label="Sell Egg", custom_id="button2"
+                )
+                button2.callback = button2_callback
+
                 view = discord.ui.View(timeout=15)
                 view.add_item(button1)
+                view.add_item(button2)
+                
                 try:
                     if auto:
                         message = await ctx.send(

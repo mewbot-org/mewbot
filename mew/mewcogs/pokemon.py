@@ -804,11 +804,11 @@ class Pokemon(commands.Cog):
         tlist = ", ".join(types)
         egg_groups = ", ".join(egg_groups)
         stats_str = (
-            f"`HP`: {pokemonHp}{blank*1}"
+            f"`HP`: {pokemonHp}{blank*1}\n"
             f"`Attack`: {pokemonAtk}{blank*1}"
-            f"`Defense`: {pokemonDef}{blank*1}"
+            f"`Defense`: {pokemonDef}{blank*1}\n"
             f"`Sp. Attack`: {pokemonSpa}{blank*1}"
-            f"`Sp. Defense`: {pokemonSpd}{blank*1}"
+            f"`Sp. Defense`: {pokemonSpd}{blank*1}\n"
             f"`Speed`: {pokemonSpeed}"
         )
 
@@ -857,10 +857,7 @@ class Pokemon(commands.Cog):
 
         if "arceus-" in val.lower():
             tlist = val.split("-")[1]
-        emoji = get_emoji(
-            shiny=shiny,
-            skin=skin,
-        )
+        emoji = ctx.bot.misc.get_emote("shiny" if shiny else skin)
         val = val.capitalize()
         embed = discord.Embed(
             title=f"{emoji}{val}", description="", color=random.choice(ctx.bot.colors)

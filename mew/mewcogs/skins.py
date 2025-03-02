@@ -198,10 +198,12 @@ class Skins(commands.Cog):
         skin: Literal[
             "halloween",
             "xmas",
+            "valentine",
             "xmas2022",
             "xmas2023",
             "xmas2024",
             "valentines2023",
+            "valentine2025",
             "easter2023",
             "summer2023",
             "summer2024",
@@ -224,6 +226,9 @@ class Skins(commands.Cog):
             
         if skin == "xmas":
             skin = "xmas2024"
+        
+        if skin == "valentine":
+            skin = "valentine2025"
             
         if skin in BUYABLE_SKINS:
             # This can be removed once shop is redone

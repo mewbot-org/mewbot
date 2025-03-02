@@ -218,11 +218,12 @@ async def get_pokemon_qinfo(ctx, records, info_type=None):
         egg_groups = "?"
         # gender_rate = 0
 
-    emoji = get_emoji(
-        shiny=shiny,
-        radiant=radiant,
-        skin=skin,
-    )
+    # emoji = get_emoji(
+    #     shiny=shiny,
+    #     radiant=radiant,
+    #     skin=skin,
+    # )
+    emoji = ctx.bot.misc.get_emote("shiny" if shiny else skin)
 
     if pn.lower() == "shedinja":
         hp = 1
@@ -472,11 +473,11 @@ async def get_pokemon_info(ctx, records, info_type=None):
         t_ivs = int(hpiv + atkiv + defiv + spatkiv + spdefiv + speediv)
         tlist = "?"
 
-    emoji = get_emoji(
-        shiny=shiny,
-        radiant=radiant,
-        skin=skin,
-    )
+    emoji = ctx.bot.misc.get_emote("shiny" if shiny else skin) # get_emoji(
+    #     shiny=shiny,
+    #     radiant=radiant,
+    #     skin=skin,
+    # )
 
     if pn.lower() == "shedinja":
         hp = 1

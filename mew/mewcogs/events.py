@@ -553,19 +553,7 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Lopunny",
-            "Bidoof",
-            "Bibarel",
-            "Buneary",
-            "Klefki",
-            "Mimikyu",
-            "Raging-bolt",
-            "Flamigo",
-            "Komala",
-            "Mew",
-            "Corviknight",
-            "Rookidee",
-            "Corvisquire"
+            "Ekans", "Sobble", "Spoink", "Grumpig", "Jirachi", "Morpeko",
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -2177,7 +2165,7 @@ class Events(commands.Cog):
         if not self.HALLOWEEN_COMMANDS:
             await ctx.send("This command can only be used during the halloween season!")
             return
-        async with ctx.bot.db[0].acquire() as pconn:
+        async with self.bot.db[0].acquire() as pconn:
             spooky_chest = await pconn.fetchval(
                 "SELECT spooky_chest FROM events_new WHERE u_id = $1", ctx.author.id
             )
@@ -2241,7 +2229,7 @@ class Events(commands.Cog):
                 ctx.author.id,
             )
         msg += f"You also received {candy} :candy: !\n"
-        await ctx.send(embed=make_embed(title=msg))
+        await ctx.send(msg)
 
     @halloween.command(name="open_fleshy")
     async def open_fleshy(self, ctx):
@@ -2697,7 +2685,7 @@ class Events(commands.Cog):
                 ctx.author.id,
             )
             await pconn.execute(
-                "UPDATE users SET holidayinv = $1::json WHERE u_id = $2",
+                "UPDATE users SET holidayinv = $1::json where u_id = $2",
                 inv,
                 ctx.author.id,
             )
@@ -3581,7 +3569,7 @@ class Events(commands.Cog):
                 interaction, idx
             )
             view.add_item(button)
-            # Send the initial message with pumpkin challenge
+            # Send the initial message with the button
         msg = await channel.send(embed=e, view=view)
 
         try:
@@ -3766,7 +3754,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_poke_spawn(self, channel, user):
-        # For limiting raids to Official only
+        # For limiting raids to Official onlyR
         if self.bot.botbanned(user.id):
             return
         if self.EASTER_DROPS:
@@ -3788,10 +3776,10 @@ class Events(commands.Cog):
         if self.CHRISTMAS_DROPS:
             # if not random.randrange(15) or user.id == 334155028170407949:
             # await self.give_cheer(channel, user)
-            if not random.randrange(3) or user.id == 455277032625012737:
+            if not random.randrange(6) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.VALENTINE_DROPS:
-            if not random.randrange(5) or user.id == 334155028170407949:
+            if not random.randrange(3) or user.id == 455277032625012737:
                 await self.maybe_spawn_christmas(channel)
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
@@ -3869,6 +3857,7 @@ class ChristmasSpawn(discord.ui.View):
         self.attacked = {}
         self.max_hp = 0
         self.hp = self.max_hp
+        self._earned_gems = {}
         self.state = "registering"
         self.pokeurl = ""
         self.timeout = 120
@@ -3909,46 +3898,47 @@ class ChristmasSpawn(discord.ui.View):
     def rand_spawn_title(self):
         return random.choice(
             [
-                f"🎄 A festive breeze carries a wild {self.poke} your way!",
-                f"🎅 Under the twinkling Christmas lights, a jolly {self.poke} has appeared!",
-                f"✨ A magical glow surrounds {self.poke} as it steps out of a winter wonderland!",
-                f"❄️ Amidst the falling snow, you spot a holiday {self.poke} looking for cheer!",
-                f"🎁 The spirit of Christmas is here, and {self.poke} has come to celebrate!",
+                f"💖 A warm breeze of love carries a wild {self.poke} your way!",
+                f"🌹 Under the soft glow of candlelight, a romantic {self.poke} appears!",
+                f"✨ A magical shimmer surrounds {self.poke} as it emerges with Valentine’s cheer!",
+                f"💘 Amidst falling rose petals, a charming {self.poke} has arrived!",
+                f"🎁 The spirit of love is here, and {self.poke} has come to spread joy!",
             ]
         )
 
     def pokemon_escaped_message(self):
         return random.choice(
             [
-                f"🎄 The wild {self.poke} was feeling too jolly and danced away into the snow!",
-                f"🎅 {self.poke} vanished with a ho-ho-ho! Better luck next time!",
-                f"✨ {self.poke} slipped away under the cover of twinkling Christmas lights!",
-                f"❄️ A gust of winter wind carried {self.poke} far away. It’s gone for now!",
-                f"🎁 {self.poke} decided to deliver presents elsewhere. Keep an eye out for another chance!",
+                f"💔 The wild {self.poke} got cold feet and ran off before you could catch it!",
+                f"🌹 {self.poke} vanished into a field of roses, leaving only a sweet scent behind!",
+                f"✨ {self.poke} slipped away into the starlit night, heart unclaimed!",
+                f"💘 A gentle breeze carried {self.poke} far away, lost in the magic of love!",
+                f"🎁 {self.poke} decided to spread affection elsewhere. Keep an eye out for another chance!",
             ]
         )
-    
+
     def rand_defeat_message(self):
         return random.choice(
             [
-                f"❄️ {self.poke} fades into the snow, leaving behind a chilling silence...",
-                f"🎄 The festive lights dim as {self.poke} retreats into the winter night.",
-                f"🎁 {self.poke} leaves behind a parting gift of snowflakes as it vanishes!",
-                f"✨ {self.poke} sparkles one last time before disappearing into the frosty ether.",
-                f"🎅 With a jolly nod, {self.poke} bids farewell and vanishes into the holiday mist!",
-                f"❄️ The snow settles as {self.poke} is no longer in sight.",
-                f"🎁 {self.poke} leaves with a parting twinkle, disappearing into the magic of the season.",
-                f"🎄 The jingling bells quiet as {self.poke} drifts away into the winter wonderland.",
-                f"✨ The glow around {self.poke} fades, leaving only a frosty memory behind.",
-                f"🎅 With a merry wave, {self.poke} departs, its holiday spirit lingering in the air!",
+                f"💔 {self.poke} fades away, leaving behind a bittersweet memory...",
+                f"🌹 The soft glow around {self.poke} dims as it vanishes into the night.",
+                f"🎁 {self.poke} leaves behind a single rose as a parting gift before disappearing!",
+                f"✨ {self.poke} sparkles one last time before vanishing into the aura of love.",
+                f"💘 With a loving glance, {self.poke} bids farewell, its presence lingering in the air!",
+                f"💖 The warmth fades as {self.poke} is no longer in sight, love lost for now.",
+                f"🌟 {self.poke} twinkles softly before disappearing into a sea of floating hearts.",
+                f"🎶 The melody of love quiets as {self.poke} drifts away into the starry sky.",
+                f"💌 The soft glow of affection fades as {self.poke} slips into the distance.",
+                f"🎊 With a gentle wave, {self.poke} departs, leaving behind a lingering sense of romance!",
             ]
         )
+
 
 
     async def stream_image(self):
         params = {
             "poke_image_url": "sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="xmas2024"),
+            + await get_file_name(self.poke, self.cog.bot, skin="valentine2025"),
             "poke": ujson.dumps({"hp": self.hp, "starting_hp": self.max_hp}),
         }
         image = BytesIO()
@@ -3992,7 +3982,17 @@ class ChristmasSpawn(discord.ui.View):
 
         return winners
     
-    async def calculate_diminishing_gems(self, amount_of_gems):
+    async def calculate_diminishing_gems(self, amount_of_gems, user):
+        # Track and limit gems for users who have already earned more than 100 gems
+        user_total_gems = self._earned_gems.get(user.id, 0) + amount_of_gems
+        
+        # If user has more than 100 gems, cap the new gems
+        if user_total_gems > 100:
+            amount_of_gems = min(amount_of_gems, 5)
+        
+        # Update the tracked gems for the user
+        self._earned_gems[user.id] = user_total_gems
+        
         # Normalize the amount_of_gems to a diminishing scale
         base = 10  # Minimum value
         max_value = 25  # Maximum value
@@ -4027,7 +4027,7 @@ class ChristmasSpawn(discord.ui.View):
 
         extra_msg = ""
         self.pokeurl = pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
-            self.poke, self.cog.bot, skin="xmas2024"
+            self.poke, self.cog.bot, skin="valentine2025"
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
         if guild is None:
@@ -4095,7 +4095,7 @@ class ChristmasSpawn(discord.ui.View):
         self.max_hp *= (await self.cog.bot.db[1].pokemon_stats.find_one(
             {"pokemon_id": form_info["pokemon_id"]}
         ))['stats'][0]
-        self.max_hp //= 1.5
+        self.max_hp //= 2
         self.hp = self.max_hp = int(self.max_hp)
     
         type_effectiveness = {}
@@ -4261,7 +4261,7 @@ class ChristmasSpawn(discord.ui.View):
             # self.embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")/
             self.embed.set_image(url="attachment://event.png")
             await self.message.edit(embed=self.embed, attachments=[await self.stream_image()], view=self)
-            await asyncio.sleep(12)
+            await asyncio.sleep(20)
 
         self.state = "ended"
         # hp = max(self.max_hp - sum(self.attacked.values()), 0)
@@ -4292,7 +4292,7 @@ class ChristmasSpawn(discord.ui.View):
             if self.channel.guild.id == 998128574898896906:
                 for user in self.registered:
                     amount_of_gems = self.max_hp // len(self.attacked)
-                    amount_of_gems = await self.calculate_diminishing_gems(amount_of_gems) if amount_of_gems > 10 else amount_of_gems
+                    amount_of_gems = await self.calculate_diminishing_gems(amount_of_gems, user) if amount_of_gems > 10 else amount_of_gems
 
                     await self.cog.bot.commondb.add_bag_item(
                         user.id,
@@ -4301,7 +4301,7 @@ class ChristmasSpawn(discord.ui.View):
                         True,
                     )
             for winner, dmg in winners:
-                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, boosted = bool(random.randint(0, 3)), skin = 'xmas2024')
+                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, boosted = bool(random.randint(0, 3)), skin = 'valentine2025')
 
         self.embed = discord.Embed(
             title=self.rand_defeat_message(),
@@ -4343,44 +4343,45 @@ class RaidMove(discord.ui.Button):
         if damage == 2:
             # "It's super effective! You will get a Large Present if the poke is defeated."
             # "It's super effective! You'll receive hearts if the poke is defeated!"
-            # self.effective = (
+            self.effective = (
 
-            #     f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
-            # )
+                f"It's **Super Effective**!\nYou will get 9 to 15 seashells 🐚 if the Pokémon is defeated."
+            )
             self.effective = f"It's Super Effective!\n{self.random_motivational_phrase()}"
 
         elif damage == 1:
             # "It's not very effective... You will get a Small Present if the poke is defeated."
             # "It's not very effective... You'll receive hearts if the poke is defeated!"
-            # self.effective = (
-            #     f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
-            # )
+            self.effective = (
+                f"It's **Not Very Effective**...\nYou will get 2 to 8 seashells 🐚 if the Pokémon is defeated."
+            )
             self.effective = f"It's not Very Effective...\n{self.random_motivational_phrase()}"
 
         else:
             # "It had no effect... You will only get Snowflakes if the poke is defeated."
             # "It had no effect... You'll receive hearts if the poke is defeated!"
-            # self.effective = (
-            #     f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
-            # )
+            self.effective = (
+                f"It **Had No Effect**...\nYou will get 1 seashell 🐚 if the Pokémon is defeated."
+            )
             self.effective = (
                 f"It had No Effect...\n{self.random_motivational_phrase()}"
             )
             
     def random_motivational_phrase(self):
         phrases = [
-            "Keep attacking!",
-            "You're doing great, keep it up!",
-            "Stay strong, you're almost there!",
-            "Don't give up, defeat is close!",
-            "Keep fighting, the win is near!",
-            "You're crushing it, keep going!",
-            "Attack with all you've got!",
-            "Victory is within reach, keep pushing!",
-            "Keep up the pressure, you're winning!",
-            "The battle is yours, just a bit more!"
+            "Fight with love and passion! 💖",
+            "You're doing amazing, keep spreading the love! ❤️",
+            "Stay strong, your Valentine victory is near! 💘",
+            "Don't give up, the heart of battle beats for you! 💓",
+            "Keep going, your efforts will be cherished! 💞",
+            "You're dazzling in battle, keep shining! ✨",
+            "Put your heart into it and keep fighting! 💖🔥",
+            "Love and determination will carry you to victory! 💌",
+            "Keep the momentum, you're winning hearts and battles! 💕",
+            "Your love-fueled strength will lead you to victory! 💝",
         ]
         return random.choice(phrases)
+
 
     async def callback(self, interaction):
         self.view.attacked[interaction.user.id] = (

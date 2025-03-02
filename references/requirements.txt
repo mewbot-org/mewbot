@@ -7,7 +7,7 @@ async_timeout
 beautifulsoup4
 dacite
 dataclasses
-discord
+git+https://github.com/Rapptz/discord.py
 fastapi
 flask
 motor
