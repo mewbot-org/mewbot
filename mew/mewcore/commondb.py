@@ -241,7 +241,7 @@ class CommonDB:
             "Heracross": ["u-turn", "tackle", "tackle", "tackle"],
             "Manaphy": ["stored-power", "tackle", "tackle", "tackle"],
             "Pidgeot": ["focus-blast", "tackle", "tackle", "tackle"],
-            "Salamence": ["crush-grip", "tackle", "tackle", "tackle"],
+            # "Salamence": ["crush-grip", "tackle", "tackle", "tackle"],
             "Gallade": ["no-retreat", "tackle", "tackle", "tackle"],
             "Gogoat": ["body-press", "tackle", "tackle", "tackle"],
             "Pyroar": ["fiery-dance", "tackle", "tackle", "tackle"],

@@ -895,7 +895,7 @@ class KittyCat(commands.Cog):
     @discord.app_commands.guilds(STAFFSERVER)
     async def gib(self, ctx): ...
 
-    @check_admin()
+    @check_art_team()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def streak(
@@ -924,7 +924,7 @@ class KittyCat(commands.Cog):
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
-    @check_gymauth()
+    @check_art_team()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def redeems(self, ctx, user: discord.Member, amount: int):
@@ -958,7 +958,7 @@ class KittyCat(commands.Cog):
             embed.set_footer(text="Definitely hax... lots of hax")
             await ctx.send(embed=embed)
 
-    @check_admin()
+    @check_art_team()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def gems(self, ctx, user: discord.Member, gems: int):
@@ -1002,7 +1002,7 @@ class KittyCat(commands.Cog):
         )
         await self.load_bans_cross_cluster()
 
-    @check_gymauth()
+    @check_art_team()
     @gib.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def chest(
