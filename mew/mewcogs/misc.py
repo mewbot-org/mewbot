@@ -290,20 +290,20 @@ class Misc(commands.Cog):
         if " " in name:
             name = name.replace(" ", "")
         e = discord.Embed(title="Donate to the Bot Here!", color=0xFFB6C1)
-        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&notify_url=https://api.mewbot.xyz/paypal&business=vintagedust@live.com&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&currency_code=USD&custom={ctx.author.id}"
+        donation_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&notify_url=https://api.mewbot.site/paypal&business=isobeld03@outlook.com&lc=US&item_name=MewBot-Donation-from-{ctx.author.id}&currency_code=USD&custom={ctx.author.id}"
 
         payload = {"user_name": ctx.author.name, "user_id": ctx.author.id}
-        # donation_url = f"https://mewbot.xyz/donate?{urllib.parse.urlencode(payload)}"
+        # donation_url = f"https://mewbot.site/donate?{urllib.parse.urlencode(payload)}"
 
         # e.add_field(name="READ THIS", value="We are currently experiencing problems with the automatic rewards from donations. Heres our temporary work-around.\n 1.Please use this [link](https://mewbot.wiki/en/Donations) to donate via paypal.\n2.Then DM Sky or join the [official server](https://discord.gg/mewbot) and ask in questions.\n3. Have a SS of donation ready.")
         e.add_field(name="Donation Link", value=f"[Donate Here!]({donation_url})\n")
-        e.add_field(
-            name="Patreon",
-            value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotxyz?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.",
-            inline=False,
-        )
+        # e.add_field(
+        #     name="Patreon",
+        #     value=f"**[Become a Patreon and benefit from some awesome rewards.](https://www.patreon.com/mewbotxyz?fan_landing=true)**\n*Patreon is not the same as standard donations, and has totally unique benefits and rewards-see the link above for information on the tiers available.",
+        #     inline=False,
+        # )
         e.set_footer(
-            text="You will receive 2 Redeem + 3,000 credits for every USD donated."
+            text="You will receive An Incubator, 2 Redeems + 3,000 credits for every USD donated."
         )
         await ctx.send(embed=e)
 

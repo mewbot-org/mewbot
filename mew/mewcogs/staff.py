@@ -620,7 +620,7 @@ class MewBotAdmin(commands.Cog):
             )
             await ctx.send(":white_check_mark:")
 
-    @check_gymauth()
+    @check_art_team()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def createpoke(
@@ -655,7 +655,7 @@ class MewBotAdmin(commands.Cog):
             f"{ctx.author.name} used create-poke - Pokemon = `{pokedata.id}`",
         )
 
-    @check_admin()
+    @check_art_team()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     @discord.app_commands.describe(skin="Leave Blank for no skin")
@@ -675,7 +675,7 @@ class MewBotAdmin(commands.Cog):
             else "Removed Skin from Pokemon"
         )
 
-    @check_admin()
+    @check_art_team()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def add_skin(self, ctx, user: discord.Member, pokname: str, skinname: str):
@@ -723,7 +723,7 @@ class MewBotAdmin(commands.Cog):
         await ctx.bot.mongo_update('forms', {"identifier": pokemon.lower()}, {"weight": weight})
         return await ctx.send("Updated %s Weight to %d KG" % (pokemon, weight//10))
         
-    @check_gymauth()
+    # @check_gymauth()
     @admin.command()
     @discord.app_commands.guilds(STAFFSERVER)
     async def editiv(

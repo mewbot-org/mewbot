@@ -27,8 +27,8 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available gleam pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = [
-            "Ditto", "Ferroseed", "Tepig", "Throh", "Lechonk", "Enamorus", "Iron-leaves", "Keldeo", "Tapu-bulu"
-        ]
+            "Squirtle", "Pansear", "Farfetchd-galar", "Wimpod", "Dunsparce", "Lickitung", "Iron-bundle", "Cobalion", "Fezandipiti", "Azelf", "Uxie", "Mesprit"
+                ]
 
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
@@ -162,9 +162,9 @@ class Chests(commands.Cog):
                 ("shadowstreak", 0.40, "Grants 75 shadow streak to boost shadow Pokémon odds."),
                 ("shadowstreak2", 0.10, "Grants 150 shadow streak to significantly improve shadow Pokémon odds."),
                 ("shadow", 0.02, "An exclusive shadow Pokémon."),
-                ("gleam", 0.20, "A rare gleam Pokémon."),
-                ("boostedgleam", 0.08, "A high-IV gleam Pokémon."),
-                ("voucher", 0.005, "An exclusive voucher for rare rewards."),
+                ("gleam", 0.0845, "A rare gleam Pokémon."),
+                ("boostedgleam", 0.20, "A high-IV gleam Pokémon."),
+                ("voucher", 0.0005, "An exclusive voucher for rare rewards."),
                 ("credits", 0.18, "Shop credits for purchases."),
 
                 ],
@@ -215,12 +215,13 @@ class Chests(commands.Cog):
 
     async def display_chest(self, ctx, chest: str):
         
+        chest_type = "Mystery Box..." if chest.lower() == "mystery" else "Chest..."
         embed = discord.Embed(
-            title="Opening " + "Mystery Box..." if chest.lower() == "mystery" else "Chest...",
-            description="Explore the rewards you can get from each chest!\nLearn more about its rewards!",
-            color=discord.Color.orange(),
+        title=f"Opening {chest_type}",
+        description="Explore the rewards you can get from each chest!\nLearn more about its rewards!",
+        color=discord.Color.orange(),
         )
-
+        
         rewards_message = ""
         for reward, weight, description in self.CHEST_DATA[chest.upper()]["rewards"]:
             rewards_message += f"• **{description}** (Chance: {weight * 100}%)\n"
@@ -230,6 +231,7 @@ class Chests(commands.Cog):
             value=rewards_message,
             inline=False,
         )
+        
 
         # Add the chest image
         embed.set_thumbnail(url=self.CHEST_DATA[chest.upper()]["image_url"])

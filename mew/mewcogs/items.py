@@ -21,7 +21,7 @@ activeItemList = (
     "sweet_apple",
     "dusk_stone",
     "thunder_stone",
-    "fire_stone",
+    # "fire_stone",
     "water_stone",
     "dawn_stone",
     "leaf_stone",
@@ -920,16 +920,20 @@ class Items(commands.Cog):
     @discord.app_commands.describe(
         chest_type="The type of chest you want to buy.",
         credits_or_redeems="Use credits or redeems to buy chest.",
+        amount="The amount or quantity of chests."
     )
     async def buy_chest(
         self,
         ctx,
         chest_type: Literal["Rare", "Mythic", "Legend"],
         credits_or_redeems: Literal["Credits", "Redeems"],
+        amount: int = 1,
     ):
+        
         """Buy a gleam chest."""
         ct = chest_type.lower().strip()
         cor = credits_or_redeems.lower()
+        amount = max(1, amount)
         if ct not in ("rare", "mythic", "legend"):
             await ctx.send(
                 f'"`{ct}`" is not a valid chest type! Choose one of Rare, Mythic, or Legend.'
@@ -942,8 +946,9 @@ class Items(commands.Cog):
             "credits": {"rare": 600000, "mythic": 1250000, "legend": 3000000},
             "redeems": {"rare": 10, "mythic": 15, "legend": 25},
         }[cor][ct]
+        total_price = amount * price
         if not await ConfirmView(
-            ctx, f"Are you sure you want to buy a {ct} chest for {price} {cor}?\n"
+            ctx, f"Are you sure you want to buy {amount} {ct} chest for {total_price} {cor}?\n"
         ).wait():
             await ctx.send("Purchase cancelled.")
             return
@@ -957,9 +962,9 @@ class Items(commands.Cog):
                 if bal is None:
                     await ctx.send("You have not started!\nStart with `/start` first.")
                     return
-                if bal < price:
+                if bal < total_price:
                     await ctx.send(
-                        f"You do not have the {price} credits you need to buy a {ct} chest!"
+                        f"You do not have the {total_price} credits you need to buy a {ct} chest!"
                     )
                     return
 
@@ -1001,22 +1006,25 @@ class Items(commands.Cog):
 
                 await pconn.execute(
                     "UPDATE users SET mewcoins = mewcoins - $1 WHERE u_id = $2",
-                    ctx.bot.misc.get_vat_price(price),
+                    ctx.bot.misc.get_vat_price(total_price),
                     ctx.author.id,
                 )
                 if ct == "rare":
                     await pconn.execute(
-                        "UPDATE cheststore SET rare = rare + 1 WHERE u_id = $1",
+                        "UPDATE cheststore SET rare = rare + $1 WHERE u_id = $2",
+                        amount,
                         ctx.author.id,
                     )
                 elif ct == "mythic":
                     await pconn.execute(
-                        "UPDATE cheststore SET mythic = mythic + 1 WHERE u_id = $1",
+                        "UPDATE cheststore SET mythic = mythic + $1 WHERE u_id = $2",
+                        amount,
                         ctx.author.id,
                     )
                 elif ct == "legend":
                     await pconn.execute(
-                        "UPDATE cheststore SET legend = legend + 1 WHERE u_id = $1",
+                        "UPDATE cheststore SET legend = legend + $1 WHERE u_id = $2",
+                        amount,
                         ctx.author.id,
                     )
             elif cor == "redeems":
@@ -1027,22 +1035,22 @@ class Items(commands.Cog):
                 if bal is None:
                     await ctx.send("You have not started!\nStart with `/start` first.")
                     return
-                if bal < price:
+                if bal < total_price:
                     await ctx.send(
-                        f"You do not have the {price} redeems you need to buy a {ct} chest!"
+                        f"You do not have the {total_price} redeems you need to buy a {ct} chest!"
                     )
                     return
                 await pconn.execute(
                     "UPDATE users SET redeems = redeems - $1 WHERE u_id = $2",
-                    price,
+                    total_price,
                     ctx.author.id,
                 )
             else:  # safe-guard, should never be hit
                 return
             item = ct + "_chest"
-            await ctx.bot.commondb.add_bag_item(ctx.author.id, item, 1, True)
+            await ctx.bot.commondb.add_bag_item(ctx.author.id, item, amount, True)
         await ctx.send(
-            f"You have successfully bought a {ct} chest for {price} {cor}!\n"
+            f"You have successfully bought {amount} {ct} chest for {total_price} {cor}!\n"
             f"You can open it with `/open {ct}`."
         )
     

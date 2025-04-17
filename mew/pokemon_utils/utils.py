@@ -816,7 +816,7 @@ async def evolve(
     held_item_id = await bot.mongo_pokemon_db.items.find_one(
         {"identifier": pokemon.hitem.replace("_", "-")}
     )
-    if held_item_id is not None:
+    if held_item_id:
         held_item_id = held_item_id["id"]
 
     # Get the owner's current region

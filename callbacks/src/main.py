@@ -164,14 +164,15 @@ class AppUtils:
         response = await response.json()
         return response["id"]
 
-    async def send_message(self, channel_id, amount, credits):
+    async def send_message(self, channel_id, redeems, credits, incubators):
         data = {
             "embed": {
                 "title": "Thank You For Supporting Mewbot!",
                 "description": (
-                    f"You have received {amount} Redeems and {credits} Credits for supporting "
+                    f"You have received {redeems} Redeems and {credits} Credits for supporting "
                     "Mewbot!\nYou can use your redeems with `/redeem <pokemon_name>` to get any "
-                    "Pokemon of your choice!"
+                    "Pokemon of your choice!\n\n"
+                    f"You also received {incubators} Incubators!"
                 ),
                 "color": 0xFFB6C1,
             }
@@ -255,6 +256,7 @@ class AppUtils:
             args = (user_id, amount, ref)
             print("Sending Redeems...")
             await pconn.execute(query, *args)
+            await pconn.execute("UPDATE account_bound SET incubators = incubators + 1 WHERE u_id = $1", user_id)
             await pconn.execute(
                 (
                     "UPDATE users SET redeems = redeems + $1, mewcoins = mewcoins + $2 "
@@ -446,8 +448,8 @@ async def shutdown():
 #            }
 #        ],
 #        mode = 'payment',
-#        success_url = 'https://www.mewbot.xyz/thankyou.html',
-#        cancel_url = 'https://www.mewbot.xyz/donate',
+#        success_url = 'https://www.mewbot.site/thankyou.html',
+#        cancel_url = 'https://www.mewbot.site/donate',
 #        metadata = {'custom': data['custom']}
 #    )
 #    print(session.url)
@@ -586,7 +588,7 @@ async def paystack_verify(ref: int, request: Request):
 
     await app.utils.give_redeems(user_id, amount, f"{ref}_PV")
 
-    return RedirectResponse(url="https://mewbot.xyz/donate/thankyou.html")
+    return RedirectResponse(url="https://mewbot.site/donate/thankyou.html")
 
 
 # top.gg

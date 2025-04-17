@@ -31,7 +31,6 @@ class MewMisc:
             "VOTE": "<a:votestreak:998338987070603354>",
             # "PAT_CHEST": "<:patreon:1184571762705432679>",
             "VALENTINE": "<:heart:1184895213399982140>",
-            "EASTER": "<:easter:1184895215060914277>",
 
         }
     def get_emoji(self, emote):
@@ -52,12 +51,18 @@ class MewMisc:
             emote_name = 'easter'
         elif 'vote' in emote_name:
             emote_name = 'vote'
+        elif 'staff' in emote_name: # Sometimes the skin passed from postgres would be the folder name
+            emote_name = 'staff'    # Like staff/custom/xx.png so jojo, we just gotta parse it to the actual uploaded emote name
         ##
 
         emote = self.emotes.get(emote_name.upper(), None)
         if not emote:
             emote = discord.utils.get(self.app_emojis, name = emote_name.lower())
-        return emote or "<:blank:1012504803496177685>"
+        
+        if not emote and emote_name and ('skin' in emote_name or 'custom' in emote_name): # There's no emote for this skin but its an actual skin (because emote_name is not False), so its probably a generic skin
+            emote = discord.utils.get(self.app_emojis, name = 'skin')
+
+        return emote or "<:blank:1012504803496177685>" # We return blank (as a placeholder) if there should be an emote in the text or embed or whatever
     
     async def get_all_gleams(self):
         # Get list of pokemon in old skin folders

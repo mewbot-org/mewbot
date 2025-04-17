@@ -45,7 +45,7 @@ class Tutorial(commands.Cog):
                 Redeems are a special currency that allow you get any Pokemon at all, from Ultra Beasts to Dittoes!
                 See page 9, or `/redeem` for more.
                 """,
-                "embed_image": "https://mewbot.xyz/img/catch_img.jpg"
+                "embed_image": "https://mewbot.site/img/catch_img.jpg"
             },
             {
                 "title": "Managing your Pokemon",

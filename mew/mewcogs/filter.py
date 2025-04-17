@@ -923,6 +923,12 @@ class Filter(commands.Cog):
             nick = record["poknick"]
             iv = record["ivs"]
             shiny = record["shiny"]
+
+
+            incubate_for = record["incubate_for"] or datetime.now()
+            incubating = incubate_for > datetime.now()
+
+
             print(shiny)
             gleam = record["radiant"]
             level = str(record["pokelevel"]).rjust(max_lvl, " ")
@@ -941,7 +947,7 @@ class Filter(commands.Cog):
             extra_text = ""
             if filter_type == "m":
                 price = f"{price:,.0f}".rjust(max_price, " ")
-                extra_text = f"{ctx.bot.misc.CREDITS_EMOJI}`{price})`"
+                extra_text = f"{ctx.bot.misc.get_emote('mewcoin')}`{price})`"
             elif gid in mothers:
                 end = mothers[gid] + timedelta(hours=6)
                 now = datetime.now()
@@ -957,13 +963,13 @@ class Filter(commands.Cog):
                 extra_text = f"\N{STOPWATCH}`{time}`"
 
             iv = f"{iv/186:02.0%}".rjust(4, " ")
-
+            egg_text = '' if not is_egg else (':egg:`' + str(counter) + '`' if not incubating else ctx.bot.misc.get_emote('incubator'))
             desc += (
                 f"{emoji}{gender}"
                 f"<:num:1029030329350111232>**`{pn}`** "
                 f"__`{formatted_name}`__"
                 f"{level}"
-                f"<:ivs:1029331472789819442>`{iv}`{'' if not is_egg else ':egg:`' + str(counter) + '`'}"
+                f"<:ivs:1029331472789819442>`{iv}`{egg_text}"
                 f"{extra_text}\n"
             )
 

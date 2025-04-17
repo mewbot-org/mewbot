@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from mewutils.checks import check_owner
+from mewutils.checks import check_owner, check_admin
 from mewcogs.json_files import make_embed
 
 import asyncio
@@ -174,7 +174,7 @@ class Boost(commands.Cog):
         await ctx.send(f"Reset boost for {id}")
 
     @nitro.command()
-    @check_owner()
+    @check_admin()
     async def reset(self, ctx):
         """Reset all Nitro Boosts"""
         boosters_collection = ctx.bot.db[1].boosters

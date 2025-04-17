@@ -47,8 +47,8 @@ from mewcogs.pokemon_list import LegendList
 from email.message import EmailMessage
 
 
-IMG_SERVER_BASE_SKIN = "https://mewbot.xyz/sprites/skins/"
-IMG_SERVER_BASE_RAD = "https://mewbot.xyz/sprites/radiant/"
+IMG_SERVER_BASE_SKIN = "https://mewbot.site/sprites/skins/"
+IMG_SERVER_BASE_RAD = "https://mewbot.site/sprites/radiant/"
 SKIN_BASE = "/home/dyroot/mewbot/shared/duel/sprites/skins/"
 RAD_BASE = "/home/dyroot/mewbot/shared/duel/sprites/radiant/"
 
@@ -1517,7 +1517,7 @@ class Sky(commands.Cog):
     async def view_skins_pride(self, ctx):
         """PUBLIC: View Pride 2022 Skins"""
         pages = []
-        SERVER_BASE_PRIDE_SKIN = "https://mewbot.xyz/sprites/skins/pride2022/"
+        SERVER_BASE_PRIDE_SKIN = "https://mewbot.site/sprites/skins/pride2022/"
         PRIDE_BASE = "/home/dylee/clustered/shared/duel/sprites/skins/pride2022/"
         pages = []
         skins = list(pathlib.Path(PRIDE_BASE).glob("*-*-.png"))
@@ -1611,7 +1611,7 @@ class Sky(commands.Cog):
     @commands.hybrid_command()
     async def irefresh(self, ctx):
         """MOD: IMAGE REFRESH, pull new images to both servers"""
-        COMMAND = "rsync -avz --delete /var/www/mewbot.xyz/html/sprites/ /home/dylee/clustered/shared/duel/sprites/"
+        COMMAND = "rsync -avz --delete /var/www/mewbot.site/html/sprites/ /home/dylee/clustered/shared/duel/sprites/"
         proc = await asyncio.create_subprocess_shell(
             COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
@@ -1625,7 +1625,7 @@ class Sky(commands.Cog):
 
         await ctx.send("Images Synced Successfully.")
 
-        # COMMAND = f"sshpass -p liger666 ssh -A root@images.mewbot.xyz \"cd /var/www/html/img/sprites/ && git pull\" && cd /home/dylee/clustered/shared/duel/sprites/ && git pull"
+        # COMMAND = f"sshpass -p liger666 ssh -A root@images.mewbot.site \"cd /var/www/html/img/sprites/ && git pull\" && cd /home/dylee/clustered/shared/duel/sprites/ && git pull"
         # addendum = ""
 
         # proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
@@ -1634,7 +1634,7 @@ class Sky(commands.Cog):
         # stdout = stdout.decode()
 
         # if "no tracking information" in stderr.decode():
-        #     COMMAND = f"sshpass -p liger666 ssh -A root@images.mewbot.xyz \"cd /var/www/html/img/sprites/ && git pull\" && cd /home/dylee/clustered/shared/duel/sprites/ && git pull"
+        #     COMMAND = f"sshpass -p liger666 ssh -A root@images.mewbot.site \"cd /var/www/html/img/sprites/ && git pull\" && cd /home/dylee/clustered/shared/duel/sprites/ && git pull"
         #     proc = await asyncio.create_subprocess_shell(COMMAND, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         #     stdout, stderr = await proc.communicate()
         #     stdout = stdout.decode()

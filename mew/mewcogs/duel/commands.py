@@ -1223,6 +1223,9 @@ class Duel(commands.Cog):
             # badge_level = get_badge_level(badge_data, region)
 
             # Here we ensure leader exists and then check player can challenge
+            
+            print(f"Gym leader: identifier={npc.lower()}, region={region}")
+
             leader_data = await ctx.bot.db[1].gym_leaders.find_one(
                 {"$and": [{"identifier": npc.lower()}, {"region": region}]}
             )

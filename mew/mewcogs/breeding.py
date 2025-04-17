@@ -536,6 +536,33 @@ class Breeding(commands.Cog):
             "HMSET", "breedcooldowns", str(id_), "0"
         )
         self.auto_redo[id_] = None
+    
+    @commands.hybrid_command(
+    )
+    @commands.cooldown(1, 10, commands.BucketType.default)
+    @discord.app_commands.describe(
+        pokemon="The Pokémon to incubate."
+    )
+    async def incubate(self, ctx, pokemon: int):
+        """
+        Incubate a Pokémon for 6 hours.
+        """
+        async with self.bot.db[0].acquire() as pconn:
+            pokemon_id = await pconn.fetchval(
+                "SELECT pokes[$1] FROM users WHERE u_id = $2",
+                pokemon,
+                ctx.author.id,
+            )
+            if pokemon_id is None:
+                await ctx.send("Invalid Pokémon ID.")
+                return
+            pokemon = await pconn.fetchrow("SELECT * FROM pokes WHERE id = $1 AND pokname = 'Egg'", pokemon_id)
+            if not pokemon:
+                await ctx.send("Invalid Pokémon ID or Pokémon is not an egg.")
+                return
+            
+            await pconn.execute("UPDATE pokes SET incubate_for = $1 WHERE id = $2", datetime.now() + timedelta(hours=6), pokemon["id"])
+            await ctx.send(embed=make_embed(title=f"{pokemon['pokname']} has been incubated."))
 
     @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -662,7 +689,7 @@ class Breeding(commands.Cog):
                     "SELECT count(*) FROM pokes WHERE id = ANY ($1) AND pokname = 'Egg'",
                     pokes,
                 )
-                if daycared > dlimit:
+                if daycared >= dlimit:
                     await ctx.send("You already have enough Pokemon in the Daycare!")
                     await self.reset_cooldown(ctx.author.id)
                     return
@@ -861,6 +888,7 @@ class Breeding(commands.Cog):
 
                 # THIS IS OFFICIAL REDUCTION IN STEPS
                 counter = counter - round(counter * (10 / 100))
+                incubator_chance = random.random() < 0.02
 
                 if patreon_status in (
                     "Crystal Tier",
@@ -895,6 +923,11 @@ class Breeding(commands.Cog):
                     mother_details["id"], ctx.author.id
                 )
                 async with ctx.bot.db[0].acquire() as pconn:
+                    if incubator_chance:
+                        await pconn.execute(
+                            "UPDATE account_bound SET incubators = incubators + 1 WHERE u_id = $1",
+                            ctx.author.id,
+                        )
                     await pconn.execute(mother_query, *mother_args)
                     pokeid = await pconn.fetchval(query, *args)
                     # a = await pconn.fetchval("SELECT currval('pokes_id_seq');")
@@ -954,7 +987,14 @@ class Breeding(commands.Cog):
                         value=f"This Shadow took {chain} attempts! WOW!",
                         inline=True,
                     )
-                embed.set_image(url="https://mewbot.xyz/eastereggs.png")
+                
+                if incubator_chance:
+                    embed.add_field(
+                        name="Your Egg dropped an Incubator!",
+                        value="You received an Incubator!",
+                        inline=True,
+                    )
+                embed.set_image(url="https://mewbot.site/eastereggs.png")
                 embed.set_footer(text=chance_message)
 
                 async def button1_callback(interaction: discord.Interaction):
@@ -1038,7 +1078,7 @@ class Breeding(commands.Cog):
                 #         inline=True,
                 #     )
                 # embed.set_image(
-                #     url="https://mewbot.xyz/eastereggs.png"
+                #     url="https://mewbot.site/eastereggs.png"
                 # )
                 # embed.set_footer(text=chance_message)
 

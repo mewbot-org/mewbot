@@ -322,7 +322,7 @@ class Spawn(commands.Cog):
         """Claim Easter Eggs previously dropped in a channel."""
         embed = make_embed(
             footer="Checking this channel for any Easter egg drops...",
-            icon_url="https://mewbot.xyz/eastereggs.png",
+            icon_url="https://mewbot.site/eastereggs.png",
             title="",
             description="",
         )
@@ -333,7 +333,7 @@ class Spawn(commands.Cog):
             else:
                 embed = make_embed(
                     footer=f"Oops! There are currently no Easter Eggs in this channel!",
-                    icon_url="https://mewbot.xyz/eastereggs.png",
+                    icon_url="https://mewbot.site/eastereggs.png",
                     title="",
                     description="",
                 )
@@ -382,7 +382,7 @@ class Spawn(commands.Cog):
             )
             embed = make_embed(
                 description=f"You have claimed a {':star2: ' if is_shiny else ' '}{mother_name} Easter Egg!\nBegin hatching quickly!",
-                icon_url="https://mewbot.xyz/eastereggs.png",
+                icon_url="https://mewbot.site/eastereggs.png",
                 footer="...",
                 title="",
             )
@@ -557,9 +557,9 @@ class Spawn(commands.Cog):
         )
         try:
             if small_images:
-                embed.set_thumbnail(url="http://mewbot.xyz/sprites/" + pokeurl)
+                embed.set_thumbnail(url="http://mewbot.site/sprites/" + pokeurl)
             else:
-                embed.set_image(url="http://mewbot.xyz/sprites/" + pokeurl)
+                embed.set_image(url="http://mewbot.site/sprites/" + pokeurl)
         except Exception:
             return
 
@@ -585,7 +585,7 @@ class Spawn(commands.Cog):
         except:
             self.bot.logger.error(traceback.format_exc())
 
-        # embed = make_embed(footer=, icon_url="https://mewbot.xyz/eastereggs.png", title="", description="")
+        # embed = make_embed(footer=, icon_url="https://mewbot.site/eastereggs.png", title="", description="")
         # if event_chance:
         #     await spawn_channel.send(embed = embed)
 

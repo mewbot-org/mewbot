@@ -202,7 +202,7 @@ class Mew(commands.AutoShardedBot):
     async def on_ready(self):
 
         game = discord.Streaming(
-            name="/start - Use this command", url="https://mewbot.xyz/"
+            name="/start - Use this command", url="https://mewbot.site/"
         )
         await self.change_presence(status=discord.Status.dnd, activity=game)
 

@@ -99,7 +99,7 @@ class Missions(commands.Cog):
                     )[0]
 
                     if reward == "chest":
-                        chest_type = random.choice("common_chest", "rare_chest")
+                        chest_type = random.choice(("common_chest", "rare_chest"))
                         await pconn.execute(
                             f"UPDATE account_bound SET {chest_type} = {chest_type} + 1 WHERE u_id = $1",
                             ctx.author.id,

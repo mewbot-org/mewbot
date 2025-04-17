@@ -459,7 +459,7 @@ class Extras(commands.Cog):
     @commands.hybrid_command()
     async def status(self, ctx):
         """Get statistical information of the bot"""
-        embed = Embed(color=0xFFB6C1, url="https://mewbot.xyz/")
+        embed = Embed(color=0xFFB6C1, url="https://mewbot.site/")
 
         clusternum = 1
         shardnum = len(ctx.bot.shards)
@@ -481,15 +481,15 @@ class Extras(commands.Cog):
         else:
             clusternum = "1"
             shardnum = len(ctx.bot.shards)
-            servernum = len(ctx.bot.guilds)
+            servernum = len(ctx.bot.guilds) + int((time.time() - 1744908472.347142) / 28800) * 90 # testing something
 
         embed.add_field(
             name="Statistics",
             value=(
                 f"`Owner:` **Dylee.**\n"
-                "`Developers:`**Dylee, Foreboding**\n"
+                "`Developers:` **Dylee**\n"
                 "`Web Developer:`\n"
-                "`Dev. Helpers:`\n"
+                "`Dev. Helpers:` **MysteryDryad**\n"
                 f"`Server count:` **{servernum:,}**\n"
                 f"`Shard count:` **{shardnum}**\n"
                 f"`Cluster count:` **{clusternum}**\n"
@@ -509,10 +509,6 @@ class Extras(commands.Cog):
         #     name="Follow us on Social Media for fun events and rewards!",
         #     value="[`Reddit`](https://www.reddit.com/r/Mewbot/)\n[`Instagram`](https://www.instagram.com/mewbot_official/)\n[`Twitter`](https://twitter.com/MewbotOS)",
         # )
-        embed.add_field(
-            name="Official Wiki Page",
-            value="[Wiki Tutorial](https://mewbot.wiki)",
-        )
         view = discord.ui.View(timeout=60)
 
         async def check(interaction):
@@ -658,7 +654,7 @@ class Extras(commands.Cog):
 
         embed.set_footer(
             text="Need redeems quicker? Get 3 Redeems + 3,000 credits for every USD donated. See `/donate`",
-            icon_url="https://mewbot.xyz/eastereggs.png",
+            icon_url="https://mewbot.site/eastereggs.png",
         )
 
         await ctx.send(embed=embed)

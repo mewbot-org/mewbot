@@ -573,7 +573,7 @@ async def get_spawn_url(pokemon_name):
     # cipher_suite = Fernet(key);
     # cipher_text = cipher_suite.encrypt(pokemon_name.encode())
     # payload = {'cipher_text': cipher_text.decode(), 'key': key.decode()}
-    return "https://mewbot.xyz/sprites/" + pokemon_name
+    return "https://mewbot.site/sprites/" + pokemon_name
 
 
 async def get_battle_image(poke1, poke2, bot):
@@ -611,10 +611,12 @@ def get_emoji(*, blank="", shiny=False, radiant=False, gleam=False, skin=None):
     if skin is not None:
         skin = skin.lower()
         emoji = ":question:"
-        if skin == "staff":
+        if skin in ("staff", "staff_gif"):
             emoji = "<:staff_custom:1184571383393554623>"
         elif skin == "custom":
-            emoji = "<:custom:867904645447548929>"  # Not used atm
+            emoji = "<:custom:867904645447548929>" # Not used atm
+        elif skin.startswith("custom/"): 
+            emoji = "<:custom:867904645447548929>"
         elif skin == "patreon":
             emoji = "<:patreon:1184571762705432679>"
         elif skin in ("vote", "vote2", "vote3"):

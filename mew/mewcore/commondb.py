@@ -39,15 +39,23 @@ class CommonDB:
     def __init__(self, bot):
         self.bot = bot
         self.ALPHA_POKEMON = [
-            "Salamence",
-            "Blacephalon",
-            "Lunatone",
-            "Iron-hands",
-            "Altaria",
-            "Zeraora"
+            "Infernape",
+            "Porygon-z",
+            "Iron-thorns",
+            "Flygon",
+            "Mimikyu",
+            "Guzzlord", 
+            "Spinda"
         ]
 
         self.ALL_ALPHA_POKEMON = [
+            "Infernape",
+            "Porygon-z",
+            "Iron-thorns",
+            "Flygon",
+            "Mimikyu",
+            "Guzzlord",
+            "Starmie",
             "Salamence",
             "Blacephalon",
             "Lunatone",
@@ -94,7 +102,6 @@ class CommonDB:
             "Cobalion",
             "Camerupt",
             "Absol",
-            "Guzzlord",
             "Spiritomb",
             "Manectric",
             "Greninja",
@@ -151,9 +158,18 @@ class CommonDB:
             "Terrakion",
             "Walking-wake",
             "Glastrier",
-            "Samurott-hisui"
+            "Samurott-hisui", 
+            "Spinda", 
         ]
         self.ALPHA_MOVESETS = {
+            "Infernape": ["mountain-gale", "tackle", "tackle", "tackle"],
+            "Porygon-z": ["blood moon", "tackle", "tackle", "tackle"],
+            "Iron-thorns": ["shift-gear", "tackle", "tackle", "tackle"],
+            "Flygon": ["victory-dance", "tackle", "tackle", "tackle"],
+            "Mimikyu": ["spectral-thief", "tackle", "tackle", "tackle"],
+            "Guzzlord": ["comeuppance", "tackle", "tackle", "tackle"],
+            "Spinda": ["v-create", "tackle", "tackle", "tackle"],
+            "Starmie": ["prismatic-laser", "tackle", "tackle", "tackle"],
             "Salamence": ["dragon-darts", "tackle", "tackle", "tackle"],
             "Blacephalon": ["astral-barrage", "tackle", "tackle", "tackle"],
             "Lunatone": ["geomancy", "tackle", "tackle", "tackle"],
@@ -228,7 +244,6 @@ class CommonDB:
             "Cobalion": ["clangorous-soul", "tackle", "tackle", "tackle"],
             "Camerupt": ["magma-storm", "tackle", "tackle", "tackle"],
             "Absol": ["victory-dance", "tackle", "tackle", "tackle"],
-            "Guzzlord": ["fillet-away", "tackle", "tackle", "tackle"],
             "Spiritomb": ["toxic-thread", "tackle", "tackle", "tackle"],
             "Manectric": ["nasty-plot", "tackle", "tackle", "tackle"],
             "Greninja": ["strange-steam", "tackle", "tackle", "tackle"],
@@ -266,6 +281,8 @@ class CommonDB:
             "Blaziken": ["fake-out", "tackle", "tackle", "tackle"],
             "Blastoise": ["origin-pulse", "tackle", "tackle", "tackle"],
             "Drapion": ["wicked-blow", "tackle", "tackle", "tackle"],
+            #"Guzzlord": ["fillet away", "tackle", "tackle", "tackle"],
+
         }
 
     async def get_time(self):
@@ -394,13 +411,17 @@ class CommonDB:
         gender: str = None,
         level: int = 1,
         tradable: bool = True,
+        name: str = "",
     ):
         """
         Creates a poke and gives it to user.
 
         Returns a Pokemon object if the poke was created, and None otherwise.
         """
-        form_info = await self.bot.db[1].forms.find_one({"identifier": pokemon.lower()})
+        if name:
+            form_info = await self.bot.db[1].forms.find_one({"identifier": name.lower()}) # If we passed an Egg, with its hatch/parent name, then check that instead.
+        else:
+            form_info = await self.bot.db[1].forms.find_one({"identifier": pokemon.lower()})
         try:
             pokemon_info = await self.bot.db[1].pfile.find_one(
                 {"id": form_info["pokemon_id"]}
@@ -464,9 +485,9 @@ class CommonDB:
             skin=skin,
         )
         query2 = """
-                INSERT INTO pokes (pokname, hpiv, atkiv, defiv, spatkiv, spdefiv, speediv, hpev, atkev, defev, spatkev, spdefev, speedev, pokelevel, moves, hitem, exp, nature, expcap, poknick, shiny, price, market_enlist, fav, ability_index, gender, caught_by, radiant, skin, tradable)
+                INSERT INTO pokes (pokname, hpiv, atkiv, defiv, spatkiv, spdefiv, speediv, hpev, atkev, defev, spatkev, spdefev, speedev, pokelevel, moves, hitem, exp, nature, expcap, poknick, shiny, price, market_enlist, fav, ability_index, gender, caught_by, radiant, skin, tradable, name, counter)
 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30) RETURNING id
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32) RETURNING id
                 """
         args = (
             pokemon.capitalize(),
@@ -503,6 +524,8 @@ class CommonDB:
             radiant,
             skin,
             tradable,
+            name,
+            256 if pokemon.capitalize() == "Egg" else 0,
         )
         async with self.bot.db[0].acquire() as pconn:
             pokeid = await pconn.fetchval(query2, *args)

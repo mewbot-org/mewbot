@@ -19,22 +19,22 @@ from mewutils.misc import (
 )
 
 IMAGE_URLS = {
-    "xmas/Maleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_male.png",
-    "xmas/Femaleskier": "https://mewbot.xyz/sprites/trainers/skier_trainer_female.png",
-    "xmas/Pyrce": "https://mewbot.xyz/sprites/trainers/pyrce_trainer.png",
-    "staff/Artsquad": "https://mewbot.xyz/sprites/trainers/art_squad.png",
-    "halloween/Hexmaniac": "https://mewbot.xyz/sprites/trainers/hex_maniac_6.png",
-    "summer/Phoebe": "https://mewbot.xyz/sprites/trainers/phoebe.png",
-    "summer/Brycen": "https://mewbot.xyz/sprites/trainers/brycen.png",
-    "halloween/Allister": "https://mewbot.xyz/sprites/trainers/allister.png", 
+    "xmas/Maleskier": "https://mewbot.site/sprites/trainers/skier_trainer_male.png",
+    "xmas/Femaleskier": "https://mewbot.site/sprites/trainers/skier_trainer_female.png",
+    "xmas/Pyrce": "https://mewbot.site/sprites/trainers/pyrce_trainer.png",
+    "staff/Artsquad": "https://mewbot.site/sprites/trainers/art_squad.png",
+    "halloween/Hexmaniac": "https://mewbot.site/sprites/trainers/hex_maniac_6.png",
+    "summer/Phoebe": "https://mewbot.site/sprites/trainers/phoebe.png",
+    "summer/Brycen": "https://mewbot.site/sprites/trainers/brycen.png",
+    "halloween/Allister": "https://mewbot.site/sprites/trainers/allister.png", 
     "user/Youngster": "https://archives.bulbagarden.net/media/upload/4/48/Spr_DP_Youngster.png",
-    "breeder/Breeder1": "https://mewbot.xyz/sprites/trainers/breeder1.png",
-    "breeder/Breeder2": "https://mewbot.xyz/sprites/trainers/breeder2.png",
-    "summer/Swimmerf": "https://mewbot.xyz/sprites/trainers/swimmerf.png",
-    "summer/Swimmerm": "https://mewbot.xyz/sprites/trainers/swimmerm.png",
-    "summer/Cyclist": "https://mewbot.xyz/sprites/trainers/cyclistf.png",
-    "summer/Dancer": "https://mewbot.xyz/sprites/trainers/dancer.png",
-    "dev/Ghetsis": "https://mewbot.xyz/sprites/trainers/ghetsis.png",
+    "breeder/Breeder1": "https://mewbot.site/sprites/trainers/breeder1.png",
+    "breeder/Breeder2": "https://mewbot.site/sprites/trainers/breeder2.png",
+    "summer/Swimmerf": "https://mewbot.site/sprites/trainers/swimmerf.png",
+    "summer/Swimmerm": "https://mewbot.site/sprites/trainers/swimmerm.png",
+    "summer/Cyclist": "https://mewbot.site/sprites/trainers/cyclistf.png",
+    "summer/Dancer": "https://mewbot.site/sprites/trainers/dancer.png",
+    "dev/Ghetsis": "https://mewbot.site/sprites/trainers/ghetsis.png",
 }
 
 REGIONS = [
@@ -328,13 +328,14 @@ def calculate_iv_multiplier(level):
 class ProfileView(discord.ui.View):
     """View that creates profile embed and displays buttons"""
 
-    def __init__(self, ctx, bound_data, bag_data, player_data, badge_data):
+    def __init__(self, ctx, bound_data, bag_data, player_data, badge_data, events_data):
         super().__init__(timeout=20)
         self.ctx = ctx
         self.bag_data = bag_data
         self.bound_data = bound_data
         self.player_data = player_data
         self.badge_data = badge_data if badge_data else {}
+        self.events_data = events_data if events_data else {}
         self.event = asyncio.Event()
         self.embed = ""
 
@@ -366,6 +367,7 @@ class ProfileView(discord.ui.View):
         exalted = self.bound_data["exalted_chest"]
         art = self.bound_data["art_chest"]
         pats = self.bound_data["pat_chest"]
+
         embed = discord.Embed(
             title=f"{interaction.user}'s Chests",
             description="Chests hold various rewards! From credits to Pokemon.",
@@ -603,6 +605,8 @@ class ProfileView(discord.ui.View):
         evpoints = self.player_data["evpoints"]
         visible = self.player_data["visible"]
         trainer_image = self.player_data["trainer_image"]
+        incubators = self.bound_data["incubators"]
+
         if visible:
             hidden_text = "Private: True"
         else:
@@ -621,7 +625,9 @@ class ProfileView(discord.ui.View):
             value=(
                 f"`Pokemon Caught`: {count:,}\n"
                 f"`Active Region`: {region.title()}\n"
-                f"`EV Points`: {evpoints:,} <:evs:1029331432792915988>"
+                f"`EV Points`: {evpoints:,} <:evs:1029331432792915988>\n"
+                f"`Incubators`: {incubators} {self.ctx.bot.misc.get_emote('incubator')}\n"
+                f"`Easter Eggs`: {self.events_data.get('easter_eggs', 0)} {self.ctx.bot.misc.get_emote('easter')}\n"
             ),
             inline=True,
         )
@@ -671,6 +677,9 @@ class Profile(commands.Cog):
             badge_data = await pconn.fetchrow(
                 "SELECT * FROM achievements WHERE u_id = $1", ctx.author.id
             )
+            events_data = await pconn.fetchrow(
+                "SELECT * FROM events_new WHERE u_id = $1", ctx.author.id
+            )
         if bag_data is None:
             await ctx.send(
                 "Have you converted to the new bag system?\nUse `/bag convert` if you haven't!"
@@ -687,6 +696,7 @@ class Profile(commands.Cog):
             bag_data=bag_data,
             player_data=player_data,
             badge_data=badge_data,
+            events_data=events_data,
         ).wait()
 
     @profile.command(name="visible")

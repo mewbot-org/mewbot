@@ -19,6 +19,7 @@ class Mother(commands.Cog):
             self.energy.start()
             self.npc_energy.start()
             self.berries.start()
+            self.hatch_incubators.start()
 
     @tasks.loop(seconds=10)  # Runs every week
     async def deduct_market_fees(self):
@@ -73,6 +74,12 @@ class Mother(commands.Cog):
     async def berries(self):
         async with self.bot.db[0].acquire() as pconn:
             await pconn.execute("UPDATE berries SET ready = True")
+    
+    @tasks.loop(hours=1)
+    async def hatch_incubators(self):
+        async with self.bot.db[0].acquire() as pconn:
+            await pconn.execute("UPDATE pokes SET pokname = name WHERE incubate_for < NOW() + INTERVAL '6 hours'")
+            await pconn.execute("UPDATE pokes SET incubate_for = NULL WHERE incubate_for < NOW() + INTERVAL '6 hours'")
 
     @tasks.loop(seconds=60 * 10)
     async def mother(self):
@@ -99,6 +106,7 @@ class Mother(commands.Cog):
         self.npc_energy.cancel()
         self.mother.cancel()
         self.berries.cancel()
+        self.hatch_incubators.cancel()
 
 
 async def setup(bot):

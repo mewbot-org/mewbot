@@ -441,7 +441,7 @@ class Minigames(commands.Cog):
                 description=f"You cast your {rod.title()} into the water!",
                 color=0xFFBC61,
             )
-            e.set_image(url="https://mewbot.xyz/poke-fish.gif")
+            e.set_image(url="https://mewbot.site/poke-fish.gif")
             embed = await ctx.send(embed=e)
 
             # Added two different chances for items and fish
@@ -524,7 +524,7 @@ class Minigames(commands.Cog):
                 description=f"You've encountered `{provided_name}`",
                 color=0xFFBC61,
             )
-            e.set_image(url="https://mewbot.xyz/poke-fish.gif")
+            e.set_image(url="https://mewbot.site/poke-fish.gif")
             e.set_footer(
                 text=f"You have 30 secs to guess the Pokemon to catch it.",
                 # icon_url = ctx.author.avatar_url
@@ -595,7 +595,7 @@ class Minigames(commands.Cog):
                 description=f"You start digging with your **{shovel.title()}**!",
                 color=0xFFBC61,
             )
-            e.set_image(url="https://mewbot.xyz/mining.png")
+            e.set_image(url="https://mewbot.site/mining.png")
             embed = await ctx.send(embed=e)
 
             # Added two different chances for items and fish
@@ -667,7 +667,7 @@ class Minigames(commands.Cog):
                 description=f"You've encountered `{provided_name}`",
                 color=0xFFBC61,
             )
-            e.set_image(url="https://mewbot.xyz/mining_active.gif")
+            e.set_image(url="https://mewbot.site/mining_active.gif")
             e.set_footer(
                 text=f"You have 30 secs to guess the Pokemon to catch it.",
                 # icon_url = ctx.author.avatar_url

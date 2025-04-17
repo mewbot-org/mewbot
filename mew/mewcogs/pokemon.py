@@ -554,10 +554,12 @@ class Pokemon(commands.Cog):
             item = await self.bot.db[1].items.find_one(
                 {"id": evoreq["trigger_item_id"]}
             )
-            reqs.append(f"apply `{item['identifier']}`")
+            item_display = item['identifier'].replace("-", " ")
+            reqs.append(f"apply `{item_display}`")
         if evoreq["held_item_id"]:
             item = await self.bot.db[1].items.find_one({"id": evoreq["held_item_id"]})
-            reqs.append(f"hold `{item['identifier']}`")
+            item_display = item['identifier'].replace("-", " ")
+            reqs.append(f"hold `{item_display}`")
         if evoreq["gender_id"]:
             reqs.append(f"is `{'female' if evoreq['gender_id'] == 1 else 'male'}`")
         if evoreq["minimum_level"]:

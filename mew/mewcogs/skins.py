@@ -199,12 +199,16 @@ class Skins(commands.Cog):
             "halloween",
             "xmas",
             "valentine",
+            "easter",
             "xmas2022",
             "xmas2023",
             "xmas2024",
-            "valentines2023",
+            "valentine2023",
+            "valentine2024",
             "valentine2025",
             "easter2023",
+            "easter2024",
+            "easter2025",
             "summer2023",
             "summer2024",
             "halloween2023",
@@ -229,6 +233,9 @@ class Skins(commands.Cog):
         
         if skin == "valentine":
             skin = "valentine2025"
+        
+        if skin == "easter":
+            skin = "easter2025"
             
         if skin in BUYABLE_SKINS:
             # This can be removed once shop is redone
@@ -471,7 +478,7 @@ class RaidSpawn(discord.ui.View):
             return False
 
     async def start(self):
-        pokeurl = "https://mewbot.xyz/sprites/" + await get_file_name(
+        pokeurl = "https://mewbot.site/sprites/" + await get_file_name(
             self.poke, self.bot, skin=self.skin
         )
         guild = await self.bot.mongo_find("guilds", {"id": self.channel.guild.id})

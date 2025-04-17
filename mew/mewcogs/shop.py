@@ -556,7 +556,7 @@ class ShopView(discord.ui.View):
             description=f"Choose an option from the dropdown menu below!",
             color=0x4F2683,
         )
-        embed.set_image(url="https://mewbot.xyz/shop_image.png")
+        embed.set_image(url="https://mewbot.site/shop_image.png")
         self.message = await self.ctx.send(embed=embed, view=self)
         await self.event.wait()
 

@@ -4,6 +4,7 @@ import os
 import discord
 import random
 import asyncio
+import asyncpg
 import time
 
 from unicodedata import name
@@ -16,6 +17,8 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Coroutine, Literal
 from dataclasses import dataclass
+
+import mewcogs.views
 
 ORANGE = 0xF4831B
 RED_GREEN = [0xBB2528, 0x146B3A]
@@ -277,7 +280,7 @@ class ListSelectChristmas(discord.ui.Select):
 
 
 class ListSelectView(discord.ui.View):
-    """View to handle trainer selection"""
+    """View to handle selection"""
 
     def __init__(self, ctx, confirm_content: str):
         super().__init__(timeout=60)
@@ -312,203 +315,15 @@ class ListSelectView(discord.ui.View):
         await self.event.wait()
         return self.choice
 
-
-# Here for Easter 2023 Event
-async def get_egg(ctx, fund):
-    shiny = False
-    boosted = False
-    # Proceed to generate egg and add to user
-    max_chance = 28000 - fund
-    special_chance = random.randint(1, max_chance)
-
-    # 5. Boosted Legendary, 5% Shiny
-    if special_chance <= 2500:  # 10%
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        choiceList = random.choices(
-            (ubList, LegendList),
-            weights=(0.7, 0.3),
-        )[0]
-        poke_name = random.choice(choiceList)
-
-    # 4. Boosted 80% UB/ 20% Legendary, 10% Shiny
-    elif special_chance <= 5000:
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        choiceList = random.choices(
-            (pseudoList, ubList, LegendList),
-            weights=(0.4, 0.4, 0.2),
-        )[0]
-        poke_name = random.choice(choiceList)
-
-    # 3. 40% Boosted Psu, 25% Shiny
-    elif special_chance <= 10000:
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        choiceList = random.choices(
-            (pseudoList, ubList),
-            weights=(0.9, 0.1),
-        )[0]
-        poke_name = random.choice(choiceList)
-
-    # 2. 60% Boosted Starter/Pokemon, 75% Shiny
-    elif special_chance <= 15000:
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        choiceList = random.choices(
-            (pList, starterList, pseudoList),
-            weights=(0.5, 0.4, 0.1),
-        )[0]
-        poke_name = random.choice(choiceList)
-
-    # 1. Boosted Starter or Pseudo, 80% Shiny
-    elif special_chance <= 24000:
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        choiceList = random.choices(
-            (pList, starterList),
-            weights=(0.8, 0.2),
-        )[0]
-        poke_name = random.choice(choiceList)
-
-    # Boosted Normal Pokemon, 80% Shiny (Edge Case)
-    else:
-        if (random.randint(1, 100)) <= 10:
-            shiny = True
-        if (random.randint(1, 100)) <= 10:
-            boosted = True
-        poke_name = random.choice(pList)
-
-    # Generate Egg Stats
-    # IVs and Nature
-    min_iv = 13 if boosted else 1
-    max_iv = 31 if boosted or random.randint(0, 1) else 29
-    hpiv = random.randint(min_iv, max_iv)
-    atkiv = random.randint(min_iv, max_iv)
-    defiv = random.randint(min_iv, max_iv)
-    spaiv = random.randint(min_iv, max_iv)
-    spdiv = random.randint(min_iv, max_iv)
-    speiv = random.randint(min_iv, max_iv)
-    nature = random.choice(natlist)
-
-    # Everything else
-    form_info = await ctx.bot.db[1].forms.find_one({"identifier": poke_name.lower()})
-    pokemon_info = await ctx.bot.db[1].pfile.find_one({"id": form_info["pokemon_id"]})
-    try:
-        gender_rate = pokemon_info["gender_rate"]
-    except Exception:
-        ctx.logger.warn("No Gender Rate for %s" % pokemon_info["identifier"])
-        return None
-
-    ab_ids = (
-        await ctx.bot.db[1]
-        .poke_abilities.find({"pokemon_id": form_info["pokemon_id"]})
-        .to_list(length=3)
-    )
-    ab_ids = [doc["ability_id"] for doc in ab_ids]
-
-    # Gender
-    if "idoran-" in poke_name:
-        gender = poke_name[-2:]
-    elif poke_name.lower() == "illumise":
-        gender = "-f"
-    elif poke_name.lower() == "volbeat":
-        gender = "-m"
-    # -1 = genderless pokemon
-    elif gender_rate == -1:
-        gender = "-x"
-    # 0 = male only, 8 = female only, in between means mix at that ratio.
-    # 0 < 0 = False, so the poke will always be male
-    # 7 < 8 = True, so the poke will always be female
-    elif random.randrange(8) < gender_rate:
-        gender = "-f"
-    else:
-        gender = "-m"
-
-    emoji = get_emoji(
-        shiny=shiny,
-    )
-    p = Pokemon(
-        poke_name.capitalize(),
-        gender,
-        hpiv,
-        atkiv,
-        defiv,
-        spaiv,
-        spdiv,
-        speiv,
-        1,
-        shiny,
-        "None",
-        0,
-        random.randrange(len(ab_ids)),
-        ab_ids,
-        nature,
-    )
-    return p, emoji, boosted
-
-
-# Here for Easter 2023 Event
-def get_insert_query(ctx, poke, is_shadow=False):
-    tackle = "tackle"
-    query2 = """
-    INSERT INTO pokes (pokname, hpiv, atkiv, defiv, spatkiv, spdefiv, speediv, hpev, atkev, defev, spatkev, spdefev, speedev, pokelevel, moves, hitem, exp, nature, expcap, poknick, price, market_enlist, happiness, fav, ability_index, counter, name, gender, caught_by, shiny, skin)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31) RETURNING id"""
-    skin = "shadow" if is_shadow else None
-    args = (
-        "Egg",
-        poke.hp,
-        poke.attack,
-        poke.defense,
-        poke.spatk,
-        poke.spdef,
-        poke.speed,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        5,
-        [tackle, tackle, tackle, tackle],
-        "None",
-        1,
-        poke.nature,
-        35,
-        "None",
-        0,
-        False,
-        0,
-        False,
-        poke.ability_id,
-        150,
-        poke.name,
-        poke.gender,
-        ctx.author.id,
-        poke.shiny,
-        skin,
-    )
-    return query2, args
-
-
 class Events(commands.Cog):
     """Various seasonal events in Mewbot."""
+
 
     def __init__(self, bot):
         self.bot = bot
         # Seasonal toggles
-        self.EASTER_DROPS = False
-        self.EASTER_COMMANDS = False
+        self.EASTER_DROPS = True
+        self.EASTER_COMMANDS = True
         self.HALLOWEEN_DROPS = False
         self.HALLOWEEN_COMMANDS = False
         self.CHRISTMAS_DROPS = False
@@ -553,7 +368,7 @@ class Events(commands.Cog):
             "Raboot": ["Snipe Shot", "Grassy Glide", "Court Change", "Taunt"],
         }
         self.EVENT_POKEMON = [
-            "Ekans", "Sobble", "Spoink", "Grumpig", "Jirachi", "Morpeko",
+            "Azumarill", "Azurill", "Exeggcute", "Exeggutor", "Iron-bundle", "Lapras", "Marill", "Minun", "Pichu", "Pikachu", "Raichu", "Sigilyph", "Tapu-lele", "Togedemaru", "Raichu-alola"
         ]
         self.UNOWN_WORD = None
         self.UNOWN_GUESSES = []
@@ -657,14 +472,50 @@ class Events(commands.Cog):
                 self.UNOWN_WORDLIST = f.readlines().copy()
         except Exception:
             pass
+            
+        EGG_EMOJI = "🥚" 
+            
+        self.possible_titles = [
+            f"{EGG_EMOJI} A Glimmer in the Grass!",
+            f"{EGG_EMOJI} Another Egg Found!",
+            f"{EGG_EMOJI} Look What You Stumbled Upon!",
+            f"{EGG_EMOJI} Egg Hunt Success!",
+            f"{EGG_EMOJI} Your Collection Grows!",
+            f"{EGG_EMOJI} A Mysterious Discovery!",
+            f"{EGG_EMOJI} What's This?",
+            f"{EGG_EMOJI} Treasure Spotted!",
+        ]
 
-    # @commands.hybrid_group()
+        # Descriptions (Intro part, user mention will be added before these)
+        self.possible_description_intros = [
+            "incredible luck! You've found another Mysterious Egg.",
+            "persistence pays off! One more egg for your collection.",
+            "hidden away, you spotted it! A beautifully patterned egg.",
+            "this one was hiding well! You've secured another egg.",
+            "excellent work, hunter! Another egg has been added.",
+            "while adventuring, you came across something special...",
+            "fortune smiles upon you! Another egg is yours.",
+            "just when you least expected it, an egg appears!",
+        ]
+
+        # Footer Texts
+        self.possible_footers = [
+            "Keep searching! More wonders await...",
+            "What secrets could these eggs hold?",
+            "Your hoard is looking impressive!",
+            "How many can you collect?",
+            "The hunt continues!",
+            "Maybe this one will hatch soon?",
+            "Keep your collection safe!",
+        ]
+
+    @commands.hybrid_group()
     async def easter(self, ctx: commands.Context): ...
 
     # @easter.command(name="info")
     async def easter_info(self, ctx):
         embed = discord.Embed(
-            title="Mewbot Easter Event 2023",
+            title="Mewbot Easter Event 2025",
             description="More details on the event and how things are working!",
             color=0x00FF00,
         )
@@ -683,23 +534,38 @@ class Events(commands.Cog):
             value="In the shop for the duration of the event. Can be assigned to any Pokemon the skin belongs too.",
             inline=True,
         )
-        embed.add_field(
-            name="Winter Fund and Eggs",
-            value=(
-                "The Easter Bunny has provided us with the opportunity to gain **Painted Eggs**. They are available in the shop for 50 🥕."
-                "The Winter Fund is the Easter Bunny's storage for the Winter! By increasing your fund, Diggersby is more likely to give you a Boosted and/or Shiny Egg"
-                "These eggs can be **any** Pokemon from the bot! As you donate more the choice of Pokemon your egg can be gets better and better"
-            ),
-            inline=False,
-        )
+        # embed.add_field(
+        #     name="Winter Fund and Eggs",
+        #     value=(
+        #         "The Easter Bunny has provided us with the opportunity to gain **Painted Eggs**. They are available in the shop for 50 🥕."
+        #         "The Winter Fund is the Easter Bunny's storage for the Winter! By increasing your fund, Diggersby is more likely to give you a Boosted and/or Shiny Egg"
+        #         "These eggs can be **any** Pokemon from the bot! As you donate more the choice of Pokemon your egg can be gets better and better"
+        #     ),
+        #     inline=False,
+        # )
         await ctx.send(embed=embed)
 
-    # @easter.command(name="shop")
+    @easter.command(name="shop")
     async def easter_shop(self, ctx):
         """Check the easter shop."""
         if not self.EASTER_COMMANDS:
             await ctx.send("This command can only be used during the Easter Season!")
             return
+
+        view = mewcogs.views.PokemonShopView({k: {"image_url": "http://mewbot.site/sprites/" + await get_file_name(
+                        k, ctx.bot, skin="easter2025"
+                    ), "price": round(len(k) * 6)} for k in self.EVENT_POKEMON}, 0, cog_instance=self)
+
+        # Create the initial embed using the view's method
+        initial_embed = await view._create_embed()
+
+        # Send the message with the embed and view
+        shop_message = await ctx.send(embed=initial_embed, view=view)
+
+        # Store the message reference in the view so it can be edited later (e.g., on timeout)
+        view.message = shop_message
+
+        return
         async with ctx.bot.db[0].acquire() as pconn:
             try:
                 dets = await pconn.fetchrow(
@@ -736,7 +602,7 @@ class Events(commands.Cog):
             value="Egg and Redeem\n50 🥕\nEgg and Fund Increase\n150 🥕",
             inline=True,
         )
-        embed.set_thumbnail(url="https://mewbot.xyz/diggersby.png")
+        embed.set_thumbnail(url="https://mewbot.site/diggersby.png")
         embed.set_footer(text="Diggersby Image made by @Ort.Homeless on Instagram!")
         await ctx.send(embed=embed)
 
@@ -970,7 +836,7 @@ class Events(commands.Cog):
                     name="Egg Details",
                     value=f"Diggersby has granted you a {emoji} {msg} **{ivpercent}** Painted Egg!\nIt'll hatch in **150** steps!",
                 )
-                embed.set_image(url="https://mewbot.xyz/eastereggs.png")
+                embed.set_image(url="https://mewbot.site/eastereggs.png")
                 embed.set_footer(
                     text="Easter 2023 ends on 4/23 | Make sure to join Mewbot Official for more Events!"
                 )
@@ -1961,31 +1827,33 @@ class Events(commands.Cog):
         embed.set_footer(text="Join Mewbot's Official Server for all event updates!")
         await ctx.send(embed=embed)
 
-    # @halloween.group(name="pumpkin")
-    async def pumpkin(self, ctx): ...
+    @commands.group(name="egg")
+    async def egg(self, ctx): ...
 
-    # @pumpkin.command(name="pop")
-    async def pumpkin_pop(self, ctx):
-        """Open a mysterious pumpkin and receive a reward... or a trick!"""
+
+    @check_mod()
+    @egg.command(name="crack")
+    async def egg_crack(self, ctx):
+        """Open a mysterious easter egg and receive a reward!"""
 
         # Starting message with suspense
         # if not self.HALLOWEEN_COMMANDS:
         #     await ctx.send("This command can only be used during the halloween season!")
         #     return
         embed = discord.Embed(
-            title="🎃 Selected a Mysterious pumpkin from your stash! 🎃",
+            title="🥚 Selected a Mysterious Easter Egg from your stash! 🥚",
             description="*Do you dare to open it?*",
             color=discord.Color.orange(),
         )
         open_button = discord.ui.Button(
-            label="Pop Pumpkin", style=discord.ButtonStyle.green
+            label="Pop Egg", style=discord.ButtonStyle.green
         )
 
-        # Callback for the button to handle opening the pumpkin
+        # Callback for the button to handle opening the egg
         async def open_callback(interaction: discord.Interaction):
             if interaction.user != ctx.author:
                 await interaction.response.send_message(
-                    "Only the pumpkin owner can open it!", ephemeral=True
+                    "Only the egg owner can open it!", ephemeral=True
                 )
                 return
 
@@ -2007,26 +1875,26 @@ class Events(commands.Cog):
             )[0]
             message = rewards[reward][1]
 
-            # Get user pumpkin count
+            # Get user egg count
             async with self.bot.db[0].acquire() as pconn:
                 try:
-                    pumpkins = await pconn.fetchval(
-                        "UPDATE events_new SET pumpkin = pumpkin - 1 WHERE u_id = $1 RETURNING pumpkin",
+                    eggs = await pconn.fetchval(
+                        "UPDATE events_new SET easter_eggs = easter_eggs - 1 WHERE u_id = $1 RETURNING easter_eggs",
                         ctx.author.id,
                     )
                 except:
                     await ctx.send(
                         embed=make_embed(
-                            title="You probably don't have any <:pumpkin:1301436707169894430>"
+                            title=f"You probably don't have any easter eggs{ctx.bot.misc.get_emote('easteregg')}!"
                         )
                     )
                     return
 
-                # if they have more than 5 pumpkins, there should be a 60% chance of event pokemon,
+                # if they have more than 5 eggs, there should be a 10% chance of event pokemon,
                 # if not, there should be a 90% chance
-                if pumpkins >= 5:
+                if eggs >= 5:
                     true_reward = random.choices(
-                        ("event_pokemon", "reward"), weights=(0.6, 0.4), k=1
+                        ("event_pokemon", "reward"), weights=(0.1, 0.9), k=1
                     )[0]
                 else:
                     true_reward = random.choices(
@@ -2038,10 +1906,10 @@ class Events(commands.Cog):
                         ctx.bot,
                         ctx.author.id,
                         pokemon.capitalize(),
-                        skin="halloween2024",
+                        skin="easter2025",
                     )
-                    pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
-                        pokemon, ctx.bot, skin="halloween2024"
+                    pokeurl = "http://mewbot.site/sprites/" + await get_file_name(
+                        pokemon, ctx.bot, skin="easter2025"
                     )
                     guild = await ctx.bot.mongo_find(
                         "guilds", {"id": ctx.channel.guild.id}
@@ -2051,9 +1919,9 @@ class Events(commands.Cog):
                     else:
                         small_images = guild["small_images"]
                     embed = discord.Embed(
-                        title="🎃 *A Halloween Pokémon Jumps Out!* 🎃",
-                        description="As you pry open the pumpkin, mist swirls out and...\n\n"
-                        "👻 *A Halloween Pokémon appears!* \n\n"
+                        title="*A Pokémon Jumps Out!*",
+                        description="As you pry open the egg, mist swirls out and...\n\n"
+                        "👻 *A Pokémon appears!* \n\n"
                         "The Pokémon has been added to your inventory!",
                         color=discord.Color.purple(),
                     )
@@ -2061,7 +1929,7 @@ class Events(commands.Cog):
                         url=pokeurl
                     )  # Replace with the actual Pokémon image URL
                     embed.set_footer(
-                        text="Happy Halloween! Keep opening pumpkins for more surprises."
+                        text="Happy Easter! Keep opening eggs for more surprises."
                     )
 
                     if small_images:
@@ -2082,7 +1950,7 @@ class Events(commands.Cog):
                         await self.drop_potions(ctx)
 
                     embed = discord.Embed()
-                    embed.title = "🎃 You opened the pumpkin!"
+                    embed.title = "You opened the egg!"
                     embed.description = message
                     await interaction.response.edit_message(embed=embed, view=None)
 
@@ -2094,7 +1962,7 @@ class Events(commands.Cog):
         # Send the initial message with the button
         await ctx.send(embed=embed, view=view)
 
-    @halloween.command(name="shop")
+    # @halloween.command(name="shop")
     async def halloween_shop(self, ctx):
         """Check the halloween shop."""
         if not self.HALLOWEEN_COMMANDS:
@@ -3388,6 +3256,20 @@ class Events(commands.Cog):
         await self.update_unown()
         await ctx.send("Event started!")
 
+    
+    def _get_random_title(self) -> str:
+        """Returns a random title for the egg embed."""
+        return random.choice(self.possible_titles)
+
+    def _get_random_description_intro(self) -> str:
+        """Returns a random introductory sentence for the egg embed description."""
+        # Ensures the first letter is lowercase, expecting a mention before it.
+        return random.choice(self.possible_description_intros).strip()
+
+    def _get_random_footer(self) -> str:
+        """Returns a random footer text for the egg embed."""
+        return random.choice(self.possible_footers)
+
     async def give_balloons(self, channel, user):
         """Gives some balloons to the provided user."""
         carrots = random.randint(1, 3)
@@ -3408,25 +3290,113 @@ class Events(commands.Cog):
             )
         await channel.send(embed=embed)
 
-    async def give_egg(self, channel, user):
-        """Gives some carrots to the provided user."""
-        carrots = random.randint(5, 10)
-        async with self.bot.db[0].acquire() as pconn:
-            await pconn.execute(
-                "INSERT INTO events_new (u_id) VALUES ($1) ON CONFLICT DO NOTHING",
-                user.id,
-            )
-            await pconn.execute(
-                f"UPDATE events_new SET carrots = carrots + $1 WHERE u_id = $2",
-                carrots,
-                user.id,
-            )
+    async def give_egg(self, channel: discord.TextChannel, user: discord.Member | discord.User):
+        """
+        Gives the user +1 Easter Egg, updating the 'easter_egg' count in the database
+        and sending a cool, immersive embed notification using varied text.
+
+        Args:
+            channel: The discord.TextChannel to send the notification in.
+            user: The discord.Member or discord.User who receives the egg.
+        """
+        new_egg_total = 0
+
+        #shiny egg
+        if random.random() < 0.1:
+            pokemon = random.choice(self.EVENT_POKEMON).lower()
+            await self.bot.commondb.create_poke(
+                    self.bot, 
+                    user.id,
+                    "Egg",
+                    shiny = True,
+                    name = pokemon
+                )
             embed = discord.Embed(
-                title="Easter Event!",
-                description=f"The Pokemon was holding {carrots}x 🥕s!\nUse command `/easter shop` to use them!",
-                color=ORANGE,
+                title=self._get_random_title(),
+                description=f"{user.mention}, {self._get_random_description_intro()}\nThis time it's a :star2:!",
+                color=discord.Color.from_rgb(240, 240, 210)
             )
-        await channel.send(embed=embed)
+            embed.set_image(url="https://mewbot.site/img/easter_image.png")
+            embed.add_field(
+            name="Item Found:",
+            value=f"✨ **Shiny Easter Egg** :egg:",
+            inline=False
+            )
+            embed.add_field(
+            name="Your Hoard Grows:",
+            value=f"Hatch the egg to see what's inside!",
+            inline=False
+            )
+            embed.set_footer(text=self._get_random_footer())
+            await channel.send(embed=embed)
+            return 
+            
+
+
+        # --- Database Interaction (same as before) ---
+        try:
+            async with self.bot.db[0].acquire() as conn:
+                async with conn.transaction():
+                    await conn.execute(
+                        "INSERT INTO events_new (u_id, easter_eggs) VALUES ($1, 0) ON CONFLICT (u_id) DO NOTHING",
+                        user.id,
+                    )
+                    new_egg_total = await conn.fetchval(
+                        """
+                        UPDATE events_new
+                        SET easter_eggs = easter_eggs + 1
+                        WHERE u_id = $1
+                        RETURNING easter_eggs
+                        """,
+                        user.id,
+                    )
+                    if new_egg_total is None:
+                         print(f"Error: Failed to retrieve new egg count for user {user.id} after update.")
+                         # Attempt fallback or set default if needed
+                         new_egg_total = await conn.fetchval("SELECT easter_eggs FROM events_new WHERE u_id = $1", user.id) or 1
+
+        except asyncpg.PostgresError as e:
+            print(f"Database error in give_egg for user {user.id}: {e}")
+            try:
+                await channel.send(f"⚙️ A database issue occurred while adding an egg for {user.mention}. Please notify staff if this repeats.", delete_after=20)
+            except discord.HTTPException: pass
+            return
+        except Exception as e:
+            print(f"Generic error in give_egg for user {user.id}: {e}")
+            try:
+                await channel.send(f"⚙️ An unexpected error occurred for {user.mention}. Please contact support.", delete_after=20)
+            except discord.HTTPException: pass
+            return
+
+        # --- Create Cool Embed using Helper Methods ---
+        embed = discord.Embed(
+            title=self._get_random_title(), # <-- Use helper method
+            description=f"{user.mention}, {self._get_random_description_intro()}", # <-- Use helper method
+            color=discord.Color.from_rgb(240, 240, 210)
+        )
+
+        # if EGG_THUMBNAIL_URL:
+        #      embed.set_thumbnail(url=EGG_THUMBNAIL_URL)
+
+        embed.add_field(
+            name="Item Found:",
+            value=f"✨ **+1 Mysterious Easter Egg** :egg:",
+            inline=False
+        )
+        embed.add_field(
+            name="Your Hoard Grows:",
+            value=f"You now have **{new_egg_total}** egg{'s' if new_egg_total != 1 else ''}!",
+            inline=False
+        )
+        embed.set_footer(text=self._get_random_footer()) # <-- Use helper method
+
+        # --- Send the Message ---
+        try:
+            await channel.send(embed=embed)
+        except discord.Forbidden:
+            print(f"Error: Bot lacks permissions to send messages in channel {channel.id} ({channel.name})")
+        except discord.HTTPException as e:
+            print(f"Error: Failed to send egg embed message: {e}")
 
     async def give_candy(self, ctx, amount=0):
         """Gives candy to the provided user."""
@@ -3535,7 +3505,7 @@ class Events(commands.Cog):
             color=discord.Color.orange(),
         )
         e.set_image(
-            url="https://mewbot.xyz/img/pumpkin.jpg"
+            url="https://mewbot.site/img/pumpkin.jpg"
         )  # Replace with Halloween image URL
 
         view = discord.ui.View(timeout=5)
@@ -3757,11 +3727,8 @@ class Events(commands.Cog):
         # For limiting raids to Official onlyR
         if self.bot.botbanned(user.id):
             return
-        if self.EASTER_DROPS:
-            if not random.randrange(10):
-                await self.give_egg(channel, user)
-            if not random.randrange(5) or user.id == 334155028170407949:
-                await self.maybe_spawn_christmas(channel)
+        if self.EASTER_DROPS and not random.randrange(10 // 4 if channel.guild == self.bot.official_server else 1):
+            await self.maybe_spawn_christmas(channel)
         if self.HALLOWEEN_DROPS:
 
             func: Coroutine = random.choices(
@@ -3795,8 +3762,11 @@ class Events(commands.Cog):
     async def on_poke_fish(self, channel, user):
         if self.bot.botbanned(user.id):
             return
-        if self.EASTER_DROPS and not random.randrange(5):
+        if self.EASTER_DROPS and random.random() < 0.03 * (2 if channel.guild == self.bot.official_server else 1):
             await self.give_egg(channel, user)
+            await self.maybe_spawn_christmas(channel)
+            
+
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
@@ -3820,9 +3790,10 @@ class Events(commands.Cog):
     async def on_poke_breed(self, channel, user):
         if self.bot.botbanned(user.id):
             return
-        if self.EASTER_DROPS:
-            if not random.randrange(10):
-                await self.give_egg(channel, user)
+        if self.EASTER_DROPS and random.random() < 0.03:
+            await self.give_egg(channel, user)
+            await self.maybe_spawn_christmas(channel)
+
         if self.SUMMER_DROPS:
             if not random.randrange(5) or user.id == 334155028170407949:
                 await self.give_balloons(channel, user)
@@ -3898,38 +3869,38 @@ class ChristmasSpawn(discord.ui.View):
     def rand_spawn_title(self):
         return random.choice(
             [
-                f"💖 A warm breeze of love carries a wild {self.poke} your way!",
-                f"🌹 Under the soft glow of candlelight, a romantic {self.poke} appears!",
-                f"✨ A magical shimmer surrounds {self.poke} as it emerges with Valentine’s cheer!",
-                f"💘 Amidst falling rose petals, a charming {self.poke} has arrived!",
-                f"🎁 The spirit of love is here, and {self.poke} has come to spread joy!",
+                f"🐣 A gentle spring breeze brings a wild {self.poke} hopping your way!",
+                f"🌸 Beneath blooming flowers, a cheerful {self.poke} appears with Easter joy!",
+                f"✨ A pastel shimmer surrounds {self.poke} as it hatches into the celebration!",
+                f"🥚 Amongst hidden eggs and laughter, a festive {self.poke} has arrived!",
+                f"🎉 The spirit of Easter is here, and {self.poke} has come to join the fun!",
             ]
         )
 
     def pokemon_escaped_message(self):
         return random.choice(
             [
-                f"💔 The wild {self.poke} got cold feet and ran off before you could catch it!",
-                f"🌹 {self.poke} vanished into a field of roses, leaving only a sweet scent behind!",
-                f"✨ {self.poke} slipped away into the starlit night, heart unclaimed!",
-                f"💘 A gentle breeze carried {self.poke} far away, lost in the magic of love!",
-                f"🎁 {self.poke} decided to spread affection elsewhere. Keep an eye out for another chance!",
+                f"🥚 The wild {self.poke} rolled away inside a mysterious egg—maybe next time!",
+                f"🌸 {self.poke} vanished behind a patch of blooming flowers and wasn’t seen again!",
+                f"✨ {self.poke} bounced away on a spring breeze, leaving behind sparkles and wonder!",
+                f"🐇 A playful bunny distracted you, and {self.poke} used the moment to escape!",
+                f"🎁 {self.poke} hid in an Easter basket and disappeared with a giggle!",
             ]
         )
 
     def rand_defeat_message(self):
         return random.choice(
             [
-                f"💔 {self.poke} fades away, leaving behind a bittersweet memory...",
-                f"🌹 The soft glow around {self.poke} dims as it vanishes into the night.",
-                f"🎁 {self.poke} leaves behind a single rose as a parting gift before disappearing!",
-                f"✨ {self.poke} sparkles one last time before vanishing into the aura of love.",
-                f"💘 With a loving glance, {self.poke} bids farewell, its presence lingering in the air!",
-                f"💖 The warmth fades as {self.poke} is no longer in sight, love lost for now.",
-                f"🌟 {self.poke} twinkles softly before disappearing into a sea of floating hearts.",
-                f"🎶 The melody of love quiets as {self.poke} drifts away into the starry sky.",
-                f"💌 The soft glow of affection fades as {self.poke} slips into the distance.",
-                f"🎊 With a gentle wave, {self.poke} departs, leaving behind a lingering sense of romance!",
+                f"🥚 {self.poke} vanishes in a swirl of pastel sparkles, leaving behind a cracked egg shell...",
+                f"🌸 The spring bloom dims as {self.poke} quietly disappears into the fields.",
+                f"🎁 {self.poke} leaves behind a painted egg before hopping away into the horizon!",
+                f"✨ {self.poke} twinkles gently, then dissolves into the Easter morning mist.",
+                f"🐣 With a soft chirp, {self.poke} fades into the warmth of the season.",
+                f"💐 The garden hushes as {self.poke} is no longer in sight, hidden among the flowers.",
+                f"🌷 A breeze of petals carries {self.poke} away, its presence just a fleeting springtime memory.",
+                f"🐇 A rustle in the bushes is all that’s left as {self.poke} hops off into the festive wilderness.",
+                f"🍬 The candy trail ends as {self.poke} disappears with a playful giggle.",
+                f"🎊 With a cheery bounce, {self.poke} waves goodbye, its Easter spirit lingering behind!",
             ]
         )
 
@@ -3938,7 +3909,7 @@ class ChristmasSpawn(discord.ui.View):
     async def stream_image(self):
         params = {
             "poke_image_url": "sprites/"
-            + await get_file_name(self.poke, self.cog.bot, skin="valentine2025"),
+            + await get_file_name(self.poke, self.cog.bot, skin="easter2025"),
             "poke": ujson.dumps({"hp": self.hp, "starting_hp": self.max_hp}),
         }
         image = BytesIO()
@@ -4005,7 +3976,7 @@ class ChristmasSpawn(discord.ui.View):
 
     async def on_timeout(self):
         self.embed = discord.Embed(
-            title="The Pokémon slipped and got away!🧟👻",
+            title=self.pokemon_escaped_message(),
             description="Catch more Pokémon to spawn another one.",
             color=0x0084FD,
         )
@@ -4026,7 +3997,7 @@ class ChristmasSpawn(discord.ui.View):
                 self.servercache.append(self.channel.guild.id)
 
         extra_msg = ""
-        self.pokeurl = pokeurl = "http://mewbot.xyz/sprites/" + await get_file_name(
+        self.pokeurl = pokeurl = "http://mewbot.site/sprites/" + await get_file_name(
             self.poke, self.cog.bot, skin="valentine2025"
         )
         guild = await self.cog.bot.mongo_find("guilds", {"id": self.channel.guild.id})
@@ -4095,7 +4066,7 @@ class ChristmasSpawn(discord.ui.View):
         self.max_hp *= (await self.cog.bot.db[1].pokemon_stats.find_one(
             {"pokemon_id": form_info["pokemon_id"]}
         ))['stats'][0]
-        self.max_hp //= 2
+        self.max_hp //= 4
         self.hp = self.max_hp = int(self.max_hp)
     
         type_effectiveness = {}
@@ -4267,7 +4238,7 @@ class ChristmasSpawn(discord.ui.View):
         # hp = max(self.max_hp - sum(self.attacked.values()), 0)
         if self.hp > 0 or self.is_finished():
             self.embed = discord.Embed(
-                title="The Pokémon slipped and got away!🧟👻",
+                title=self.pokemon_escaped_message(),
                 description="Catch more Pokémon to spawn another one.",
                 color=0x0084FD,
             )
@@ -4278,6 +4249,7 @@ class ChristmasSpawn(discord.ui.View):
             else:
                 self.embed.set_image(url=pokeurl)
             await self.message.edit(embed=self.embed, attachments = [], view=None)
+            self.stop()
             return
 
         # Remove server from lock
@@ -4301,7 +4273,7 @@ class ChristmasSpawn(discord.ui.View):
                         True,
                     )
             for winner, dmg in winners:
-                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, boosted = bool(random.randint(0, 3)), skin = 'valentine2025')
+                await self.cog.bot.commondb.create_poke(self.cog.bot, winner, self.poke, boosted = bool(random.randint(0, 3)), skin = 'easter2025')
 
         self.embed = discord.Embed(
             title=self.rand_defeat_message(),
@@ -4420,6 +4392,9 @@ class RaidMoveNoEmote(discord.ui.Button):
         await interaction.response.send_message(
             content=f"You used {self.move}. {self.effective}", ephemeral=True
         )
+
+
+
 
 
 async def setup(bot):

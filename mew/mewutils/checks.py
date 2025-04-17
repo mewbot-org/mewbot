@@ -15,8 +15,8 @@ class Rank(IntEnum):
     SUPPORT = 1
     GYM = 2
     HELPER = 3
-    ART_TEAM = 4
-    MOD = 5
+    MOD = 4
+    ART_LEAD = 5
     GYMAUTH = 6
     INVESTIGATOR = 7
     ADMIN = 8
@@ -26,7 +26,7 @@ class Rank(IntEnum):
 # In order to prevent developers from being locked out, this variable holds the user ids of developers.
 # Any ID in this tuple will always be able to use commands, regardless of rank or DB status.
 # Be careful adding IDs to this tuple, as they get access to a large number of commands.
-OWNER_IDS = (440383094218948609, 455277032625012737, 334155028170407949)
+OWNER_IDS = (440383094218948609, 455277032625012737, 334155028170407949, 641062476057673778)
 
 
 def check_owner():
@@ -63,7 +63,7 @@ def check_art_team():
             return False
         rank = Rank[rank.upper()]
         # ONLY allow EXACTLY Art Team (or higher) to use
-        return rank >= Rank.ART_TEAM
+        return rank >= Rank.ART_LEAD
 
     return commands.check(predicate)
 
