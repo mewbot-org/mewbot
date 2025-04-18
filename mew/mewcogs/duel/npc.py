@@ -518,7 +518,7 @@ async def generate_pokemon(
     # Print Pokemon perms to channel for records - Webhook
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(
-            "https://discord.com/api/webhooks/1237465290636263514/6hnjg9TAi0ec0LBhdlii8KNxptcj4E1RZ0unN7WMKUeAyiqndxiPMxAHhtJaEBFi50Wk",
+            os.getenv("NPC_CHANNEL_WEBHOOK"),
             session=session,
         )
         embed = discord.Embed(

@@ -3762,7 +3762,7 @@ class Events(commands.Cog):
     async def on_poke_fish(self, channel, user):
         if self.bot.botbanned(user.id):
             return
-        if self.EASTER_DROPS and random.random() < 0.03 * (2 if channel.guild == self.bot.official_server else 1):
+        if self.EASTER_DROPS and random.random() < 0.1 * (2 if channel.guild == self.bot.official_server else 1):
             await self.give_egg(channel, user)
             await self.maybe_spawn_christmas(channel)
             
@@ -3790,7 +3790,7 @@ class Events(commands.Cog):
     async def on_poke_breed(self, channel, user):
         if self.bot.botbanned(user.id):
             return
-        if self.EASTER_DROPS and random.random() < 0.03:
+        if self.EASTER_DROPS and random.random() < 0.1 * (2 if channel.guild == self.bot.official_server else 1):
             await self.give_egg(channel, user)
             await self.maybe_spawn_christmas(channel)
 
